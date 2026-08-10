@@ -406,6 +406,30 @@ public ref struct SpanWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteLatin1(ReadOnlySpan<char> value, int fixedLength) => Write(value, Encoding.Latin1, fixedLength);
 
+    /// <summary>Writes UTF-8 text into a fixed-size byte field, truncating at a real
+    /// character boundary (never splitting a multi-byte sequence) and zero-padding if
+    /// shorter. Unlike Write(span, Encoding.UTF8, fixedLength), this never writes more
+    /// than fixedLength bytes — that generic overload assumes 1 byte per character, which
+    /// is wrong for UTF-8 and can silently overflow the declared field, desyncing every
+    /// packet sent afterward on the wire.</summary>
+    public void WriteUtf8Fixed(ReadOnlySpan<char> value, int fixedLength)
+    {
+        Span<byte> encoded = fixedLength <= 256 ? stackalloc byte[fixedLength * 4] : new byte[fixedLength * 4];
+        var encodedLength = Encoding.UTF8.GetBytes(value, encoded);
+
+        var copyLength = Math.Min(encodedLength, fixedLength);
+
+        while (copyLength > 0 && (encoded[copyLength - 1] & 0xC0) == 0x80)
+        {
+            copyLength--;
+        }
+
+        for (var i = 0; i < fixedLength; i++)
+        {
+            Write(i < copyLength ? encoded[i] : (byte)0);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void WriteLatin1Null(ReadOnlySpan<char> value)
     {

@@ -416,6 +416,7 @@ public class BandageContext : Timer
                 }
 
                 Patient.Heal((int)toHeal, Healer, false);
+                Systems.MahaonCombat.BleedingSystem.CureBleed(Patient);
             }
             else
             {

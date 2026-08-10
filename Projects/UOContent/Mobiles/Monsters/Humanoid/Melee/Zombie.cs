@@ -51,6 +51,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a rotting corpse";
         public override string DefaultName => "a zombie";
+        public override bool IsUndead => true;
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Regular;

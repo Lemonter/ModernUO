@@ -69,6 +69,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a skeletal corpse";
         public override string DefaultName => "a skeleton";
+        public override bool IsUndead => true;
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lesser;

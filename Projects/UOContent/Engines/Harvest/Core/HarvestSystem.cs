@@ -289,6 +289,8 @@ namespace Server.Engines.Harvest
 
         public virtual bool Give(Mobile m, Item item, bool placeAtFeet)
         {
+            Systems.MahaonProfessions.ProfessionHarvestBonus.ApplyCraftsmanBonus(m, item);
+
             if (m.PlaceInBackpack(item))
             {
                 return true;

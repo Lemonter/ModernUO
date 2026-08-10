@@ -66,6 +66,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a skeletal corpse";
         public override string DefaultName => "a skeletal knight";
+        public override bool IsUndead => true;
 
         public override bool BleedImmune => true;
 

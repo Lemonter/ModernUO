@@ -48,6 +48,10 @@ namespace Server.Mobiles
         }
         public override string CorpseName => "a lich's corpse";
         public override string DefaultName => "a lich lord";
+        public override bool IsUndead => true;
+
+        private BaseAI _mahaonForcedAI;
+        protected override BaseAI ForcedAI => _mahaonForcedAI ??= new MahaonNecroSummonerAI(this);
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

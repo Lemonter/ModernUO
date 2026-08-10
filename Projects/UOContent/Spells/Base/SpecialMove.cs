@@ -74,6 +74,11 @@ namespace Server.Spells
 
         public virtual int ScaleMana(Mobile m, int mana)
         {
+            if (m is Mobiles.BotMobile)
+            {
+                return (int)(mana * 0.1);
+            }
+
             var scalar = 1.0;
 
             if (!MindRotSpell.GetMindRotScalar(m, ref scalar))

@@ -46,6 +46,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a white wyrm corpse";
         public override string DefaultName => "a white wyrm";
+        public override bool IsDragonKind => true;
 
         public override bool ReacquireOnMovement => true;
         public override int TreasureMapLevel => 4;

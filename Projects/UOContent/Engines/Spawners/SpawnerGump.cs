@@ -19,8 +19,8 @@ public class SpawnerGump : Gump
 
         AddPage(0);
 
-        AddBackground(0, 0, 346, 400 + (_entry != null ? 44 : 0), 5054);
-        AddAlphaRegion(0, 0, 346, 400 + (_entry != null ? 44 : 0));
+        AddBackground(0, 0, 376, 400 + (_entry != null ? 44 : 0), 5054);
+        AddAlphaRegion(0, 0, 376, 400 + (_entry != null ? 44 : 0));
 
         AddHtml(240, 1, 250, 20, "<BASEFONT COLOR=#F4F4F4>#</BASEFONT>");
         AddHtml(271, 1, 250, 20, "<BASEFONT COLOR=#F4F4F4>Max</BASEFONT>");
@@ -64,6 +64,10 @@ public class SpawnerGump : Gump
             }
 
             AddButton(38, 22 * i + 21 + offset, 0xFA2, 0xFA4, GetButtonID(2, 1 + i * 2)); // Delete
+
+            // Mahaon: opens a searchable creature picker for this row instead of
+            // requiring the exact type name typed in by hand.
+            AddButton(347, 22 * i + 21 + offset, 0x15E1, 0x15E5, GetButtonID(3, i)); // Browse list
 
             AddImageTiled(71, 22 * i + 20 + offset, 161, 23, 0xA40); // creature text box
             AddImageTiled(72, 22 * i + 21 + offset, 159, 21, 0xBBC); // creature text box
@@ -421,6 +425,12 @@ public class SpawnerGump : Gump
 
                     CreateArray(info, state.Mobile, _spawner);
                     break;
+                }
+            case 3: // Mahaon: browse creature list for this row
+                {
+                    var entryIndex = index + _page * 13;
+                    state.Mobile.SendGump(new MahaonCreaturePickerGump(_spawner, entryIndex, _page));
+                    return;
                 }
         }
 

@@ -9,6 +9,26 @@ namespace Server.Engines.Harvest
     {
         private static Mining _system;
 
+        /// <summary>
+        ///     Vanilla mining ties ore type to a per-location "vein" that's rolled once and
+        ///     stays locked until it depletes — skill only gates whether you can
+        ///     successfully extract whatever type that vein already is, it doesn't shift
+        ///     the odds toward better ore at all. That's not how skill is supposed to
+        ///     matter here, so real Mining skill now re-rolls the type every single swing
+        ///     via the same weighted table our own mining pick and bots use.
+        /// </summary>
+        public override Type MutateType(
+            Type type, Mobile from, Item tool, HarvestDefinition def, Map map, Point3D loc, HarvestResource resource
+        )
+        {
+            if (def == OreAndStone)
+            {
+                return Systems.MahaonMining.MahaonResourceTiers.PickOre(from.Skills[SkillName.Mining].Value);
+            }
+
+            return base.MutateType(type, from, tool, def, map, loc, resource);
+        }
+
         private static readonly int[] _offsets =
         {
             -1, -1,

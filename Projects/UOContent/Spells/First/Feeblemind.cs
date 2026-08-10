@@ -29,9 +29,17 @@ namespace Server.Spells.First
 
                 SpellHelper.CheckReflect((int)Circle, Caster, ref m);
 
+                if (CheckResisted(m))
+                {
+                    m.FixedParticles(0x3779, 10, 15, 5052, EffectLayer.Waist);
+                    m.PlaySound(0x1F7); // resisted sound
+                    HarmfulSpell(m);
+                    return;
+                }
+
                 // TODO: StoneForm immunity
 
-                var length = SpellHelper.GetDuration(Caster, m);
+                var length = SpellHelper.GetHarmfulDuration(Caster, m);
                 SpellHelper.AddStatCurse(Caster, m, StatType.Int, length, false);
 
                 m.Spell?.OnCasterHurt();

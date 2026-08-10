@@ -49,6 +49,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a lich's corpse";
         public override string DefaultName => "a lich";
+        public override bool IsUndead => true;
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 
@@ -56,6 +57,12 @@ namespace Server.Mobiles
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;
         public override int TreasureMapLevel => 3;
+
+        // Base MageAI already handles some necromancy (PainSpikeSpell/StrangleSpell) for
+        // anything with Necromancy > 50, but never actually summons undead. This gives
+        // liches that on top, without touching the rest of their normal mage behavior.
+        private BaseAI _mahaonForcedAI;
+        protected override BaseAI ForcedAI => _mahaonForcedAI ??= new MahaonNecroSummonerAI(this);
 
         public override void GenerateLoot()
         {

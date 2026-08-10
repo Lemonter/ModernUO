@@ -43,6 +43,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a shadow wyrm corpse";
         public override string DefaultName => "a shadow wyrm";
+        public override bool IsDragonKind => true;
         public override bool ReacquireOnMovement => true;
         public override bool AutoDispel => true;
         public override Poison PoisonImmune => Poison.Deadly;

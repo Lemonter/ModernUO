@@ -258,7 +258,7 @@ namespace Server.Spells
         }
 
         public virtual bool ConsumeReagents() =>
-            Scroll != null || !Caster.Player ||
+            Scroll != null || !Caster.Player || Caster is Mobiles.BotMobile ||
             AosAttributes.GetValue(Caster, AosAttribute.LowerRegCost) > Utility.Random(100) ||
             DuelContext.IsFreeConsume(Caster) || Caster.Backpack?.ConsumeTotal(Info.Reagents, Info.Amounts) == -1;
 
@@ -320,6 +320,11 @@ namespace Server.Spells
             if (Evasion.CheckSpellEvasion(target)) // Only single target spells an be evaded
             {
                 scalar = 0;
+            }
+
+            if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic))
+            {
+                scalar *= 1.5; // bonus spell damage, straight off the real profession text
             }
 
             return scalar;
@@ -454,7 +459,7 @@ namespace Server.Spells
                 return;
             }
 
-            if (!string.IsNullOrEmpty(Info.Mantra) && Caster.Player)
+            if (!string.IsNullOrEmpty(Info.Mantra))
             {
                 Caster.PublicOverheadMessage(MessageType.Spell, Caster.SpeechHue, true, Info.Mantra, false);
             }
@@ -625,6 +630,12 @@ namespace Server.Spells
                 Caster.CheckSkill(DamageSkill, 0.0, Caster.Skills[DamageSkill].Cap);
             }
 
+            if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(Caster, Systems.MahaonCombat.FractureLocation.Hands)
+                && Utility.RandomDouble() < 0.5)
+            {
+                return false; // broken hand — extra independent chance to fizzle regardless of skill
+            }
+
             return Caster.CheckSkill(CastSkill, minSkill, maxSkill);
         }
 
@@ -632,6 +643,11 @@ namespace Server.Spells
 
         public virtual int ScaleMana(int mana)
         {
+            if (Caster is Mobiles.BotMobile)
+            {
+                return (int)(mana * 0.1);
+            }
+
             var scalar = 1.0;
 
             if (!MindRotSpell.GetMindRotScalar(Caster, ref scalar))
@@ -727,8 +743,14 @@ namespace Server.Spells
             }
 
             var fcDelay = TimeSpan.FromSeconds(-(CastDelayFastScalar * fc * CastDelaySecondsPerTick));
+            var baseDelay = Utility.Max(CastDelayBase + fcDelay, CastDelayMinimum);
 
-            return Utility.Max(CastDelayBase + fcDelay, CastDelayMinimum);
+            if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic))
+            {
+                baseDelay = TimeSpan.FromTicks(baseDelay.Ticks / 2); // faster casting, straight off the real profession text
+            }
+
+            return baseDelay;
         }
 
         public virtual int ComputeKarmaAward() => 0;
@@ -739,6 +761,11 @@ namespace Server.Spells
 
             if (Caster.Deleted || !Caster.Alive || Caster.Spell != this || State != SpellState.Sequencing)
             {
+                DoFizzle();
+            }
+            else if (Systems.MahaonCombat.HitLocationSystem.IsCastingBlocked(Caster))
+            {
+                Caster.LocalOverheadMessage(MessageType.Regular, 0x22, false, "Твои руки слишком повреждены, чтобы колдовать.");
                 DoFizzle();
             }
             else if (Scroll != null && Scroll is not Runebook &&

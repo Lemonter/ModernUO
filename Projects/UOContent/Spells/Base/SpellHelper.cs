@@ -378,7 +378,12 @@ namespace Server.Spells
         public static TimeSpan GetDuration(Mobile caster, Mobile target) =>
             // TODO: Is this accurate for Curse? Sources say it is magery. Should confirm at least for newest era.
             TimeSpan.FromSeconds(6 * (Core.AOS ? caster.Skills.EvalInt.Value : caster.Skills.Magery.Value) / 5.0);
-
+		
+		// Alias — Weaken/Clumsy/Feeblemind/Curse call this name specifically; everything
+        // else in this file still calls GetDuration directly, both point at the same math.
+        public static TimeSpan GetHarmfulDuration(Mobile caster, Mobile target) =>
+            GetDuration(caster, target);
+			
         public static double GetOffsetScalar(Mobile caster, Mobile target, bool curse)
         {
             var percent = curse
@@ -1036,6 +1041,11 @@ namespace Server.Spells
 
                 var damageGiven = AOS.Damage(target, from, dmg, phys, fire, cold, pois, nrgy, chaos);
                 Mysticism.SpellPlagueSpell.OnMobileDamaged(target);
+
+                if (spell != null && from != null && damageGiven > 0)
+                {
+                    Systems.MahaonCombat.CombatLogSystem.LogSpellHit(from, target, spell.Name, damageGiven);
+                }
 
                 StaminaSystem.DFA = DFAlgorithm.Standard;
 

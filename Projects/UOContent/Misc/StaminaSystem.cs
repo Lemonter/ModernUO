@@ -353,6 +353,13 @@ public static class StaminaSystem
             return;
         }
 
+        if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(from, Systems.MahaonCombat.FractureLocation.Legs))
+        {
+            from.SendMessage(0x22, "Сломанная нога не даёт бежать.");
+            e.Blocked = true;
+            return;
+        }
+
         if (AdditionalLossWhenBelow > 0 && from.Stam / Math.Max(from.StamMax, 1.0) < AdditionalLossWhenBelow)
         {
             --from.Stam;

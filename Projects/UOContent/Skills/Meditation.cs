@@ -43,7 +43,10 @@ namespace Server.SkillHandlers
                 return TimeSpan.FromSeconds(Core.AOS ? 10.0 : 5.0);
             }
 
-            if (Core.AOS && RegenRates.GetArmorOffset(m) > 0)
+            var isBattlemage = Server.Systems.MahaonProfessions.ProfessionSystem.GetProfession(m) ==
+                                Server.Systems.MahaonProfessions.MahaonProfession.BattleMage;
+
+            if (Core.AOS && RegenRates.GetArmorOffset(m) > 0 && !isBattlemage)
             {
                 m.SendLocalizedMessage(500135); // Regenerative forces cannot penetrate your armor!
 

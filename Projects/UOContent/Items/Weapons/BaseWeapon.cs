@@ -1512,6 +1512,8 @@ public abstract partial class BaseWeapon
             delayInSeconds = 15000.0 / v;
         }
 
+        delayInSeconds /= Systems.MahaonCombat.CombatStanceSystem.GetSwingSpeedScalar(m);
+
         return TimeSpan.FromSeconds(delayInSeconds);
     }
 
@@ -1607,6 +1609,13 @@ public abstract partial class BaseWeapon
         if (defender.Player || defender.Body.IsHuman)
         {
             blocked = CheckParry(defender);
+
+            // House rule: parrying an arrow/bolt takes an actual shield — a sword alone
+            // doesn't cut it against something already in flight.
+            if (blocked && this is BaseRanged && defender.FindItemOnLayer<BaseShield>(Layer.TwoHanded) == null)
+            {
+                blocked = false;
+            }
 
             if (blocked)
             {
@@ -1813,6 +1822,30 @@ public abstract partial class BaseWeapon
 
         percentageBonus += (int)(damageBonus * 100) - 100;
 
+        percentageBonus += (int)(Systems.MahaonCombat.CombatStanceSystem.GetDamageDealtScalar(attacker) * 100) - 100;
+
+        percentageBonus += Systems.MahaonCombat.HitLocationSystem.ConsumeHitBonus(attacker, defender);
+
+        percentageBonus += Systems.MahaonCombat.WeaponEnchantment.GetDamageBonus(this);
+
+        percentageBonus += Systems.MahaonCombat.MetalDamageSystem.GetBonus(this, defender);
+
+        if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(attacker, Systems.MahaonCombat.FractureLocation.Arms))
+        {
+            percentageBonus -= 30;
+        }
+
+        if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(attacker, Systems.MahaonProfessions.ProfessionCategory.Warrior))
+        {
+            percentageBonus += 100; // double damage, straight off the real profession text
+        }
+
+        if (this is BaseRanged &&
+            Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(attacker, Systems.MahaonProfessions.ProfessionCategory.Ranger))
+        {
+            percentageBonus += 30; // bonus archery damage, straight off the real profession text
+        }
+
         var cs = CheckSlayers(attacker, defender);
 
         if (cs != CheckSlayerResult.None)
@@ -1913,6 +1946,8 @@ public abstract partial class BaseWeapon
         }
 
         AddBlood(attacker, defender, damage);
+
+        Systems.MahaonCombat.WeaponEnchantment.TryLightningProc(this, attacker, defender);
 
         GetDamageTypes(
             attacker,
@@ -2036,6 +2071,9 @@ public abstract partial class BaseWeapon
 
         if (damageGiven > 0)
         {
+            var location = Systems.MahaonCombat.HitLocationSystem.GetLastConsumedLocation(attacker);
+            Systems.MahaonCombat.CombatLogSystem.LogMeleeHit(attacker, defender, damageGiven, LocationRuForLog(location));
+
             var propertyBonus = move?.GetPropertyBonus(attacker) ?? 1.0;
 
             // Leech abilities
@@ -2344,6 +2382,16 @@ public abstract partial class BaseWeapon
 
         return CheckSlayerResult.None;
     }
+
+    private static string LocationRuForLog(Systems.MahaonCombat.HitLocation? location) => location switch
+    {
+        Systems.MahaonCombat.HitLocation.Chest => "грудь",
+        Systems.MahaonCombat.HitLocation.Arms  => "руку",
+        Systems.MahaonCombat.HitLocation.Legs  => "ногу",
+        Systems.MahaonCombat.HitLocation.Hands => "кисть",
+        Systems.MahaonCombat.HitLocation.Neck  => "шею",
+        _                                       => null
+    };
 
     public virtual void AddBlood(Mobile attacker, Mobile defender, int damage)
     {

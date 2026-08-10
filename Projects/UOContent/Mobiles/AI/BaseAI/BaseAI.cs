@@ -228,6 +228,11 @@ public abstract partial class BaseAI
             return false;
         }
 
+        if (Mobile is BaseCreature bc)
+        {
+            Systems.MahaonCombat.MonsterSelfHealSystem.TryHeal(bc);
+        }
+
         if (CheckFlee())
         {
             return true;

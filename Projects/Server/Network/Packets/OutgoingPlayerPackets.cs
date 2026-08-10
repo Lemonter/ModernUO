@@ -262,7 +262,7 @@ public static class OutgoingPlayerPackets
         var writer = new SpanWriter(stackalloc byte[66]);
         writer.Write((byte)0x88); // Packet ID
         writer.Write(m);
-        writer.WriteLatin1(title, 60);
+        writer.WriteUtf8Fixed(title, 60);
         writer.Write(flags);
 
         ns.Send(writer.Span);

@@ -484,6 +484,15 @@ namespace Server.Mobiles
         public virtual double HitPoisonChance => 0.5;
         public virtual Poison PoisonImmune => null;
 
+        // Mahaon: silver weapons x3 vs undead, gold weapons x3 vs dragons — see
+        // BaseWeapon.OnHit for where these get checked. No built-in "is this thing
+        // undead/a dragon" flag existed in the engine, so this is opt-in per creature
+        // class rather than inferred from Body/OppositionGroup (which not everything
+        // undead actually sets). Defaults false; override true on the specific classes
+        // that should count.
+        public virtual bool IsUndead => false;
+        public virtual bool IsDragonKind => false;
+
         public virtual bool BardImmune => false;
         public virtual bool Unprovokable => BardImmune || IsDeadPet;
         public virtual bool Uncalmable => BardImmune || IsDeadPet;

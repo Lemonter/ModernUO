@@ -229,7 +229,53 @@ namespace Server.Mobiles
 
         public BlockMountType MountBlockReason => _mountBlock?.MountBlockReason ?? BlockMountType.None;
 
-        public override int MaxWeight => (Core.ML && Race == Race.Human ? 100 : 40) + (int)(3.5 * Str);
+        public override int MaxWeight
+        {
+            get
+            {
+                var baseMaxWeight = (Core.ML && Race == Race.Human ? 100 : 40) + (int)(3.5 * Str) +
+                                    Systems.MahaonBots.BotController.GetCarryWeightBonus(this) +
+                                    (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(this, Systems.MahaonProfessions.ProfessionCategory.Craft) ? 100 : 0);
+
+                return this is BotMobile ? baseMaxWeight * 10 : baseMaxWeight;
+            }
+        }
+
+        public override int GetResistance(ResistanceType type)
+        {
+            var baseValue = base.GetResistance(type);
+
+            var gemBonus = type switch
+            {
+                ResistanceType.Fire   => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.FireResist),
+                ResistanceType.Cold   => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.ColdResist),
+                ResistanceType.Poison => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.PoisonResist),
+                ResistanceType.Energy => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.EnergyResist),
+                _                     => 0
+            };
+
+            var leatherBonus = 0;
+            foreach (var item in Items)
+            {
+                if (item is not Items.BaseArmor armor)
+                {
+                    continue;
+                }
+
+                var name = armor.GetType().Name;
+
+                if (type == ResistanceType.Fire && name.Contains("Dragon"))
+                {
+                    leatherBonus += 4; // dragonhide runs hot
+                }
+                else if (type == ResistanceType.Poison && name.Contains("Spined"))
+                {
+                    leatherBonus += 4; // snake/reptile hide — natural venom resistance
+                }
+            }
+
+            return baseValue + gemBonus + leatherBonus;
+        }
 
         public override double ArmorRating
         {
@@ -566,16 +612,30 @@ namespace Server.Mobiles
                     strBase = RawStr;
                 }
 
-                return strBase / 2 + 50 + strOffs;
+                return strBase / 2 + 50 + strOffs + Systems.MahaonGuard.GuardSystem.GetHitsBonus(this);
             }
         }
 
         [CommandProperty(AccessLevel.GameMaster)]
-        public override int StamMax => base.StamMax + AosAttributes.GetValue(this, AosAttribute.BonusStam);
+        public override int StamMax => base.StamMax + AosAttributes.GetValue(this, AosAttribute.BonusStam) +
+                                        Systems.MahaonArtifacts.ArcherStaminaQuestSystem.GetStamBonus(this);
 
         [CommandProperty(AccessLevel.GameMaster)]
-        public override int ManaMax => base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
-                                       (Core.ML && Race == Race.Elf ? 20 : 0);
+        public override int ManaMax
+        {
+            get
+            {
+                var baseMana = base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
+                               (Core.ML && Race == Race.Elf ? 20 : 0);
+
+                if (this is BotMobile { Archetype: BotArchetype.Mage })
+                {
+                    baseMana *= 3;
+                }
+
+                return baseMana;
+            }
+        }
 
         [CommandProperty(AccessLevel.GameMaster)]
         public override int Str
@@ -1237,6 +1297,17 @@ namespace Server.Mobiles
         [OnEvent(nameof(PlayerLoginEvent))]
         public static void OnLogin(PlayerMobile from)
         {
+            Systems.MahaonSeasons.SeasonSystem.TellCurrentSeason(from);
+            Systems.MahaonWeather.WeatherSystem.SendTo(from.NetState);
+            Systems.MahaonWeather.WindManager.SendTo(from.NetState);
+            Systems.MahaonWorld.StaticOverrideManager.ResendActiveOverridesTo(from);
+
+            // Always with the player from here on — see MahaonCombatMenuGump's own class
+            // comment for why this is "collapses, never actually closes" rather than a
+            // normal dismissable gump. Starts collapsed so it isn't in the way the moment
+            // someone logs in.
+            from.SendGump(new MahaonCombatMenuGump(from, true));
+
             if (AccountHandler.LockdownLevel > AccessLevel.Player)
             {
                 string notice;
@@ -1685,6 +1756,9 @@ namespace Server.Mobiles
                 CheckStatTimers();
             }
 
+            Systems.MahaonSoulStones.SoulStoneSocketing.OnEquipChanged(this, item, true);
+            Systems.MahaonGems.GemSocketingSystem.OnEquipChanged(this, item, true);
+
             if (NetState != null)
             {
                 CheckLightLevels(false);
@@ -1699,6 +1773,9 @@ namespace Server.Mobiles
             {
                 CheckStatTimers();
             }
+
+            Systems.MahaonSoulStones.SoulStoneSocketing.OnEquipChanged(this, item, false);
+            Systems.MahaonGems.GemSocketingSystem.OnEquipChanged(this, item, false);
 
             if (NetState != null)
             {
@@ -2346,6 +2423,8 @@ namespace Server.Mobiles
 
         public override void OnDamage(int amount, Mobile from, bool willKill)
         {
+            Systems.MahaonQoL.AutoBandageSystem.TryAutoBandage(this);
+
             int disruptThreshold;
 
             if (!Core.AOS)
@@ -2479,6 +2558,12 @@ namespace Server.Mobiles
 
         public override void OnDeath(Container c)
         {
+            if (this is BotMobile deadBotForLoot)
+            {
+                Systems.MahaonBots.BotController.SnapshotGearToBank(deadBotForLoot);
+                Systems.MahaonBots.BotController.DismissPetOnDeath(deadBotForLoot);
+            }
+
             base.OnDeath(c);
 
             EquipSnapshot = null;
@@ -2590,6 +2675,18 @@ namespace Server.Mobiles
                 }
             }
 
+            Systems.MahaonCombat.MonsterLootingSystem.TryEquipFromCorpse(this, c);
+
+            if (LastKiller is BotMobile { IsPk: true } killerBot)
+            {
+                killerBot.Kills = 0;
+            }
+
+            if (this is BotMobile deadBot)
+            {
+                Systems.MahaonBots.BotController.ScheduleResurrection(deadBot);
+            }
+
             PlayerDeathEvent(this);
         }
 
@@ -2691,9 +2788,90 @@ namespace Server.Mobiles
             }
         }
 
+        public override bool OnEquip(Item item)
+        {
+            if (!base.OnEquip(item))
+            {
+                return false;
+            }
+
+            var profession = Systems.MahaonProfessions.ProfessionSystem.GetProfession(this);
+            if (profession == null)
+            {
+                return true;
+            }
+
+            var category = Systems.MahaonProfessions.ProfessionData.All[profession.Value].Category;
+
+            // Magic professions fight with staves and daggers only, per the real profession
+            // text ("разрешённое оружие — посохи, кинжалы").
+            if (category == Systems.MahaonProfessions.ProfessionCategory.Magic &&
+                item is BaseWeapon and not (BaseStaff or BaseKnife))
+            {
+                SendMessage(0x22, "Магам этого пути позволено только посохи да кинжалы.");
+                return false;
+            }
+
+            if (item is BaseArmor armorItem)
+            {
+                var armorName = armorItem.GetType().Name;
+                var isBone = armorName.Contains("Bone");
+                var isPlate = !isBone && (armorName.Contains("Plate") || armorName.Contains("Dragon"));
+                var isMetal = isPlate || armorName.Contains("Chain") || armorName.Contains("Ring");
+
+                // Plate (and equally heavy dragon) is Warrior/Craft only — nobody else
+                // could wear it at all, per the real profession text. Bone is open to
+                // everyone, no restriction.
+                if (isPlate && category is not (Systems.MahaonProfessions.ProfessionCategory.Warrior or
+                    Systems.MahaonProfessions.ProfessionCategory.Craft))
+                {
+                    SendMessage(0x22, "Такие тяжёлые латы не для твоего пути.");
+                    return false;
+                }
+
+                // Magic professions can't wear metal at all — "доспех в котором нет
+                // металла" — except the Battlemage, who's explicitly called out as the one
+                // exception that can wear ringmail.
+                if (category == Systems.MahaonProfessions.ProfessionCategory.Magic && isMetal)
+                {
+                    var isBattlemage = profession == Systems.MahaonProfessions.MahaonProfession.BattleMage;
+                    if (!isBattlemage || !armorName.Contains("Ring"))
+                    {
+                        SendMessage(0x22, "Металлическая броня рвёт твою связь с магией.");
+                        return false;
+                    }
+                }
+
+                // Thief/Bard/Ranger professions cap out at chain armor — no plate, bone, or
+                // dragon, per "разрешённая броня — до плетенок (chain)". (Plate/bone/dragon
+                // are already blocked above for everyone but Warrior/Craft, so this only
+                // needs to catch anything else heavier than chain, which there isn't — kept
+                // here for clarity that the chain-tier cap is intentional, not accidental.)
+            }
+
+            return true;
+        }
+
         public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false)
         {
+            // Thief bots get a flat 30% chance to dodge an incoming hit entirely — has to be
+            // the very first thing here, before any of the damage-modifier chain below
+            // (combat stance, ring of protection, evil omen, blood oath) even runs, so a
+            // dodge is a true "the hit never landed" with zero side effects, not just zero
+            // final damage. Real players with Thief skill aren't affected — this is
+            // specifically the bot flavor ability requested for them.
+            if (this is BotMobile &&
+                Systems.MahaonBots.BotController.IsProfessionCategory(this, Systems.MahaonProfessions.ProfessionCategory.Thief) &&
+                Utility.RandomDouble() < 0.3)
+            {
+                PublicOverheadMessage(MessageType.Emote, 0x480, false, "*уворачивается*");
+                return;
+            }
+
             var damageBonus = 1.0;
+
+            damageBonus *= Systems.MahaonCombat.CombatStanceSystem.GetDamageTakenScalar(this);
+            damageBonus *= global::Server.Items.MageRingOfProtection.GetDamageTakenScalar(this);
 
             if (EvilOmenSpell.EndEffect(this) && !ignoreEvilOmen)
             {
@@ -2718,7 +2896,23 @@ namespace Server.Mobiles
                 }
             }
 
-            base.Damage((int)(amount * damageBonus), from, informMount);
+            var scaledAmount = (int)(amount * damageBonus);
+
+            if (!Systems.MahaonCombat.MagicDamageFlag.Active && Hits > 0)
+            {
+                var profession = Systems.MahaonProfessions.ProfessionSystem.GetProfession(this);
+                var isWarrior = profession != null &&
+                                 Systems.MahaonProfessions.ProfessionData.All[profession.Value].Category ==
+                                 Systems.MahaonProfessions.ProfessionCategory.Warrior;
+
+                if (isWarrior && scaledAmount >= Hits * 0.5)
+                {
+                    scaledAmount = System.Math.Max(1, (int)(scaledAmount * 0.1));
+                    PublicOverheadMessage(MessageType.Emote, 0x59, false, "*стойкость*");
+                }
+            }
+
+            base.Damage(scaledAmount, from, informMount);
 
             // If the blood oath caster will die then damage is not reflected back to the attacker
             if (hasBloodOath && Alive && !Deleted && !IsDeadBondedPet)
@@ -3744,6 +3938,8 @@ namespace Server.Mobiles
                 poison = Poison.IncreaseLevel(poison);
             }
 
+            poison = Systems.MahaonPoison.PoisonToleranceSystem.GetEffectivePoison(this, poison);
+
             var result = base.ApplyPoison(from, poison);
 
             if (from != null && result == ApplyPoisonResult.Poisoned && PoisonTimer is PoisonImpl.PoisonTimer timer)
@@ -3756,6 +3952,31 @@ namespace Server.Mobiles
 
         public override bool CheckPoisonImmunity(Mobile from, Poison poison) =>
             Young && (DuelContext?.Started != true || DuelContext.Finished) || base.CheckPoisonImmunity(from, poison);
+
+        // Strong poison (Deadly/Lethal, level 3+) doesn't fully cure in one shot — a cure
+        // only knocks it down a level, matching the "multi-stage cure" the player recalled.
+        private const int StrongPoisonThreshold = 3;
+
+        public override bool CurePoison(Mobile from)
+        {
+            var currentPoison = Poison;
+
+            if (currentPoison == null || currentPoison.Level < StrongPoisonThreshold || !CheckCure(from))
+            {
+                return base.CurePoison(from);
+            }
+
+            var weaker = Server.Poison.GetPoisonByIndex(currentPoison.Index - 1);
+
+            if (weaker == null || weaker.Level < 0 || weaker.Family != currentPoison.Family)
+            {
+                return base.CurePoison(from);
+            }
+
+            Poison = weaker;
+            SendMessage(0x59, $"Яд ослабевает до уровня «{weaker.Name}» — потребуется ещё лечение.");
+            return false;
+        }
 
         public override void OnPoisonImmunity(Mobile from, Poison poison)
         {

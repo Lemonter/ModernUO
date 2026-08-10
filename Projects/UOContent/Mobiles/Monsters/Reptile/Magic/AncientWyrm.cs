@@ -43,6 +43,7 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a dragon corpse";
         public override string DefaultName => "an ancient wyrm";
+        public override bool IsDragonKind => true;
 
         public override bool ReacquireOnMovement => true;
         public override bool AutoDispel => true;

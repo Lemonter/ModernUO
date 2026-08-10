@@ -28,7 +28,7 @@ namespace Server.Spells.Fourth
 
         public static bool DoCurse(Mobile caster, Mobile m)
         {
-            var duration = SpellHelper.GetDuration(caster, m);
+            var duration = SpellHelper.GetHarmfulDuration(caster, m);
 
             if (duration == TimeSpan.Zero)
             {
@@ -93,6 +93,14 @@ namespace Server.Spells.Fourth
                 SpellHelper.Turn(Caster, m);
 
                 SpellHelper.CheckReflect((int)Circle, Caster, ref m);
+
+                if (CheckResisted(m))
+                {
+                    m.FixedParticles(0x3779, 10, 15, 5052, EffectLayer.Waist);
+                    m.PlaySound(0x1F7); // resisted sound
+                    HarmfulSpell(m);
+                    return;
+                }
 
                 if (DoCurse(Caster, m))
                 {

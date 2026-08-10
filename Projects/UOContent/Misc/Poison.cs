@@ -136,6 +136,11 @@ public class PoisonImpl : Poison
 
             (_mobile as IHonorTarget)?.ReceivedHonorContext?.OnTargetPoisoned();
 
+            if (From != null)
+            {
+                damage += Server.Systems.MahaonGems.GemSocketingSystem.GetPoisonDamageBonus(From);
+            }
+
             AOS.Damage(_mobile, From, damage, 0, 0, 0, 100, 0);
 
             // Parasitic: heals attacker for damage dealt when within 1 tile

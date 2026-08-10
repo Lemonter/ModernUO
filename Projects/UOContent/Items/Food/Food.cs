@@ -69,6 +69,11 @@ public abstract partial class Food : Item
 
             if (Poison != null)
             {
+                if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(from, Systems.MahaonProfessions.ProfessionCategory.Bard))
+                {
+                    from.SendMessage(0x22, "Ты чувствуешь, что эта еда была отравлена!");
+                }
+
                 from.ApplyPoison(Poisoner, Poison);
             }
 

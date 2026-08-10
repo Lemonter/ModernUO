@@ -47,6 +47,10 @@ namespace Server.Mobiles
 
         public override string CorpseName => "a skeletal corpse";
         public override string DefaultName => "a skeletal mage";
+        public override bool IsUndead => true;
+
+        private BaseAI _mahaonForcedAI;
+        protected override BaseAI ForcedAI => _mahaonForcedAI ??= new MahaonNecroSummonerAI(this);
 
         public override bool BleedImmune => true;
 
