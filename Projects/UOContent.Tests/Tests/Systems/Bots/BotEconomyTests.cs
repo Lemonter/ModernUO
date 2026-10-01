@@ -26,11 +26,11 @@ public class BotEconomyTests
 
         try
         {
-            Assert.True(BotGoods.IsForSale(common));
+            Assert.True(BotGoods.IsRawGood(common));
             // An ore smelts into two ingots: worth more than one, less than the two it yields.
             Assert.True(BotGoods.BaseUnitPrice(ore) > BotGoods.BaseUnitPrice(common));
             Assert.True(BotGoods.BaseUnitPrice(ore) < 2 * BotGoods.BaseUnitPrice(common));
-            Assert.False(BotGoods.IsForSale(new Gold(1)));
+            Assert.False(BotGoods.IsRawGood(new Gold(1)));
         }
         finally
         {

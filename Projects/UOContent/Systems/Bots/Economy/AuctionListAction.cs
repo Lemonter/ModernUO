@@ -22,7 +22,7 @@ public sealed class AuctionListAction : BotAction
         var goods = new List<Item>();
         foreach (var item in pack.Items)
         {
-            if (BotGoods.IsForSale(item))
+            if (BotGoods.IsForSale(brain.Bot, item))
             {
                 goods.Add(item);
             }

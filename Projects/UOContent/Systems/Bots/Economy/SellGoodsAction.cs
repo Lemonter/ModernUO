@@ -72,7 +72,7 @@ public sealed class SellGoodsAction : BotAction
     {
         foreach (var item in bot.Backpack.Items)
         {
-            if (BotGoods.IsForSale(item) && WorldCatalog.FindBuyerFor(_city, item) is { } vendor)
+            if (BotGoods.IsForSale(bot, item) && WorldCatalog.FindBuyerFor(_city, item) is { } vendor)
             {
                 return vendor;
             }

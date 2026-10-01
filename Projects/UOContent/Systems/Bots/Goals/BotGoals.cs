@@ -16,6 +16,11 @@ public static class BotGoals
     public static readonly GatherGoal Fish = new(ResourceKind.Fish);
     public static readonly TradeGoal Trade = new();
     public static readonly SupplyGoal Supply = new();
+    public static readonly LearnGoal Learn = new();
+    public static readonly CraftGoal Smithing = new(0);
+    public static readonly CraftGoal Tinkering = new(1);
+    public static readonly CraftGoal Carpentry = new(2);
+    public static readonly CraftGoal Bowcraft = new(3);
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft];
 }

@@ -8,10 +8,21 @@ namespace Server.Systems.Bots;
 /// and follow the town's auction: a bot undercuts the going rate a little, the way sellers do.</summary>
 public static class BotGoods
 {
-    public static bool IsForSale(Item item) => item is MahaonIngot or MahaonOre or Log or Board or Fish or MahaonCoal;
+    public static bool IsRawGood(Item item) => item is MahaonIngot or MahaonOre or Log or Board or Fish or MahaonCoal;
+
+    /// <summary>Something this bot made and doesn't wear or work with.</summary>
+    public static bool IsProduct(Mobile bot, Item item) =>
+        item.PlayerConstructed && item.Parent == bot.Backpack && item is not BaseTool && item is not Container &&
+        BotCrafting.ProductValue(item) > 0;
+
+    /// <summary>What a bot puts on the market: raw goods it doesn't need for its own craft, and
+    /// what it crafted.</summary>
+    public static bool IsForSale(Mobile bot, Item item) =>
+        IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item);
 
     public static int BaseUnitPrice(Item item) => item switch
     {
+        _ when item.PlayerConstructed && BotCrafting.ProductValue(item) > 0 => BotCrafting.ProductValue(item),
         MahaonIngot ingot => TierPrice(ingot.Metal),
         MahaonOre ore     => TierPrice(ore.Metal) * 3 / 2,
         Board             => 6,
@@ -41,7 +52,7 @@ public static class BotGoods
         long value = 0;
         foreach (var item in pack.Items)
         {
-            if (IsForSale(item))
+            if (IsForSale(bot, item))
             {
                 value += (long)BaseUnitPrice(item) * item.Amount;
             }

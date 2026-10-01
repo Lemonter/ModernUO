@@ -32,7 +32,7 @@ public sealed class SellToVendorAction : BotAction
 
         foreach (var item in pack.Items)
         {
-            if (!BotGoods.IsForSale(item))
+            if (!BotGoods.IsForSale(brain.Bot, item))
             {
                 continue;
             }

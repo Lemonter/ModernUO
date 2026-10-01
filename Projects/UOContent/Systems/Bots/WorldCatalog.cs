@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Server.Engines.Craft;
+using Server.Engines.Pathing.Nav;
 using Server.Mobiles;
 using Server.Regions;
 using Server.Targeting;
@@ -27,6 +28,9 @@ public sealed class BotCity
     internal bool ForgeSearched;
     internal Point3D ForgeLocation;
     internal object Forge; // a forge Item or a StaticTarget, as a smelt target takes it
+
+    internal bool SmithySearched;
+    internal Point3D? SmithyStand;
 
     internal long VendorsRefreshedAt;
     internal bool VendorsSearched;
@@ -205,6 +209,92 @@ public static class WorldCatalog
                 }
             }
         }
+    }
+
+    private static bool IsAnvilId(int id) => id is 4015 or 4016 or 11733 or 11734;
+
+    /// <summary>
+    /// A standable cell within reach of both the town forge and an anvil — where a smith works
+    /// (the craft checks both within 2 tiles). Found once per town.
+    /// </summary>
+    public static bool TryGetSmithy(BotCity city, out Point3D stand)
+    {
+        if (!city.SmithySearched)
+        {
+            city.SmithySearched = true;
+            city.SmithyStand = FindSmithy(city);
+        }
+
+        stand = city.SmithyStand ?? Point3D.Zero;
+        return city.SmithyStand != null;
+    }
+
+    private static Point3D? FindSmithy(BotCity city)
+    {
+        if (!TryGetForge(city, out _, out var forge))
+        {
+            return null;
+        }
+
+        var map = city.Map;
+        Point3D? anvil = null;
+
+        foreach (var item in map.GetItemsInRange(forge, 4))
+        {
+            if (item.Parent == null && (item.GetType().IsDefined(typeof(AnvilAttribute), false) || IsAnvilId(item.ItemID)))
+            {
+                anvil = item.Location;
+                break;
+            }
+        }
+
+        for (var dy = -4; anvil == null && dy <= 4; dy++)
+        {
+            for (var dx = -4; anvil == null && dx <= 4; dx++)
+            {
+                foreach (var tile in map.Tiles.GetStaticTiles(forge.X + dx, forge.Y + dy))
+                {
+                    if (IsAnvilId(tile.ID))
+                    {
+                        anvil = new Point3D(forge.X + dx, forge.Y + dy, tile.Z);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (anvil == null)
+        {
+            return null;
+        }
+
+        var graph = NavSystem.GetGraph(map);
+        if (graph == null)
+        {
+            return null;
+        }
+
+        var a = anvil.Value;
+        for (var dy = -2; dy <= 2; dy++)
+        {
+            for (var dx = -2; dx <= 2; dx++)
+            {
+                var x = forge.X + dx;
+                var y = forge.Y + dy;
+                if (!Utility.InRange(new Point3D(x, y, 0), new Point3D(a.X, a.Y, 0), 2))
+                {
+                    continue;
+                }
+
+                var region = graph.Locate(x, y, forge.Z, 0);
+                if (region >= 0)
+                {
+                    return new Point3D(x, y, forge.Z);
+                }
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The town's vendors, refreshed every few minutes as they die and respawn.</summary>

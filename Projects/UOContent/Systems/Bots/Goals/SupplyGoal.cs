@@ -11,6 +11,7 @@ public sealed class SupplyGoal : BotGoal
 {
     public override string Name => "Закупка";
 
+
     private static (ResourceKind kind, Type tool) MainTrade(BotBrain brain)
     {
         var skills = brain.Bot.Skills;
@@ -26,11 +27,28 @@ public sealed class SupplyGoal : BotGoal
         return lumber >= fishing ? (ResourceKind.Wood, typeof(Hatchet)) : (ResourceKind.Fish, typeof(FishingPole));
     }
 
-    public override double Score(BotBrain brain)
+    /// <summary>The tool to buy, or null when nothing the bot works with is missing: the gathering
+    /// tool of its main trade first, then the tool of any craft it practises.</summary>
+    private static Type NeededTool(BotBrain brain)
     {
-        var (kind, _) = MainTrade(brain);
-        return GatherAction.FindTool(brain.Bot, kind) == null ? 0.9 : 0;
+        var (kind, gatherTool) = MainTrade(brain);
+        if (GatherAction.FindTool(brain.Bot, kind) == null)
+        {
+            return gatherTool;
+        }
+
+        foreach (var system in BotCrafting.Systems)
+        {
+            if (system != null && BotCrafting.IsCrafter(brain.Bot, system) && BotCrafting.FindTool(brain.Bot, system) == null)
+            {
+                return BotCrafting.ToolTypeFor(system);
+            }
+        }
+
+        return null;
     }
+
+    public override double Score(BotBrain brain) => NeededTool(brain) != null ? 0.9 : 0;
 
     public override List<BotAction> Plan(BotBrain brain)
     {
@@ -41,7 +59,11 @@ public sealed class SupplyGoal : BotGoal
             return null;
         }
 
-        var (_, toolType) = MainTrade(brain);
+        var toolType = NeededTool(brain);
+        if (toolType == null)
+        {
+            return null;
+        }
 
         BaseVendor seller = null;
         GenericBuyInfo stock = null;
