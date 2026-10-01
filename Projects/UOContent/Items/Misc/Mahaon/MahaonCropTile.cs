@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Systems.MahaonSeasons;
@@ -27,10 +28,32 @@ public partial class MahaonCropTile : Item
     [SerializableField(1)]
     private bool _harvested;
 
-    private const int GmMarkerHue = 53; // "yellow" per the request — tweak freely, purely cosmetic
+    // Раньше грядки красились в жёлтый, чтобы ГМ видел их среди травы. Теперь грядками
+    // стали и все поля Британии — пять с половиной тысяч штук, — и подкрашивать их значило
+    // бы перекрасить полмира. Ищутся они и так: зимой и после сбора они невидимы для
+    // игроков, но не для ГМ (AccessLevel обходит Item.Visible).
     private const int HarvestAmount = 6;
 
+    /// <summary>Во сколько раз семян меньше, чем урожая.</summary>
+    private const int SeedsPerHarvestDivisor = 3;
+
     private static readonly List<MahaonCropTile> AllTiles = new();
+
+    /// <summary>Все грядки мира — для севооборота, который работает полями, а не тайлами.</summary>
+    public static IReadOnlyList<MahaonCropTile> All => AllTiles;
+
+    /// <summary>
+    ///     Меняет культуру и сразу перерисовывает грядку.
+    ///
+    ///     Отдельным методом, а не просто сеттером: культура определяет и графику, и
+    ///     название, так что смена без перерисовки оставила бы на поле пшеницу, которая
+    ///     называется морковью.
+    /// </summary>
+    public void SetCrop(MahaonCropType crop)
+    {
+        CropType = crop;
+        RefreshAppearance();
+    }
 
     private MahaonCropDefinition Definition => MahaonCropTable.Data[(int)_cropType];
 
@@ -39,7 +62,6 @@ public partial class MahaonCropTile : Item
         : base(MahaonCropTable.Data[(int)cropType].GraphicFor(SeasonSystem.CurrentSeason))
     {
         Movable = false;
-        Hue = GmMarkerHue;
         _cropType = cropType;
 
         AllTiles.Add(this);
@@ -83,9 +105,38 @@ public partial class MahaonCropTile : Item
         }
     }
 
+    /// <summary>
+    ///     Семена той же культуры вместе с урожаем.
+    ///
+    ///     Без этого земледелие упиралось в лавку: посеять можно было только то, что продал
+    ///     фермер, а собранное шло в еду и только. Теперь снятый лён даёт и лён, и семена
+    ///     льна — поле воспроизводит само себя, и фермер нужен для начала, а не навсегда.
+    ///
+    ///     Семян меньше, чем урожая: поле должно расширяться, но не взрывообразно, иначе
+    ///     первый же собранный участок покроет посевами всё вокруг.
+    /// </summary>
+    private void GiveSeeds(Mobile from, int harvested)
+    {
+        var count = Math.Max(1, harvested / SeedsPerHarvestDivisor);
+        var seeds = new MahaonCropSeed(_cropType) { Amount = count };
+
+        if (from.Backpack?.TryDropItem(from, seeds, false) != true)
+        {
+            seeds.MoveToWorld(from.Location, from.Map);
+        }
+
+        from.SendMessage(0x59, $"Собраны и семена: {Definition.NameRu} ({count}).");
+    }
+
     private void RefreshAppearance()
     {
-        Name = $"грядка: {Definition.NameRu}";
+        Name = SeasonSystem.CurrentSeason switch
+        {
+            MahaonSeason.Spring => $"грядка: {Definition.NameRu} (росток)",
+            MahaonSeason.Summer => $"грядка: {Definition.NameRu} (почти созрел)",
+            MahaonSeason.Autumn => $"грядка: {Definition.NameRu} (можно собирать)",
+            _                   => $"грядка: {Definition.NameRu}"
+        };
 
         if (_harvested || SeasonSystem.CurrentSeason == MahaonSeason.Winter)
         {
@@ -119,17 +170,42 @@ public partial class MahaonCropTile : Item
 
         if (SeasonSystem.CurrentSeason != MahaonSeason.Autumn)
         {
-            from.SendMessage(0x59, $"{Definition.NameRu} ещё не созрел.");
+            // Стадий теперь три, и грядка это показывает графикой — пусть и на словах
+            // говорит, на какой именно она стоит, а не отделывается общим «не созрел».
+            from.SendMessage(
+                0x59,
+                SeasonSystem.CurrentSeason == MahaonSeason.Spring
+                    ? $"{Definition.NameRu} только проклюнулся."
+                    : $"{Definition.NameRu} почти созрел — дождись осени."
+            );
+
             return;
         }
 
-        var harvest = Definition.CreateHarvest();
-        harvest.Amount = HarvestAmount;
+        var amount = HarvestAmount;
 
-        if (from.Backpack?.TryDropItem(from, harvest, false) != true)
+        // Вспаханная земля под грядкой удваивает урожай — и на этом заканчивается: пашня
+        // уходит вместе со снятым урожаем, так что перед следующим посевом землю надо
+        // готовить заново. Иначе один раз вспаханное поле кормило бы вдвойне вечно.
+        var tilled = MahaonTilledEarth.Find(GetWorldLocation(), Map);
+
+        if (tilled != null)
+        {
+            amount *= MahaonTilledEarth.YieldMultiplier;
+            tilled.Delete();
+            from.SendMessage(0x59, "Земля была вспахана — урожай вышел вдвое щедрее.");
+        }
+
+        var harvest = Definition.CreateHarvest();
+        harvest.Amount = Systems.MahaonWorld.MahaonHouseFenceSystem.ApplyYieldBonus(amount, GetWorldLocation(), Map);
+
+        if (!Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(from, harvest, MahaonResourceCategory.Crop)
+            && from.Backpack?.TryDropItem(from, harvest, false) != true)
         {
             harvest.MoveToWorld(from.Location, from.Map);
         }
+
+        GiveSeeds(from, amount);
 
         from.SendMessage(0x59, $"Собрано: {Definition.NameRu}.");
 

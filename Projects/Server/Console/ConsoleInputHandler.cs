@@ -81,10 +81,18 @@ public static class ConsoleInputHandler
     [CallPriority(0)]
     public static void Initialize()
     {
+        // A redirected stdin (a pipe from a supervisor process, e.g. an external control
+        // panel) still delivers lines — it just cannot answer interactive prompts. Those
+        // stay disabled through Core.Headless in ReadLine(); the command pump runs either
+        // way, so piped commands such as "save" and "shutdown" still reach the server and
+        // a supervised process can shut down gracefully instead of being force-killed.
+        // On a stdin that is closed or never written to, the pump reads EOF and its thread
+        // simply ends.
         if (Core.Headless)
         {
-            logger.Information("Console input disabled (headless: stdin is not a TTY).");
-            return;
+            logger.Information(
+                "Console input redirected (stdin is not a TTY); interactive prompts are disabled, piped commands are still accepted."
+            );
         }
 
         _pump = new ConsoleInputPump(Console.In, GetInputCommand, logger);

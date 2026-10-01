@@ -67,8 +67,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a skeletal corpse";
-        public override string DefaultName => "a skeleton";
+        public override string CorpseName => "труп скелета";
+        public override string DefaultName => "скелет";
         public override bool IsUndead => true;
 
         public override bool BleedImmune => true;

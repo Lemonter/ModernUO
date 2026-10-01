@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Server.Items;
+using Server.Systems.MahaonCombat;
 
 namespace Server.Systems.MahaonMining;
 
@@ -80,6 +81,12 @@ public static class MahaonLumberjackingSwings
                 }
             }
 
+            // Was missing entirely — GatheringSpecializationSystem.OnWoodChopped was only
+            // wired into vanilla Lumberjacking.cs's harvest completion, which this swing
+            // system replaces (see class doc comment), so the Lumberjacking specialization
+            // could never actually grow from real chopping.
+            GatheringSpecializationSystem.OnWoodChopped(from, (Log)log);
+
             if (from.Backpack?.TryDropItem(from, log, false) != true)
             {
                 log.MoveToWorld(from.Location, map);
@@ -115,4 +122,20 @@ public static class MahaonLumberjackingSwings
 
     private static bool CanContinue(Mobile from, Point3D loc) =>
         !from.Deleted && from.Alive && from.InRange(loc, 3);
+
+    /// <summary>
+    ///     Срублено ли это дерево под корень и не успело ли ещё отрасти.
+    ///
+    ///     Нужно тем, кто выбирает дерево сам, а не по клику игрока — ботам. Срубленный
+    ///     ствол остаётся в статике КАРТЫ как был (подменяется только картинка, через
+    ///     StaticOverrideManager), поэтому поиск по тайлам находит пень наравне с живой
+    ///     сосной, и бот, выбирающий ближайшее, упирался бы ровно в то дерево, которое
+    ///     только что сам и извёл.
+    ///
+    ///     Точка — та же, что уходит в StartTreeSwings: с поправкой Z, которую StaticTarget
+    ///     добавляет в своём конструкторе. Считать эту поправку на стороне вызывающего
+    ///     нельзя — разойдётся с ключом здесь и проверка станет бесполезной.
+    /// </summary>
+    public static bool IsDepleted(Map map, Point3D loc) =>
+        DepletedUntil.TryGetValue((map, loc.X, loc.Y, loc.Z), out var until) && Core.Now < until;
 }

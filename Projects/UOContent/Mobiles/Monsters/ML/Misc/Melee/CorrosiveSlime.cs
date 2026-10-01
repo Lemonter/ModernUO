@@ -44,8 +44,8 @@ namespace Server.Mobiles
 
         // TODO: Damage weapon via acid
 
-        public override string CorpseName => "a slimey corpse";
-        public override string DefaultName => "a corrosive slime";
+        public override string CorpseName => "склизкий труп";
+        public override string DefaultName => "едкая слизь";
 
         public override Poison PoisonImmune => Poison.Regular;
         public override Poison HitPoison => Poison.Regular;

@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 50;
         }
 
-        public override string CorpseName => "an elder gazer corpse";
-        public override string DefaultName => "an elder gazer";
+        public override string CorpseName => "труп старшего газера";
+        public override string DefaultName => "старший газер";
 
         public override int TreasureMapLevel => Core.AOS ? 4 : 0;
 

@@ -41,8 +41,8 @@ namespace Server.Mobiles
             PackReg(10);
         }
 
-        public override string CorpseName => "a ghostly corpse";
-        public override string DefaultName => "a spectre";
+        public override string CorpseName => "призрачный труп";
+        public override string DefaultName => "спектр";
 
         public override bool BleedImmune => true;
 

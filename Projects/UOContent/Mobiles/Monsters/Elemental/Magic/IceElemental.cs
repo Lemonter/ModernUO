@@ -43,8 +43,8 @@ namespace Server.Mobiles
             PackItem(new BlackPearl());
             PackReg(3);
         }
-        public override string CorpseName => "an ice elemental corpse";
-        public override string DefaultName => "an ice elemental";
+        public override string CorpseName => "труп ледяного элементаля";
+        public override string DefaultName => "ледяной элементаль";
         public override bool BleedImmune => true;
 
         public override void GenerateLoot()

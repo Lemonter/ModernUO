@@ -849,7 +849,7 @@ namespace Server.Mobiles
 
             if (!ContentFeatureFlags.VendorPurchase)
             {
-                from.SendMessage(0x22, "Vendor purchases are temporarily disabled.");
+                from.SendMessage(0x22, "Покупка у торговцев временно отключена.");
                 return;
             }
 
@@ -1021,7 +1021,7 @@ namespace Server.Mobiles
 
             if (!ContentFeatureFlags.VendorSell)
             {
-                from.SendMessage(0x22, "Vendor sales are temporarily disabled.");
+                from.SendMessage(0x22, "Продажа торговцам временно отключена.");
                 return;
             }
 
@@ -1071,7 +1071,7 @@ namespace Server.Mobiles
             }
             else
             {
-                Say(true, "You have nothing I would be interested in.");
+                Say(true, "У тебя нет ничего, что меня заинтересует.");
             }
         }
 

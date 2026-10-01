@@ -39,8 +39,8 @@ public partial class YoungNinja : BaseCreature
         SetSkill(SkillName.Tactics, 50.0);
     }
 
-    public override string CorpseName => "a young ninja's corpse";
-    public override string DefaultName => "a young ninja";
+    public override string CorpseName => "труп юного ниндзя";
+    public override string DefaultName => "юный ниндзя";
 
     public override bool AlwaysMurderer => true;
 }

@@ -453,6 +453,19 @@ public partial class TreasureMap : MapItem
 
         from.PlaySound(0x249);
         base.DisplayTo(from);
+
+        if (from is Mobiles.PlayerMobile player && !_completed && (_decoder == from || HasRequiredSkill(from)))
+        {
+            if (Systems.MahaonQuests.MahaonTreasureCompassSystem.IsTracking(player))
+            {
+                Systems.MahaonQuests.MahaonTreasureCompassSystem.Stop(player);
+                from.SendMessage(0x59, "Компас выключен.");
+            }
+            else
+            {
+                Systems.MahaonQuests.MahaonTreasureCompassSystem.Start(player, this);
+            }
+        }
     }
 
     public override void GetContextMenuEntries(Mobile from, ref PooledRefList<ContextMenuEntry> list)
@@ -792,6 +805,7 @@ public partial class TreasureMap : MapItem
                 m_Chest.Temporary = false;
                 m_TreasureMap.Completed = true;
                 m_TreasureMap.CompletedBy = m_From;
+                Systems.MahaonQuests.MahaonTreasureCompassSystem.StopIfTracking(m_TreasureMap);
 
                 var spawns = m_TreasureMap.Level switch
                 {

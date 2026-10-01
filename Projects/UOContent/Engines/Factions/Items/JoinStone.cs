@@ -31,7 +31,7 @@ public class JoinStone : BaseSystemController
         }
     }
 
-    public override string DefaultName => "faction signup stone";
+    public override string DefaultName => "камень записи во фракцию";
 
     public override void OnDoubleClick(Mobile from)
     {

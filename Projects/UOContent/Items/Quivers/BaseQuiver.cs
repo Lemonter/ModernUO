@@ -219,6 +219,9 @@ public partial class BaseQuiver : Container, ICraftable, IAosItem
     {
         base.GetProperties(list);
 
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
+
         if (_crafter != null)
         {
             list.Add(1050043, _crafter); // crafted by ~1_NAME~

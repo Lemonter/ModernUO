@@ -43,8 +43,8 @@ public partial class Raptor : BaseCreature
         // Also unported vs ServUO: the 25% AncientPotteryFragments corpse drop (item class not yet in ModernUO).
     }
 
-    public override string CorpseName => "a raptor corpse";
-    public override string DefaultName => "a raptor";
+    public override string CorpseName => "труп раптора";
+    public override string DefaultName => "раптор";
 
     public override int TreasureMapLevel => 3;
     public override int Meat => 7;

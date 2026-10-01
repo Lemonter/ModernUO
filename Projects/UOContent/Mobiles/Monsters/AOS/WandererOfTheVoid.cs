@@ -50,8 +50,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a wanderer of the void corpse";
-        public override string DefaultName => "a wanderer of the void";
+        public override string CorpseName => "труп скитальца пустоты";
+        public override string DefaultName => "скиталец пустоты";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

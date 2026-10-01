@@ -12,5 +12,5 @@ public partial class MinotaurHedge : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "minotaur hedge";
+    public override string DefaultName => "изгородь минотавра";
 }

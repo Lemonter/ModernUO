@@ -295,7 +295,7 @@ public partial class Darius : DoneQuestCollector
     public override TextDefinition[] Complete => m_Complete;
     public override Type[] Needed => m_Needed;
 
-    public override string DefaultName => "Darius";
+    public override string DefaultName => "Дарий";
 
     public override bool CanTalkTo(Mobile from) => from.Race == Race.Human;
 
@@ -371,7 +371,7 @@ public partial class Nedrick : DoneQuestCollector
     public override TextDefinition[] Complete => m_Complete;
     public override Type[] Needed => m_Needed;
 
-    public override string DefaultName => "Nedrick";
+    public override string DefaultName => "Недрик";
 
     public override bool CanTalkTo(Mobile from) => from.Race == Race.Elf;
 

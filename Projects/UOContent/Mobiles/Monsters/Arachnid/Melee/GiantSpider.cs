@@ -43,8 +43,8 @@ namespace Server.Mobiles
             PackItem(new SpidersSilk(5));
         }
 
-        public override string CorpseName => "a giant spider corpse";
-        public override string DefaultName => "a giant spider";
+        public override string CorpseName => "труп гигантского паука";
+        public override string DefaultName => "гигантский паук";
 
         public override FoodType FavoriteFood => FoodType.Meat;
         public override PackInstinct PackInstinct => PackInstinct.Arachnid;

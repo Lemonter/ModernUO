@@ -45,8 +45,8 @@ namespace Server.Mobiles
             MinTameSkill = 83.1;
         }
 
-        public override string CorpseName => "an imp corpse";
-        public override string DefaultName => "an imp";
+        public override string CorpseName => "труп импа";
+        public override string DefaultName => "имп";
 
         public override int Meat => 1;
         public override int Hides => 6;

@@ -12,7 +12,7 @@ public partial class AlchemyStone : Item
         Hue = 0x250;
     }
 
-    public override string DefaultName => "an Alchemist Supply Stone";
+    public override string DefaultName => "камень припасов алхимика";
 
     public override void OnDoubleClick(Mobile from)
     {

@@ -41,8 +41,8 @@ namespace Server.Mobiles
             PackItem(new Club());
         }
 
-        public override string CorpseName => "a frozen ogre lord's corpse";
-        public override string DefaultName => "an arctic ogre lord";
+        public override string CorpseName => "труп замёрзшего лорда-огра";
+        public override string DefaultName => "арктический лорд-огр";
 
         public override Poison PoisonImmune => Poison.Regular;
         public override int TreasureMapLevel => 3;

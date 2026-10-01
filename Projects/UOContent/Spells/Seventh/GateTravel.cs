@@ -181,7 +181,7 @@ public partial class GateTravelMoongate : Moongate
     {
         if (LinkedGate?.Deleted != false)
         {
-            m.SendMessage("The other gate no longer exists.");
+            m.SendMessage("Второго портала больше нет.");
             return;
         }
 

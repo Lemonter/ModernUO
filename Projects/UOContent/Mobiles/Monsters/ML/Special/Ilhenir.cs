@@ -61,7 +61,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a corpse of Ilhenir";
+        public override string CorpseName => "труп Ильхенира";
         public override ChampionSkullType SkullType => ChampionSkullType.Pain;
 
         public override Type[] UniqueList => Array.Empty<Type>();
@@ -82,7 +82,7 @@ namespace Server.Mobiles
             MonsterStatuetteType.RedDeath
         };
 
-        public override string DefaultName => "Ilhenir";
+        public override string DefaultName => "Ильхенир";
 
         public override bool Unprovokable => true;
         public override bool Uncalmable => true;

@@ -12,7 +12,7 @@ public sealed partial class StormsEye : PowerFactionItem
 {
     public StormsEye() : base(3967) => Hue = 1165;
 
-    public override string DefaultName => "storms eye";
+    public override string DefaultName => "око бури";
 
     public override bool Use(Mobile user)
     {

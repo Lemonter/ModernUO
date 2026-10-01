@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ModernUO.CodeGeneratedEvents;
@@ -37,7 +37,8 @@ namespace Server.Mobiles
         Strongest, // Attack the strongest
         Weakest,   // Attack the weakest
         Closest,   // Attack the closest
-        Evil       // Only attack aggressor -or- negative karma
+        Evil,      // Only attack aggressor -or- negative karma
+        Good       // Only attack aggressor -or- positive karma
     }
 
     public enum OrderType
@@ -116,6 +117,15 @@ namespace Server.Mobiles
         Spined,
         Horned,
         Barbed
+    }
+
+    public enum FurType
+    {
+        None,
+        Green,
+        LightBrown,
+        Yellow,
+        Brown
     }
 
     public class DamageStore : IComparable<DamageStore>
@@ -204,11 +214,11 @@ namespace Server.Mobiles
             /* Cooked */
             typeof(Bacon), typeof(CookedBird), typeof(Sausage),
             typeof(Ham), typeof(Ribs), typeof(LambLeg),
-            typeof(ChickenLeg),
+            typeof(ChickenLeg), typeof(FishSteak),
 
             /* Uncooked */
             typeof(RawBird), typeof(RawRibs), typeof(RawLambLeg),
-            typeof(RawChickenLeg),
+            typeof(RawChickenLeg), typeof(RawFishSteak),
 
             /* Body Parts */
             typeof(Head), typeof(LeftArm), typeof(LeftLeg),
@@ -374,6 +384,23 @@ namespace Server.Mobiles
             }
 
             GenerateLoot(true);
+
+            // Русский перевод имени — только тут, не в сериализационном конструкторе
+            // ниже (иначе переприсваивалось бы при каждой загрузке уже существующего
+            // существа с сохранённым состоянием). DefaultName уже резолвится
+            // виртуально в этой точке — конструктор самого производного класса ещё не
+            // отработал, но виртуальный вызов всё равно уходит в правильную
+            // переопределённую реализацию.
+            //
+            // DefaultName == null у существ без переопределения (например,
+            // SummonedDaemon) — раньше это падало прямо в TryGet и крашило сервер при
+            // каждом призыве такого существа (Dictionary.TryGetValue(null, ...)
+            // реально бросает ArgumentNullException для string-ключа, вопреки тому, что
+            // я думал раньше). Проверка на null здесь — на месте использования.
+            if (DefaultName != null && Systems.MahaonCreatures.MahaonCreatureNameTable.TryGet(DefaultName, out var ruName))
+            {
+                Name = ruName;
+            }
         }
 
         public BaseCreature(Serial serial) : base(serial)
@@ -493,6 +520,34 @@ namespace Server.Mobiles
         public virtual bool IsUndead => false;
         public virtual bool IsDragonKind => false;
 
+        /// <summary>Permission for a creature to use the bard skills against players, which is
+        /// otherwise a player-only direction. Travesty turns these on while it is wearing a
+        /// bard's face (see Engines/Peerless/Citadel/Travesty.cs).
+        ///
+        /// Note these are permissions, not behaviour: nothing in this codebase's AI decides to
+        /// start a song on its own, so a creature only gets here if something calls the skill
+        /// on its behalf.</summary>
+        public virtual bool CanDiscord => false;
+
+        public virtual bool CanPeace => false;
+
+        public virtual bool CanProvoke => false;
+
+        /// <summary>Whether this creature may be picked for paragon conversion. ModernUO gated
+        /// that with a hardcoded type list inside Paragon.CheckConvert; this is the virtual the
+        /// original uses, so a creature can rule itself out without editing that list. The list
+        /// still applies — this is an additional veto, not a replacement.</summary>
+        public virtual bool CanBeParagon => true;
+
+        /// <summary>Charmed by Spellweaving's Dryad Allure rather than tamed. Kept as its own
+        /// flag because such a creature is otherwise an ordinary Controlled pet, and the spell
+        /// has to be able to tell "already someone else's" from "already mine".</summary>
+        [CommandProperty(AccessLevel.GameMaster)]
+        public bool Allured { get; set; }
+
+        /// <summary>Creatures that opt out of Dryad Allure entirely.</summary>
+        public virtual bool AllureImmune => false;
+
         public virtual bool BardImmune => false;
         public virtual bool Unprovokable => BardImmune || IsDeadPet;
         public virtual bool Uncalmable => BardImmune || IsDeadPet;
@@ -544,7 +599,7 @@ namespace Server.Mobiles
 
         public virtual bool IsNecroFamiliar =>
             Summoned && m_ControlMaster != null &&
-            SummonFamiliarSpell.Table.TryGetValue(m_ControlMaster, out var bc) && bc == this;
+            SummonFamiliarSpell.IsFamiliar(m_ControlMaster, this);
 
         public virtual bool DeleteCorpseOnDeath => !Core.AOS && _summoned;
 
@@ -585,8 +640,15 @@ namespace Server.Mobiles
         }
 
         [CommandProperty(AccessLevel.GameMaster)]
+        // Mahaon: shard-wide x4 — see Systems.MahaonCombat.CreatureHitsSystem for why the
+        // multiplier lives here and not in SetHits.
         public override int HitsMax =>
-            HitsMaxSeed <= 0 ? Str : Math.Clamp(HitsMaxSeed + GetStatOffset(StatType.Str), 1, 65000);
+            Math.Clamp(
+                (int)((HitsMaxSeed <= 0 ? Str : HitsMaxSeed + GetStatOffset(StatType.Str)) *
+                      Systems.MahaonCombat.CreatureHitsSystem.GetScalar(this)),
+                1,
+                65000
+            );
 
         [CommandProperty(AccessLevel.GameMaster)]
         public int HitsMaxSeed { get; set; } = -1;
@@ -1091,6 +1153,15 @@ namespace Server.Mobiles
         public virtual int Feathers => 0;
         public virtual int Wool => 0;
 
+        /// <summary>Boura and kepetch fur. Unlike the others this can also be taken from the
+        /// live creature — see each one's ICarvable.Carve.</summary>
+        public virtual int Fur => 0;
+
+        public virtual FurType FurType => FurType.Green;
+
+        /// <summary>Cut from a boura or slith corpse.</summary>
+        public virtual int DragonBlood => 0;
+
         public virtual MeatType MeatType => MeatType.Ribs;
         public virtual int Meat => 0;
 
@@ -1361,7 +1432,9 @@ namespace Server.Mobiles
                 return false;
             }
 
-            if (m_Team != c.Team || FightMode == FightMode.Evil && m.Karma < 0 || c.FightMode == FightMode.Evil && Karma < 0)
+            if (m_Team != c.Team ||
+                FightMode == FightMode.Evil && m.Karma < 0 || c.FightMode == FightMode.Evil && Karma < 0 ||
+                FightMode == FightMode.Good && m.Karma > 0 || c.FightMode == FightMode.Good && Karma > 0)
             {
                 return true;
             }
@@ -1670,9 +1743,11 @@ namespace Server.Mobiles
             var meat = Meat;
             var hides = Hides;
             var scales = Scales;
+            var fur = Fur;
+            var dragonBlood = DragonBlood;
 
-            if (feathers == 0 && wool == 0 && meat == 0 && hides == 0 && scales == 0 || Summoned || IsBonded ||
-                corpse.Animated)
+            if (feathers == 0 && wool == 0 && meat == 0 && hides == 0 && scales == 0 && fur == 0 && dragonBlood == 0 ||
+                Summoned || IsBonded || corpse.Animated)
             {
                 if (corpse.Animated)
                 {
@@ -1715,6 +1790,21 @@ namespace Server.Mobiles
                 {
                     corpse.AddCarvedItem(new TaintedWool(wool), from);
                     from.SendLocalizedMessage(500483); // You shear it, and the wool is now on the corpse.
+                }
+
+                if (fur != 0)
+                {
+                    corpse.AddCarvedItem(new Fur(FurType, fur), from);
+                    from.SendLocalizedMessage(1112765); // You shear it, and the fur is now on the corpse.
+                }
+
+                // The original routes this through the backpack when the tool is a HarvestersBlade,
+                // an SA reward blade that isn't in this codebase; without it the original always
+                // takes this branch too.
+                if (dragonBlood != 0)
+                {
+                    corpse.AddCarvedItem(new DragonBlood(dragonBlood), from);
+                    from.SendLocalizedMessage(1094946); // Some blood is left on the corpse.
                 }
 
                 if (meat != 0)
@@ -1852,7 +1942,7 @@ namespace Server.Mobiles
         {
             base.Serialize(writer);
 
-            writer.Write(20); // version
+            writer.Write(21); // version
 
             writer.Write((int)m_CurrentAI);
             writer.Write((int)m_DefaultAI);
@@ -1972,6 +2062,9 @@ namespace Server.Mobiles
 
             // Version 19
             writer.Write(HomeMap);
+
+            // Version 21
+            writer.Write(Allured);
         }
 
         public override void Deserialize(IGenericReader reader)
@@ -2175,6 +2268,11 @@ namespace Server.Mobiles
                 HomeMap = reader.ReadMap();
             }
 
+            if (version >= 21)
+            {
+                Allured = reader.ReadBool();
+            }
+
             if (version <= 14 && m_Paragon && Hue == 0x31)
             {
                 Hue = Paragon.Hue; // Paragon hue fixed, should now be 0x501.
@@ -2279,6 +2377,8 @@ namespace Server.Mobiles
                 AIType.AI_Healer  => new HealerAI(this),
                 AIType.AI_Vendor  => new VendorAI(this),
                 AIType.AI_Mage    => new MageAI(this),
+                AIType.AI_Mystic  => new MysticAI(this),
+                AIType.AI_NecroMage => new NecroMageAI(this),
                 AIType.AI_Predator =>
                     // m_AI = new PredatorAI(this);
                     new MeleeAI(this),
@@ -2562,6 +2662,13 @@ namespace Server.Mobiles
             if (m_bTamable && !_controlled && from.Alive)
             {
                 list.Add(new TameEntry(from.Female ? AllowFemaleTamer : AllowMaleTamer));
+            }
+
+            // Free "shrink" for small pets (1 control slot) — no potion needed, small
+            // enough to plausibly fit in a bag. See MahaonPetBagItem.
+            if (_controlled && m_ControlMaster == from && from.Alive && !IsDeadPet && ControlSlots <= 1)
+            {
+                list.Add(new PetIntoBagEntry(this));
             }
 
             AddCustomContextEntries(from, ref list);
@@ -2871,9 +2978,9 @@ namespace Server.Mobiles
 
             if (DeathAdderCharmable && from.CanBeHarmful(this, false))
             {
-                if (SummonFamiliarSpell.Table.TryGetValue(from, out var bc) && (bc as DeathAdder)?.Deleted == false)
+                if (SummonFamiliarSpell.FindFamiliar<DeathAdder>(from) != null)
                 {
-                    from.SendAsciiMessage("You charm the snake.  Select a target to attack.");
+                    from.SendAsciiMessage("Ты зачаровываешь змею. Укажи, кого атаковать.");
                     from.Target = new DeathAdderCharmTarget(this);
                 }
             }
@@ -3235,6 +3342,16 @@ namespace Server.Mobiles
 
         public override void OnDeath(Container c)
         {
+            var questKiller = LastKiller is BaseCreature killerPet ? killerPet.GetDamageMaster(this) : LastKiller;
+
+            if (questKiller is PlayerMobile killerPlayer)
+            {
+                Systems.MahaonQuests.MayorQuestSystem.OnCreatureKilled(killerPlayer, this);
+                Systems.MahaonQuests.GuardQuestSystem.OnCreatureKilled(killerPlayer, this);
+                Systems.MahaonQuests.CourtMageQuestSystem.OnCreatureKilled(killerPlayer, this);
+                Systems.MahaonQuests.RangerQuestSystem.DropHeadIfWildlife(this, c);
+            }
+
             if (IsBonded)
             {
                 Effects.PlaySound(this, GetDeathSound());
@@ -3670,7 +3787,238 @@ namespace Server.Mobiles
                 AuraDamage();
                 m_NextAura = tc + (int)AuraInterval.TotalMilliseconds;
             }
+
+            TryBardAbility(tc);
         }
+
+        #region Barding
+
+        private long m_NextDiscord;
+        private long m_NextPeace;
+        private long m_NextProvoke;
+
+        /// <summary>A creature that plays at most one song per tick, on a five-to-twelve second
+        /// cooldown. Ported from ServUO (BaseCreature.OnThink); the CanDiscord / CanPeace /
+        /// CanProvoke flags above are the permission half.</summary>
+        private void TryBardAbility(long tc)
+        {
+            if (Combatant is not Mobile combatant)
+            {
+                return;
+            }
+
+            if (CanDiscord && !Discordance.UnderEffects(combatant) && tc >= m_NextDiscord &&
+                0.33 > Utility.RandomDouble())
+            {
+                DoDiscord();
+                m_NextDiscord = tc + Utility.RandomMinMax(5000, 12500);
+            }
+            else if (CanPeace && !Peacemaking.UnderEffects(combatant) && tc >= m_NextPeace &&
+                     0.33 > Utility.RandomDouble())
+            {
+                DoPeace();
+                m_NextPeace = tc + Utility.RandomMinMax(5000, 12500);
+            }
+            else if (CanProvoke && tc >= m_NextProvoke && 0.33 > Utility.RandomDouble())
+            {
+                DoProvoke();
+                m_NextProvoke = tc + Utility.RandomMinMax(5000, 12500);
+            }
+        }
+
+        public virtual bool PlayInstrumentSound => true;
+
+        public virtual bool DoDiscord()
+        {
+            var target = GetBardTarget(Controlled);
+
+            if (target == null || !target.InLOS(this) ||
+                !InRange(target.Location, BaseInstrument.GetBardRange(this, SkillName.Discordance)) ||
+                CheckInstrument() == null)
+            {
+                return false;
+            }
+
+            Spell = null;
+
+            if (!UseSkill(SkillName.Discordance))
+            {
+                return false;
+            }
+
+            if (Target is Discordance.DiscordanceTarget)
+            {
+                Target.Invoke(this, target);
+                return true;
+            }
+
+            return false;
+        }
+
+        public virtual bool DoPeace()
+        {
+            var target = GetBardTarget();
+
+            if (target == null || !target.InLOS(this) ||
+                !InRange(target.Location, BaseInstrument.GetBardRange(this, SkillName.Peacemaking)) ||
+                CheckInstrument() == null)
+            {
+                return false;
+            }
+
+            Spell = null;
+
+            if (!UseSkill(SkillName.Peacemaking))
+            {
+                return false;
+            }
+
+            if (Target is Peacemaking.InternalTarget)
+            {
+                Target.Invoke(this, target);
+                return true;
+            }
+
+            return false;
+        }
+
+        public virtual bool DoProvoke()
+        {
+            var target = GetBardTarget();
+
+            if (target is not BaseCreature first || !target.InLOS(this) ||
+                !InRange(target.Location, BaseInstrument.GetBardRange(this, SkillName.Provocation)) ||
+                CheckInstrument() == null)
+            {
+                return false;
+            }
+
+            Spell = null;
+
+            if (!UseSkill(SkillName.Provocation))
+            {
+                return false;
+            }
+
+            if (Target is not Provocation.InternalFirstTarget)
+            {
+                return false;
+            }
+
+            Target.Invoke(this, first);
+
+            if (Target is Provocation.InternalSecondTarget)
+            {
+                var second = GetSecondTarget(first);
+
+                if (second != null)
+                {
+                    Target.Invoke(this, second);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>A barding creature needs an instrument in its pack and needs it registered,
+        /// or BaseInstrument.PickInstrument would try to prompt a client that isn't there. Packs
+        /// a harp the first time and remembers it.</summary>
+        public BaseInstrument CheckInstrument()
+        {
+            var inst = BaseInstrument.GetInstrument(this);
+
+            if (inst == null)
+            {
+                if (Backpack == null)
+                {
+                    return null;
+                }
+
+                inst = Backpack.FindItemByType<BaseInstrument>();
+
+                if (inst == null)
+                {
+                    inst = new Harp
+                    {
+                        SuccessSound = PlayInstrumentSound ? 0x58B : 0,
+                        FailureSound = PlayInstrumentSound ? 0x58C : 0,
+                        Movable = false,
+                        Quality = InstrumentQuality.Exceptional
+                    };
+
+                    PackItem(inst);
+                }
+            }
+
+            BaseInstrument.SetInstrument(this, inst);
+            return inst;
+        }
+
+        /// <summary>Who to play at. Normally whoever we're fighting; failing that, whoever our
+        /// master is fighting, and failing that one of our own aggressors. Override for
+        /// something cleverer.</summary>
+        public virtual Mobile GetBardTarget(bool creaturesOnly = false)
+        {
+            var m = Combatant as Mobile;
+
+            if (m == null && GetMaster() is PlayerMobile master)
+            {
+                m = master.Combatant as Mobile;
+            }
+
+            if (creaturesOnly && m is PlayerMobile)
+            {
+                return null;
+            }
+
+            if (m != null && m != this && CanBeHarmful(m, false) && (!creaturesOnly || m is BaseCreature))
+            {
+                return m;
+            }
+
+            using var candidates = PooledRefList<Mobile>.Create();
+
+            foreach (var info in Aggressors)
+            {
+                if (!creaturesOnly || info.Attacker is PlayerMobile)
+                {
+                    candidates.Add(info.Attacker);
+                }
+            }
+
+            return candidates.Count > 0 ? candidates[Utility.Random(candidates.Count)] : null;
+        }
+
+        /// <summary>Provocation needs someone for the first target to fight — anyone both we and
+        /// it can harm, in range of both.</summary>
+        public virtual Mobile GetSecondTarget(BaseCreature first)
+        {
+            var map = Map;
+
+            if (first == null || map == null)
+            {
+                return null;
+            }
+
+            var range = BaseInstrument.GetBardRange(this, SkillName.Provocation);
+
+            using var candidates = PooledRefList<Mobile>.Create();
+
+            foreach (var m in map.GetMobilesInRange(Location, range))
+            {
+                if (m != first && m != this && first.InRange(m.Location, range) &&
+                    CanBeHarmful(m, false) && first.CanBeHarmful(m, false))
+                {
+                    candidates.Add(m);
+                }
+            }
+
+            return candidates.Count > 0 ? candidates[Utility.Random(candidates.Count)] : null;
+        }
+
+        #endregion
 
         public virtual bool Rummage()
         {
@@ -5513,6 +5861,40 @@ namespace Server.Mobiles
             }
         }
 
+        // Label text: see ClassicUO.Game.Managers.MahaonContextMenuText.PetIntoBag on the
+        // client — the classic context-menu protocol only carries a numeric cliloc id, so
+        // this reuses a sentinel id (9000001, well outside any real cliloc range) that the
+        // client resolves to real Russian text locally instead of looking it up in Cliloc.enu.
+        private class PetIntoBagEntry : ContextMenuEntry
+        {
+            private readonly BaseCreature _creature;
+
+            public PetIntoBagEntry(BaseCreature creature) : base(9000001, 3) => _creature = creature;
+
+            public override void OnClick(Mobile from, IEntity target)
+            {
+                if (_creature.Deleted || _creature.ControlMaster != from || !from.CheckAlive())
+                {
+                    return;
+                }
+
+                if (TransferItem.IsInCombat(_creature))
+                {
+                    from.SendMessage(0x22, "Питомец сейчас в бою — его нельзя убрать в мешок.");
+                    return;
+                }
+
+                var bag = new MahaonPetBagItem(_creature);
+
+                if (from.Backpack?.TryDropItem(from, bag, false) != true)
+                {
+                    bag.MoveToWorld(from.Location, from.Map);
+                }
+
+                from.SendMessage(0x59, $"{_creature.Name} теперь у тебя в мешке.");
+            }
+        }
+
         private class DeathAdderCharmTarget : Target
         {
             private readonly BaseCreature m_Charmed;
@@ -5526,7 +5908,7 @@ namespace Server.Mobiles
                     return;
                 }
 
-                if (!(SummonFamiliarSpell.Table.TryGetValue(from, out var bc) && (bc as DeathAdder)?.Deleted == false))
+                if (SummonFamiliarSpell.FindFamiliar<DeathAdder>(from) == null)
                 {
                     return;
                 }

@@ -56,3 +56,11 @@
 # Ignore everything under tools/ except the operator scripts checked in below.
 /tools/*
 !/tools/Export-IpBlocklist.ps1
+
+# Локальный архив исходников. Projects.zip — это 123 МБ копии папки Projects, то есть
+# того же, что и так лежит в репозитории. GitHub файлы такого размера вообще не принимает,
+# а смысла в них нет и без ограничения.
+#
+# Маска именно по имени, а не *.zip: в репозитории есть нужный rider-settings.zip, и
+# глухая маска сбивала бы с толку всякого, кто попробует добавить архив намеренно.
+/Projects.zip

@@ -50,8 +50,8 @@ namespace Server.Mobiles
             PackItem(new MandrakeRoot(3));
         }
 
-        public override string CorpseName => "a corpser corpse";
-        public override string DefaultName => "a corpser";
+        public override string CorpseName => "труп корпсера";
+        public override string DefaultName => "корпсер";
 
         public override Poison PoisonImmune => Poison.Lesser;
         public override bool DisallowAllMoves => true;

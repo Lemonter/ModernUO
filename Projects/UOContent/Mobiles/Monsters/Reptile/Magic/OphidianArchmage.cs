@@ -51,7 +51,7 @@ namespace Server.Mobiles
             PackNecroReg(5, 15);
         }
 
-        public override string CorpseName => "an ophidian corpse";
+        public override string CorpseName => "труп офидиана";
 
         public override int Meat => 1;
 

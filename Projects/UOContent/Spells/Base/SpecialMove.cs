@@ -91,6 +91,15 @@ namespace Server.Spells
 
             scalar -= (double)lmc / 100;
 
+            // «Дух воина» — обычный перк категории Бусидо: приёмы боевых школ (и бусидо,
+            // и ниндзюцу — оба идут через SpecialMove) обходятся ему на четверть дешевле.
+            if (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                    m, Systems.MahaonProfessions.ProfessionCategory.Bushido
+                ))
+            {
+                scalar -= Systems.MahaonProfessions.ProfessionBonuses.SchoolManaDiscount;
+            }
+
             var total = (int)(mana * scalar);
 
             if (m.Skills[MoveSkill].Value < 50.0 && GetContext(m) != null)

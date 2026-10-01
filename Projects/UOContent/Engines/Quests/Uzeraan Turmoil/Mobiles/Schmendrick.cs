@@ -13,7 +13,7 @@ public partial class Schmendrick : BaseQuester
     {
     }
 
-    public override string DefaultName => "Schmendrick";
+    public override string DefaultName => "Шмендрик";
 
     public override void InitBody()
     {

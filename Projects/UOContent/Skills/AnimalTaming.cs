@@ -37,8 +37,7 @@ namespace Server.SkillHandlers
         }
 
         public static bool CheckMastery(Mobile tamer, BaseCreature creature) =>
-            SummonFamiliarSpell.Table.TryGetValue(tamer, out var bc)
-            && bc is DarkWolfFamiliar { Deleted: false }
+            SummonFamiliarSpell.FindFamiliar<DarkWolfFamiliar>(tamer) != null
             && creature is DireWolf or GreyWolf or TimberWolf or WhiteWolf or BakeKitsune;
 
         public static bool MustBeSubdued(BaseCreature bc) =>
@@ -408,20 +407,24 @@ namespace Server.SkillHandlers
                         {
                             if (m_Creature.Owners.Count == 0) // First tame
                             {
+                                var specBonus = Systems.MahaonCombat.TamingSpecializationSystem.OnTamed(
+                                    m_Tamer, m_Creature.ControlSlots
+                                );
+
                                 if (m_Creature is GreaterDragon)
                                 {
-                                    ScaleSkills(m_Creature, 0.72, 0.90); // 72% of original skills trainable to 90%
+                                    ScaleSkills(m_Creature, Math.Min(0.98, 0.72 + specBonus), 0.90); // 72% of original skills trainable to 90%
                                     // Greater dragons have a 90% cap reduction and 90% skill reduction on magery
                                     m_Creature.Skills.Magery.Base = m_Creature.Skills.Magery.Cap;
                                 }
                                 else if (m_Paralyzed)
                                 {
                                     // 86% of original skills if they were paralyzed during the taming
-                                    ScaleSkills(m_Creature, 0.86);
+                                    ScaleSkills(m_Creature, Math.Min(0.98, 0.86 + specBonus));
                                 }
                                 else
                                 {
-                                    ScaleSkills(m_Creature, 0.90); // 90% of original skills
+                                    ScaleSkills(m_Creature, Math.Min(0.98, 0.90 + specBonus)); // 90% of original skills
                                 }
 
                                 if (m_Creature.StatLossAfterTame)

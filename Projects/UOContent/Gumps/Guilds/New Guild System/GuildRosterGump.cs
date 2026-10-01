@@ -167,7 +167,7 @@ namespace Server.Guilds
             else if (targetState?.IsLeaving == true)
             {
                 // OSI does this quite strangely, so we'll just do it this way
-                pm.SendMessage("That person is quitting their faction and so you may not recruit them.");
+                pm.SendMessage("Этот человек выходит из фракции, завербовать его нельзя.");
             }
             else
             {

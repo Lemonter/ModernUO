@@ -1,4 +1,5 @@
 using ModernUO.Serialization;
+using Server.Items;
 using Server.Misc;
 
 namespace Server.Mobiles
@@ -40,6 +41,11 @@ namespace Server.Mobiles
 
             VirtualArmor = 44;
 
+            // Mahaon: роба одного цвета на весь набор — грязно-серый, отличается от
+            // OrcishMage (зелёный) для визуального разнообразия между видами NPC.
+            AddItem(new Robe(0x453));
+            AddItem(new Sandals(0x453));
+
             PackReg(6);
 
             if (Utility.RandomDouble() < 0.02)
@@ -48,7 +54,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a glowing ratman corpse";
+        public override string CorpseName => "светящийся труп крысолюда";
         public override InhumanSpeech SpeechType => InhumanSpeech.Ratman;
 
         public override bool CanRummageCorpses => true;

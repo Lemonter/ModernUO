@@ -15,7 +15,7 @@ public partial class BarkeepContract : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "a barkeep contract";
+    public override string DefaultName => "контракт трактирщика";
 
     public override void OnDoubleClick(Mobile from)
     {

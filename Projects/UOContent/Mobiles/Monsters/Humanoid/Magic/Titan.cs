@@ -45,8 +45,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a titans corpse";
-        public override string DefaultName => "a titan";
+        public override string CorpseName => "труп титана";
+        public override string DefaultName => "титан";
 
         public override int Meat => 4;
         public override Poison PoisonImmune => Poison.Regular;

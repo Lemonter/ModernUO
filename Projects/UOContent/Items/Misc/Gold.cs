@@ -19,7 +19,7 @@ public partial class Gold : Item
         Amount = amount;
     }
 
-    public override double DefaultWeight => Core.ML ? 0.02 / 3 : 0.02;
+    public override double DefaultWeight => 0; // Mahaon: currency is weightless by design
 
     public override int GetDropSound()
     {

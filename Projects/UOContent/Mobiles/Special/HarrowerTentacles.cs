@@ -57,9 +57,9 @@ public partial class HarrowerTentacles : BaseCreature
         PackNecroReg(15, 75);
     }
 
-    public override string CorpseName => "a tentacles corpse";
+    public override string CorpseName => "труп щупалец";
 
-    public override string DefaultName => "tentacles of the harrower";
+    public override string DefaultName => "щупальца Разорителя";
 
     public override bool AutoDispel => true;
     public override bool Unprovokable => true;

@@ -58,6 +58,14 @@ namespace Server.Mobiles
             AddItem(new Surcoat(Utility.RandomRedHue()));
             AddItem(new ExecutionersAxe());
 
+            // Mahaon: сет из бочковатой (Barbed) кожи под сюрко — самая прочная кожа
+            // из четырёх, под стать самому сильному из бандитского семейства NPC.
+            AddItem(new LeatherChest { Resource = CraftResource.BarbedLeather });
+            AddItem(new LeatherArms { Resource = CraftResource.BarbedLeather });
+            AddItem(new LeatherGloves { Resource = CraftResource.BarbedLeather });
+            AddItem(new LeatherGorget { Resource = CraftResource.BarbedLeather });
+            AddItem(new LeatherLegs { Resource = CraftResource.BarbedLeather });
+
             Utility.AssignRandomHair(this);
         }
 

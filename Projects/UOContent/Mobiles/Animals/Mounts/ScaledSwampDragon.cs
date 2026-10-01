@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class ScaledSwampDragon : BaseMount
     {
-        public override string DefaultName => "a swamp dragon";
+        public override string DefaultName => "болотный дракон";
 
         [Constructible]
         public ScaledSwampDragon() : base(0x31F, 0x3EBE, AIType.AI_Melee, FightMode.Aggressor)
@@ -41,7 +41,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a swamp dragon corpse";
+        public override string CorpseName => "труп болотного дракона";
 
         public override bool AutoDispel => !Controlled;
         public override FoodType FavoriteFood => FoodType.Meat;

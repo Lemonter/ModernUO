@@ -878,21 +878,21 @@ public partial class ConditionTeleporter : Teleporter
         {
             if (GetFlag(ConditionFlag.DenyPackContents) && pack.TotalItems != 0)
             {
-                m.SendMessage("You must empty your backpack before proceeding.");
+                m.SendMessage("Сначала опустоши рюкзак.");
                 return false;
             }
 
             if (GetFlag(ConditionFlag.DenyPackEthereals) &&
                 pack.FindItemByType(new[] { typeof(EtherealMount), typeof(BaseImprisonedMobile) }) != null)
             {
-                m.SendMessage("You must empty your backpack of ethereal mounts before proceeding.");
+                m.SendMessage("Сначала убери из рюкзака эфирных скакунов.");
                 return false;
             }
         }
 
         if (GetFlag(ConditionFlag.DenyHolding) && m.Holding != null)
         {
-            m.SendMessage("You must let go of what you are holding before proceeding.");
+            m.SendMessage("Сначала отпусти то, что держишь.");
             return false;
         }
 
@@ -912,7 +912,7 @@ public partial class ConditionTeleporter : Teleporter
                         }
                     default:
                         {
-                            m.SendMessage("You must remove all equipment before proceeding.");
+                            m.SendMessage("Сначала сними всё снаряжение.");
                             return false;
                         }
                 }
@@ -921,7 +921,7 @@ public partial class ConditionTeleporter : Teleporter
 
         if (GetFlag(ConditionFlag.DenyTransformed) && m.IsBodyMod)
         {
-            m.SendMessage("You cannot go there in this form.");
+            m.SendMessage("В этом облике туда не пройти.");
             return false;
         }
 

@@ -34,7 +34,7 @@ public class StrongholdRegion : BaseRegion
 
         if (m is PlayerMobile pm && pm.DuelContext != null)
         {
-            pm.SendMessage("You may not enter this area while participating in a duel or a tournament.");
+            pm.SendMessage("Сюда нельзя войти, пока ты участвуешь в дуэли или турнире.");
             return false;
         }
 

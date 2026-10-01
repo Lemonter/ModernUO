@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Server.Items;
 
 namespace Server.Mobiles
@@ -33,7 +33,8 @@ namespace Server.Mobiles
 
                 Add(new GenericBuyInfo(typeof(TinkersTools), 7, 20, 0x1EBC, 0));
                 Add(new GenericBuyInfo(typeof(Board), 3, 20, 0x1BD7, 0));
-                Add(new GenericBuyInfo(typeof(IronIngot), 5, 16, 0x1BF2, 0));
+                // Наш слиток вместо ванильного: металл в игре один (см. MahaonCraftMetals).
+                Add(new GenericBuyInfo(typeof(MahaonIngot), 5, 16, 0x1BF2, 0));
                 Add(new GenericBuyInfo(typeof(SewingKit), 3, 20, 0xF9D, 0));
 
                 Add(new GenericBuyInfo(typeof(DrawKnife), 10, 20, 0x10E4, 0));
@@ -61,6 +62,31 @@ namespace Server.Mobiles
                 Add(new GenericBuyInfo(typeof(SmoothingPlane), 11, 20, 0x1032, 0));
 
                 Add(new GenericBuyInfo(typeof(Pickaxe), 25, 20, 0xE86, 0));
+
+                // Mahaon: слесарь торгует ВСЕМИ ремесленными инструментами, а не только
+                // теми, что нужны ему самому. Раньше половину набора взять было негде:
+                // ни инструментов лучника, ни ступки алхимика, ни кухонной утвари, ни
+                // перьев картографа и писаря — игрок должен был искать их по другим
+                // лавкам или крафтить, не имея с чего начать. Слесарь — единственный, кто
+                // эти вещи делает, так что и продавать их логичнее всего ему.
+                Add(new GenericBuyInfo(typeof(TinkerTools), 7, 20, 0x1EB8, 0));
+                Add(new GenericBuyInfo(typeof(FletcherTools), 12, 20, 0x1022, 0));
+                Add(new GenericBuyInfo(typeof(MortarPestle), 8, 20, 0xE9B, 0));
+                Add(new GenericBuyInfo(typeof(ScribesPen), 8, 20, 0x0FBF, 0));
+                Add(new GenericBuyInfo(typeof(MapmakersPen), 8, 20, 0x0FBF, 0));
+                Add(new GenericBuyInfo(typeof(MalletAndChisel), 14, 20, 0x12B3, 0));
+                Add(new GenericBuyInfo(typeof(Blowpipe), 14, 20, 0xE8A, 0));
+                Add(new GenericBuyInfo(typeof(SledgeHammer), 20, 20, 0xFB5, 0));
+
+                // Кухонная утварь.
+                Add(new GenericBuyInfo(typeof(Skillet), 9, 20, 0x97F, 0));
+                Add(new GenericBuyInfo(typeof(FlourSifter), 6, 20, 0x103E, 0));
+                Add(new GenericBuyInfo(typeof(RollingPin), 6, 20, 0x1043, 0));
+
+                // Добыча.
+                Add(new GenericBuyInfo(typeof(SturdyShovel), 20, 20, 0xF39, 0));
+                Add(new GenericBuyInfo(typeof(FishingPole), 15, 20, 0x0DC0, 0));
+                Add(new GenericBuyInfo(typeof(Hatchet), 15, 20, 0xF43, 0));
 
                 Add(new GenericBuyInfo(typeof(Drums), 21, 20, 0x0E9C, 0));
                 Add(new GenericBuyInfo(typeof(Tambourine), 21, 20, 0x0E9E, 0));
@@ -108,6 +134,22 @@ namespace Server.Mobiles
 
                 Add(typeof(Lockpick), 6);
                 Add(typeof(TinkerTools), 3);
+                Add(typeof(TinkersTools), 3);
+
+                // Скупка тех же инструментов, что теперь и продаются.
+                Add(typeof(FletcherTools), 6);
+                Add(typeof(MortarPestle), 4);
+                Add(typeof(ScribesPen), 4);
+                Add(typeof(MapmakersPen), 4);
+                Add(typeof(MalletAndChisel), 7);
+                Add(typeof(Blowpipe), 7);
+                Add(typeof(SledgeHammer), 10);
+                Add(typeof(Skillet), 4);
+                Add(typeof(FlourSifter), 3);
+                Add(typeof(RollingPin), 3);
+                Add(typeof(SturdyShovel), 10);
+                Add(typeof(FishingPole), 7);
+                Add(typeof(Hatchet), 7);
 
                 Add(typeof(Board), 1);
                 Add(typeof(Log), 1);

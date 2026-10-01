@@ -44,8 +44,8 @@ namespace Server.Mobiles
             PackItem(new ZoogiFungus());
         }
 
-        public override string CorpseName => "a solen worker corpse";
-        public override string DefaultName => "a red solen worker";
+        public override string CorpseName => "труп солена-рабочего";
+        public override string DefaultName => "красный солен-рабочий";
 
         public override int GetAngerSound() => 0x269;
 

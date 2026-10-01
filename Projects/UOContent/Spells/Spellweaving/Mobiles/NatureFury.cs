@@ -48,7 +48,7 @@ public partial class NatureFury : BaseCreature
     public override Poison PoisonImmune => Poison.Lethal;
 
     public override bool AlwaysMurderer => true;
-    public override string DefaultName => "a nature's fury";
+    public override string DefaultName => "ярость природы";
 
     public override void MoveToWorld(Point3D loc, Map map)
     {

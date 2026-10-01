@@ -59,5 +59,8 @@ public static class RegionJsonRegistration
 
         // Myrmidex
         RegionJsonSerializer.Register<BattleRegion>();
+
+        // Underworld
+        RegionJsonSerializer.Register<UnderworldRegion>();
     }
 }

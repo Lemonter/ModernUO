@@ -12,7 +12,7 @@ public partial class Haochi : BaseQuester
     {
     }
 
-    public override string DefaultName => "Daimyo Haochi";
+    public override string DefaultName => "даймё Хаочи";
 
     public override int TalkNumber => -1;
 

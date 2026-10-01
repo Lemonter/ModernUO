@@ -40,8 +40,8 @@ namespace Server.Mobiles
             VirtualArmor = 50;
         }
 
-        public override string CorpseName => "an ophidian corpse";
-        public override string DefaultName => "an ophidian matriarch";
+        public override string CorpseName => "труп офидиана";
+        public override string DefaultName => "матриарх офидианов";
 
         public override Poison PoisonImmune => Poison.Greater;
         public override int TreasureMapLevel => 4;

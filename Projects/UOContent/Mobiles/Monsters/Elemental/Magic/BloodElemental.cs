@@ -1,9 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles
 {
     [SerializationGenerator(0, false)]
-    public partial class BloodElemental : BaseCreature
+    public partial class BloodElemental : BaseCreature, IBloodCreature
     {
         [Constructible]
         public BloodElemental() : base(AIType.AI_Mage)
@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 60;
         }
 
-        public override string CorpseName => "a blood elemental corpse";
-        public override string DefaultName => "a blood elemental";
+        public override string CorpseName => "труп элементаля крови";
+        public override string DefaultName => "элементаль крови";
 
         public override int TreasureMapLevel => 5;
 

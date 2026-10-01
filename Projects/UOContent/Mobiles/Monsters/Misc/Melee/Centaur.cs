@@ -50,7 +50,7 @@ namespace Server.Mobiles
             ); // OSI it is different: in a sub backpack, this is probably just a limitation of their engine
         }
 
-        public override string CorpseName => "a centaur corpse";
+        public override string CorpseName => "труп кентавра";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

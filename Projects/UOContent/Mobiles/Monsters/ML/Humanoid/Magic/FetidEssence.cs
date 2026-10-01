@@ -40,8 +40,8 @@ namespace Server.Mobiles
             Karma = -3700; // Guessed
         }
 
-        public override string CorpseName => "a fetid essence corpse";
-        public override string DefaultName => "a fetid essence";
+        public override string CorpseName => "труп смрадной сущности";
+        public override string DefaultName => "смрадная сущность";
 
         public override Poison HitPoison => Poison.Deadly;
         public override Poison PoisonImmune => Poison.Deadly;

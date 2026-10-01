@@ -6,7 +6,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Reptalon : BaseMount
     {
-        public override string DefaultName => "a reptalon";
+        public override string DefaultName => "репталон";
 
         [Constructible]
         public Reptalon() : base(0x114, 0x3E90, AIType.AI_Melee)
@@ -41,7 +41,7 @@ namespace Server.Mobiles
             MinTameSkill = 101.1;
         }
 
-        public override string CorpseName => "a reptalon corpse";
+        public override string CorpseName => "труп репталона";
         public override int TreasureMapLevel => 5;
         public override int Meat => 5;
         public override int Hides => 10;

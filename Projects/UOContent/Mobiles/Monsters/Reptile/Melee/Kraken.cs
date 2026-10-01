@@ -54,8 +54,8 @@ namespace Server.Mobiles
             PackItem(new SpecialFishingNet()); // Confirm?
         }
 
-        public override string CorpseName => "a krakens corpse";
-        public override string DefaultName => "a kraken";
+        public override string CorpseName => "труп кракена";
+        public override string DefaultName => "кракен";
 
         public override int TreasureMapLevel => 4;
 

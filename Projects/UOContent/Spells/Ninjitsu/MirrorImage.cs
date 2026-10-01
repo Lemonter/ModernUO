@@ -60,7 +60,11 @@ namespace Server.Spells.Ninjitsu
                 return false;
             }
 
-            if (Caster.Followers + 1 > Caster.FollowersMax)
+            // Ниндзюцу-профессиям двойники не занимают слоты питомцев — иначе перк
+            // «двое вместо одного» упирался бы в тот же лимит, что и раньше.
+            if (!Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+                    Caster, Systems.MahaonProfessions.ProfessionCategory.Ninjitsu
+                ) && Caster.Followers + 1 > Caster.FollowersMax)
             {
                 // You cannot summon a mirror image because you have too many followers.
                 Caster.SendLocalizedMessage(1063133);
@@ -91,7 +95,9 @@ namespace Server.Spells.Ninjitsu
             {
                 Caster.SendLocalizedMessage(1063132); // You cannot use this ability while mounted.
             }
-            else if (Caster.Followers + 1 > Caster.FollowersMax)
+            else if (!Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+                         Caster, Systems.MahaonProfessions.ProfessionCategory.Ninjitsu
+                     ) && Caster.Followers + 1 > Caster.FollowersMax)
             {
                 // You cannot summon a mirror image because you have too many followers.
                 Caster.SendLocalizedMessage(1063133);
@@ -105,7 +111,16 @@ namespace Server.Spells.Ninjitsu
                 Caster.FixedParticles(0x376A, 1, 14, 0x13B5, EffectLayer.Waist);
                 Caster.PlaySound(0x511);
 
-                new Clone(Caster).MoveToWorld(Caster.Location, Caster.Map);
+                // Mahaon, «Теневые клоны» — сигнатурный перк категории Ниндзюцу: двойник
+                // не один, а два. Достаётся и тому, у кого Ниндзюцу вторичная категория.
+                var clones = Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+                    Caster, Systems.MahaonProfessions.ProfessionCategory.Ninjitsu
+                ) ? 2 : 1;
+
+                for (var i = 0; i < clones; i++)
+                {
+                    new Clone(Caster).MoveToWorld(Caster.Location, Caster.Map);
+                }
             }
 
             FinishSequence();

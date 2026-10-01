@@ -42,9 +42,9 @@ namespace Server.Mobiles
             VirtualArmor = 54;
         }
 
-        public override string CorpseName => "a crystal elemental corpse";
+        public override string CorpseName => "труп кристаллического элементаля";
 
-        public override string DefaultName => "a crystal elemental";
+        public override string DefaultName => "кристаллический элементаль";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

@@ -1,4 +1,4 @@
-/*************************************************************************
+﻿/*************************************************************************
  * ModernUO                                                              *
  * Copyright 2019-2026 - ModernUO Development Team                       *
  * Email: hi@modernuo.com                                                *
@@ -876,7 +876,7 @@ public abstract partial class BaseAI
 
     private bool IsInvalidFightModeTarget(Mobile m, FightMode acqType, BaseCreature bc)
     {
-        if (acqType is not (FightMode.Aggressor or FightMode.Evil))
+        if (acqType is not (FightMode.Aggressor or FightMode.Evil or FightMode.Good))
         {
             return false;
         }
@@ -884,8 +884,21 @@ public abstract partial class BaseAI
         var valid = IsHostile(m) || Mobile.GetFactionAllegiance(m) == BaseCreature.Allegiance.Enemy
                                  || Mobile.GetEthicAllegiance(m) == BaseCreature.Allegiance.Enemy;
 
-        // Valid if FightMode is Evil and the target's karma is negative
-        return !valid && (acqType != FightMode.Evil || (bc?.GetMaster()?.Karma ?? m.Karma) >= 0);
+        if (valid)
+        {
+            return false;
+        }
+
+        // Valid if FightMode is Evil and the target's karma is negative, or Good and it is positive.
+        // A pet is judged by its master's karma, not its own.
+        var karma = bc?.GetMaster()?.Karma ?? m.Karma;
+
+        return acqType switch
+        {
+            FightMode.Evil => karma >= 0,
+            FightMode.Good => karma <= 0,
+            _              => true
+        };
     }
 
     private bool IsHostile(Mobile from) =>

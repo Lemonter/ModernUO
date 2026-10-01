@@ -63,7 +63,7 @@ namespace Server.Mobiles
         public override Mobile ConstantFocus => m_Target;
         public override bool AlwaysAttackable => true;
 
-        public override string DefaultName => "a revenant";
+        public override string DefaultName => "ревенант";
 
         public override bool BardImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

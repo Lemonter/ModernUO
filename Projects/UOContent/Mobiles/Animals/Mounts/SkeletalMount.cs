@@ -33,8 +33,8 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "an undead horse corpse";
-        public override string DefaultName => "a skeletal steed";
+        public override string CorpseName => "труп нежити-лошади";
+        public override string DefaultName => "скелетный скакун";
 
         public override Poison PoisonImmune => Poison.Lethal;
         public override bool BleedImmune => true;

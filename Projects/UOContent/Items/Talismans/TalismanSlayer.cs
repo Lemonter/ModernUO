@@ -15,7 +15,12 @@ public enum TalismanSlayerName
     Bird,
     Ice,
     Flame,
-    Bovine
+    Bovine,
+
+    // Ported alongside the Underworld quest line with TalismanofGoblinSlaying. ServUO carries
+    // eight more after this one (Wolf, Undead, Repond, Elemental, Demon, Arachnid, Reptile,
+    // Fey) that nothing here needs yet.
+    Goblin
 }
 
 public static class TalismanSlayer
@@ -80,6 +85,17 @@ public static class TalismanSlayer
                 typeof(Cow), typeof(Bull),
                 typeof(Gaman) /*, typeof( MinotaurCaptain ), typeof( MinotaurScout ), typeof( Minotaur ) */
                 // TODO TormentedMinotaur
+            },
+            // Ported with the Underworld quest line's Talisman of Goblin Slaying.
+            [TalismanSlayerName.Goblin] = new[]
+            {
+                typeof(EnslavedGoblinScout), typeof(EnslavedGoblinKeeper),
+                typeof(EnslavedGreenGoblin), typeof(EnslavedGreenGoblinAlchemist),
+                typeof(EnslavedGoblinMage), typeof(EnslavedGrayGoblin),
+                typeof(GreenGoblinScout), typeof(GreenGoblinAlchemist),
+                typeof(GreenGoblin), typeof(GrayGoblinMage),
+                typeof(GrayGoblinKeeper), typeof(GrayGoblin),
+                typeof(GreenGoblinAlchemistRenowned), typeof(GrayGoblinMageRenowned)
             }
         };
     }

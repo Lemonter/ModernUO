@@ -398,7 +398,7 @@ public partial class TrophyDeed : Item
 
                         default:
                             {
-                                from.SendMessage("Turn to face the wall on which to hang this trophy.");
+                                from.SendMessage("Повернись к стене, на которую хочешь повесить трофей.");
                                 return;
                             }
                     }

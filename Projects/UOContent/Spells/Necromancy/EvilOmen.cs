@@ -46,7 +46,8 @@ public class EvilOmenSpell : NecromancerSpell, ITargetingSpell<Mobile>
              * The effect lasts for one harmful event only.
              */
 
-            m.Spell?.OnCasterHurt();
+            // Mahaon: no longer disturbs the target's own cast — enemy spells don't fizzle
+            // casting anymore (see Spell.OnCasterHurt's doc comment).
 
             m.PlaySound(0xFC);
             m.FixedParticles(0x3728, 1, 13, 9912, 1150, 7, EffectLayer.Head);

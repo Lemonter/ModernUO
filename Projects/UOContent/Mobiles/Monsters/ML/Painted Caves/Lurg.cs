@@ -41,8 +41,8 @@ namespace Server.Mobiles
             Karma = -10000;
         }
 
-        public override string CorpseName => "a Lurg corpse";
-        public override string DefaultName => "Lurg";
+        public override string CorpseName => "труп Лурга";
+        public override string DefaultName => "Лург";
         public override bool GivesMLMinorArtifact => true;
         public override int TreasureMapLevel => 4;
 

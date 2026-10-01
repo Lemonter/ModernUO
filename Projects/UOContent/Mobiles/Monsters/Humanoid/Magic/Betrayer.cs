@@ -49,9 +49,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a betrayer corpse";
+        public override string CorpseName => "труп предателя";
 
-        public override string DefaultName => "a betrayer";
+        public override string DefaultName => "предатель";
 
         public override bool AlwaysMurderer => true;
         public override bool BardImmune => !Core.AOS;

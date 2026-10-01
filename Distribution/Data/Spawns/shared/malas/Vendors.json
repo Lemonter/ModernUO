@@ -3,7 +3,11 @@
     "$type": "Spawner",
     "guid": "0d9c6323-7da9-4e12-861a-76fd30b3e3dc",
     "name": "Spawner (405)",
-    "location": [950, 520, -55],
+    "location": [
+      950,
+      520,
+      -55
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -12,15 +16,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e82cd7e4-b690-40ca-959a-c5fbd380cc97",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      950,
+      520,
+      -55
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "0db7d5e9-beaa-43a2-ac46-2802ac962fcb",
     "name": "Spawner (405)",
-    "location": [2068, 1372, -75],
+    "location": [
+      2068,
+      1372,
+      -75
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -29,15 +69,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "597ed53b-e6bf-4b3b-811c-f2a138c86455",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2068,
+      1372,
+      -75
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3d301c77-1ade-4823-b2ff-f1d4e0ed2bf0",
     "name": "Spawner (405)",
-    "location": [1029, 520, -55],
+    "location": [
+      1029,
+      520,
+      -55
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -46,15 +122,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "6d7c57bb-0483-4e9a-a3aa-aa9198660729",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1029,
+      520,
+      -55
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3d69c950-70d4-48c5-8729-be8848330c1a",
     "name": "Spawner (405)",
-    "location": [2045, 1397, -90],
+    "location": [
+      2045,
+      1397,
+      -90
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -63,14 +175,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "92ad0444-4d6b-452e-9df4-9ccc871170a5",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2045,
+      1397,
+      -90
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3dcbbc92-14ac-4798-8753-41aa3b6b2450",
     "name": "Spawner (405)",
-    "location": [2023, 1379, -80],
+    "location": [
+      2023,
+      1379,
+      -80
+    ],
     "map": "Malas",
     "count": 3,
     "minDelay": "00:05:00",
@@ -79,16 +223,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Mage", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mage",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "MageGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0b41ed20-e99f-4c77-a8b4-5d75e1fd96d0",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2023,
+      1379,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "54deea77-bc1e-446b-8274-ea23bddb369e",
     "name": "Spawner (405)",
-    "location": [989, 527, -50],
+    "location": [
+      989,
+      527,
+      -50
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -97,14 +281,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7bdbfb59-7615-479f-8d38-7aae4a576618",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      989,
+      527,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "55fab330-6d2a-4823-a666-3dfa33dceeb6",
     "name": "Spawner (405)",
-    "location": [1977, 1365, -80],
+    "location": [
+      1977,
+      1365,
+      -80
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -113,15 +329,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "6bef8c77-69ea-44ad-81ba-19838d594296",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1977,
+      1365,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "72a7f47d-d4cb-4530-9ba6-3878482279b2",
     "name": "Spawner (405)",
-    "location": [2078, 1327, -80],
+    "location": [
+      2078,
+      1327,
+      -80
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -130,15 +382,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tanner", "maxCount": 1, "probability": 100 },
-      { "name": "Furtrader", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tanner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Furtrader",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "22f47c3f-6019-475d-a0ff-ea2148ab169c",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2078,
+      1327,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "79aa68b8-d2bd-4a4d-ad84-422588aeaaff",
     "name": "Spawner (405)",
-    "location": [1016, 514, -70],
+    "location": [
+      1016,
+      514,
+      -70
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -147,14 +435,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "KeeperOfChivalry", "maxCount": 1, "probability": 100 }
+      {
+        "name": "KeeperOfChivalry",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "21c19163-57b9-4fca-9e44-79f98205c18c",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1016,
+      514,
+      -70
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "7a10d380-53e3-48c9-9c5b-07a3c215032a",
     "name": "Spawner (405)",
-    "location": [1027, 494, -70],
+    "location": [
+      1027,
+      494,
+      -70
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -163,14 +483,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "AnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "AnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1fad9af9-4713-4c6d-a692-11f18e60e52e",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1027,
+      494,
+      -70
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "7bd799ab-c7fb-446e-b6cb-580d1fe2f7fb",
     "name": "Spawner (405)",
-    "location": [976, 512, -50],
+    "location": [
+      976,
+      512,
+      -50
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -179,15 +531,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "6c91182e-8b3a-489f-86ba-beec096e4288",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      976,
+      512,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "81e4af4e-3310-4864-8517-a032d487716f",
     "name": "Spawner (405)",
-    "location": [1992, 1315, -90],
+    "location": [
+      1992,
+      1315,
+      -90
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -196,14 +584,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "AnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "AnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "cba85893-d387-4256-8bfd-7fcedc39427b",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1992,
+      1315,
+      -90
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "8ed338dc-51c1-40b3-a91a-7ebd8d91131b",
     "name": "Spawner (405)",
-    "location": [2060, 1283, -80],
+    "location": [
+      2060,
+      1283,
+      -80
+    ],
     "map": "Malas",
     "count": 3,
     "minDelay": "00:05:00",
@@ -212,16 +632,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Carpenter", "maxCount": 1, "probability": 100 },
-      { "name": "Architect", "maxCount": 1, "probability": 100 },
-      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Carpenter",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Architect",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "RealEstateBroker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0e84acb9-7ac5-4adb-8f08-3427108e80a9",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2060,
+      1283,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9347985d-23a4-4044-9a5c-79939c9f7df0",
     "name": "Spawner (405)",
-    "location": [2037, 1311, -85],
+    "location": [
+      2037,
+      1311,
+      -85
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -230,14 +690,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1c94aef3-2ca8-4c20-84e4-3c57fb0a07c9",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2037,
+      1311,
+      -85
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "99cde945-5b9c-4cff-924f-a59142bcbdb9",
     "name": "Spawner (405)",
-    "location": [989, 520, -50],
+    "location": [
+      989,
+      520,
+      -50
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -246,15 +738,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2a18ae99-158f-46d6-9448-54208ba0c5f4",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      989,
+      520,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9ad9f47f-17bc-4790-9a84-1e9aee66478f",
     "name": "Spawner (405)",
-    "location": [2011, 1326, -80],
+    "location": [
+      2011,
+      1326,
+      -80
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -263,15 +791,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "b26ecf58-0eb5-4eef-9f15-b5738db195f4",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2011,
+      1326,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a0c83d13-2354-494f-9535-d4e587cc7a6b",
     "name": "Spawner (405)",
-    "location": [2025, 1387, -80],
+    "location": [
+      2025,
+      1387,
+      -80
+    ],
     "map": "Malas",
     "count": 3,
     "minDelay": "00:05:00",
@@ -280,16 +844,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Herbalist", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Herbalist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "CustomHairstylist",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d83bf61b-7568-48e7-81f2-f40f129ccc9f",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2025,
+      1387,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a263ccfc-65e1-4181-93b6-6e1c7914f5b8",
     "name": "Spawner (405)",
-    "location": [2048, 1343, -85],
+    "location": [
+      2048,
+      1343,
+      -85
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -298,15 +902,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "da92425d-6578-4747-b03e-97eb548f7003",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2048,
+      1343,
+      -85
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a4200c02-8035-48bc-b79d-8b45225ffd4f",
     "name": "Spawner (405)",
-    "location": [1004, 527, -50],
+    "location": [
+      1004,
+      527,
+      -50
+    ],
     "map": "Malas",
     "count": 4,
     "minDelay": "00:05:00",
@@ -315,17 +955,61 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "HolyMage", "maxCount": 1, "probability": 100 },
-      { "name": "Herbalist", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      {
+        "name": "HolyMage",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Herbalist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "CustomHairstylist",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e6dcec40-a941-4233-9191-d955fb7f45dd",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1004,
+      527,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b4f71d7e-8c76-47db-a1c1-b81c4484741b",
     "name": "Spawner (405)",
-    "location": [2027, 1353, -90],
+    "location": [
+      2027,
+      1353,
+      -90
+    ],
     "map": "Malas",
     "count": 4,
     "minDelay": "00:05:00",
@@ -334,17 +1018,61 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "TavernKeeper", "maxCount": 1, "probability": 100 },
-      { "name": "Waiter", "maxCount": 1, "probability": 100 },
-      { "name": "Cook", "maxCount": 1, "probability": 100 },
-      { "name": "Barkeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TavernKeeper",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Waiter",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cook",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Barkeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7775abbd-802d-4b95-9711-392ef5e7c8f3",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2027,
+      1353,
+      -90
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b7226aea-9fd0-4079-8e21-70a7a443d0b2",
     "name": "Spawner (405)",
-    "location": [1056, 1434, -85],
+    "location": [
+      1056,
+      1434,
+      -85
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -353,14 +1081,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7d007d36-ec80-4b8b-8215-7790399124ae",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1056,
+      1434,
+      -85
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "c1bda852-fee4-45ee-aa79-630980bc44e9",
     "name": "Spawner (405)",
-    "location": [1003, 512, -50],
+    "location": [
+      1003,
+      512,
+      -50
+    ],
     "map": "Malas",
     "count": 5,
     "minDelay": "00:05:00",
@@ -369,18 +1129,66 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 },
-      { "name": "Carpenter", "maxCount": 1, "probability": 100 },
-      { "name": "Architect", "maxCount": 1, "probability": 100 },
-      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Carpenter",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Architect",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "RealEstateBroker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ac07f9f5-f8b2-480a-87b5-5a7a1ca96824",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      1003,
+      512,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d6de9f30-1ee9-4914-853c-be075bd119ce",
     "name": "Spawner (405)",
-    "location": [2083, 1322, -80],
+    "location": [
+      2083,
+      1322,
+      -80
+    ],
     "map": "Malas",
     "count": 3,
     "minDelay": "00:05:00",
@@ -389,16 +1197,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 },
-      { "name": "TailorGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TailorGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0884977c-8464-4927-a275-9bf52a98c644",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2083,
+      1322,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "df531ac9-d2b0-48ae-bc19-dc043d6af3de",
     "name": "Spawner (405)",
-    "location": [993, 511, -50],
+    "location": [
+      993,
+      511,
+      -50
+    ],
     "map": "Malas",
     "count": 3,
     "minDelay": "00:05:00",
@@ -407,16 +1255,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 },
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "3cb86ba5-4e0b-4b24-af63-e32b4f2b08e7",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      993,
+      511,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "e08eb38c-0b25-4387-8999-f9d8a0a877aa",
     "name": "Spawner (405)",
-    "location": [961, 517, -70],
+    "location": [
+      961,
+      517,
+      -70
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -425,14 +1313,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "KeeperOfChivalry", "maxCount": 1, "probability": 100 }
+      {
+        "name": "KeeperOfChivalry",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "10af97ab-7d9c-4e12-9213-0565d4b59441",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      961,
+      517,
+      -70
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "eb50b13f-dd98-42c1-bfa0-2599bdc85de3",
     "name": "Spawner (405)",
-    "location": [2066, 1282, -80],
+    "location": [
+      2066,
+      1282,
+      -80
+    ],
     "map": "Malas",
     "count": 2,
     "minDelay": "00:05:00",
@@ -441,15 +1361,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "59473302-05e0-48ec-898c-4eb1573d5a08",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2066,
+      1282,
+      -80
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f62df843-74a7-4bb0-a101-53d1dc4cb806",
     "name": "Spawner (405)",
-    "location": [976, 527, -50],
+    "location": [
+      976,
+      527,
+      -50
+    ],
     "map": "Malas",
     "count": 5,
     "minDelay": "00:05:00",
@@ -458,18 +1414,66 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 },
-      { "name": "TailorGuildmaster", "maxCount": 1, "probability": 100 },
-      { "name": "Tanner", "maxCount": 1, "probability": 100 },
-      { "name": "Furtrader", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TailorGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Tanner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Furtrader",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "416a0e76-8a33-4106-be25-5e941e18fe82",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      976,
+      527,
+      -50
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fa9dbd50-e0ca-4206-a197-0fe85a349900",
     "name": "Spawner (405)",
-    "location": [2017, 1356, -90],
+    "location": [
+      2017,
+      1356,
+      -90
+    ],
     "map": "Malas",
     "count": 1,
     "minDelay": "00:05:00",
@@ -478,7 +1482,35 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Baker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Baker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a4df6c39-7e77-43de-bbe0-5934e3218234",
+    "name": "Guard Spawner (Spawner (405))",
+    "location": [
+      2017,
+      1356,
+      -90
+    ],
+    "map": "Malas",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   }
 ]

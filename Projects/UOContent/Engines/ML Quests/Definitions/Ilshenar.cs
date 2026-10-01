@@ -114,7 +114,7 @@ public partial class Lissbet : BaseEscortable
 
     public override bool StaticMLQuester => true;
     public override bool InitialInnocent => true;
-    public override string DefaultName => "Lissbet";
+    public override string DefaultName => "Лиссбет";
 
     public override bool CanShout => true;
 
@@ -184,7 +184,7 @@ public partial class GrandpaCharley : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Grandpa Charley";
+    public override string DefaultName => "дедушка Чарли";
     public override bool CanTeach => true;
 }
 
@@ -212,7 +212,7 @@ public partial class Jelrice : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Jelrice";
+    public override string DefaultName => "Джелрис";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -246,7 +246,7 @@ public partial class Yorus : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Yorus";
+    public override string DefaultName => "Йорус";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

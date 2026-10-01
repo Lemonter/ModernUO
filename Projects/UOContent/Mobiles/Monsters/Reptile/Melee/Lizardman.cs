@@ -38,7 +38,7 @@ namespace Server.Mobiles
             VirtualArmor = 28;
         }
 
-        public override string CorpseName => "a lizardman corpse";
+        public override string CorpseName => "труп ящеролюда";
         public override InhumanSpeech SpeechType => InhumanSpeech.Lizardman;
 
         public override bool CanRummageCorpses => true;

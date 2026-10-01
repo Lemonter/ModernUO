@@ -12,7 +12,7 @@ public partial class TomasONeerlan : BaseQuester
     {
     }
 
-    public override string DefaultName => "Tomas O'Neerlan";
+    public override string DefaultName => "Томас О'Нирлан";
 
     public override void InitBody()
     {

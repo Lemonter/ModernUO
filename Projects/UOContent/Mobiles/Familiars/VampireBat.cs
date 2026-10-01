@@ -34,6 +34,6 @@ public partial class VampireBatFamiliar : BaseFamiliar
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a vampire bat corpse";
-    public override string DefaultName => "a vampire bat";
+    public override string CorpseName => "труп вампирской летучей мыши";
+    public override string DefaultName => "вампирская летучая мышь";
 }

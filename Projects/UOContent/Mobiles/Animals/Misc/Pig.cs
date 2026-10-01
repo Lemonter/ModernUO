@@ -38,8 +38,8 @@ namespace Server.Mobiles
             MinTameSkill = 11.1;
         }
 
-        public override string CorpseName => "a pig corpse";
-        public override string DefaultName => "a pig";
+        public override string CorpseName => "труп свиньи";
+        public override string DefaultName => "свинья";
 
         public override int Meat => 1;
         public override FoodType FavoriteFood => FoodType.FruitsAndVeggies | FoodType.GrainsAndHay;

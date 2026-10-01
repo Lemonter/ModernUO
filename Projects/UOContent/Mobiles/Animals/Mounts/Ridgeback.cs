@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Ridgeback : BaseMount
     {
-        public override string DefaultName => "a ridgeback";
+        public override string DefaultName => "риджбек";
 
         [Constructible]
         public Ridgeback() : base(187, 0x3EBA, AIType.AI_Animal, FightMode.Aggressor)
@@ -42,7 +42,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a ridgeback corpse";
+        public override string CorpseName => "труп риджбека";
 
         public override int Meat => 1;
         public override int Hides => 12;

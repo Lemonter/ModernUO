@@ -14,7 +14,9 @@ public enum MahaonMenuCategory
     Stones,
     DungeonMarkers,
     Crops,
-    Raids
+    Raids,
+    Quests,
+    Areas
 }
 
 /// <summary>Our own "[AddLem" menu — not the base engine [add. Nested categories, each
@@ -56,7 +58,9 @@ public class MahaonSaplingAddGump : StaticGump<MahaonSaplingAddGump>
         ("Камни", 1000 + (int)MahaonMenuCategory.Stones),
         ("Маркеры данжей (невидимые)", 1000 + (int)MahaonMenuCategory.DungeonMarkers),
         ("Урожай (сезонные грядки)", 1000 + (int)MahaonMenuCategory.Crops),
-        ("Набеги", 1000 + (int)MahaonMenuCategory.Raids)
+        ("Набеги", 1000 + (int)MahaonMenuCategory.Raids),
+        ("Квесты", 1000 + (int)MahaonMenuCategory.Quests),
+        ("Области (разметка)", 1000 + (int)MahaonMenuCategory.Areas)
     ];
 
     private static (string label, int actionId)[] SaplingEntries()
@@ -120,6 +124,22 @@ public class MahaonSaplingAddGump : StaticGump<MahaonSaplingAddGump>
         ("Спаунер защитников города", 7002)
     ];
 
+    private static (string label, int actionId)[] QuestEntries() =>
+    [
+        ("Мэр (выдаёт задание \"убей N\")", 8000),
+        ("Доска охотников за головами", 8001),
+        ("Доска заказов ремесленников", 8002),
+        ("Сержант Гвидо (гвардия, звание, задания)", 8003),
+        ("Библиотекарь (продажа чертежей)", 8004),
+        ("Лесничий Питэр (задания на головы животных)", 8005),
+        ("Придворный маг (звание, бонус к мане, задания)", 8006)
+    ];
+
+    private static (string label, int actionId)[] AreaEntries() =>
+    [
+        ("Жезл разметки областей", 9000)
+    ];
+
     private (string label, int actionId)[] CurrentEntries() => _category switch
     {
         MahaonMenuCategory.Saplings       => SaplingEntries(),
@@ -128,6 +148,8 @@ public class MahaonSaplingAddGump : StaticGump<MahaonSaplingAddGump>
         MahaonMenuCategory.DungeonMarkers => DungeonMarkerEntries(),
         MahaonMenuCategory.Crops          => CropEntries(),
         MahaonMenuCategory.Raids          => RaidEntries(),
+        MahaonMenuCategory.Quests         => QuestEntries(),
+        MahaonMenuCategory.Areas          => AreaEntries(),
         _                                 => MainEntries()
     };
 
@@ -139,6 +161,8 @@ public class MahaonSaplingAddGump : StaticGump<MahaonSaplingAddGump>
         MahaonMenuCategory.DungeonMarkers => "Mahaon — маркеры данжей (невидимые для игроков)",
         MahaonMenuCategory.Crops          => "Mahaon — грядки (сезонный урожай)",
         MahaonMenuCategory.Raids          => "Mahaon — набеги",
+        MahaonMenuCategory.Quests         => "Mahaon — квесты",
+        MahaonMenuCategory.Areas          => "Mahaon — разметка областей",
         _                                 => "Mahaon — меню"
     };
 
@@ -353,6 +377,64 @@ public class MahaonSaplingAddGump : StaticGump<MahaonSaplingAddGump>
                     guardSpawner.OnDoubleClick(mobile);
                     mobile.SendMessage(0x59, "Спавнер защитников города поставлен и настроен на MahaonTownDefender.");
                     break;
+            }
+
+            return;
+        }
+
+        // Quests
+        if (buttonId is >= 8000 and < 9000)
+        {
+            switch (buttonId)
+            {
+                case 8000:
+                    var mayor = new Mobiles.MahaonMayor();
+                    mayor.MoveToWorld(mobile.Location, mobile.Map);
+                    mobile.SendMessage(0x59, "Мэр поставлен здесь — ПКМ → Properties, задай CityName.");
+                    break;
+
+                case 8001:
+                    PlaceAtFeet(mobile, new Items.MahaonBountyBoard());
+                    break;
+
+                case 8002:
+                    PlaceAtFeet(mobile, new Items.MahaonCraftingOrderBoard());
+                    break;
+
+                case 8003:
+                    var guido = new Mobiles.MahaonGuardSergeant();
+                    guido.MoveToWorld(mobile.Location, mobile.Map);
+                    mobile.SendMessage(0x59, "Сержант Гвидо поставлен здесь.");
+                    break;
+
+                case 8004:
+                    var librarian = new Mobiles.MahaonLibrarian();
+                    librarian.MoveToWorld(mobile.Location, mobile.Map);
+                    mobile.SendMessage(0x59, "Библиотекарь поставлен здесь.");
+                    break;
+
+                case 8005:
+                    var ranger = new Mobiles.MahaonRanger();
+                    ranger.MoveToWorld(mobile.Location, mobile.Map);
+                    mobile.SendMessage(0x59, "Лесничий Питэр поставлен здесь.");
+                    break;
+
+                case 8006:
+                    var courtMage = new Mobiles.MahaonCourtMage();
+                    courtMage.MoveToWorld(mobile.Location, mobile.Map);
+                    mobile.SendMessage(0x59, "Придворный маг поставлен здесь.");
+                    break;
+            }
+
+            return;
+        }
+
+        // Areas
+        if (buttonId is >= 9000 and < 9100)
+        {
+            if (buttonId == 9000)
+            {
+                PlaceAtFeet(mobile, new Items.MahaonAreaMarkingTool());
             }
         }
     }

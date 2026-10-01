@@ -40,8 +40,8 @@ namespace Server.Mobiles
             VirtualArmor = 30;
         }
 
-        public override string CorpseName => "an ice snake corpse";
-        public override string DefaultName => "an ice snake";
+        public override string CorpseName => "труп ледяной змеи";
+        public override string DefaultName => "ледяная змея";
 
         public override bool DeathAdderCharmable => true;
 

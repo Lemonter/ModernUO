@@ -1,4 +1,3 @@
-using System;
 using ModernUO.Serialization;
 
 namespace Server.Items;
@@ -43,13 +42,6 @@ public abstract partial class BaseHealPotion : BasePotion
             return false;
         }
 
-        if (!from.BeginAction<BaseHealPotion>())
-        {
-            // You must wait 10 seconds before using another healing potion.
-            from.LocalOverheadMessage(MessageType.Regular, 0x22, 500235);
-            return false;
-        }
-
         return true;
     }
 
@@ -58,7 +50,5 @@ public abstract partial class BaseHealPotion : BasePotion
         DoHeal(from);
 
         PlayDrinkEffect(from);
-
-        Timer.StartTimer(TimeSpan.FromSeconds(Delay), from.EndAction<BaseHealPotion>);
     }
 }

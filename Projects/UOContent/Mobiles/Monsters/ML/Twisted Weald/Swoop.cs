@@ -80,8 +80,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "a Swoop corpse";
-        public override string DefaultName => "Swoop";
+        public override string CorpseName => "труп Налётчика";
+        public override string DefaultName => "Налётчик";
 
         public override bool CanFly => true;
         public override bool GivesMLMinorArtifact => true;

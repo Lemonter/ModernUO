@@ -17,7 +17,7 @@ public sealed class Bless : Power
     public override void BeginInvoke(Player from)
     {
         from.Mobile.BeginTarget(12, true, TargetFlags.None, Power_OnTarget, from);
-        from.Mobile.SendMessage("Where do you wish to bless?");
+        from.Mobile.SendMessage("Что благословить?");
     }
 
     private void Power_OnTarget(Mobile fromMobile, object obj, Player from)

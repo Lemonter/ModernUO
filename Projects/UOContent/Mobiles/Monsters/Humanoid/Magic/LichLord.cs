@@ -46,8 +46,8 @@ namespace Server.Mobiles
             PackItem(new GnarledStaff());
             PackNecroReg(12, 40);
         }
-        public override string CorpseName => "a lich's corpse";
-        public override string DefaultName => "a lich lord";
+        public override string CorpseName => "труп лича";
+        public override string DefaultName => "лич-лорд";
         public override bool IsUndead => true;
 
         private BaseAI _mahaonForcedAI;

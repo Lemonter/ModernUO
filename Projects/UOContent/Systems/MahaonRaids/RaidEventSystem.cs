@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.CodeGeneratedEvents;
-using Server.Items;
 using Server.Mobiles;
 using Server.Network;
 using Server.Systems.MahaonGuard;
@@ -10,10 +9,10 @@ namespace Server.Systems.MahaonRaids;
 
 /// <summary>
 ///     Mahaon "Raid" mechanic: every ~12 hours a pack of mobs runs into a city and holds
-///     position there. Killing them grants guard points and gold. Dragon raids pay x20.
-///     Per the project's "world pauses without the player" design goal, raids are only
-///     rolled while at least one player is online — no one is progressing/farming while
-///     you're away.
+///     position there. Killing them grants guard points (no gold — removed per the shard
+///     owner's ask). Dragon raids pay x20. Per the project's "world pauses without the
+///     player" design goal, raids are only rolled while at least one player is online — no
+///     one is progressing/farming while you're away.
 /// </summary>
 public class RaidEventSystem : GenericPersistence
 {
@@ -28,8 +27,9 @@ public class RaidEventSystem : GenericPersistence
     private static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
 
     // Base reward for a raid kill, before the mob's RewardMultiplier is applied.
-    private const int BaseGuardPoints = 2;
-    private const int BaseGoldReward = 5;
+    // Mahaon: raised per the shard owner's ask ("повысь награды за набеги в очках
+    // гвардии") — was 2, felt small next to GuardQuestSystem's own 20-per-turn-in pacing.
+    private const int BaseGuardPoints = 10;
 
     private static DateTime _nextRaidTime;
     private static Timer _pollTimer;
@@ -100,6 +100,33 @@ public class RaidEventSystem : GenericPersistence
 
     private static TimeSpan RandomInterval() =>
         MinInterval + (MaxInterval - MinInterval) * Utility.RandomDouble();
+
+    /// <summary>How long until the next scheduled raid roll — never negative (a raid due
+    /// but not yet rolled, e.g. because no one was online, shows as "any moment now"
+    /// rather than a stale negative timer). Used by MahaonGuardSergeantGump.</summary>
+    public static TimeSpan GetTimeUntilNextRaid()
+    {
+        var remaining = _nextRaidTime - Core.Now;
+        return remaining < TimeSpan.Zero ? TimeSpan.Zero : remaining;
+    }
+
+    /// <summary>Live count of raid-spawned creatures still standing anywhere in the world
+    /// right now — a cheap enough scan for an occasional gump open, not a hot path. Used
+    /// to show "a raid is happening right now" instead of just a countdown.</summary>
+    public static int GetActiveRaiderCount()
+    {
+        var count = 0;
+
+        foreach (var mobile in World.Mobiles.Values)
+        {
+            if (mobile is IRaidSpawn and BaseCreature { Deleted: false, Alive: true })
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
 
     private static void CheckForRaid()
     {
@@ -196,14 +223,9 @@ public class RaidEventSystem : GenericPersistence
 
         var multiplier = raid.RewardMultiplier;
 
-        GuardSystem.AddPoints(player, BaseGuardPoints * multiplier);
-
-        var goldReward = BaseGoldReward * multiplier;
-        if (player.Backpack != null)
-        {
-            CurrencyHelper.DepositCopperValue(player.Backpack, CurrencyHelper.ToCopperValue(goldReward, 0, 0));
-            player.SendMessage(0x59, $"Ты получаешь {goldReward} золота за участие в набеге.");
-        }
+        var pointsReward = BaseGuardPoints * multiplier;
+        GuardSystem.AddPoints(player, pointsReward);
+        player.SendMessage(0x59, $"Ты получаешь {pointsReward} очков гвардии за участие в набеге.");
     }
 
     public override void Serialize(IGenericWriter writer)

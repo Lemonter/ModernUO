@@ -45,8 +45,8 @@ namespace Server.Mobiles
             PackItem(new Bone());
         }
 
-        public override string CorpseName => "a skeletal corpse";
-        public override string DefaultName => "a skeletal mage";
+        public override string CorpseName => "труп скелета";
+        public override string DefaultName => "скелет-маг";
         public override bool IsUndead => true;
 
         private BaseAI _mahaonForcedAI;

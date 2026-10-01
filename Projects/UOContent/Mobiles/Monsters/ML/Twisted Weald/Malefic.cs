@@ -48,8 +48,8 @@ namespace Server.Mobiles
             */
         }
 
-        public override string CorpseName => "a Malefic corpse";
-        public override string DefaultName => "Malefic";
+        public override string CorpseName => "труп Злокозненного";
+        public override string DefaultName => "Злокозненный";
 
         public override bool GivesMLMinorArtifact => true;
 

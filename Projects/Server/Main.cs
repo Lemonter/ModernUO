@@ -415,7 +415,9 @@ public static class Core
         Headless = Console.IsInputRedirected;
         if (Headless)
         {
-            logger.Information("Headless mode detected (stdin is not a TTY); interactive console input is disabled.");
+            logger.Information(
+                "Headless mode detected (stdin is not a TTY); interactive console prompts are disabled. Commands piped to stdin are still executed — see ConsoleInputHandler."
+            );
         }
 
         // LibDeflate is not thread safe, so we need to create a new instance for each thread

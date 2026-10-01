@@ -56,10 +56,10 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an orcish corpse";
+        public override string CorpseName => "труп орка";
         public override InhumanSpeech SpeechType => InhumanSpeech.Orc;
 
-        public override string DefaultName => "an orc bomber";
+        public override string DefaultName => "орк-бомбардир";
 
         public override bool CanRummageCorpses => true;
 

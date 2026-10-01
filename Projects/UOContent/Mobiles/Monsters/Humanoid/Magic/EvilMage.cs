@@ -54,7 +54,7 @@ namespace Server.Mobiles
             EquipItem(new Sandals());
         }
 
-        public override string CorpseName => "an evil mage corpse";
+        public override string CorpseName => "труп злого мага";
 
         public override bool CanRummageCorpses => true;
         public override bool AlwaysMurderer => true;

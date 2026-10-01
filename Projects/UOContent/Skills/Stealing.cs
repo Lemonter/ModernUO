@@ -53,7 +53,7 @@ public static class Stealing
         }
         else if (m.Region.IsPartOf<SafeZone>())
         {
-            m.SendMessage("You may not steal in this area.");
+            m.SendMessage("Здесь красть нельзя.");
         }
         else
         {
@@ -99,7 +99,7 @@ public static class Stealing
             }
             else if (_thief.Region.IsPartOf<SafeZone>())
             {
-                _thief.SendMessage("You may not steal in this area.");
+                _thief.SendMessage("Здесь красть нельзя.");
             }
             else if ((_thief as PlayerMobile)?.Young == true && (rootIsPlayer || mobRoot is BaseCreature))
             {
@@ -253,7 +253,13 @@ public static class Stealing
             {
                 var w = toSteal.Weight + toSteal.TotalWeight;
 
-                if (w > MaxWeightToSteal)
+                // «Лёгкая рука» — обычный перк категории Вор: из чужого рюкзака он
+                // вытащит вчетверо более тяжёлую вещь, чем кто угодно другой.
+                var maxWeight = Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                    _thief, Systems.MahaonProfessions.ProfessionCategory.Thief
+                ) ? MaxWeightToSteal * 4 : MaxWeightToSteal;
+
+                if (w > maxWeight)
                 {
                     // This item is too heavy to steal from someone's backpack.
                     _thief.SendLocalizedMessage(502722);
@@ -306,7 +312,13 @@ public static class Stealing
                         var iw = (int)Math.Ceiling(w);
                         iw *= 10;
 
-                        if (_thief.CheckTargetSkill(SkillName.Stealing, toSteal, iw - 22.5, iw + 27.5))
+                        var windowBonus = mobRoot != null
+                            ? Systems.MahaonCombat.ThievingSpecializationSystem.GetSkillWindowBonus(
+                                _thief, Systems.MahaonCombat.ThievingSpecialization.Pickpocket
+                            )
+                            : 0.0;
+
+                        if (_thief.CheckTargetSkill(SkillName.Stealing, toSteal, iw - 22.5 - windowBonus, iw + 27.5))
                         {
                             stolen = toSteal;
                         }
@@ -314,6 +326,13 @@ public static class Stealing
 
                     if (stolen != null)
                     {
+                        if (mobRoot != null)
+                        {
+                            Systems.MahaonCombat.ThievingSpecializationSystem.Train(
+                                _thief, Systems.MahaonCombat.ThievingSpecialization.Pickpocket
+                            );
+                        }
+
                         _thief.SendLocalizedMessage(502724); // You successfully steal the item.
 
                         if (si != null)

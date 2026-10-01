@@ -64,7 +64,7 @@ namespace Server.Items
             set => TeleOffset = new Point3D(value.X - Location.X, value.Y - Location.Y, value.Z - Location.Z);
         }
 
-        public override string DefaultName => "a hole";
+        public override string DefaultName => "дыра";
 
         public override void OnDoubleClick(Mobile m)
         {

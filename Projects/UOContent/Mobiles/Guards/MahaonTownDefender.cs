@@ -13,7 +13,7 @@ namespace Server.Mobiles
     ///     everything or getting steamrolled by "hundreds of orcs".
     /// </summary>
     [SerializationGenerator(0, false)]
-    public partial class MahaonTownDefender : BaseCreature
+    public partial class MahaonTownDefender : BaseCreature, IMahaonTownDefender
     {
         [Constructible]
         public MahaonTownDefender() : base(AIType.AI_Melee)
@@ -56,6 +56,22 @@ namespace Server.Mobiles
         public override bool AlwaysMurderer => false;
         public override bool ClickTitle => false;
         public override bool ShowFameTitle => false;
+
+        // Раньше защитник дрался только реактивно (обычный AI_Melee — атакует, только
+        // если атаковали его самого). Теперь, раз ванильная стража отключена
+        // (DisableVanillaGuards), это должно стать её честной заменой — реально
+        // проактивно атаковать ПК и красных существ, кто бы это ни был.
+        //
+        // AcquireOnApproach включает уже существующий в BaseCreature.OnMovement
+        // механизм "заметил кого-то рядом — напал", не пишем свой OnMovement с нуля.
+        // Но IsEnemy по умолчанию (см. BaseCreature.IsEnemy) считает врагом ЛЮБОГО
+        // игрока, кроме особых исключений — это полностью переопределяем, а не
+        // дополняем, иначе страж бросался бы вообще на всех подряд.
+        public override bool AcquireOnApproach => true;
+        public override int AcquireOnApproachRange => 10;
+
+        public override bool IsEnemy(Mobile m) =>
+            m.Alive && m.Murderer && (m as BaseCreature)?.IsInvulnerable != true;
 
         // Real fighting stats above still matter for who "wins" the visual duel/animations
         // — this only caps the actual Hits damage exchanged specifically against raid

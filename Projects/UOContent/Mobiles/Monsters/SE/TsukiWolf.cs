@@ -59,8 +59,8 @@ namespace Server.Mobiles
             );
         }
 
-        public override string CorpseName => "a tsuki wolf corpse";
-        public override string DefaultName => "a tsuki wolf";
+        public override string CorpseName => "труп цуки-волка";
+        public override string DefaultName => "цуки-волк";
         public override int Meat => 4;
         public override int Hides => 25;
         public override FoodType FavoriteFood => FoodType.Meat;

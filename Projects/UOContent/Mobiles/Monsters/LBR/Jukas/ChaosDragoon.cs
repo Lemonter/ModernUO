@@ -91,8 +91,8 @@ namespace Server.Mobiles
             new SwampDragon().Rider = this;
         }
 
-        public override string CorpseName => "a chaos dragoon corpse";
-        public override string DefaultName => "a chaos dragoon";
+        public override string CorpseName => "труп драгуна хаоса";
+        public override string DefaultName => "драгун хаоса";
 
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.AOS;

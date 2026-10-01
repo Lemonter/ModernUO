@@ -175,7 +175,7 @@ public partial class VendorRentalContract : Item
             }
             else if (!house.IsAosRules)
             {
-                from.SendMessage("Rental contracts can only be placed in AOS-enabled houses.");
+                from.SendMessage("Договоры аренды можно размещать только в домах AOS.");
             }
             else if (!house.Public)
             {
@@ -270,7 +270,7 @@ public partial class VendorRentalContract : Item
             }
             else if (!house.IsAosRules)
             {
-                from.SendMessage("Rental contracts can only be placed in AOS-enabled houses.");
+                from.SendMessage("Договоры аренды можно размещать только в домах AOS.");
             }
             else if (!house.Public)
             {

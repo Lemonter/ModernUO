@@ -43,8 +43,8 @@ namespace Server.Mobiles
             VirtualArmor = 40;
         }
 
-        public override string CorpseName => "an acid elemental corpse";
-        public override string DefaultName => "an acid elemental";
+        public override string CorpseName => "труп кислотного элементаля";
+        public override string DefaultName => "кислотный элементаль";
 
         public override bool BleedImmune => true;
         public override Poison HitPoison => Poison.Lethal;

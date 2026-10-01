@@ -38,8 +38,8 @@ namespace Server.Mobiles
             Karma = -12000;
         }
 
-        public override string CorpseName => "a corporeal brume corpse";
-        public override string DefaultName => "a corporeal brume";
+        public override string CorpseName => "труп воплощённой мглы";
+        public override string DefaultName => "воплощённая мгла";
 
         // TODO: Verify area attack specifics
         public override bool HasAura => Combatant != null;

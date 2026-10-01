@@ -48,7 +48,8 @@ public class MindRotSpell : NecromancerSpell, ITargetingSpell<Mobile>
              * The effect lasts for ((Spirit Speak skill level - target's Resist Magic skill level) / 50 ) + 20 seconds.
              */
 
-            m.Spell?.OnCasterHurt();
+            // Mahaon: no longer disturbs the target's own cast — enemy spells don't fizzle
+            // casting anymore (see Spell.OnCasterHurt's doc comment).
 
             m.PlaySound(0x1FB);
             m.PlaySound(0x258);

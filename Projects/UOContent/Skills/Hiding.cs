@@ -95,7 +95,7 @@ namespace Server.SkillHandlers
                 m.LocalOverheadMessage(MessageType.Regular, 0x22, 501241); // You can't seem to hide here.
             }
 
-            return TimeSpan.FromSeconds(10.0);
+            return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
         }
     }
 }

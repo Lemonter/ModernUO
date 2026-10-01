@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Server.Gumps;
 using Server.Items;
+using Server.Systems.MahaonCombat;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Systems.MahaonMining;
 
@@ -59,13 +61,26 @@ public static class MahaonMiningSwings
         {
             ApplyToolBonus(tool, ore);
 
+            // MahaonOre (the everyday drop) uses the real 24-metal tier; a rich vein can
+            // rarely hand back a genuine vanilla BaseOre instead (MineComplexSystem's
+            // CreateVeinResource fallback) — TierForVanillaOre covers that case too, so
+            // gathering specialization grows from either drop type.
+            if (ore is MahaonOre mahaonOre)
+            {
+                GatheringSpecializationSystem.OnOreMined(from, MahaonMetalTable.Get(mahaonOre.Metal).Tier, ore);
+            }
+            else if (ore is BaseOre baseOre)
+            {
+                GatheringSpecializationSystem.OnOreMined(from, GatheringSpecializationSystem.TierForVanillaOre(baseOre.Resource), ore);
+            }
+
             if (from.Backpack?.TryDropItem(from, ore, false) != true)
             {
                 ore.MoveToWorld(from.Location, wallMap);
             }
 
             var label = wasVein ? "Богатая жила поддаётся!" : "Ты добываешь";
-            from.SendMessage(0x59, $"{label}: {ore.Amount} x {ore.GetType().Name}.");
+            from.SendMessage(0x59, $"{label}: {ore.Amount} x {ore.Name}.");
 
             if (Utility.RandomDouble() < CoalChance)
             {
@@ -143,16 +158,26 @@ public static class MahaonMiningSwings
 
         if (from.CheckSkill(SkillName.Mining, 0.0, 100.0))
         {
-            var oreType = MahaonResourceTiers.PickOre(miningSkill);
-            var ore = MahaonResourceTiers.CreateOre(oreType, 1);
-            ApplyToolBonus(tool, ore);
+            var metal = Systems.MahaonMetals.MahaonOreGenerator.PickMetal(miningSkill);
+            var ore = new MahaonOre(metal, 1);
+            // Тул-бонус (кирка своего металла добывает быстрее) — не перенесён на новую
+            // систему в этом заходе, требует отдельной привязки металла к самой кирке
+            // (ковка кирок из новых металлов ещё не построена).
+
+            GatheringSpecializationSystem.OnOreMined(from, MahaonMetalTable.Get(metal).Tier, ore);
 
             if (from.Backpack?.TryDropItem(from, ore, false) != true)
             {
                 ore.MoveToWorld(from.Location, map);
             }
 
-            from.SendMessage(0x59, $"Ты выкапываешь: {ore.Amount} x {ore.GetType().Name}.");
+            // Mahaon: было ore.GetType().Name — MahaonOre хранит металл полем (_metal),
+            // не отдельным классом на тип, так что это ВСЕГДА печатало буквально
+            // "MahaonOre" независимо от того, какой металл реально выкопан (сам предмет
+            // при этом клался в рюкзак с правильным именем/цветом — несовпадение было
+            // только в этом сообщении). ore.Name уже верно выставлено в конструкторе
+            // MahaonOre на реальное русское название металла.
+            from.SendMessage(0x59, $"Ты выкапываешь: {ore.Amount} x {ore.Name}.");
 
             if (Utility.RandomDouble() < CoalChance)
             {
@@ -204,7 +229,17 @@ public static class MahaonMiningSwings
     }
 
     /// <summary>Matched-metal pick doubles the yield — iron pick on iron ore, agapite pick
-    /// on agapite ore, etc. Any other tool (or the wrong metal) gets no bonus.</summary>
+    /// on agapite ore, etc. Any other tool (or the wrong metal) gets no bonus.
+    ///
+    /// Real ore drops are MahaonOre now (one class + a MahaonMetal field — see MahaonOre.cs),
+    /// not the old per-tier vanilla ore classes MahaonResourceTiers.OreTable/OreToolBonus was
+    /// built against, so comparing ore.GetType() against those never matched — this bonus was
+    /// dead for every actual drop. Matches on MahaonMetal instead: the tool's reforged metal
+    /// (MahaonMetalTracker, set by SmithHammer's "перековка") if it has one, else Iron — every
+    /// tool is crafted plain-iron first under the current craft-then-reforge flow, so an
+    /// unreforged pick still counts as an iron pick on iron ore, same baseline as before.
+    /// OreToolBonus/OreTable stick around for MineComplexSystem's vanilla-typed vein fallback
+    /// (CreateVeinResource's OreTiers branch), a separate, much rarer path.</summary>
     private static void ApplyToolBonus(Item tool, Item ore)
     {
         if (tool is not BaseWeapon weapon)
@@ -212,7 +247,18 @@ public static class MahaonMiningSwings
             return;
         }
 
-        var bonus = MahaonResourceTiers.OreToolBonus(weapon.Resource, ore.GetType());
+        double bonus;
+
+        if (ore is MahaonOre mahaonOre)
+        {
+            var toolMetal = MahaonMetalTracker.GetMetal(weapon) ?? MahaonMetal.Iron;
+            bonus = toolMetal == mahaonOre.Metal ? MahaonResourceTiers.ToolMatchBonus : 1.0;
+        }
+        else
+        {
+            bonus = MahaonResourceTiers.OreToolBonus(weapon.Resource, ore.GetType());
+        }
+
         if (bonus > 1.0)
         {
             ore.Amount = (int)(ore.Amount * bonus);

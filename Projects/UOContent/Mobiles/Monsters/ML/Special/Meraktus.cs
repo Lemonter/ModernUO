@@ -98,7 +98,7 @@ public partial class Meraktus : BaseChampion
         }
     }
 
-    public override string CorpseName => "the remains of Meraktus";
+    public override string CorpseName => "останки Мерактуса";
     public override ChampionSkullType SkullType => ChampionSkullType.Pain;
 
     public override Type[] UniqueList => new[] { typeof(Subdue) };
@@ -113,7 +113,7 @@ public partial class Meraktus : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => new[] { MonsterStatuetteType.Minotaur };
 
-    public override string DefaultName => "Meraktus";
+    public override string DefaultName => "Мерактус";
 
     public override int Meat => 2;
     public override int Hides => 10;

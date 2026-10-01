@@ -73,8 +73,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a yomotsu corpse";
-        public override string DefaultName => "a yomotsu warrior";
+        public override string CorpseName => "труп ёмоцу";
+        public override string DefaultName => "воин ёмоцу";
 
         public override FoodType FavoriteFood => FoodType.Fish;
 

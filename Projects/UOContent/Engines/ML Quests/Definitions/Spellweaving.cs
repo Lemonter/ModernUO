@@ -512,7 +512,7 @@ public partial class Aeluva : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Aeluva";
+    public override string DefaultName => "Аэлува";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -562,7 +562,7 @@ public partial class Koole : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Koole";
+    public override string DefaultName => "Кооле";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -613,7 +613,7 @@ public partial class Synaeva : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Synaeva";
+    public override string DefaultName => "Синаэва";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -650,7 +650,7 @@ public partial class ElderBrae : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Elder Brae";
+    public override string DefaultName => "старейшина Брэ";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

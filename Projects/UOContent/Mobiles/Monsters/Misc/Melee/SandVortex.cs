@@ -43,8 +43,8 @@ namespace Server.Mobiles
             PackItem(new Bone());
         }
 
-        public override string CorpseName => "a sand vortex corpse";
-        public override string DefaultName => "a sand vortex";
+        public override string CorpseName => "труп песчаного вихря";
+        public override string DefaultName => "песчаный вихрь";
 
         public override void GenerateLoot()
         {

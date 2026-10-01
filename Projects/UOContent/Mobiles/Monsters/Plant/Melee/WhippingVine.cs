@@ -50,8 +50,8 @@ namespace Server.Mobiles
             PackItem(new Vines());
         }
 
-        public override string CorpseName => "a whipping vine corpse";
-        public override string DefaultName => "a whipping vine";
+        public override string CorpseName => "труп хлещущей лозы";
+        public override string DefaultName => "хлещущая лоза";
 
         public override bool BardImmune => !Core.AOS;
         public override Poison PoisonImmune => Poison.Lethal;

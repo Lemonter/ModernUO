@@ -383,7 +383,7 @@ namespace Server.Items
         public override int InitMinHits => 20;
         public override int InitMaxHits => 30;
 
-        public override string DefaultName => "a mask of orcish kin";
+        public override string DefaultName => "маска орочьего рода";
 
         public override bool Dye(Mobile from, DyeTub sender)
         {

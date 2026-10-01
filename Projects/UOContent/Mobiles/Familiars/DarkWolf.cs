@@ -38,8 +38,8 @@ public partial class DarkWolfFamiliar : BaseFamiliar
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a dark wolf corpse";
-    public override string DefaultName => "a dark wolf";
+    public override string CorpseName => "труп тёмного волка";
+    public override string DefaultName => "тёмный волк";
 
     public override void OnThink()
     {

@@ -40,8 +40,8 @@ namespace Server.Mobiles
             Karma = -18900;
         }
 
-        public override string CorpseName => "a Lady Sabrix corpse";
-        public override string DefaultName => "Lady Sabrix";
+        public override string CorpseName => "труп леди Сабрикс";
+        public override string DefaultName => "леди Сабрикс";
 
         /*
         // TODO: uncomment once added

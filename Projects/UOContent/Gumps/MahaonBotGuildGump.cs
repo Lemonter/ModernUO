@@ -19,7 +19,26 @@ public class MahaonBotGuildGump : StaticGump<MahaonBotGuildGump>
         var myGuildName = _beacon.GuildName;
         var haveGuild = !string.IsNullOrEmpty(myGuildName);
 
-        var height = haveGuild ? 260 + names.Length * 24 : 150;
+        // Must mirror the real layout below exactly — the background/alpha region are added
+        // before the content that determines how tall they should be. Was a flat guess
+        // (150 / 310+list) that never accounted for the guild-picker list at all in the
+        // no-guild case, or the "relation to others" section (added later) in the haveGuild
+        // case — with the full 15-name roster the real content ran ~300-400px past the
+        // background, clipping/overlapping the back button and half the relations list.
+        const int HeaderHeight = 90;               // title + status line + "no guild" button
+        const int GuildInfoBlockHeight = 124;       // member/pvp/crafts/training-header/boost-button
+        const int PickerRowHeight = 24;
+        const int RelationsHeaderHeight = 10 + 24;  // gap + "Отношение..." header
+        const int BottomMargin = 40;
+
+        var height = HeaderHeight + (haveGuild ? GuildInfoBlockHeight : 0) + names.Length * PickerRowHeight;
+
+        if (haveGuild)
+        {
+            height += RelationsHeaderHeight + (names.Length - 1) * PickerRowHeight;
+        }
+
+        height += BottomMargin;
 
         builder.AddPage();
         builder.AddBackground(0, 0, 360, height, 5054);
@@ -45,7 +64,7 @@ public class MahaonBotGuildGump : StaticGump<MahaonBotGuildGump>
             var pvpPercent = GuildSpecialization.GetPvpPercent(myGuildName);
             var allowsCrafts = GuildSpecialization.GetAllowsCrafts(myGuildName);
 
-            builder.AddHtml(20, y, 320, 20, $"Членов: {memberCount}   Золота в банке: {goldValue / (double)CurrencyHelper.CopperPerGold:0.##}   Камней: {gemCount}");
+            builder.AddHtml(20, y, 320, 20, $"Членов: {memberCount}   Золота в банке: {goldValue}   Камней: {gemCount}");
             y += 24;
 
             builder.AddHtml(20, y, 150, 20, $"PvP-направленность: {pvpPercent}%");
@@ -58,6 +77,28 @@ public class MahaonBotGuildGump : StaticGump<MahaonBotGuildGump>
             builder.AddButton(20, y, allowsCrafts ? 4006 : 4005, allowsCrafts ? 4008 : 4007, 202);
             builder.AddHtml(55, y + 2, 250, 20, allowsCrafts ? "Крафты разрешены" : "Крафты запрещены (клик — включить)");
             y += 30;
+
+            var purchaseCount = GuildUpgrades.GetPurchaseCount(myGuildName);
+            var nextCost = GuildUpgrades.GetNextPurchaseCost(myGuildName);
+
+            builder.AddHtml(
+                20, y, 320, 20,
+                $"Боевая подготовка: {purchaseCount}/{GuildUpgrades.MaxLevel} — усиливает одного случайного живого члена гильдии на +{GuildUpgrades.StatBonusPerPurchase} к статам"
+            );
+            y += 22;
+
+            if (nextCost >= 0)
+            {
+                var canAfford = gemCount >= nextCost;
+                builder.AddButton(20, y, canAfford ? 4005 : 4014, canAfford ? 4007 : 4016, canAfford ? 203 : 0);
+                builder.AddHtml(55, y + 2, 280, 20, $"Усилить случайного бойца за {nextCost} камней");
+            }
+            else
+            {
+                builder.AddHtml(20, y, 280, 20, "Все усиления уже куплены");
+            }
+
+            y += 24;
         }
 
         for (var i = 0; i < names.Length; i++)
@@ -178,6 +219,15 @@ public class MahaonBotGuildGump : StaticGump<MahaonBotGuildGump>
                     GuildSpecialization.SetAllowsCrafts(
                         _beacon.GuildName, !GuildSpecialization.GetAllowsCrafts(_beacon.GuildName)
                     );
+                    sender.Mobile?.SendGump(new MahaonBotGuildGump(_beacon));
+                    return;
+
+                case 203: // Buy one boost, applied to a random living guild member
+                    if (!GuildUpgrades.TryBoostRandomMember(_beacon.GuildName))
+                    {
+                        sender.Mobile?.SendMessage(0x22, "Не удалось усилить бойца — не хватает камней или в гильдии нет живых членов.");
+                    }
+
                     sender.Mobile?.SendGump(new MahaonBotGuildGump(_beacon));
                     return;
             }

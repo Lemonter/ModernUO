@@ -38,8 +38,8 @@ public partial class LadyJennifyr : SkeletalKnight
         Karma = -18000;
     }
 
-    public override string CorpseName => "a Lady Jennifyr corpse";
-    public override string DefaultName => "Lady Jennifyr";
+    public override string CorpseName => "труп леди Дженнифир";
+    public override string DefaultName => "леди Дженнифир";
 
     /*
     // TODO: Uncomment once added

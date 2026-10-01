@@ -123,7 +123,7 @@ public partial class Moongate : Item
         }
         else
         {
-            m.SendMessage("This moongate does not seem to go anywhere.");
+            m.SendMessage("Похоже, эти лунные врата никуда не ведут.");
         }
     }
 
@@ -188,7 +188,7 @@ public partial class Moongate : Item
         }
         else
         {
-            from.SendMessage("This moongate does not seem to go anywhere.");
+            from.SendMessage("Похоже, эти лунные врата никуда не ведут.");
         }
     }
 

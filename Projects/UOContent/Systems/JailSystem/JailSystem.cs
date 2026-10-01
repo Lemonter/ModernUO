@@ -108,7 +108,7 @@ public class JailSystem : GenericPersistence
         record.JailEndTime = Core.Now + jailTime;
 
         player.Frozen = true;
-        player.SendMessage(0x35, "You are being sent to jail!");
+        player.SendMessage(0x35, "Тебя отправляют в тюрьму!");
         player.PlaySound(0x204);
 
         CommandLogging.WriteLine(from, $"Player {player.Name} jailed for: {reason} (Offense #{record.JailCount}, {jailTime.TotalMinutes} minutes)");
@@ -130,7 +130,7 @@ public class JailSystem : GenericPersistence
         {
             var mount = player.Mount;
             mount.Rider = null;
-            player.SendMessage(0x35, "You have been dismounted.");
+            player.SendMessage(0x35, "Тебя сбили со скакуна.");
             if (mount is BaseCreature bc)
             {
                 if (bc.Summoned)
@@ -163,8 +163,8 @@ public class JailSystem : GenericPersistence
 
         player.MoveToWorld(jailLocation, JailMap);
 
-        player.SendMessage(0x35, "Use [jailrecord to pull up your record.");
-        player.SendMessage(0x35, "Please contact staff if you believe this was a mistake.");
+        player.SendMessage(0x35, "Набери [jailrecord, чтобы посмотреть свою историю.");
+        player.SendMessage(0x35, "Если считаешь, что это ошибка — напиши персоналу.");
 
         CommandLogging.WriteLine(from, $"Player {player.Name} teleported to jail at {jailLocation}");
 
@@ -194,7 +194,7 @@ public class JailSystem : GenericPersistence
 
         // Freeze player for release sequence
         player.Frozen = true;
-        player.SendMessage(0x35, "You have been released from jail!");
+        player.SendMessage(0x35, "Тебя выпустили из тюрьмы!");
         player.PlaySound(0x1FF);
 
         if (from != null)
@@ -219,7 +219,7 @@ public class JailSystem : GenericPersistence
 
         if (from != null)
         {
-            CommandLogging.WriteLine(player, $"Player {player.Name} teleported from jail to {ReleaseLocation}");
+            CommandLogging.WriteLine(from, $"Player {player.Name} teleported from jail to {ReleaseLocation}");
         }
 
         Timer.DelayCall(TimeSpan.FromSeconds(5.0), UnfreezeFromRelease, from, player);
@@ -228,9 +228,9 @@ public class JailSystem : GenericPersistence
     private static void UnfreezeFromRelease(Mobile from, PlayerMobile player)
     {
         player.Frozen = false;
-        player.SendMessage(0x35, "Welcome back!");
-        player.SendMessage(0x35, "Please follow the shard rules.");
-        player.SendMessage(0x35, "Have a nice day!");
+        player.SendMessage(0x35, "С возвращением!");
+        player.SendMessage(0x35, "Соблюдай правила шарда.");
+        player.SendMessage(0x35, "Хорошего дня!");
 
         if (from != null)
         {
@@ -271,7 +271,7 @@ public class JailSystem : GenericPersistence
 
         if (player.AccessLevel > AccessLevel.Player)
         {
-            e.Mobile.SendMessage(0x35, "You cannot jail staff members.");
+            e.Mobile.SendMessage(0x35, "Персонал в тюрьму не сажают.");
             return;
         }
 
@@ -417,8 +417,21 @@ public class JailSystem : GenericPersistence
                 PlayerJailRecords[player] = record;
                 if (record.IsCurrentlyJailed)
                 {
-                    CurrentlyBeingJailed.Add(player);
+                    // Deliberately NOT added to CurrentlyBeingJailed here — that set only
+                    // guards the brief in-progress freeze/dismount/teleport/unfreeze
+                    // sequence (JailPlayer adds, UnfreezePlayer removes once the player is
+                    // settled in the cell), not "is still serving time." Adding it here used
+                    // to permanently block this player from ever being jailed again after
+                    // release, since ReleasePlayer never removes it — JailPlayer's guard
+                    // `if (!CurrentlyBeingJailed.Add(player)) return;` would silently no-op
+                    // forever.
                     var jailTime = record.JailEndTime - Core.Now;
+
+                    if (jailTime < TimeSpan.Zero)
+                    {
+                        jailTime = TimeSpan.Zero;
+                    }
+
                     JailTimers[player] = Timer.DelayCall(jailTime, ReleasePlayer, record.JailedBy, player);
                 }
             }

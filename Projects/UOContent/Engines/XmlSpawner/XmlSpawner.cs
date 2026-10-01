@@ -15,11 +15,14 @@ using System.Xml;
 using Server.Collections;
 using Server.Engines.Spawners;
 using Server.Gumps;
+using Server.Logging;
 
 namespace Server.Mobiles;
 
 public class XmlSpawner : Item, ISpawner
 {
+    private static readonly ILogger logger = LogFactory.GetLogger(typeof(XmlSpawner));
+
     public enum TODModeType { Realtime, Gametime }
 
     public enum SpawnPositionType { Random, RowFill, ColFill, Perimeter, Player, Waypoint, RelXY, DeltaLocation, Location, Wet, Tiles, NoTiles, ItemID, NoItemID }
@@ -5282,6 +5285,9 @@ public class XmlSpawner : Item, ISpawner
             from.SendMessage($"Loading {"XmlSpawner"} objects{(!string.IsNullOrEmpty(SpawnerPrefix) ? $" beginning with {SpawnerPrefix}" : string.Empty)} from file {filename}.");
         }
 
+        var loadStopwatch = Stopwatch.StartNew();
+        logger.Information("XmlSpawner: reading {File} (this can take a while for large files, no progress until parsing finishes)...", filename);
+
         // Create the data set
         DataSet ds = new DataSet(SpawnDataSetName);
 
@@ -5298,6 +5304,7 @@ public class XmlSpawner : Item, ISpawner
                 from.SendMessage(33, $"Error reading xml file {filename}");
             }
 
+            logger.Error("XmlSpawner: failed to parse {File}", filename);
             fileerror = true;
         }
         // close the file
@@ -5310,9 +5317,34 @@ public class XmlSpawner : Item, ISpawner
         // Check that at least a single table was loaded
         if (ds.Tables.Count > 0)
         {
+            // Perf: the per-row duplicate-spawner lookup used to walk the entire
+            // World.Items.Values collection (looking for an XmlSpawner with a matching
+            // UniqueId) once per row, in BOTH the creation pass below and the
+            // reference-resolution pass after it. Since every row that creates a spawner
+            // also grows World.Items by one, that made each successive row's scan longer
+            // than the last — an O(rows × world size) blowup that gets visibly slower the
+            // further an import progresses, worse on a world that already has a lot of items
+            // in it. A dictionary keyed by UniqueId, built once up front and kept updated as
+            // new spawners are created, turns every lookup into O(1) and is shared by both
+            // passes.
+            var spawnersByGuid = new Dictionary<string, XmlSpawner>();
+            foreach (var worldItem in World.Items.Values)
+            {
+                if (worldItem is XmlSpawner existingSpawner)
+                {
+                    spawnersByGuid[existingSpawner.UniqueId] = existingSpawner;
+                }
+            }
+
             // Add each spawn point to the current map
             if (ds.Tables[SpawnTablePointName] != null && ds.Tables[SpawnTablePointName].Rows.Count > 0)
             {
+                var totalRows = ds.Tables[SpawnTablePointName].Rows.Count;
+                logger.Information(
+                    "XmlSpawner: {File} parsed in {Elapsed:N1}s, {Rows} spawn entries found — creating spawners now",
+                    filename, loadStopwatch.Elapsed.TotalSeconds, totalRows
+                );
+
                 foreach (DataRow dr in ds.Tables[SpawnTablePointName].Rows)
                 {
                     // load in the spawner info.  Certain fields are required and therefore cannot be ignored
@@ -5695,36 +5727,27 @@ public class XmlSpawner : Item, ISpawner
                         // Check if this spawner already exists
                         XmlSpawner OldSpawner = null;
                         bool found_container = false;
-                        bool found_spawner = false;
                         Container spawn_container = null;
                         if (!bad_spawner)
                         {
-                            foreach (Item i in World.Items.Values)
-                            {
-                                if (i is XmlSpawner checkXmlSpawner)
-                                {
-                                    // Check if the spawners GUID is the same as the one being loaded
-                                    // and that the spawners map is the same as the one being loaded
-                                    if (checkXmlSpawner.UniqueId == SpawnId.ToString()
-                                        /* && (CheckXmlSpawner.Map == SpawnMap || loadrelative)*/)
-                                    {
-                                        OldSpawner = checkXmlSpawner;
-                                        found_spawner = true;
-                                    }
-                                }
+                            // O(1) instead of walking every World.Items.Values entry — see
+                            // the comment on spawnersByGuid's declaration above.
+                            spawnersByGuid.TryGetValue(SpawnId.ToString(), out OldSpawner);
 
-                                //look for containers with the spawn coordinates if the incontainer flag is set
-                                if (InContainer && !found_container && i is Container container && SpawnCentreX == container.Location.X && SpawnCentreY == container.Location.Y &&
-                                    (SpawnCentreZ == container.Location.Z || SpawnCentreZ == short.MinValue))
+                            // InContainer spawns are rare — only pay for a full world scan
+                            // when this row actually needs one.
+                            if (InContainer)
+                            {
+                                foreach (Item i in World.Items.Values)
                                 {
-                                    // assume this is the container that the spawner was in
-                                    found_container = true;
-                                    spawn_container = container;
-                                }
-                                // ok we can break if we have handled both the spawner and any containers
-                                if (found_spawner && (found_container || !InContainer))
-                                {
-                                    break;
+                                    if (i is Container container && SpawnCentreX == container.Location.X && SpawnCentreY == container.Location.Y &&
+                                        (SpawnCentreZ == container.Location.Z || SpawnCentreZ == short.MinValue))
+                                    {
+                                        // assume this is the container that the spawner was in
+                                        found_container = true;
+                                        spawn_container = container;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -5796,6 +5819,11 @@ public class XmlSpawner : Item, ISpawner
                                 m_DisableGlobalAutoReset = TickReset
                             };
 
+                            // Keep the lookup dictionary current so later rows in this same
+                            // file (and the reference-resolution pass below) can find this
+                            // spawner without a full world scan.
+                            spawnersByGuid[TheSpawn.UniqueId] = TheSpawn;
+
                             // Try to find a valid Z height if required (SpawnCentreZ = short.MinValue)
                             int NewZ = 0;
 
@@ -5861,6 +5889,14 @@ public class XmlSpawner : Item, ISpawner
 
                             // Increment the count
                             TotalCount++;
+
+                            if (TotalCount % 200 == 0)
+                            {
+                                logger.Information(
+                                    "XmlSpawner: {File} — {Done}/{Total} spawners created ({Elapsed:N0}s elapsed)",
+                                    filename, TotalCount, totalRows, loadStopwatch.Elapsed.TotalSeconds
+                                );
+                            }
                         }
                         bad_spawner = false;
                         questionable_spawner = false;
@@ -5873,10 +5909,28 @@ public class XmlSpawner : Item, ISpawner
                 from.SendMessage("Resolving spawner self references");
             }
 
+            logger.Information(
+                "XmlSpawner: {File} — {Total} spawners created in {Elapsed:N1}s, resolving self-references now",
+                filename, TotalCount, loadStopwatch.Elapsed.TotalSeconds
+            );
+
             if (ds.Tables[SpawnTablePointName] != null && ds.Tables[SpawnTablePointName].Rows.Count > 0)
             {
+                var refIndex = 0;
+                var refTotal = ds.Tables[SpawnTablePointName].Rows.Count;
+
                 foreach (DataRow dr in ds.Tables[SpawnTablePointName].Rows)
                 {
+                    refIndex++;
+
+                    if (refIndex % 500 == 0)
+                    {
+                        logger.Information(
+                            "XmlSpawner: {File} — resolving self-references {Done}/{Total} ({Elapsed:N0}s elapsed)",
+                            filename, refIndex, refTotal, loadStopwatch.Elapsed.TotalSeconds
+                        );
+                    }
+
                     // Try load the GUID
                     bool badid = false;
                     Guid SpawnId = Guid.NewGuid();
@@ -5904,27 +5958,9 @@ public class XmlSpawner : Item, ISpawner
                         catch { }
                     }
 
-                    bool found_spawner = false;
-                    XmlSpawner OldSpawner = null;
-                    foreach (Item i in World.Items.Values)
-                    {
-                        if (i is XmlSpawner checkXmlSpawner)
-                        {
-                            // Check if the spawners GUID is the same as the one being loaded
-                            // and that the spawners map is the same as the one being loaded
-                            if (checkXmlSpawner.UniqueId == SpawnId.ToString()
-                                /* && (CheckXmlSpawner.Map == SpawnMap || loadrelative) */)
-                            {
-                                OldSpawner = checkXmlSpawner;
-                                found_spawner = true;
-                            }
-                        }
-
-                        if (found_spawner)
-                        {
-                            break;
-                        }
-                    }
+                    // O(1) instead of walking every World.Items.Values entry — see the
+                    // comment on spawnersByGuid's declaration above.
+                    var found_spawner = spawnersByGuid.TryGetValue(SpawnId.ToString(), out var OldSpawner);
 
                     if (found_spawner && OldSpawner != null && !OldSpawner.Deleted)
                     {
@@ -6046,6 +6082,11 @@ public class XmlSpawner : Item, ISpawner
         {
             from.SendMessage($"{TotalCount} spawner(s) were created from file {filename} [Trammel={TrammelCount}, Felucca={FeluccaCount}, Ilshenar={IlshenarCount}, Malas={MalasCount}, Tokuno={TokunoCount} Other={OtherCount}].");
         }
+
+        logger.Information(
+            "XmlSpawner: {File} finished in {Elapsed:N1}s — {Total} spawner(s) created [Trammel={Trammel}, Felucca={Felucca}, Ilshenar={Ilshenar}, Malas={Malas}, Tokuno={Tokuno}, Other={Other}], {Bad} bad, {Questionable} questionable",
+            filename, loadStopwatch.Elapsed.TotalSeconds, TotalCount, TrammelCount, FeluccaCount, IlshenarCount, MalasCount, TokunoCount, OtherCount, badcount, questionablecount
+        );
 
         if (failedobjectitemcount > 0)
         {

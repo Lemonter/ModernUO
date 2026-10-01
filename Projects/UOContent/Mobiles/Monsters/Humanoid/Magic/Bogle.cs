@@ -34,8 +34,8 @@ namespace Server.Mobiles
             PackItem(new Bone());
         }
 
-        public override string CorpseName => "a ghostly corpse";
-        public override string DefaultName => "a bogle";
+        public override string CorpseName => "призрачный труп";
+        public override string DefaultName => "богл";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

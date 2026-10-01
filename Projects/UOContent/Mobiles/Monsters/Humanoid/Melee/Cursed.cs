@@ -48,7 +48,7 @@ namespace Server.Mobiles
             Karma = -2000;
         }
 
-        public override string CorpseName => "an inhuman corpse";
+        public override string CorpseName => "нечеловеческий труп";
         public override bool ClickTitle => false;
         public override bool ShowFameTitle => false;
 

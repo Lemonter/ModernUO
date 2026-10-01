@@ -40,8 +40,8 @@ namespace Server.Mobiles
             Tamable = false;
         }
 
-        public override string CorpseName => "a grizzly bear corpse";
-        public override string DefaultName => "a raging grizzly bear";
+        public override string CorpseName => "труп гризли";
+        public override string DefaultName => "разъярённый гризли";
 
         public override int Meat => 4;
         public override int Hides => 32;

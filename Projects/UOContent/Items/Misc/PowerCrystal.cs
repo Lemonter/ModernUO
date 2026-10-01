@@ -12,7 +12,7 @@ public partial class PowerCrystal : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "power crystal";
+    public override string DefaultName => "силовой кристалл";
 
     public override void OnDoubleClick(Mobile from)
     {
@@ -22,7 +22,7 @@ public partial class PowerCrystal : Item
         }
         else
         {
-            from.SendAsciiMessage("This looks like part of a larger contraption.");
+            from.SendAsciiMessage("Похоже на часть чего-то большего.");
         }
     }
 }

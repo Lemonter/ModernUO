@@ -45,8 +45,8 @@ namespace Server.Mobiles
             AddItem(new LightSource());
         }
 
-        public override string CorpseName => "a fire elemental corpse";
-        public override string DefaultName => "a fire elemental";
+        public override string CorpseName => "труп огненного элементаля";
+        public override string DefaultName => "огненный элементаль";
 
         public override bool BleedImmune => true;
         

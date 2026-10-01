@@ -30,7 +30,7 @@ public static class T2ACraftSystem
                 var menu = new BlacksmithMenu(mob, t);
                 if (menu.Entries.Length == 0)
                 {
-                    mob.SendAsciiMessage("You lack the skill and materials to craft anything.");
+                    mob.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                     return;
                 }
 
@@ -112,7 +112,7 @@ public static class T2ACraftSystem
         var menu = (T)Activator.CreateInstance(typeof(T), from, tool);
         if (menu.Entries.Length == 0)
         {
-            from.SendAsciiMessage("You lack the skill and materials to craft anything.");
+            from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
             return;
         }
 

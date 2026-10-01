@@ -12,6 +12,6 @@ namespace Server.Items
         [Constructible]
         public PumpkinPizza() => Hue = 0xF3;
 
-        public override string DefaultName => "Pumpkin Pizza";
+        public override string DefaultName => "тыквенная пицца";
     }
 }

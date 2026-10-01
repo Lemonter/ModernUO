@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Collections;
 using Server.ContextMenus;
@@ -178,7 +178,9 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
         }
     }
 
-    private class ToggleMiningStoneEntry : ContextMenuEntry
+    // internal, not private: IronBeetle offers the same two entries on its own context menu,
+    // exactly as the original does.
+    internal class ToggleMiningStoneEntry : ContextMenuEntry
     {
         private readonly bool _value;
 

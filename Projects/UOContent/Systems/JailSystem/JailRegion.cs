@@ -26,7 +26,7 @@ public class JailRegion : BaseRegion
     {
         if (from.AccessLevel == AccessLevel.Player)
         {
-            from.SendMessage("You may not do that in jail.");
+            from.SendMessage("В тюрьме так нельзя.");
             return false;
         }
 
@@ -37,7 +37,7 @@ public class JailRegion : BaseRegion
     {
         if (from.AccessLevel == AccessLevel.Player)
         {
-            from.SendMessage("You may not do that in jail.");
+            from.SendMessage("В тюрьме так нельзя.");
             return false;
         }
 
@@ -79,7 +79,7 @@ public class JailRegion : BaseRegion
     {
         if (from.AccessLevel == AccessLevel.Player)
         {
-            from.SendMessage("You may not use skills in jail.");
+            from.SendMessage("В тюрьме навыки не работают.");
             return false;
         }
 

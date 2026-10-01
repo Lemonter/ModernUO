@@ -81,7 +81,7 @@ public partial class ChampionSkullBrazier : AddonComponent
         }
         else if (!Harrower.CanSpawn)
         {
-            from.SendMessage("The harrower has already been spawned.");
+            from.SendMessage("Разоритель уже призван.");
         }
         else if (_skull == null)
         {
@@ -112,7 +112,7 @@ public partial class ChampionSkullBrazier : AddonComponent
         }
         else if (!Harrower.CanSpawn)
         {
-            from.SendMessage("The harrower has already been spawned.");
+            from.SendMessage("Разоритель уже призван.");
         }
         else if (skull == null)
         {

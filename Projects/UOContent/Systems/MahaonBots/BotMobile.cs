@@ -28,6 +28,41 @@ public partial class BotMobile : PlayerMobile
     [SerializableField(1)]
     private bool _isPk;
 
+    // Mahaon: real players' Resurrect() (PlayerMobile.cs) grants a DeathRobe every single
+    // time they come back to life — fine for an actual person who dies occasionally, but
+    // bots die and resurrect constantly (sometimes thousands of times over a long test
+    // session), and each robe that PlayerMobile.EquipItem couldn't equip cleanly (slot
+    // already occupied by a leftover from the PREVIOUS death) gets pushed into the bot's
+    // own backpack instead of being discarded — millions of orphaned DeathRobe items
+    // accumulating in the world over time, all counted every single save even though
+    // nothing about the world visually looks any different. Bots don't need the cosmetic
+    // "you just died" indicator the way a real player does, so this skips granting one at
+    // all — still calls the real PlayerMobile.Resurrect() first for everything else it
+    // does (clearing poison, restoring Hits/Stam/Mana, closing the bank box, etc), just
+    // immediately removes whatever robe that call just equipped.
+    /// <summary>
+    ///     Единственная надёжная точка для «бота больше нет». [ClearBots и [remove зовут
+    ///     Delete() напрямую, мимо UnregisterBot, поэтому питомец оставался в мире с
+    ///     хозяином, которого уже удалили. Здесь через это не проскочит ни один путь
+    ///     удаления.
+    /// </summary>
+    public override void OnDelete()
+    {
+        Systems.MahaonBots.BotController.UnregisterBot(this);
+        base.OnDelete();
+    }
+
+    public override void Resurrect()
+    {
+        var wasAlive = Alive;
+        base.Resurrect();
+
+        if (Alive && !wasAlive && FindItemOnLayer(Layer.OuterTorso) is DeathRobe robe)
+        {
+            robe.Delete();
+        }
+    }
+
     // Shared memory — every bot reads and writes the SAME pool of known spots, keyed by
     // map. One bot finding a good mine/tree/fish/hunting spot means every other bot
     // benefits immediately, instead of each one rediscovering the world from scratch.
@@ -49,6 +84,35 @@ public partial class BotMobile : PlayerMobile
     public Point3D? PickKnownTreeSpot() => PickKnown(SharedTreeSpots, Map);
     public Point3D? PickKnownFishSpot() => PickKnown(SharedFishSpots, Map);
     public Point3D? PickKnownHuntingSpot() => PickKnown(SharedHuntingSpots, Map);
+
+    /// <summary>
+    ///     Вычёркивает из общей памяти всё, что лежит рядом с этой точкой.
+    ///
+    ///     Зовётся, когда до места так и не удалось дойти. Память общая, и попала туда
+    ///     жила, возможно, от бота, стоявшего по ту сторону реки: без вычёркивания
+    ///     недостижимое место оставалось бы в списке навсегда и раз за разом выпадало бы
+    ///     следующему.
+    /// </summary>
+    public void ForgetSpotNear(Point3D loc)
+    {
+        Forget(SharedMineSpots, Map, loc);
+        Forget(SharedTreeSpots, Map, loc);
+        Forget(SharedFishSpots, Map, loc);
+        Forget(SharedHuntingSpots, Map, loc);
+    }
+
+    private static void Forget(Dictionary<Map, List<Point3D>> pool, Map map, Point3D loc)
+    {
+        if (map == null || !pool.TryGetValue(map, out var list))
+        {
+            return;
+        }
+
+        list.RemoveAll(known => Math.Abs(known.X - loc.X) <= ForgetRadius && Math.Abs(known.Y - loc.Y) <= ForgetRadius);
+    }
+
+    /// <summary>Насколько широко вычёркивать вокруг недостижимой точки.</summary>
+    private const int ForgetRadius = 6;
 
     private static void Remember(Dictionary<Map, List<Point3D>> pool, Map map, Point3D loc)
     {
@@ -104,7 +168,7 @@ public partial class BotMobile : PlayerMobile
             Hue = Race.Human.RandomSkinHue(),
             Player = true,
             _archetype = type,
-            _isPk = Utility.RandomDouble() < 0.12
+            _isPk = Utility.RandomDouble() < Systems.MahaonBots.BotTuning.PkChance
         };
 
         bot.Body = bot.Female ? 0x191 : 0x190;
@@ -119,6 +183,8 @@ public partial class BotMobile : PlayerMobile
         GiveInstrumentIfBard(bot);
         Systems.MahaonSoulStones.TattooSystem.ApplyTattoo(bot, Systems.MahaonSoulStones.TattooType.SoulCatcher, TimeSpan.FromDays(3650));
 
+        ApplyNameTemplate(bot);
+
         bot.Hits = bot.HitsMax;
         bot.Stam = bot.StamMax;
         bot.Mana = bot.ManaMax;
@@ -126,6 +192,49 @@ public partial class BotMobile : PlayerMobile
         bot.MoveToWorld(location, map);
 
         return bot;
+    }
+
+    /// <summary>
+    ///     Имя бота по шаблону «Имя Профессия [Гильдия]».
+    ///
+    ///     Движок собирает эту строку сам (Mobile.AddNameProperties: имя, затем Title,
+    ///     затем аббревиатура гильдии в скобках) — от нас требуются три вещи, каждой из
+    ///     которых не хватало:
+    ///
+    ///     — Title. Его ставит ProfessionSystem.SetProfession, но воскрешение и
+    ///       перевыдача снаряжения его затирали; поэтому проставляем заново здесь и после
+    ///       смерти.
+    ///     — Гильдия. Раньше в неё попадали только боты с маяка, у которого заполнено
+    ///       GuildName; у остальных скобок в имени не было вовсе. Теперь безгильдейный бот
+    ///       берёт гильдию из общего списка.
+    ///     — DisplayGuildTitle. Без него движок скобки не рисует (BotGuilds.Join его
+    ///       ставит, но только на своём пути).
+    /// </summary>
+    public static void ApplyNameTemplate(BotMobile bot)
+    {
+        if (bot?.Deleted != false)
+        {
+            return;
+        }
+
+        var profession = Systems.MahaonProfessions.ProfessionSystem.GetProfession(bot);
+
+        if (profession != null)
+        {
+            bot.Title = Systems.MahaonProfessions.ProfessionData.GetName(profession.Value, bot.Female);
+        }
+
+        // Гильдию здесь больше не выбираем: этим занимается маяк (одна на всех своих
+        // ботов). Случайная гильдия на каждого бота превращала точку возрождения в свалку
+        // чужаков — см. BotGuilds.NameForBeacon.
+        if (bot.Guild == null && Systems.MahaonBots.BotController.TryGetProfile(bot, out var profile) &&
+            profile.OwnerBeacon is Items.MahaonBotBeacon { Deleted: false } beacon)
+        {
+            Systems.MahaonBots.BotGuilds.Join(beacon.GuildNameFor(bot), bot);
+        }
+
+        bot.DisplayGuildTitle = true;
+        bot.InvalidateProperties();
     }
 
     private static void AssignProfession(BotMobile bot, BotArchetype type, bool forceThief = false)
@@ -152,6 +261,48 @@ public partial class BotMobile : PlayerMobile
     /// fresh bot of this archetype would start with.</summary>
     public static void RegearAfterDeath(BotMobile bot)
     {
+        // Смерть снимает Title вместе с прочим — возвращаем «Имя Профессия [Гильдия]».
+        ApplyNameTemplate(bot);
+
+        // Mahaon: ApplyArchetype below unconditionally EquipItems a whole fresh outfit —
+        // it doesn't check what's already worn, and EquipItem doesn't delete whatever it
+        // displaces (see the DeathRobe/TryEquipUpgrade leak — same root cause, but this
+        // one re-dresses the bot ENTIRELY on every single death, 5-10 pieces at once,
+        // which is almost certainly the bulk of the ~2 million leaked entities: exactly
+        // matches PlateGorget/Sandals/StuddedChest/etc counts from [CountEntities). Strip
+        // whatever's currently on a gear layer first so the old pieces get properly
+        // deleted instead of silently piling up in the bot's own backpack forever.
+        var gearLayers = new[]
+        {
+            Layer.OuterTorso, Layer.InnerTorso, Layer.MiddleTorso, Layer.Arms, Layer.Pants,
+            Layer.Neck, Layer.Helm, Layer.Shoes, Layer.Cloak, Layer.Gloves,
+            Layer.OneHanded, Layer.TwoHanded, Layer.Shirt
+        };
+
+        foreach (var layer in gearLayers)
+        {
+            bot.FindItemOnLayer(layer)?.Delete();
+        }
+
+        // Mahaon: ApplyArchetype also unconditionally drops a fresh Spellbook/
+        // MahaonReagentPouch/Bandage/Arrow stack into the backpack for the matching
+        // archetype — same leak, different location (backpack instead of a worn layer).
+        // Spellbook count alone was 1857 against 144 live bots in [CountEntities — this
+        // was the source. Clear the specific types ApplyArchetype is about to re-give
+        // before calling it, same reasoning as the gear-layer strip above. Bandage/Arrow
+        // are stackable and usually merge on drop, but clearing first keeps this
+        // unconditionally correct regardless of stacking behavior.
+        if (bot.Backpack != null)
+        {
+            foreach (var item in new List<Item>(bot.Backpack.Items))
+            {
+                if (item is Spellbook or MahaonReagentPouch or Bandage or Arrow)
+                {
+                    item.Delete();
+                }
+            }
+        }
+
         ApplyArchetype(bot, bot.Archetype);
 
         if (bot.Backpack?.FindItemByType<BaseInstrument>() == null)
@@ -159,22 +310,12 @@ public partial class BotMobile : PlayerMobile
             GiveInstrumentIfBard(bot); // corpse got looted — replace it if this bot actually needs one
         }
 
-        // Whatever's piled up in the bank from past deaths might beat the fresh roll —
-        // check and upgrade. This is what makes repeated deaths a net gain over time
-        // instead of a pure loss.
-        var bank = bot.FindBankNoCreate();
-        if (bank == null)
-        {
-            return;
-        }
-
-        foreach (var item in new List<Item>(bank.Items))
-        {
-            if (item is BaseArmor or BaseWeapon)
-            {
-                Systems.MahaonBots.BotController.TryEquipUpgrade(bot, item);
-            }
-        }
+        // Раньше здесь была проверка банка на предметы получше (bank.Items,
+        // TryEquipUpgrade) — банк для этого больше не используется вообще, см.
+        // BotGear.RecordBestGear/ApplyRememberedGearBonus. Подтягиваем свежую базовую
+        // броню/оружие до когда-то достигнутого уровня по запомненным числам, без единого
+        // предмета в контейнере.
+        Systems.MahaonBots.BotController.ApplyRememberedGearBonus(bot);
     }
 
     /// <summary>
@@ -248,6 +389,42 @@ public partial class BotMobile : PlayerMobile
         return pool.RandomElement()();
     }
 
+    /// <summary>
+    ///     Надевает вещь, а если не налезла — молча подсовывает кожаный аналог.
+    ///
+    ///     BotMobile наследует PlayerMobile, поэтому BaseArmor.CanEquip проверяет для бота
+    ///     требования по силе так же, как для живого игрока. Латный доспех требует 95 силы,
+    ///     а воину раскатывается SetStr(80, 95) — то есть у большинства воинов кираса и
+    ///     поножи просто не надевались. Результат EquipItem никто не смотрел, так что бот
+    ///     оставался с голым торсом, а сам предмет повисал в мире без владельца — та самая
+    ///     утечка сущностей, о которой говорит комментарий в RegearAfterDeath.
+    ///
+    ///     Кожа требует около 20 силы, её осилит любой бот, поэтому запасной вариант
+    ///     срабатывает всегда.
+    /// </summary>
+    private static void Wear(BotMobile bot, Item item, Func<Item> fallback = null)
+    {
+        if (item == null)
+        {
+            return;
+        }
+
+        if (bot.EquipItem(item))
+        {
+            return;
+        }
+
+        // Не надел — уничтожаем, иначе предмет остаётся в мире ничьим.
+        item.Delete();
+
+        var spare = fallback?.Invoke();
+
+        if (spare != null && !bot.EquipItem(spare))
+        {
+            spare.Delete();
+        }
+    }
+
     private static void EquipRandomArmorSet(BotMobile bot)
     {
         // Pick one material family and gear the whole set from it, instead of every
@@ -257,37 +434,37 @@ public partial class BotMobile : PlayerMobile
         switch (material)
         {
             case 0:
-                bot.EquipItem(new PlateChest());
-                bot.EquipItem(new PlateArms());
-                bot.EquipItem(new PlateLegs());
-                bot.EquipItem(new PlateGorget());
-                bot.EquipItem(RandomHelm());
+                Wear(bot, new PlateChest(), () => new LeatherChest());
+                Wear(bot, new PlateArms(), () => new LeatherArms());
+                Wear(bot, new PlateLegs(), () => new LeatherLegs());
+                Wear(bot, new PlateGorget(), () => new LeatherGorget());
+                Wear(bot, RandomHelm(), () => new LeatherCap());
                 break;
             case 1:
-                bot.EquipItem(new ChainChest());
-                bot.EquipItem(new ChainLegs());
-                bot.EquipItem(new RingmailArms());
-                bot.EquipItem(new PlateGorget());
-                bot.EquipItem(RandomHelm());
+                Wear(bot, new ChainChest(), () => new LeatherChest());
+                Wear(bot, new ChainLegs(), () => new LeatherLegs());
+                Wear(bot, new RingmailArms(), () => new LeatherArms());
+                Wear(bot, new PlateGorget(), () => new LeatherGorget());
+                Wear(bot, RandomHelm(), () => new LeatherCap());
                 break;
             case 2:
-                bot.EquipItem(new RingmailChest());
-                bot.EquipItem(new RingmailArms());
-                bot.EquipItem(new RingmailLegs());
-                bot.EquipItem(new PlateGorget());
+                Wear(bot, new RingmailChest(), () => new LeatherChest());
+                Wear(bot, new RingmailArms(), () => new LeatherArms());
+                Wear(bot, new RingmailLegs(), () => new LeatherLegs());
+                Wear(bot, new PlateGorget(), () => new LeatherGorget());
                 break;
             case 3:
-                bot.EquipItem(new StuddedChest());
-                bot.EquipItem(new StuddedArms());
-                bot.EquipItem(new StuddedLegs());
-                bot.EquipItem(new StuddedGorget());
-                bot.EquipItem(new LeatherCap());
+                Wear(bot, new StuddedChest(), () => new LeatherChest());
+                Wear(bot, new StuddedArms(), () => new LeatherArms());
+                Wear(bot, new StuddedLegs(), () => new LeatherLegs());
+                Wear(bot, new StuddedGorget(), () => new LeatherGorget());
+                Wear(bot, new LeatherCap());
                 break;
             default:
-                bot.EquipItem(new BoneChest());
-                bot.EquipItem(new BoneArms());
-                bot.EquipItem(new BoneLegs());
-                bot.EquipItem(new BoneGloves());
+                Wear(bot, new BoneChest(), () => new LeatherChest());
+                Wear(bot, new BoneArms(), () => new LeatherArms());
+                Wear(bot, new BoneLegs(), () => new LeatherLegs());
+                Wear(bot, new BoneGloves(), () => new LeatherGloves());
                 break;
         }
     }
@@ -310,25 +487,25 @@ public partial class BotMobile : PlayerMobile
         switch (variant)
         {
             case 0:
-                bot.EquipItem(new LeatherChest());
-                bot.EquipItem(new LeatherArms());
-                bot.EquipItem(new LeatherLegs());
-                bot.EquipItem(new LeatherGloves());
-                bot.EquipItem(new LeatherGorget());
+                Wear(bot, new LeatherChest());
+                Wear(bot, new LeatherArms());
+                Wear(bot, new LeatherLegs());
+                Wear(bot, new LeatherGloves());
+                Wear(bot, new LeatherGorget());
                 break;
             case 1:
-                bot.EquipItem(new StuddedChest());
-                bot.EquipItem(new StuddedArms());
-                bot.EquipItem(new StuddedLegs());
-                bot.EquipItem(new StuddedGloves());
-                bot.EquipItem(new StuddedGorget());
+                Wear(bot, new StuddedChest());
+                Wear(bot, new StuddedArms());
+                Wear(bot, new StuddedLegs());
+                Wear(bot, new StuddedGloves());
+                Wear(bot, new StuddedGorget());
                 break;
             default:
-                bot.EquipItem(bot.Female ? new FemaleLeatherChest() : new LeatherChest());
-                bot.EquipItem(new LeatherArms());
-                bot.EquipItem(new LeatherLegs());
-                bot.EquipItem(new LeatherGloves());
-                bot.EquipItem(new LeatherGorget());
+                Wear(bot, bot.Female ? new FemaleLeatherChest() : new LeatherChest());
+                Wear(bot, new LeatherArms());
+                Wear(bot, new LeatherLegs());
+                Wear(bot, new LeatherGloves());
+                Wear(bot, new LeatherGorget());
                 break;
         }
     }
@@ -359,7 +536,7 @@ public partial class BotMobile : PlayerMobile
                 SetSkill(bot, SkillName.Bushido, 30, 65);
 
                 EquipRandomArmorSet(bot);
-                bot.EquipItem(RandomWarriorWeapon());
+                Wear(bot, RandomWarriorWeapon());
                 bot.Backpack?.DropItem(new Bandage(Utility.RandomMinMax(45, 55)));
                 Systems.MahaonGuard.GuardSystem.SetRandomRank(bot);
                 break;
@@ -376,9 +553,12 @@ public partial class BotMobile : PlayerMobile
                 SetSkill(bot, SkillName.Necromancy, 40, 75);
                 SetSkill(bot, SkillName.SpiritSpeak, 30, 60);
 
-                bot.EquipItem(new Robe(Utility.RandomNondyedHue()));
-                bot.EquipItem(new Sandals());
-                bot.EquipItem(RandomMageStaff());
+                Wear(bot, new Robe(Utility.RandomNondyedHue()));
+                Wear(bot, new Sandals());
+                Wear(bot, new LeatherGloves());
+                Wear(bot, new LeatherGorget());
+                Wear(bot, new LeatherArms());
+                Wear(bot, RandomMageStaff());
                 bot.Backpack?.DropItem(new Spellbook());
                 bot.Backpack?.DropItem(new MahaonReagentPouch());
                 bot.Backpack?.DropItem(new Bandage(Utility.RandomMinMax(15, 25)));
@@ -396,7 +576,7 @@ public partial class BotMobile : PlayerMobile
                 SetSkill(bot, SkillName.Spellweaving, 30, 65);
 
                 EquipRandomLeatherSet(bot);
-                bot.EquipItem(RandomArcherWeapon());
+                Wear(bot, RandomArcherWeapon());
                 bot.Backpack?.DropItem(new Arrow(Utility.RandomMinMax(50, 200)));
                 break;
 
@@ -412,11 +592,11 @@ public partial class BotMobile : PlayerMobile
                 SetSkill(bot, SkillName.Mining, 40, 75);
                 SetSkill(bot, SkillName.Lumberjacking, 40, 75);
 
-                bot.EquipItem(new Shirt(Utility.RandomNeutralHue()));
-                bot.EquipItem(new LongPants(Utility.RandomNeutralHue()));
-                bot.EquipItem(new Sandals());
-                bot.EquipItem(new LeatherGloves());
-                bot.EquipItem(new LeatherCap());
+                Wear(bot, new LeatherChest());
+                Wear(bot, new LeatherLegs());
+                Wear(bot, new Sandals());
+                Wear(bot, new LeatherGloves());
+                Wear(bot, new LeatherCap());
 
                 Item tool = craftSkill switch
                 {
@@ -432,6 +612,7 @@ public partial class BotMobile : PlayerMobile
                     bot.Backpack?.DropItem(tool);
                 }
 
+                Systems.MahaonBots.BotController.GrantStartingRecipes(bot);
                 break;
 
             case BotArchetype.Trader:
@@ -444,12 +625,12 @@ public partial class BotMobile : PlayerMobile
                 SetSkill(bot, SkillName.Ninjitsu, 25, 55);
                 SetSkill(bot, SkillName.Stealth, 30, 65);
 
-                bot.EquipItem(new FancyShirt(Utility.RandomNeutralHue()));
-                bot.EquipItem(new LongPants(Utility.RandomNeutralHue()));
-                bot.EquipItem(new Boots());
-                bot.EquipItem(new Cloak(Utility.RandomNeutralHue()));
-                bot.EquipItem(new LeatherChest());
-                bot.EquipItem(new LeatherArms());
+                Wear(bot, new FancyShirt(Utility.RandomNeutralHue()));
+                Wear(bot, new LongPants(Utility.RandomNeutralHue()));
+                Wear(bot, new Boots());
+                Wear(bot, new Cloak(Utility.RandomNeutralHue()));
+                Wear(bot, new LeatherChest());
+                Wear(bot, new LeatherArms());
                 break;
         }
     }

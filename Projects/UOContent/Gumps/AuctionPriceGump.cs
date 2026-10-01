@@ -48,7 +48,7 @@ public class AuctionPriceGump : DynamicGump
 
         var text = info.GetTextEntry(0)?.Trim();
 
-        if (string.IsNullOrEmpty(text) || !long.TryParse(text, out var price) || price <= 0)
+        if (string.IsNullOrEmpty(text) || !long.TryParse(text, out var price) || price <= 0 || price > int.MaxValue)
         {
             _player.SendMessage("Введи корректную положительную цену.");
             return;

@@ -47,8 +47,8 @@ namespace Server.Mobiles
             PackItem(new LesserPoisonPotion());
         }
 
-        public override string CorpseName => "a scorpion corpse";
-        public override string DefaultName => "a scorpion";
+        public override string CorpseName => "труп скорпиона";
+        public override string DefaultName => "скорпион";
 
         public override int Meat => 1;
         public override FoodType FavoriteFood => FoodType.Meat;

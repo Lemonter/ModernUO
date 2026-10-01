@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 70;
         }
 
-        public override string CorpseName => "a shadow wyrm corpse";
-        public override string DefaultName => "a shadow wyrm";
+        public override string CorpseName => "труп теневого вирма";
+        public override string DefaultName => "теневой вирм";
         public override bool IsDragonKind => true;
         public override bool ReacquireOnMovement => true;
         public override bool AutoDispel => true;

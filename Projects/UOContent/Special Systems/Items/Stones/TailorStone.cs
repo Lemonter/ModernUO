@@ -12,7 +12,7 @@ public partial class TailorStone : Item
         Hue = 0x315;
     }
 
-    public override string DefaultName => "a Tailor Supply Stone";
+    public override string DefaultName => "камень припасов портного";
 
     public override void OnDoubleClick(Mobile from)
     {

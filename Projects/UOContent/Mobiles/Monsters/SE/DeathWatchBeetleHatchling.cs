@@ -67,8 +67,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a deathwatchbeetle hatchling corpse";
-        public override string DefaultName => "a deathwatch beetle hatchling";
+        public override string CorpseName => "труп детёныша жука-смертоносца";
+        public override string DefaultName => "детёныш жука-смертоносца";
         public override int Hides => 8;
 
         public override int GetAngerSound() => 0x4F3;

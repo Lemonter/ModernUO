@@ -109,7 +109,7 @@ public partial class MapItem : Item, ICraftable
 
         if (!ns.NewCharacterList && _facet != null && _facet != Map.Felucca && _facet != Map.Trammel)
         {
-            from.SendMessage("You must have client 7.0.13.0 or higher to display this map.");
+            from.SendMessage("Для показа этой карты нужен клиент 7.0.13.0 или новее.");
             return;
         }
 

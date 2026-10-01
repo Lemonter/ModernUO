@@ -26,6 +26,35 @@ public partial class SpellScroll : Item, ICommodity
     int ICommodity.DescriptionNumber => LabelNumber;
     bool ICommodity.IsDeedable => Core.ML;
 
+    public override void GetProperties(IPropertyList list)
+    {
+        base.GetProperties(list);
+
+        var discipline = DisciplineRu(Spellbook.GetTypeForSpell(_spellID));
+
+        if (discipline != null)
+        {
+            list.Add(discipline);
+        }
+    }
+
+    // Mahaon: per the shard owner's ask — every scroll's tooltip names which discipline it
+    // belongs to (свитки вперемешку иначе неотличимы на глаз), covering every SpellScroll
+    // subclass from a single spot instead of touching each one individually. Reuses
+    // Spellbook.GetTypeForSpell's own spellID-range mapping, so it can't drift out of sync
+    // with which spellbook a scroll actually scribes into.
+    private static string DisciplineRu(SpellbookType type) => type switch
+    {
+        SpellbookType.Regular     => "Магия",
+        SpellbookType.Necromancer => "Некромантия",
+        SpellbookType.Paladin     => "Рыцарство",
+        SpellbookType.Samurai     => "Бусидо",
+        SpellbookType.Ninja       => "Ниндзюцу",
+        SpellbookType.Arcanist    => "Плетение заклинаний",
+        SpellbookType.Mystic      => "Мистицизм",
+        _                         => null
+    };
+
     public override void GetContextMenuEntries(Mobile from, ref PooledRefList<ContextMenuEntry> list)
     {
         base.GetContextMenuEntries(from, ref list);

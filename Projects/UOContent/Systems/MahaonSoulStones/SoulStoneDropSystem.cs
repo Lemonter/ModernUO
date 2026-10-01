@@ -8,12 +8,15 @@ namespace Server.Systems.MahaonSoulStones;
 ///     Drop rule for soul stones. The original correlation between monster and stone
 ///     type/size was reportedly a mystery even to Mahaon's players, so there's nothing
 ///     authentic to reconstruct here — this is our own invented rule: flat chance per
-///     kill, uniformly random size/color, gated on the soul catcher tattoo.
-///     Tune DropChance and the size/color weighting once real gameplay data exists.
+///     kill (gated on the soul catcher tattoo), stone SIZE tied to the kill's Fame (the
+///     standard vanilla proxy for how tough/notable a monster is — an Orc is 1500, a
+///     Dragon/Daemon is 15000), color still uniformly random. Per the shard owner's own
+///     examples: "с орка малый, с дракона и демона огромный".
+///     Tune DropChance and the Fame breakpoints once real gameplay data exists.
 /// </summary>
 public static class SoulStoneDropSystem
 {
-    private const double DropChance = 0.005; // 1 in 200 eligible kills
+    private const double DropChance = 0.05; // 1 in 20 eligible kills
 
     [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
@@ -37,12 +40,7 @@ public static class SoulStoneDropSystem
             return;
         }
 
-        var size = Utility.RandomList(
-            SoulStoneSize.Small,
-            SoulStoneSize.Medium,
-            SoulStoneSize.Large,
-            SoulStoneSize.Giant
-        );
+        var size = GetSizeForFame(bc.Fame);
 
         var color = Utility.RandomList(
             SoulStoneColor.Black,
@@ -61,6 +59,16 @@ public static class SoulStoneDropSystem
 
         player.SendMessage(0x59, $"Выпадает камень души: {SizeRu(size)} {ColorRu(color)}.");
     }
+
+    // Breakpoints calibrated against real Fame values: Orc = 1500 (Small), Dragon/Daemon =
+    // 15000 (Giant) — Medium/Large fill the gap for everything in between.
+    private static SoulStoneSize GetSizeForFame(int fame) => fame switch
+    {
+        < 3000  => SoulStoneSize.Small,
+        < 8000  => SoulStoneSize.Medium,
+        < 15000 => SoulStoneSize.Large,
+        _       => SoulStoneSize.Giant
+    };
 
     private static string SizeRu(SoulStoneSize size) => size switch
     {

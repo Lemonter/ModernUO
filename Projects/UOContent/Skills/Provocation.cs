@@ -29,7 +29,7 @@ namespace Server.SkillHandlers
             from.Target = new InternalFirstTarget(from, instrument);
         }
 
-        private class InternalFirstTarget : Target
+        internal class InternalFirstTarget : Target
         {
             private readonly BaseInstrument m_Instrument;
 
@@ -84,7 +84,7 @@ namespace Server.SkillHandlers
             }
         }
 
-        private class InternalSecondTarget : Target
+        internal class InternalSecondTarget : Target
         {
             private readonly BaseCreature m_Creature;
             private readonly BaseInstrument m_Instrument;
@@ -151,7 +151,12 @@ namespace Server.SkillHandlers
                                 // from.DoHarmful( m_Creature );
                                 // from.DoHarmful( creature );
 
-                                if (!from.CheckTargetSkill(SkillName.Provocation, creature, diff - 25.0, diff + 25.0))
+                                if (!from.CheckTargetSkill(
+                                    SkillName.Provocation, creature,
+                                    diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
+                                        from, Systems.MahaonCombat.BardSpecialization.Provocation
+                                    ), diff + 25.0
+                                ))
                                 {
                                     from.NextSkillTime = Core.TickCount + 5000;
                                     from.SendLocalizedMessage(501599); // Your music fails to incite enough anger.
@@ -160,6 +165,10 @@ namespace Server.SkillHandlers
                                 }
                                 else
                                 {
+                                    Systems.MahaonCombat.BardSpecializationSystem.Train(
+                                        from, Systems.MahaonCombat.BardSpecialization.Provocation
+                                    );
+
                                     from.SendLocalizedMessage(501602); // Your music succeeds, as you start a fight.
                                     m_Instrument.PlayInstrumentWell(from);
                                     m_Instrument.ConsumeUse(from);

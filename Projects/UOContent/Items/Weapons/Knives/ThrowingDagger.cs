@@ -14,7 +14,7 @@ public partial class ThrowingDagger : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "a throwing dagger";
+    public override string DefaultName => "метательный кинжал";
 
     public override void OnDoubleClick(Mobile from)
     {
@@ -25,7 +25,7 @@ public partial class ThrowingDagger : Item
         }
         else
         {
-            from.SendMessage("You must be holding that weapon to use it.");
+            from.SendMessage("Держи это оружие в руках, чтобы им воспользоваться.");
         }
     }
 
@@ -44,7 +44,7 @@ public partial class ThrowingDagger : Item
 
             if (!from.Items.Contains(m_Dagger))
             {
-                from.SendMessage("You must be holding that weapon to use it.");
+                from.SendMessage("Держи это оружие в руках, чтобы им воспользоваться.");
             }
             else if (targeted is Mobile m && m != from && from.HarmfulCheck(m))
             {
@@ -74,7 +74,7 @@ public partial class ThrowingDagger : Item
 
                     from.MovingEffect(m_Dagger, 0x1BFE, 7, 1, false, false, 0x481, 0);
 
-                    from.SendMessage("You miss.");
+                    from.SendMessage("Промах.");
                 }
             }
         }

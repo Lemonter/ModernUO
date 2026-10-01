@@ -746,7 +746,7 @@ public class AdvancedSearchGump : Gump
     {
         if (!World.Running)
         {
-            from.SendMessage("You cannot search while the world is saving.");
+            from.SendMessage("Во время сохранения мира искать нельзя.");
             return;
         }
 

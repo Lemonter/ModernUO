@@ -655,14 +655,14 @@ public class DefTailoring : CraftSystem
         AddRes(index, typeof(Bone), 1049064, 4, 1049063);
 
         // Set the overridable material
-        SetSubRes(typeof(Leather), 1049150);
+        SetSubRes(typeof(Leather), "Обычная");
 
         // Add every material you want the player to be able to choose from
         // This will override the overridable material
-        AddSubRes(typeof(Leather), 1049150, 00.0, 1044462, 1049311);
-        AddSubRes(typeof(SpinedLeather), 1049151, 65.0, 1044462, 1049311);
-        AddSubRes(typeof(HornedLeather), 1049152, 80.0, 1044462, 1049311);
-        AddSubRes(typeof(BarbedLeather), 1049153, 99.0, 1044462, 1049311);
+        AddSubRes(typeof(Leather), "Обычная", 00.0, 1044462, 1049311);
+        AddSubRes(typeof(SpinedLeather), "Шипастая", 65.0, 1044462, 1049311);
+        AddSubRes(typeof(HornedLeather), "Роговая", 80.0, 1044462, 1049311);
+        AddSubRes(typeof(BarbedLeather), "Зазубренная", 99.0, 1044462, 1049311);
 
         // Add Bolt of Cloth for pre-AOS expansions only
         if (!Core.AOS)

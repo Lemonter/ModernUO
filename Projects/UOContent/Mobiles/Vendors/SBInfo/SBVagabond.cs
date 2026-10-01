@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Server.Items;
 
 namespace Server.Mobiles
@@ -22,7 +22,8 @@ namespace Server.Mobiles
                 Add(new GenericBuyInfo(typeof(GoldEarrings), 27, 20, 0x1087, 0));
 
                 Add(new GenericBuyInfo(typeof(Board), 3, 20, 0x1BD7, 0));
-                Add(new GenericBuyInfo(typeof(IronIngot), 6, 20, 0x1BF2, 0));
+                // Наш слиток вместо ванильного: металл в игре один (см. MahaonCraftMetals).
+                Add(new GenericBuyInfo(typeof(MahaonIngot), 6, 20, 0x1BF2, 0));
 
                 Add(new GenericBuyInfo(typeof(StarSapphire), 125, 20, 0xF21, 0));
                 Add(new GenericBuyInfo(typeof(Emerald), 100, 20, 0xF10, 0));
@@ -41,7 +42,7 @@ namespace Server.Mobiles
             public InternalSellInfo()
             {
                 Add(typeof(Board), 1);
-                Add(typeof(IronIngot), 3);
+                Add(typeof(MahaonIngot), 3);
 
                 Add(typeof(Amber), 25);
                 Add(typeof(Amethyst), 50);

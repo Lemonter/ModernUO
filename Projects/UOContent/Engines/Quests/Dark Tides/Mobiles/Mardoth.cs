@@ -13,7 +13,7 @@ public partial class Mardoth : BaseQuester
     {
     }
 
-    public override string DefaultName => "Mardoth";
+    public override string DefaultName => "Мардот";
 
     public override void InitBody()
     {

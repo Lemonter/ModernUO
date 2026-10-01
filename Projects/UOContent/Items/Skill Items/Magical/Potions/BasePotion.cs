@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Engines.ConPVP;
 using Server.Engines.Craft;
@@ -36,7 +36,12 @@ public enum PotionEffect
     Invisibility,
     Parasitic,
     Darkglow,
-    FlintsPungentBrew
+    FlintsPungentBrew,
+
+    // Appended rather than slotted in after Darkglow where ServUO keeps it: the keg label
+    // table below FlintsPungentBrew is computed by arithmetic on these values, and the tar
+    // potion is not kegable anyway.
+    ExplodingTarPotion
 }
 
 [SerializationGenerator(2, false)]
@@ -53,11 +58,11 @@ public abstract partial class BasePotion : Item, ICraftable, ICommodity
         Stackable = Core.ML;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: consumables are weightless by design
 
     public override int LabelNumber => 1041314 + (int)_potionEffect;
 
-    public virtual bool RequireFreeHand => true;
+    public virtual bool RequireFreeHand => false; // Mahaon: drink potions with hands full
 
     public virtual bool IsThrowablePotion => false;
 

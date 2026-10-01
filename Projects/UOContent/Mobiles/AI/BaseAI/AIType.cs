@@ -1,4 +1,4 @@
-/*************************************************************************
+﻿/*************************************************************************
  * ModernUO                                                              *
  * Copyright 2019-2026 - ModernUO Development Team                       *
  * Email: hi@modernuo.com                                                *
@@ -26,5 +26,13 @@ public enum AIType
     AI_Mage,
     AI_Berserk,
     AI_Predator,
-    AI_Thief
+    AI_Thief,
+
+    // Mysticism caster — see Mobiles/AI/MysticAI.cs. Rising Colossus and anything else
+    // ported from the mystic roster is built on it.
+    AI_Mystic,
+
+    // Necromancer-mage — see Mobiles/AI/NecroMageAI.cs. The liches, the Travesty, Lady
+    // Melisande and Niporailem are built on it.
+    AI_NecroMage
 }

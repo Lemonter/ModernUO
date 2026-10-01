@@ -43,8 +43,8 @@ namespace Server.Mobiles
             Karma = -21000;
         }
 
-        public override string CorpseName => "a Pyre corpse";
-        public override string DefaultName => "Pyre";
+        public override string CorpseName => "труп Погребального Костра";
+        public override string DefaultName => "Погребальный Костёр";
 
         public override bool GivesMLMinorArtifact => true;
         public override int TreasureMapLevel => 5;

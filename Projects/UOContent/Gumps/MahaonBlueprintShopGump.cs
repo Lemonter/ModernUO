@@ -184,9 +184,8 @@ public class MahaonBlueprintShopGump : DynamicGump
 
         var price = MahaonBlueprint.GetPrice(recipe);
         var backpack = pm.Backpack;
-        var cost = CurrencyHelper.ToCopperValue(price, 0, 0);
 
-        if (backpack == null || !CurrencyHelper.TryWithdrawCopperValue(backpack, cost))
+        if (backpack == null || !backpack.ConsumeTotal(typeof(Gold), price))
         {
             pm.SendMessage(0x22, $"Нужно {price} золота на этот чертёж.");
         }

@@ -41,8 +41,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an enslaved gargoyle corpse";
-        public override string DefaultName => "an enslaved gargoyle";
+        public override string CorpseName => "труп порабощённой гаргульи";
+        public override string DefaultName => "порабощённая гаргулья";
 
         public override int Meat => 1;
         public override int TreasureMapLevel => 1;

@@ -46,7 +46,7 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "a crystal sea serpent corpse";
-        public override string DefaultName => "a crystal sea serpent";
+        public override string CorpseName => "труп кристаллического морского змея";
+        public override string DefaultName => "кристаллический морской змей";
     }
 }

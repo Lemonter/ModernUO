@@ -123,7 +123,7 @@ public partial class LorekeeperBroolol : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Lorekeeper Broolol";
+    public override string DefaultName => "хранитель знаний Броолол";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

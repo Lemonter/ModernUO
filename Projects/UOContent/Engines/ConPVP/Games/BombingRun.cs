@@ -38,7 +38,7 @@ public partial class BRBomb : Item
 
     public override bool SkipSerialization => true;
 
-    public override string DefaultName => "da bomb";
+    public override string DefaultName => "бомба";
 
     public Mobile Thrower { get; private set; }
 
@@ -795,7 +795,7 @@ public partial class BRBomb : Item
             m_Bomb = bomb;
             m_Mob = from;
 
-            m_Mob.SendMessage(0x26, "Where do you want to throw it?");
+            m_Mob.SendMessage(0x26, "Куда бросить?");
         }
 
         protected override void OnTarget(Mobile from, object targeted)

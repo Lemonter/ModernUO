@@ -139,7 +139,7 @@ namespace Server.Engines.MLQuests.Definitions
         }
 
         public override bool IsInvulnerable => true;
-        public override string DefaultName => "Aurelia";
+        public override string DefaultName => "Аурелия";
     }
 
     [QuesterName("Szandor")]
@@ -158,6 +158,6 @@ namespace Server.Engines.MLQuests.Definitions
         }
 
         public override bool IsInvulnerable => true;
-        public override string DefaultName => "Skeleton of Szandor";
+        public override string DefaultName => "скелет Сзандора";
     }
 }

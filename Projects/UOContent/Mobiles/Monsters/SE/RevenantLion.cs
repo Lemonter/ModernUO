@@ -55,8 +55,8 @@ namespace Server.Mobiles
             );
         }
 
-        public override string CorpseName => "a revenant lion corpse";
-        public override string DefaultName => "a Revenant Lion";
+        public override string CorpseName => "труп льва-ревенанта";
+        public override string DefaultName => "лев-ревенант";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Greater;

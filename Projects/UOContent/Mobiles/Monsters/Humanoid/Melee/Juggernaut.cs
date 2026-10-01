@@ -50,9 +50,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a juggernaut corpse";
+        public override string CorpseName => "труп джаггернаута";
 
-        public override string DefaultName => "a blackthorn juggernaut";
+        public override string DefaultName => "джаггернаут Блэкторна";
 
         public override bool AlwaysMurderer => true;
         public override bool BardImmune => !Core.AOS;

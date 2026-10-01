@@ -41,7 +41,7 @@ namespace Server.Mobiles
             MinTameSkill = 11.1;
         }
 
-        public override string CorpseName => "a sheep corpse";
+        public override string CorpseName => "труп овцы";
 
         [DeltaDateTime]
         [SerializableProperty(0)]
@@ -60,7 +60,7 @@ namespace Server.Mobiles
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SheepBody() => Body = Core.Now >= _nextWoolTime ? 0xCF : 0xDF;
 
-        public override string DefaultName => "a sheep";
+        public override string DefaultName => "овца";
 
         public override int Meat => 3;
         public override MeatType MeatType => MeatType.LambLeg;

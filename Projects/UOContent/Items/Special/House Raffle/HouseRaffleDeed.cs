@@ -47,7 +47,7 @@ public partial class HouseRaffleDeed : Item
     [CommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
     public bool IsExpired => _stone?.Deleted != false || _stone.IsExpired;
 
-    public override string DefaultName => "a writ of lease";
+    public override string DefaultName => "договор аренды";
 
     public override double DefaultWeight => 1.0;
 

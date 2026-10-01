@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Server.Items;
 using Server.Mobiles;
@@ -14,22 +14,32 @@ namespace Server.Systems.MahaonWeather;
 /// </summary>
 public static class PuddleSystem
 {
-    // Type A — 4 flat colors, no variants.
-    private static readonly int[] PoolA = { 0x17A6, 0x17A8, 0x17A5, 0x17A7 };
+    // ---- Почему лужи сделаны из кровавых пятен --------------------------------------
+    //
+    // Раньше здесь стояли водяные статики 0x1559 и 0x1796..0x17A8 — по названию как раз
+    // «water», выбор напрашивающийся. Беда в том, что ВСЕ они помечены в tiledata флагом
+    // Impassable: об такую лужу игрок спотыкается. OnMoveOver у MahaonPuddle это не
+    // лечит — непроходимость решается раньше, на проверке проходимости тайла, и до
+    // OnMoveOver дело просто не доходит.
+    //
+    // Проходимой водяной графики в клиенте нет вовсе: проверено перебором tiledata, среди
+    // тайлов со словом water в названии проходимых нет ни одного.
+    //
+    // Зато есть кровавые пятна: проходимые, плоские, неправильной формы. Перекрашенные в
+    // синий они читаются именно как лужи. Приём на шардах известный, новой графики не
+    // требует, а главное — по ним можно ходить.
+    //
+    // Два набора оставлены: A — крупные разливы, B — мелкие брызги. Смешиваясь, они дают
+    // лужам разный размер, ради чего пулы и заводились.
 
-    // Type B — 5 color groups; every listed ID (base + bracketed alternates) goes into one
-    // flat pool. If the alternates were actually meant to be placed together as a
-    // multi-tile cluster (e.g. splash + ripple) rather than picked as independent
-    // single-tile options, this'll need revisiting — not something I can tell apart from
-    // hex IDs alone.
-    private static readonly int[] PoolB =
-    {
-        0x1559, 0x1797, 0x1798, 0x1799, 0x179A, 0x179B, 0x179C, // grey
-        0x179D, 0x179E,                                         // brown
-        0x179F, 0x17A0,                                         // purple
-        0x17A1, 0x17A2,                                         // pink
-        0x17A3, 0x17A4                                          // white
-    };
+    // Крупные разливы.
+    private static readonly int[] PoolA = { 0x122A, 0x122D };
+
+    // Мелкие брызги и потёки.
+    private static readonly int[] PoolB = { 0x122B, 0x122C, 0x122E };
+
+    /// <summary>Синева воды. Чистая косметика — правится на глаз.</summary>
+    private const int WaterHue = 0x481;
 
     private static readonly TimeSpan SpawnTick = TimeSpan.FromSeconds(6);
     private static readonly TimeSpan PuddleLifespan = TimeSpan.FromMinutes(3);
@@ -44,6 +54,44 @@ public static class PuddleSystem
     public static void Configure()
     {
         WeatherSystem.OnWeatherChanged += OnWeatherChanged;
+
+        WarnAboutImpassableGraphics();
+    }
+
+    /// <summary>
+    ///     Ругается, если в наборах оказалась непроходимая графика.
+    ///
+    ///     Это не паранойя, а память о конкретной ошибке: здесь стояли водяные статики —
+    ///     выбор по названию очевидный, — и все они помечены Impassable. Игроки
+    ///     спотыкались о лужи, и заметить это по коду было нельзя: флаг живёт в tiledata, а
+    ///     не в исходниках. Тестом такое тоже не поймать — в тестовом хосте tiledata не
+    ///     загружен. Проверка на старте, на настоящих данных, единственное надёжное место.
+    /// </summary>
+    private static void WarnAboutImpassableGraphics()
+    {
+        foreach (var graphic in PoolA)
+        {
+            Complain(graphic);
+        }
+
+        foreach (var graphic in PoolB)
+        {
+            Complain(graphic);
+        }
+
+        static void Complain(int graphic)
+        {
+            if ((TileData.ItemTable[graphic & TileData.MaxItemValue].Flags & TileFlag.Impassable) == 0)
+            {
+                return;
+            }
+
+            Utility.PushColor(ConsoleColor.Red);
+            Console.WriteLine(
+                $"[Puddles] графика {graphic:X4} непроходима — об такую лужу игроки будут спотыкаться."
+            );
+            Utility.PopColor();
+        }
     }
 
     private static void OnWeatherChanged(MahaonWeather weather)
@@ -128,7 +176,7 @@ public static class PuddleSystem
                     var pool = Utility.RandomBool() ? PoolA : PoolB;
                     var graphic = pool.RandomElement();
 
-                    var puddle = new MahaonPuddle(graphic, PuddleLifespan);
+                    var puddle = new MahaonPuddle(graphic, PuddleLifespan) { Hue = WaterHue };
                     puddle.MoveToWorld(new Point3D(x, y, z), map);
                     ActivePuddles.Add(puddle);
                     placed++;

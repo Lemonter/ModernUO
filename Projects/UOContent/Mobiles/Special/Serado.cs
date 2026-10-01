@@ -64,7 +64,7 @@ public partial class Serado : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => Array.Empty<MonsterStatuetteType>();
 
-    public override string DefaultName => "Serado";
+    public override string DefaultName => "Сераду";
 
     public override int TreasureMapLevel => 5;
 

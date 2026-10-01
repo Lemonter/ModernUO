@@ -13,7 +13,7 @@ public partial class Emino : BaseQuester
     {
     }
 
-    public override string DefaultName => "Daimyo Emino";
+    public override string DefaultName => "даймё Эмино";
 
     public override int TalkNumber => -1;
 

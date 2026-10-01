@@ -191,7 +191,7 @@ namespace Server.Items
                 _bear.Line2 = line2.FixHtml();
                 _bear.Line3 = line3.FixHtml();
 
-                from.SendMessage("You add the personalized greeting to your St. Valentine Bear.");
+                from.SendMessage("Ты добавляешь личное поздравление на валентинова медведя.");
             }
 
             private static string GetLine(RelayInfo info, int idx) => info.GetTextEntry(idx);

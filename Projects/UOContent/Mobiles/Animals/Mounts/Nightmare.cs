@@ -6,7 +6,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Nightmare : BaseMount
     {
-        public override string DefaultName => "a nightmare";
+        public override string DefaultName => "кошмар";
 
         [Constructible]
         public Nightmare() : base(0x74, 0x3EA7, AIType.AI_Mage)
@@ -90,7 +90,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 6400;
-        public override string CorpseName => "a nightmare corpse";
+        public override string CorpseName => "труп кошмара";
         public override int Meat => 5;
         public override int Hides => 10;
         public override HideType HideType => HideType.Barbed;

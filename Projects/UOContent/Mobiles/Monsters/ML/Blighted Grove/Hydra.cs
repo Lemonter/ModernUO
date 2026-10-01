@@ -40,8 +40,8 @@ namespace Server.Mobiles
             // TODO: Fame/Karma
         }
 
-        public override string CorpseName => "a hydra corpse";
-        public override string DefaultName => "a hydra";
+        public override string CorpseName => "труп гидры";
+        public override string DefaultName => "гидра";
         public override int Hides => 40;
         public override int Meat => 19;
         public override int TreasureMapLevel => 5;

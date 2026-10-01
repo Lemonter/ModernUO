@@ -15,6 +15,11 @@ namespace Server.SkillHandlers
             SkillInfo.Table[(int)SkillName.Discordance].Callback = OnUse;
         }
 
+        /// <summary>Whether a song of discord is already on this mobile. Used by the creature
+        /// barding driver in BaseCreature so a creature doesn't keep re-playing over its own
+        /// effect.</summary>
+        public static bool UnderEffects(Mobile m) => m != null && m_Table.ContainsKey(m);
+
         public static TimeSpan OnUse(Mobile m)
         {
             m.RevealingAction();
@@ -149,10 +154,13 @@ namespace Server.SkillHandlers
                     {
                         from.SendLocalizedMessage(1049537); // Your target is already in discord.
                     }
-                    else if (!targ.Player)
+                    // A creature with CanDiscord may discord players too, which is otherwise a
+                    // player-only direction; its musicianship is taken as 120 rather than read
+                    // off its skills.
+                    else if (!targ.Player || from is BaseCreature { CanDiscord: true })
                     {
                         var diff = m_Instrument.GetDifficultyFor(targ) - 10.0;
-                        var music = from.Skills.Musicianship.Value;
+                        var music = from is BaseCreature ? 120.0 : from.Skills.Musicianship.Value;
 
                         if (music > 100.0)
                         {
@@ -165,8 +173,17 @@ namespace Server.SkillHandlers
                             m_Instrument.PlayInstrumentBadly(from);
                             m_Instrument.ConsumeUse(from);
                         }
-                        else if (from.CheckTargetSkill(SkillName.Discordance, targ, diff - 25.0, diff + 25.0))
+                        else if (from.CheckTargetSkill(
+                            SkillName.Discordance, targ,
+                            diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
+                                from, Systems.MahaonCombat.BardSpecialization.Discordance
+                            ), diff + 25.0
+                        ))
                         {
+                            Systems.MahaonCombat.BardSpecializationSystem.Train(
+                                from, Systems.MahaonCombat.BardSpecialization.Discordance
+                            );
+
                             from.SendLocalizedMessage(1049539); // You play the song surpressing your targets strength
                             m_Instrument.PlayInstrumentWell(from);
                             m_Instrument.ConsumeUse(from);

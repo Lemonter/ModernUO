@@ -267,7 +267,7 @@ public class InscriptionMenu : ItemListMenu
 
         if (!HasSpellInBook(from, itemDef.ItemType))
         {
-            from.SendAsciiMessage("You do not have that spell in your spellbook.");
+            from.SendAsciiMessage("Этого заклинания нет в твоей книге.");
             return;
         }
 
@@ -284,7 +284,7 @@ public class InscriptionMenu : ItemListMenu
 
         if ((from.Backpack?.GetAmount(typeof(BlankScroll)) ?? 0) == 0)
         {
-            from.SendAsciiMessage("You do not have enough blank scrolls to make that.");
+            from.SendAsciiMessage("Не хватает чистых свитков.");
             return;
         }
 
@@ -302,7 +302,7 @@ public class InscriptionMenu : ItemListMenu
             var menu = new InscriptionMenu(from, _tool, category);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to scribe anything in that circle.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы переписать что-нибудь из этого круга.");
                 return;
             }
 

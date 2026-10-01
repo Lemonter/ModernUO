@@ -50,10 +50,15 @@ namespace Server.Mobiles
             PackArcanceScroll(0.05);
         }
 
-        public override string CorpseName => "a satyr's corpse";
-        public override string DefaultName => "a satyr";
+        public override string CorpseName => "труп сатира";
+        public override string DefaultName => "сатир";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
+
+        // Satyrs play at you for real — the barding driver is in BaseCreature.OnThink.
+        public override bool CanDiscord => true;
+        public override bool CanPeace => true;
+        public override bool CanProvoke => true;
 
         public override int Meat => 1;
 

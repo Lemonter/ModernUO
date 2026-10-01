@@ -246,6 +246,7 @@ public abstract partial class BaseWeapon
     public virtual WeaponAbility SecondaryAbility => null;
 
     public virtual int DefMaxRange => 1;
+    public virtual bool IsRangedWeapon => false; // Mahaon: overridden true in BaseRanged
     public virtual int DefHitSound => 0;
     public virtual int DefMissSound => 0;
     public virtual SkillName DefSkill => SkillName.Swords;
@@ -292,6 +293,12 @@ public abstract partial class BaseWeapon
 
     [CommandProperty(AccessLevel.GameMaster)]
     public bool Consecrated { get; set; }
+
+    /// <summary>Who currently holds a Mysticism Enchant on this weapon, or null. Deliberately
+    /// not serialized — the enchantment is a timed effect that ends with the server, and a
+    /// wielder restored from a save would point at an effect no timer is running.</summary>
+    [CommandProperty(AccessLevel.GameMaster)]
+    public Mobile EnchantedWeilder { get; set; }
 
     [SerializableProperty(1)]
     [CommandProperty(AccessLevel.GameMaster)]
@@ -1048,7 +1055,7 @@ public abstract partial class BaseWeapon
 
         if (from.Dex < DexRequirement)
         {
-            from.SendMessage("You are not nimble enough to equip that.");
+            from.SendMessage("Тебе не хватает ловкости, чтобы это надеть.");
             return false;
         }
 
@@ -1060,7 +1067,7 @@ public abstract partial class BaseWeapon
 
         if (from.Int < IntRequirement)
         {
-            from.SendMessage("You are not smart enough to equip that.");
+            from.SendMessage("Тебе не хватает ума, чтобы это надеть.");
             return false;
         }
 
@@ -1069,6 +1076,12 @@ public abstract partial class BaseWeapon
 
     public override bool OnEquip(Mobile from)
     {
+        if (!Systems.MahaonMetals.MahaonMetalWearEffects.CanWear(this, from, out var reason))
+        {
+            from.SendMessage(0x22, reason);
+            return false;
+        }
+
         var strBonus = Attributes.BonusStr;
         var dexBonus = Attributes.BonusDex;
         var intBonus = Attributes.BonusInt;
@@ -1130,6 +1143,7 @@ public abstract partial class BaseWeapon
 
             from.CheckStatTimers();
             from.Delta(MobileDelta.WeaponDamage);
+            Systems.MahaonMetals.MahaonMetalWearEffects.OnWorn(this, from);
         }
     }
 
@@ -1145,6 +1159,8 @@ public abstract partial class BaseWeapon
         m.RemoveStatMod($"{serial}Str");
         m.RemoveStatMod($"{serial}Dex");
         m.RemoveStatMod($"{serial}Int");
+
+        Spells.SkillMasteries.SkillMasterySpell.OnWeaponRemoved(m, this);
 
         if (!_enableInstaHit && m.Weapon is BaseWeapon weapon)
         {
@@ -1174,6 +1190,7 @@ public abstract partial class BaseWeapon
         m.CheckStatTimers();
 
         m.Delta(MobileDelta.WeaponDamage);
+        Systems.MahaonMetals.MahaonMetalWearEffects.OnUnworn(this, m);
     }
 
     public virtual SkillName GetUsedSkill(Mobile m, bool checkSkillAttrs)
@@ -1234,6 +1251,13 @@ public abstract partial class BaseWeapon
 
     public virtual bool CheckHit(Mobile attacker, Mobile defender)
     {
+        // Mahaon: Thief profession perk — a clean dodge, resolved before the normal hit-
+        // chance roll so it doesn't interact with any of the AOS bonus/malus math below.
+        if (Systems.MahaonProfessions.ProfessionPerkSystem.TryDodge(defender))
+        {
+            return false;
+        }
+
         var atkWeapon = attacker.Weapon as BaseWeapon;
         var defWeapon = defender.Weapon as BaseWeapon;
 
@@ -1299,6 +1323,7 @@ public abstract partial class BaseWeapon
             ourValue = (atkValue + 20.0) * (100 + bonus);
 
             bonus = AosAttributes.GetValue(defender, AosAttribute.DefendChance);
+            bonus += Spells.SkillMasteries.WhiteTigerFormSpell.GetDciBonus(defender);
 
             var info = ForceArrow.GetInfo(attacker, defender);
 
@@ -1339,10 +1364,12 @@ public abstract partial class BaseWeapon
                 bonus -= discordanceEffect;
             }
 
-            // Defense Chance Increase = 45%
-            if (bonus > 45)
+            // Defense Chance Increase = 45%, +5 while under White Tiger Form.
+            var maxDefendChance = 45 + Spells.SkillMasteries.WhiteTigerFormSpell.GetDefenseCap(defender);
+
+            if (bonus > maxDefendChance)
             {
-                bonus = 45;
+                bonus = maxDefendChance;
             }
 
             theirValue = (defValue + 20.0) * (100 + bonus);
@@ -1362,6 +1389,13 @@ public abstract partial class BaseWeapon
         if (Core.AOS && chance < 0.02)
         {
             chance = 0.02;
+        }
+
+        // White Tiger Form: flat chance to evade the attack outright, on top of (not
+        // instead of) the normal DCI-weighted roll above.
+        if (Spells.SkillMasteries.WhiteTigerFormSpell.CheckEvasion(defender))
+        {
+            return false;
         }
 
         return attacker.CheckSkill(atkSkill.SkillName, chance);
@@ -1514,6 +1548,16 @@ public abstract partial class BaseWeapon
 
         delayInSeconds /= Systems.MahaonCombat.CombatStanceSystem.GetSwingSpeedScalar(m);
 
+        // Mahaon: Archery > 90 lets a bow/crossbow fire past its own MaxRange (see
+        // Mobile.CheckCombatTime) — but 40% slower while actually doing so. Reverts to
+        // normal speed the moment the target is back within the weapon's real MaxRange, no
+        // separate toggle needed.
+        if (IsRangedWeapon && m.Combatant != null &&
+            m.Skills[SkillName.Archery].Value > 90.0 && !m.InRange(m.Combatant, MaxRange))
+        {
+            delayInSeconds /= 0.6;
+        }
+
         return TimeSpan.FromSeconds(delayInSeconds);
     }
 
@@ -1554,7 +1598,9 @@ public abstract partial class BaseWeapon
                 chance = chance * (20 + defender.Dex) / 100;
             }
 
-            return defender.CheckSkill(SkillName.Parry, chance);
+            return defender.CheckSkill(
+                SkillName.Parry, chance * Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender)
+            );
         }
 
         if (defender.Weapon is Fists or BaseRanged)
@@ -1593,13 +1639,16 @@ public abstract partial class BaseWeapon
             chance = chance * (20 + defender.Dex) / 100;
         }
 
+        // «Стальная воля» — обычный перк категории Бусидо.
+        var perk = Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender);
+
         if (chance > aosChance)
         {
-            return defender.CheckSkill(SkillName.Parry, chance);
+            return defender.CheckSkill(SkillName.Parry, chance * perk);
         }
 
         // Only skillcheck if wielding a shield & there's no effect from Bushido
-        return aosChance > Utility.RandomDouble();
+        return aosChance * perk > Utility.RandomDouble();
     }
 
     public virtual int AbsorbDamageAOS(Mobile attacker, Mobile defender, int damage)
@@ -1621,6 +1670,9 @@ public abstract partial class BaseWeapon
             {
                 defender.FixedEffect(0x37B9, 10, 16);
                 damage = 0;
+
+                Spells.SkillMasteries.SkillMasterySpell.OnParried(attacker, defender);
+                Systems.MahaonCombat.CombatLogSystem.LogParry(attacker, defender);
 
                 // Successful block removes the Honorable Execution penalty.
                 HonorableExecution.RemovePenalty(defender);
@@ -1673,7 +1725,9 @@ public abstract partial class BaseWeapon
             }
         }
 
-        return damage;
+        // Mahaon: Warrior profession perk — flat toughness knocked off whatever damage
+        // survived parry/armor.
+        return Systems.MahaonProfessions.ProfessionPerkSystem.ApplyResilience(defender, damage);
     }
 
     public virtual int AbsorbDamage(Mobile attacker, Mobile defender, int damage)
@@ -1816,6 +1870,7 @@ public abstract partial class BaseWeapon
         if (move != null)
         {
             percentageBonus += (int)(move.GetDamageScalar(attacker, defender) * 100) - 100;
+            percentageBonus += Systems.MahaonCombat.MartialTechniqueSystem.OnTechniqueLanded(attacker, move);
         }
 
         percentageBonus += (int)(ForceOfNature.GetDamageScalar(attacker, defender) * 100) - 100;
@@ -1828,23 +1883,31 @@ public abstract partial class BaseWeapon
 
         percentageBonus += Systems.MahaonCombat.WeaponEnchantment.GetDamageBonus(this);
 
-        percentageBonus += Systems.MahaonCombat.MetalDamageSystem.GetBonus(this, defender);
+        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetDamageBonus(this, attacker, defender);
+        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetArmorDefenseBonus(defender, attacker);
+
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDamageBonus(attacker, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetAmbushBonus(attacker, defender, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDistanceBonus(attacker, defender, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetLocationSynergyBonus(attacker, defender, this);
 
         if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(attacker, Systems.MahaonCombat.FractureLocation.Arms))
         {
             percentageBonus -= 30;
         }
 
-        if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(attacker, Systems.MahaonProfessions.ProfessionCategory.Warrior))
+        // Mahaon: теперь через ProfessionBonuses — с учётом первичной/вторичной категории
+        // и без прежних +100 (см. комментарий к ProfessionBonuses).
+        percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.MeleeDamageBonus(attacker);
+
+        if (this is BaseRanged)
         {
-            percentageBonus += 100; // double damage, straight off the real profession text
+            percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.RangedDamageBonus(attacker);
         }
 
-        if (this is BaseRanged &&
-            Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(attacker, Systems.MahaonProfessions.ProfessionCategory.Ranger))
-        {
-            percentageBonus += 30; // bonus archery damage, straight off the real profession text
-        }
+        // Звание охотника («убийца орков» и прочие) — прибавка за собственные заслуги, не за
+        // оружие. Скромная рядом со слееровым +100 ниже: 5% за ступень, максимум 15%.
+        percentageBonus += Systems.MahaonSlayer.MahaonSlayerTitles.DamageBonus(attacker, defender);
 
         var cs = CheckSlayers(attacker, defender);
 
@@ -2053,6 +2116,8 @@ public abstract partial class BaseWeapon
                           Bladeweave.BladeWeaving(attacker, out var bladeweavingAbi) &&
                           bladeweavingAbi is ArmorIgnore;
 
+        Spells.SkillMasteries.SkillMasterySpell.OnHit(attacker, defender, ref damage);
+
         var damageGiven = AOS.Damage(
             defender,
             attacker,
@@ -2066,13 +2131,31 @@ public abstract partial class BaseWeapon
             chaos,
             direct,
             false,
-            this is BaseRanged
+            this is BaseRanged,
+            damageType: this is BaseRanged ? Spells.SkillMasteries.DamageType.Ranged : Spells.SkillMasteries.DamageType.Melee
         );
 
         if (damageGiven > 0)
         {
-            var location = Systems.MahaonCombat.HitLocationSystem.GetLastConsumedLocation(attacker);
-            Systems.MahaonCombat.CombatLogSystem.LogMeleeHit(attacker, defender, damageGiven, LocationRuForLog(location));
+            // A real called shot already has a location; a plain hit gets a cosmetic
+            // random one purely so the log always says where it landed ("куда попал").
+            var location = Systems.MahaonCombat.HitLocationSystem.GetLastConsumedLocation(attacker)
+                ?? Systems.MahaonCombat.HitLocationSystem.RandomDisplayLocation();
+
+            var armorPiece = Systems.MahaonCombat.HitLocationSystem.GetArmorAt(defender, location);
+
+            Systems.MahaonCombat.CombatLogSystem.LogMeleeHit(
+                attacker, defender, damageGiven, LocationRuForLog(location), armorPiece?.Name ?? armorPiece?.GetType().Name
+            );
+            Systems.MahaonCombat.WeaponStyleSystem.OnAfterHit(attacker, defender, this);
+            Systems.MahaonMetals.MahaonMetalCombatEffects.OnAfterHit(this, attacker, defender);
+            Systems.MahaonCombat.WeaponStyleSystem.OnSuccessfulHit(attacker, this, damageGiven);
+            Systems.MahaonCombat.WeaponPoisonSystem.OnWeaponHit(attacker, defender, this, a);
+
+            // Чем больше урона нанесено, тем больше бонус к приросту навыка — оружейный
+            // навык и Тактика оба задействованы в этом ударе.
+            Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(attacker, DefSkill, damageGiven);
+            Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(attacker, SkillName.Tactics, damageGiven);
 
             var propertyBonus = move?.GetPropertyBonus(attacker) ?? 1.0;
 
@@ -2132,7 +2215,11 @@ public abstract partial class BaseWeapon
                 defender is Slime or AcidElemental;
 
             // Stratics says 50% chance, seems more like 4%..
-            if (isAcidMonster || Utility.Random(25) == 0)
+            // Mahaon: Arms Lore lets the wielder spare the weapon - up to half of these
+            // rolls are cancelled outright at GM. Acid blood eats through regardless: that
+            // is the monster damaging the weapon, not ordinary use.
+            if (isAcidMonster ||
+                Utility.Random(25) == 0 && !SkillHandlers.MahaonArmsLore.TryPreventWear(attacker))
             {
                 if (isAcidMonster)
                 {
@@ -2389,6 +2476,7 @@ public abstract partial class BaseWeapon
         Systems.MahaonCombat.HitLocation.Arms  => "руку",
         Systems.MahaonCombat.HitLocation.Legs  => "ногу",
         Systems.MahaonCombat.HitLocation.Hands => "кисть",
+        Systems.MahaonCombat.HitLocation.Back  => "спину",
         Systems.MahaonCombat.HitLocation.Neck  => "шею",
         _                                       => null
     };
@@ -2498,6 +2586,8 @@ public abstract partial class BaseWeapon
 
         WeaponAbility.GetCurrentAbility(attacker)?.OnMiss(attacker, defender);
         SpecialMove.GetCurrentMove(attacker)?.OnMiss(attacker, defender);
+        Spells.SkillMasteries.SkillMasterySpell.OnMiss(attacker, defender);
+        Systems.MahaonCombat.CombatLogSystem.LogMiss(attacker, defender);
 
         if (defender is IHonorTarget target)
         {
@@ -2990,6 +3080,13 @@ public abstract partial class BaseWeapon
     public override void GetProperties(IPropertyList list)
     {
         base.GetProperties(list);
+
+        // Mahaon: every weapon states what it is made of now — standard resources and
+        // dyed items included. See Systems.MahaonMetals.MaterialLineSystem.
+        list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
+
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
         if (_crafter != null)
         {

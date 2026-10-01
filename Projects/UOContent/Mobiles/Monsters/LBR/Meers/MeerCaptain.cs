@@ -86,8 +86,8 @@ namespace Server.Mobiles
             m_NextAbilityTime = Core.Now + TimeSpan.FromSeconds(Utility.RandomMinMax(2, 5));
         }
 
-        public override string CorpseName => "a meer corpse";
-        public override string DefaultName => "a meer captain";
+        public override string CorpseName => "труп мира";
+        public override string DefaultName => "капитан миров";
 
         public override bool BardImmune => !Core.AOS;
         public override bool CanRummageCorpses => true;

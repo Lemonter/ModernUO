@@ -117,6 +117,7 @@ public static class SkillCheck
                 gc /= 2;
 
                 gc *= skill.Info.GainFactor;
+                gc *= Systems.MahaonSkills.MahaonSkillGainRateSystem.GetRate(from, skill);
 
                 if (gc < 0.01)
                 {

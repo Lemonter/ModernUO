@@ -11,8 +11,14 @@ namespace Server.Systems.MahaonWeather;
 ///     see the "Направление" convention below, matches the spec exactly: 0=east, 90=north,
 ///     180=west, 270=south.
 /// </summary>
-public static class WindManager
+public sealed class WindManager : GenericPersistence
 {
+    private static WindManager _instance;
+
+    public WindManager() : base("MahaonWind", 1)
+    {
+    }
+
     public const float MaxStrength = 2f;
     public const float MaxGust = 1f;
 
@@ -34,6 +40,7 @@ public static class WindManager
 
     public static void Configure()
     {
+        _instance = new WindManager();
         CommandSystem.Register("Wind", AccessLevel.GameMaster, Wind_OnCommand);
         _resyncTimer = Timer.DelayCall(ResyncInterval, ResyncInterval, ResyncAll);
     }
@@ -116,5 +123,21 @@ public static class WindManager
             $"Ветер: направление {direction:0}°, сила {strength:0.00}, порывы {gust:0.00}" +
             (durationSeconds > 0 ? $", переход {durationSeconds:0} сек." : ".")
         );
+    }
+
+    public override void Serialize(IGenericWriter writer)
+    {
+        writer.WriteEncodedInt(0); // version
+        writer.Write(Direction);
+        writer.Write(Strength);
+        writer.Write(GustStrength);
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // version
+        Direction = reader.ReadFloat();
+        Strength = reader.ReadFloat();
+        GustStrength = reader.ReadFloat();
     }
 }

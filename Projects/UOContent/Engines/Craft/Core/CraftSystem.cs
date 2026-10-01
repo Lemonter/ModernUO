@@ -318,6 +318,17 @@ namespace Server.Engines.Craft
             CraftSubRes.Add(craftSubRes);
         }
 
+        /// <summary>Металлическая строка: тип у всех наших металлов один, различает их
+        /// это поле — см. CraftSubRes.Metal.</summary>
+        public void AddSubRes(
+            Type type, TextDefinition name, double reqSkill, int genericName, TextDefinition message,
+            Systems.MahaonMetals.MahaonMetal metal
+        )
+        {
+            var craftSubRes = new CraftSubRes(type, name, reqSkill, genericName, message, metal);
+            CraftSubRes.Add(craftSubRes);
+        }
+
         public void AddSubRes(Type type, TextDefinition name, double reqSkill, TextDefinition message)
         {
             var craftSubRes = new CraftSubRes(type, name, reqSkill, message);

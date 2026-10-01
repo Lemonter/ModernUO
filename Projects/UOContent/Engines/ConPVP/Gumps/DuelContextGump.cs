@@ -127,7 +127,7 @@ public class DuelContextGump : DynamicGump
                     else
                     {
                         from.SendMessage(
-                            "You cannot start the duel before all participating players have been assigned."
+                            "Дуэль не начать, пока не назначены все участники."
                         );
                         from.SendGump(this); // refresh-via-this
                     }
@@ -142,7 +142,7 @@ public class DuelContextGump : DynamicGump
                     }
                     else
                     {
-                        from.SendMessage("The number of participating parties may not be increased further.");
+                        from.SendMessage("Больше сторон в дуэли быть не может.");
                     }
 
                     from.SendGump(this); // refresh-via-this

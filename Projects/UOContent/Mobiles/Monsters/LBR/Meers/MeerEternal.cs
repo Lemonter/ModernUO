@@ -45,8 +45,8 @@ namespace Server.Mobiles
             m_NextAbilityTime = Core.Now + TimeSpan.FromSeconds(Utility.RandomMinMax(2, 5));
         }
 
-        public override string CorpseName => "a meer's corpse";
-        public override string DefaultName => "a meer eternal";
+        public override string CorpseName => "труп мира";
+        public override string DefaultName => "вечный мир";
 
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.AOS;
@@ -73,7 +73,7 @@ namespace Server.Mobiles
         {
             m_NextAbilityTime += TimeSpan.FromSeconds(2.5);
 
-            Say(true, "Beware, mortals!  You have provoked my wrath!");
+            Say(true, "Берегитесь, смертные! Вы навлекли на себя мой гнев!");
             FixedParticles(0x376A, 10, 10, 9537, 33, 0, EffectLayer.Waist);
 
             Timer.StartTimer(TimeSpan.FromSeconds(5.0), DoAreaLeech_Finish);
@@ -92,7 +92,7 @@ namespace Server.Mobiles
 
             if (queue.Count == 0)
             {
-                Say(true, "Bah! You have escaped my grasp this time, mortal!");
+                Say(true, "Ба! На этот раз ты ускользнул, смертный!");
                 return;
             }
 
@@ -116,7 +116,7 @@ namespace Server.Mobiles
                 Hits += AOS.Damage(m, this, Math.Max(damage, 1), 100, 0, 0, 0, 0);
             }
 
-            Say(true, "If I cannot cleanse thy soul, I will destroy it!");
+            Say(true, "Не смогу очистить твою душу — уничтожу её!");
         }
 
         private void DoFocusedLeech(Mobile combatant, string message)

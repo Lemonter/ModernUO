@@ -461,7 +461,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -475,7 +475,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -571,7 +571,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(clothing);
@@ -584,7 +584,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(clothing);
@@ -719,6 +719,16 @@ namespace Server.Items
         public override void GetProperties(IPropertyList list)
         {
             base.GetProperties(list);
+
+            // Одежда принимает инкрустацию наравне с бронёй — значит, и показывать
+            // вставленное должна так же.
+            Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+            Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
+
+            // Mahaon: clothing never stated what it was made of. Dye only changes Hue, so a
+            // dyed robe was a coloured item with no material anywhere on it. See
+            // Systems.MahaonMetals.MaterialLineSystem.
+            list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
 
             if (_crafter != null)
             {

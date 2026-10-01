@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Server.Gumps;
 using Server.Items;
 using Server.Network;
@@ -43,14 +43,17 @@ public class CraftGump : DynamicGump
 
         builder.AddPage();
 
-        builder.AddBackground(0, 0, 530, 437, 5054);
+        // Окно на 20 пикселей выше ванильного: нижняя панель была забита под завязку
+        // (переплавка, починка, улучшение, клеймо, два выбора ресурса, выход и «повторить»),
+        // свободного места под галочку учебной работы там не осталось ни слева, ни справа.
+        builder.AddBackground(0, 0, 530, 457, 5054);
         builder.AddImageTiled(10, 10, 510, 22, 2624);
         builder.AddImageTiled(10, 292, 150, 45, 2624);
         builder.AddImageTiled(165, 292, 355, 45, 2624);
-        builder.AddImageTiled(10, 342, 510, 85, 2624);
+        builder.AddImageTiled(10, 342, 510, 105, 2624);
         builder.AddImageTiled(10, 37, 200, 250, 2624);
         builder.AddImageTiled(215, 37, 305, 250, 2624);
-        builder.AddAlphaRegion(10, 10, 510, 417);
+        builder.AddAlphaRegion(10, 10, 510, 437);
 
         if (_craftSystem.GumpTitle.Number > 0)
         {
@@ -70,6 +73,18 @@ public class CraftGump : DynamicGump
 
         builder.AddButton(270, 402, 4005, 4007, GetButtonID(6, 2));
         builder.AddHtmlLocalized(305, 405, 150, 18, 1044013, LabelColor); // MAKE LAST
+
+        // Учебная работа
+        builder.AddButton(15, 422, 4005, 4007, GetButtonID(6, 9));
+        builder.AddHtml(
+            50,
+            425,
+            440,
+            18,
+            context?.Practice == true
+                ? "<BASEFONT COLOR=#FFD700>Учебная работа: ВКЛ — изделия в брак, попытки подряд</BASEFONT>"
+                : "Учебная работа: выкл"
+        );
 
         // Mark option
         if (_craftSystem.MarkOption)
@@ -121,6 +136,7 @@ public class CraftGump : DynamicGump
             var resIndex = context?.LastResourceIndex ?? -1;
 
             var resourceType = _craftSystem.CraftSubRes.ResType;
+            Systems.MahaonMetals.MahaonMetal? resourceMetal = null;
 
             if (resIndex > -1)
             {
@@ -129,17 +145,37 @@ public class CraftGump : DynamicGump
                 nameString = subResource.Name.String;
                 nameNumber = subResource.Name.Number;
                 resourceType = subResource.ItemType;
+                resourceMetal = subResource.Metal;
+            }
+            else if (_craftSystem.CraftSubRes.Count > 0)
+            {
+                // Строку ещё не выбирали — движок в этом случае работает с первой, и
+                // счётчик обязан показывать её же. Раньше он в этой ветке показывал
+                // количество по ResType, то есть по метке рецепта, а не по материалу.
+                resourceMetal = _craftSystem.CraftSubRes.GetAt(0).Metal;
             }
 
             var resourceCount = 0;
 
             if (_from.Backpack != null)
             {
-                foreach (var item in _from.Backpack.FindItems())
+                if (resourceMetal != null)
                 {
-                    if (resourceType.IsInstanceOfType(item))
+                    // У всех наших металлов один тип C#, различает их поле, поэтому
+                    // IsInstanceOfType тут посчитал бы ВСЕ слитки разом — и выбрав редкий
+                    // металл, игрок видел бы в наличии кучу железа. Считаем по металлу.
+                    resourceCount = Systems.MahaonMetals.MahaonCraftMetals.CountIngots(
+                        _from.Backpack, resourceMetal.Value
+                    );
+                }
+                else
+                {
+                    foreach (var item in _from.Backpack.FindItems())
                     {
-                        resourceCount += item.Amount;
+                        if (resourceType.IsInstanceOfType(item))
+                        {
+                            resourceCount += item.Amount;
+                        }
                     }
                 }
             }
@@ -259,12 +295,26 @@ public class CraftGump : DynamicGump
 
             if (from.Backpack != null)
             {
-                var type = subResource.ItemType;
-                foreach (var item in from.Backpack.FindItems())
+                if (subResource.Metal != null)
                 {
-                    if (type.IsInstanceOfType(item))
+                    // Второй счётчик наличия — на странице ВЫБОРА материала, где строки
+                    // перечислены списком. Тип у всех наших металлов один, поэтому
+                    // IsInstanceOfType показал бы во всех двадцати четырёх строках одно и
+                    // то же число: сумму вообще всех слитков в рюкзаке. Выглядело бы так,
+                    // будто ламий у тебя столько же, сколько железа.
+                    resourceCount = Systems.MahaonMetals.MahaonCraftMetals.CountIngots(
+                        from.Backpack, subResource.Metal.Value
+                    );
+                }
+                else
+                {
+                    var type = subResource.ItemType;
+                    foreach (var item in from.Backpack.FindItems())
                     {
-                        resourceCount += item.Amount;
+                        if (type.IsInstanceOfType(item))
+                        {
+                            resourceCount += item.Amount;
+                        }
                     }
                 }
             }
@@ -722,6 +772,18 @@ public class CraftGump : DynamicGump
                                 {
                                     Enhance.BeginTarget(_from, _craftSystem, _tool);
                                 }
+
+                                break;
+                            }
+                        case 9: // Toggle practice mode
+                            {
+                                if (context == null)
+                                {
+                                    break;
+                                }
+
+                                context.Practice = !context.Practice;
+                                _from.SendGump(new CraftGump(_from, _craftSystem, _tool, null, _page));
 
                                 break;
                             }

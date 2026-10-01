@@ -94,7 +94,7 @@ public abstract partial class PowerFactionItem : Item
         }
         else if (from is PlayerMobile mobile && mobile.DuelContext != null)
         {
-            mobile.SendMessage("You can't use that.");
+            mobile.SendMessage("Этим ты пользоваться не можешь.");
         }
         else if (Faction.Find(from) == null)
         {
@@ -123,7 +123,7 @@ public abstract partial class PowerFactionItem : Item
             new DestructionTimer(from).Start();
             Delete();
 
-            // from.SendMessage( "You must be in a faction to use this item." );
+            // from.SendMessage( "Этим может пользоваться только член фракции." );
         }
         else if (Use(from))
         {
@@ -153,7 +153,7 @@ public abstract partial class PowerFactionItem : Item
                 _screamed = true;
 
                 _mobile.PlaySound(_mobile.Female ? 814 : 1088);
-                _mobile.PublicOverheadMessage(MessageType.Regular, 2118, false, "Aaaaah!");
+                _mobile.PublicOverheadMessage(MessageType.Regular, 2118, false, "Ааааа!");
             }
 
             _mobile.Damage(Utility.Dice(2, 6, 0));

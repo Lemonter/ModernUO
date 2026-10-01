@@ -3934,7 +3934,7 @@
     "GoLocation": { "x": 924, "y": 595, "z": -14 }
   },
   {
-    "$type": "DungeonRegion",
+    "$type": "UnderworldRegion",
     "Name": "Underworld",
     "Map": "TerMur",
     "Priority": 50,

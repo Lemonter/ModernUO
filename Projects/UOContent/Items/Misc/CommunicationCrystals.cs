@@ -342,7 +342,7 @@ public partial class ReceiverCrystal : Item
         }
         else if (RootParent is Item item)
         {
-            item.PublicOverheadMessage(MessageType.Regular, 0x2B2, false, $"Crystal: {text}");
+            item.PublicOverheadMessage(MessageType.Regular, 0x2B2, false, $"Кристалл: {text}");
         }
         else
         {

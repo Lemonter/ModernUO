@@ -396,6 +396,13 @@ namespace Server.Engines.Harvest
             HarvestBank bank, HarvestResource resource, object harvested
         )
         {
+            if (harvested is BaseOre ore)
+            {
+                Systems.MahaonCombat.GatheringSpecializationSystem.OnOreMined(
+                    from, Systems.MahaonCombat.GatheringSpecializationSystem.TierForVanillaOre(ore.Resource), ore
+                );
+            }
+
             if (tool is not GargoylesPickaxe || def != OreAndStone || !(Utility.RandomDouble() < 0.1))
             {
                 return;

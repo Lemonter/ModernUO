@@ -40,12 +40,12 @@ public class WinterGiftGiver2004 : GiftGiver
         {
             case GiftResult.Backpack:
                 {
-                    mob.SendMessage(0x482, "Happy Holidays from the team!  Gift items have been placed in your backpack.");
+                    mob.SendMessage(0x482, "С праздником от команды! Подарки положены в твой рюкзак.");
                     break;
                 }
             case GiftResult.BankBox:
                 {
-                    mob.SendMessage(0x482, "Happy Holidays from the team!  Gift items have been placed in your bank box.");
+                    mob.SendMessage(0x482, "С праздником от команды! Подарки положены в твой банковский ящик.");
                     break;
                 }
         }

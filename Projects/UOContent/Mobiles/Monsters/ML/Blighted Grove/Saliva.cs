@@ -37,8 +37,8 @@ namespace Server.Mobiles
             // TODO: Fame/Karma?
         }
 
-        public override string CorpseName => "a Saliva corpse";
-        public override string DefaultName => "Saliva";
+        public override string CorpseName => "труп Слюны";
+        public override string DefaultName => "Слюна";
 
         public override void GenerateLoot()
         {

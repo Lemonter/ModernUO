@@ -8,7 +8,7 @@ namespace Server.Items
         [Constructible]
         public TwilightLantern() => Hue = Utility.RandomBool() ? 244 : 997;
 
-        public override string DefaultName => "Twilight Lantern";
+        public override string DefaultName => "сумеречный фонарь";
 
         public override bool AllowEquippedCast(Mobile from) => true;
 

@@ -418,7 +418,8 @@ public partial class ChampionSpawn : Item
         return ScrollofTranscendence.CreateRandom(min, max);
     }
 
-    private static PowerScroll CreateRandomPS() => PowerScroll.CreateRandomNoCraft(5, 5);
+    private static PowerScroll CreateRandomPS(Mobile winner) =>
+        Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(winner, 105, noCraft: true);
 
     public static void GiveScrollTo(Mobile killer, SpecialScroll scroll, bool isFelucca = true)
     {
@@ -621,7 +622,7 @@ public partial class ChampionSpawn : Item
             }
             else
             {
-                GiveScrollTo(pm, CreateRandomPS());
+                GiveScrollTo(pm, CreateRandomPS(pm));
             }
         }
 
@@ -1423,13 +1424,13 @@ public class ChampionSpawnRegion : BaseRegion
 
         if (((PlayerMobile)m).Young)
         {
-            m.SendMessage("You decide against going here because of the danger.");
+            m.SendMessage("Ты решаешь не соваться туда — слишком опасно.");
             return false;
         }
 
         if (!m.Alive)
         {
-            m.SendMessage("A magical force prevents ghosts from entering this region.");
+            m.SendMessage("Магическая сила не пускает призраков в эту область.");
             return false;
         }
 
@@ -1445,7 +1446,7 @@ public class ChampionSpawnRegion : BaseRegion
 
         if (m.Player) //Give them 5 minutes to resurrect, then they are booted.
         {
-            m.SendMessage("A magical force encompasses you, attempting to force you out of the area.");
+            m.SendMessage("Магическая сила окутывает тебя, пытаясь вытолкнуть за пределы области.");
             new EjectTimer(m, this).Start();
         }
 
@@ -1476,7 +1477,7 @@ public class ChampionSpawnRegion : BaseRegion
                 if (m_From.Region.IsPartOf(m_Region))
                 {
                     m_From.MoveToWorld(m_Region.Spawn.EjectLocation, m_Region.Spawn.EjectMap);
-                    m_From.SendMessage("A magical force forces you out of the area.");
+                    m_From.SendMessage("Магическая сила выталкивает тебя за пределы области.");
                 }
             }
             else if (Find(m_From.LogoutLocation, m_From.LogoutMap).IsPartOf(m_Region))
@@ -1494,7 +1495,7 @@ public partial class IdolOfTheChampion : Item
     [SerializableField(0)]
     private ChampionSpawn _spawn;
 
-    public override string DefaultName => "Idol of the Champion";
+    public override string DefaultName => "идол чемпиона";
 
     public IdolOfTheChampion(ChampionSpawn spawn): base(0x1F18)
     {

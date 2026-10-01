@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Systems.MahaonSeasons;
+using Server.Systems.MahaonWorld;
 
 namespace Server.Items;
 
@@ -100,6 +101,7 @@ public partial class MahaonTreeFoliage : Item
         if (data.BearsFruit && _fruitRemaining > 0 && SeasonSystem.CurrentSeason is MahaonSeason.Spring or MahaonSeason.Summer)
         {
             var fruit = data.CreateFruit(_fruitRemaining);
+            fruit.Amount = MahaonHouseFenceSystem.ApplyYieldBonus(fruit.Amount, GetWorldLocation(), Map);
 
             if (from.Backpack?.TryDropItem(from, fruit, false) != true)
             {
@@ -158,6 +160,7 @@ public partial class MahaonTreeFoliage : Item
         amount = System.Math.Min(amount, _fruitRemaining);
 
         var fruit = data.CreateFruit(amount);
+        fruit.Amount = MahaonHouseFenceSystem.ApplyYieldBonus(fruit.Amount, GetWorldLocation(), Map);
 
         if (from.Backpack?.TryDropItem(from, fruit, false) != true)
         {

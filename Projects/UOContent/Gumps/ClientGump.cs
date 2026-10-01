@@ -154,20 +154,20 @@ namespace Server.Gumps
 
             if (focus == null)
             {
-                from.SendMessage("That character is no longer online.");
+                from.SendMessage("Этот персонаж больше не в сети.");
                 return;
             }
 
             if (focus.Deleted)
             {
-                from.SendMessage("That character no longer exists.");
+                from.SendMessage("Этого персонажа больше нет.");
                 return;
             }
 
             if (from != focus && focus.Hidden && from.AccessLevel < focus.AccessLevel &&
                 (focus as PlayerMobile)?.VisibilityList.Contains(from) != true)
             {
-                from.SendMessage("That character is no longer visible.");
+                from.SendMessage("Этот персонаж больше не виден.");
                 return;
             }
 
@@ -215,7 +215,7 @@ namespace Server.Gumps
                     {
                         if (focus.Map == null || focus.Map == Map.Internal)
                         {
-                            from.SendMessage("That character is not in the world.");
+                            from.SendMessage("Этого персонажа нет в мире.");
                         }
                         else
                         {
@@ -234,7 +234,7 @@ namespace Server.Gumps
                     {
                         if (from.Map == null || from.Map == Map.Internal)
                         {
-                            from.SendMessage("You cannot bring that person here.");
+                            from.SendMessage("Этого человека сюда не привести.");
                         }
                         else
                         {
@@ -260,7 +260,7 @@ namespace Server.Gumps
                     {
                         if (from.AccessLevel >= AccessLevel.GameMaster && from.AccessLevel > focus.AccessLevel)
                         {
-                            focus.Say("I've been kicked!");
+                            focus.Say("Меня выгнали!");
 
                             m_State.Disconnect($"Kicked by {from}.");
 

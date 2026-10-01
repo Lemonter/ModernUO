@@ -46,8 +46,8 @@ namespace Server.Mobiles
             PackItem(new SpidersSilk(7));
         }
 
-        public override string CorpseName => "a frost spider corpse";
-        public override string DefaultName => "a frost spider";
+        public override string CorpseName => "труп морозного паука";
+        public override string DefaultName => "морозный паук";
 
         public override FoodType FavoriteFood => FoodType.Meat;
         public override PackInstinct PackInstinct => PackInstinct.Arachnid;

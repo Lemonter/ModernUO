@@ -28,7 +28,81 @@ public class SummonFamiliarSpell : NecromancerSpell
     public override double RequiredSkill => 30.0;
     public override int RequiredMana => 17;
 
-    public static Dictionary<Mobile, BaseCreature> Table { get; } = new();
+    // Mahaon: was one familiar per caster (Dictionary<Mobile, BaseCreature>). The
+    // summoning mastery now grants extra slots, so this holds a list. Nothing outside
+    // this file pokes the dictionary directly any more — use FindFamiliar/IsFamiliar/
+    // CountFamiliars below.
+    private static readonly Dictionary<Mobile, List<BaseCreature>> _table = new();
+
+    /// <summary>Live familiars of this master, pruning any that have been deleted.</summary>
+    public static int CountFamiliars(Mobile master)
+    {
+        if (master == null || !_table.TryGetValue(master, out var list))
+        {
+            return 0;
+        }
+
+        for (var i = list.Count - 1; i >= 0; --i)
+        {
+            if (list[i]?.Deleted != false)
+            {
+                list.RemoveAt(i);
+            }
+        }
+
+        if (list.Count == 0)
+        {
+            _table.Remove(master);
+            return 0;
+        }
+
+        return list.Count;
+    }
+
+    /// <summary>First live familiar of the given type, or null. Replaces the old
+    /// "Table.TryGetValue(...) &amp;&amp; bc is T" pattern at every call site.</summary>
+    public static T FindFamiliar<T>(Mobile master) where T : BaseCreature
+    {
+        if (master == null || !_table.TryGetValue(master, out var list))
+        {
+            return null;
+        }
+
+        for (var i = 0; i < list.Count; ++i)
+        {
+            if (list[i] is T match && !match.Deleted)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    public static bool IsFamiliar(Mobile master, Mobile creature)
+    {
+        if (master == null || creature == null || !_table.TryGetValue(master, out var list))
+        {
+            return false;
+        }
+
+        return creature is BaseCreature bc && list.Contains(bc);
+    }
+
+    public static void Add(Mobile master, BaseCreature familiar)
+    {
+        if (master == null || familiar == null)
+        {
+            return;
+        }
+
+        if (!_table.TryGetValue(master, out var list))
+        {
+            _table[master] = list = new List<BaseCreature>();
+        }
+
+        list.Add(familiar);
+    }
 
     public static SummonFamiliarEntry[] Entries { get; } =
     {
@@ -42,25 +116,46 @@ public class SummonFamiliarSpell : NecromancerSpell
     [OnEvent(nameof(PlayerMobile.PlayerDeletedEvent))]
     public static void RemoveEffects(Mobile m)
     {
-        if (Table.Remove(m, out var summon))
+        if (m == null || !_table.Remove(m, out var list))
         {
-            summon.Delete();
+            return;
         }
+
+        foreach (var summon in list)
+        {
+            summon?.Delete();
+        }
+
+        list.Clear();
     }
 
     public static void Unregister(Mobile master, Mobile summoned)
     {
-        if (master != null && Table.TryGetValue(master, out var summon) && summon == summoned)
+        if (master == null || summoned == null || !_table.TryGetValue(master, out var list))
         {
-            Table.Remove(master);
+            return;
+        }
+
+        if (summoned is not BaseCreature bc)
+        {
+            return;
+        }
+
+        if (list.Remove(bc) && list.Count == 0)
+        {
+            _table.Remove(master);
         }
     }
 
     public override bool CheckCast()
     {
-        if (Table.GetValueOrDefault(Caster)?.Deleted == false)
+        var limit = Systems.MahaonCombat.NecromancySummonSystem.GetFamiliarLimit(Caster);
+
+        if (CountFamiliars(Caster) >= limit)
         {
-            Caster.SendLocalizedMessage(1061605); // You already have a familiar.
+            // Mahaon: one familiar plus one per 50 Школа призыва, so the message has to
+            // say how many you are actually allowed instead of the flat 1061605.
+            Caster.SendMessage(0x3B2, $"Больше фамильяров тебе не удержать ({limit}).");
             return false;
         }
 
@@ -179,7 +274,8 @@ public class SummonFamiliarGump : DynamicGump
         if ((_from as PlayerMobile)?.DuelContext?.AllowSpellCast(_from, _spell) == false)
         {
         }
-        else if (SummonFamiliarSpell.Table.TryGetValue(_from, out var check) && check?.Deleted == false)
+        else if (SummonFamiliarSpell.CountFamiliars(_from) >=
+                 Systems.MahaonCombat.NecromancySummonSystem.GetFamiliarLimit(_from))
         {
             _from.SendLocalizedMessage(1061605); // You already have a familiar.
         }
@@ -192,7 +288,7 @@ public class SummonFamiliarGump : DynamicGump
         }
         else if (entry.Type == null)
         {
-            _from.SendMessage("That familiar has not yet been defined.");
+            _from.SendMessage("Такой фамильяр ещё не описан.");
             _from.SendGump(this);
         }
         else
@@ -204,11 +300,23 @@ public class SummonFamiliarGump : DynamicGump
                 // TODO: Is this right?
                 bc.Skills.MagicResist.Base = _from.Skills.MagicResist.Base;
 
+                // Mahaon: Школа призыва also makes the familiar itself tougher — it is a
+                // fixed-stat creature in vanilla, so without this the mastery would only
+                // ever add head-count.
+                Systems.MahaonCombat.NecromancySummonSystem.ApplyMasteryPower(_from, bc);
+
                 if (BaseCreature.Summon(bc, _from, _from.Location, -1, TimeSpan.FromDays(1.0)))
                 {
                     _from.FixedParticles(0x3728, 1, 10, 9910, EffectLayer.Head);
                     bc.PlaySound(bc.GetIdleSound());
-                    SummonFamiliarSpell.Table[_from] = bc;
+                    SummonFamiliarSpell.Add(_from, bc);
+
+                    Systems.MahaonCombat.NecromancySummonSystem.AnnounceSummon(
+                        _from,
+                        bc,
+                        SummonFamiliarSpell.CountFamiliars(_from),
+                        Systems.MahaonCombat.NecromancySummonSystem.GetFamiliarLimit(_from)
+                    );
                 }
             }
             catch

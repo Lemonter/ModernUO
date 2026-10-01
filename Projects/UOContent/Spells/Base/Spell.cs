@@ -52,7 +52,14 @@ namespace Server.Spells
         public virtual SkillName DamageSkill => SkillName.EvalInt;
 
         public virtual bool RevealOnCast => true;
-        public virtual bool ClearHandsOnCast => true;
+        /// <summary>
+        ///     Mahaon: «Свободные руки» — сигнатурный перк категории Магия. Обычно каст
+        ///     вышибает оружие и щит из рук (Mobile.ClearHands ниже по коду), из-за чего
+        ///     маг физически не может держать оружие. Профессиям Магии — и первичным, и
+        ///     вторичным — руки больше не разжимает.
+        /// </summary>
+        public virtual bool ClearHandsOnCast =>
+            !Systems.MahaonProfessions.ProfessionSystem.HasSignature(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic);
         public virtual bool ShowHandMovement => true;
 
         public virtual bool DelayedDamage => false;
@@ -82,6 +89,12 @@ namespace Server.Spells
 
         public virtual bool IsCasting => State == SpellState.Casting;
 
+        // Mahaon: no longer called from Mobile.Damage (see there) or the various debuff
+        // spells that used to invoke it directly — plain melee, enemy spells, and poison
+        // ticks don't disturb a cast anymore, only a called-shot hit on the caster's chosen
+        // casting channel (CastingChannelSystem) or being paralyzed/frozen (OnCasterParalyzed
+        // below) do. Left in place (and still part of ISpell) rather than deleted in case
+        // something else legitimately wants the old "any hurt disturbs" behavior later.
         public virtual void OnCasterHurt()
         {
             // Confirm: Monsters and pets cannot be disturbed.
@@ -92,6 +105,17 @@ namespace Server.Spells
                 {
                     Disturb(DisturbType.Hurt, false, true);
                 }
+            }
+        }
+
+        // Mahaon: paralyze/stun is one of the two remaining fizzle causes (see DisturbType.
+        // Paralyzed's doc comment) — called from Mobile.Paralyze/Freeze when either newly
+        // applies to a casting player.
+        public virtual void OnCasterParalyzed()
+        {
+            if (Caster.Player && IsCasting)
+            {
+                Disturb(DisturbType.Paralyzed, false, true);
             }
         }
 
@@ -245,6 +269,8 @@ namespace Server.Spells
                 damageBonus += spell.SpellDamageBonus;
             }
 
+            damageBonus += Spellweaving.ArcaneEmpowermentSpell.GetSpellBonus(Caster, playerVsPlayer);
+
             damage = AOS.Scale(damage, 100 + damageBonus);
 
             var evalSkill = GetDamageFixed(Caster);
@@ -322,10 +348,8 @@ namespace Server.Spells
                 scalar = 0;
             }
 
-            if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic))
-            {
-                scalar *= 1.5; // bonus spell damage, straight off the real profession text
-            }
+            // Mahaon: было ×1.5 и для вторичной категории тоже — см. ProfessionBonuses.
+            scalar *= Systems.MahaonProfessions.ProfessionBonuses.SpellDamageScalar(Caster);
 
             return scalar;
         }
@@ -444,7 +468,18 @@ namespace Server.Spells
 
         public virtual void OnDisturb(DisturbType type, bool message)
         {
-            if (message)
+            if (!message)
+            {
+                return;
+            }
+
+            if (type == DisturbType.Paralyzed)
+            {
+                // Mahaon: distinct cause message, matching CastingChannelSystem's own
+                // pattern of naming the reason rather than the generic vanilla line.
+                Caster.SendMessage(0x22, "Тебя парализовало, и заклинание сорвалось!");
+            }
+            else
             {
                 Caster.SendLocalizedMessage(500641); // Your concentration is disturbed, thus ruining thy spell.
             }
@@ -663,6 +698,24 @@ namespace Server.Spells
             }
 
             scalar -= (double)lmc / 100;
+            scalar *= Systems.MahaonCombat.MagerySchoolSystem.GetManaCostScalar(Caster, this);
+            scalar *= Systems.MahaonCombat.NecromancySchoolSystem.GetManaCostScalar(Caster, this);
+            scalar *= Systems.MahaonCombat.ChivalrySchoolSystem.GetManaCostScalar(Caster, this);
+            scalar *= Systems.MahaonCombat.SpellweavingSchoolSystem.GetManaCostScalar(Caster, this);
+            scalar *= Systems.MahaonCombat.MysticismSchoolSystem.GetManaCostScalar(Caster, this);
+
+            // Перки «Тёмный резерв» / «Свет не гаснет» / «Средоточие» / «Нить не рвётся» —
+            // каждая школа дешевле на четверть тому, кому она первична.
+            scalar *= Systems.MahaonProfessions.ProfessionBonuses.SchoolManaScalar(Caster, CastSkill);
+
+            if (Caster is Mobiles.BaseCreature bc && Systems.MahaonCombat.AnimalTrainingSystem.IsMagicTrained(bc))
+            {
+                // Shepherd-taught pets cast without reagents (already free for any non-
+                // player caster) but pay a mana premium for it — 10x untrained, tapering
+                // to 2x as the pet's own Magery approaches 100 (see GetManaCostMultiplier),
+                // so training genuinely lowers the cost instead of it being a flat tax.
+                scalar *= Systems.MahaonCombat.AnimalTrainingSystem.GetManaCostMultiplier(bc);
+            }
 
             return (int)(mana * scalar);
         }
@@ -745,10 +798,10 @@ namespace Server.Spells
             var fcDelay = TimeSpan.FromSeconds(-(CastDelayFastScalar * fc * CastDelaySecondsPerTick));
             var baseDelay = Utility.Max(CastDelayBase + fcDelay, CastDelayMinimum);
 
-            if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic))
-            {
-                baseDelay = TimeSpan.FromTicks(baseDelay.Ticks / 2); // faster casting, straight off the real profession text
-            }
+            // Mahaon: было ровно вдвое и для вторичной категории тоже — см. ProfessionBonuses.
+            baseDelay = TimeSpan.FromTicks(
+                (long)(baseDelay.Ticks * Systems.MahaonProfessions.ProfessionBonuses.CastDelayScalar(Caster))
+            );
 
             return baseDelay;
         }
@@ -763,9 +816,9 @@ namespace Server.Spells
             {
                 DoFizzle();
             }
-            else if (Systems.MahaonCombat.HitLocationSystem.IsCastingBlocked(Caster))
+            else if (Systems.MahaonCombat.CastingChannelSystem.IsCastingBlocked(Caster))
             {
-                Caster.LocalOverheadMessage(MessageType.Regular, 0x22, false, "Твои руки слишком повреждены, чтобы колдовать.");
+                Caster.LocalOverheadMessage(MessageType.Regular, 0x22, false, Systems.MahaonCombat.CastingChannelSystem.GetBlockMessage(Caster));
                 DoFizzle();
             }
             else if (Scroll != null && Scroll is not Runebook &&
@@ -894,6 +947,14 @@ namespace Server.Spells
                 return false;
             }
 
+            if (this is MagerySpell magerySpell && magerySpell.Circle <= SpellCircle.Fourth &&
+                Systems.MahaonMetals.MahaonMetalTracker.HasMahaonSpellImmunity(target))
+            {
+                Caster.SendLocalizedMessage(501857); // This spell won't work on that!
+                target.FixedParticles(0x375A, 9, 20, 5027, EffectLayer.Waist, 0);
+                return false;
+            }
+
             if (Caster.CanBeHarmful(target) && CheckSequence())
             {
                 Caster.DoHarmful(target);
@@ -998,6 +1059,16 @@ namespace Server.Spells
                     var originalTarget = caster.Target;
 
                     m_Spell.OnCast();
+                    Systems.MahaonCombat.MagerySchoolSystem.OnSpellCast(caster, m_Spell);
+                    Systems.MahaonCombat.NecromancySchoolSystem.OnSpellCast(caster, m_Spell);
+                    Systems.MahaonCombat.ChivalrySchoolSystem.OnSpellCast(caster, m_Spell);
+                    Systems.MahaonCombat.SpellweavingSchoolSystem.OnSpellCast(caster, m_Spell);
+                    Systems.MahaonCombat.MysticismSchoolSystem.OnSpellCast(caster, m_Spell);
+
+                    if (caster is Mobiles.BaseCreature petCaster)
+                    {
+                        Systems.MahaonCombat.AnimalTrainingSystem.TryAutoResolveTarget(petCaster);
+                    }
 
                     if (caster.Player && caster.Target != originalTarget)
                     {

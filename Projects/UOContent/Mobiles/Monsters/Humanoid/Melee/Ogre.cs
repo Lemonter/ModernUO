@@ -41,8 +41,8 @@ namespace Server.Mobiles
             PackItem(new Club());
         }
 
-        public override string CorpseName => "an ogre corpse";
-        public override string DefaultName => "an ogre";
+        public override string CorpseName => "труп огра";
+        public override string DefaultName => "огр";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 1;

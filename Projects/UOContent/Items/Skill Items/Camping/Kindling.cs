@@ -35,12 +35,18 @@ public partial class Kindling : Item
         {
             from.SendLocalizedMessage(501695); // There is not a spot nearby to place your campfire.
         }
-        else if (!from.CheckSkill(SkillName.Camping, 0.0, 100.0))
+        else if (!from.CheckSkill(
+            SkillName.Camping, 0.0 - Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
+                from, Systems.MahaonCombat.MinorSkill.Camping
+            ), 100.0
+        ))
         {
             from.SendLocalizedMessage(501696); // You fail to ignite the campfire.
         }
         else
         {
+            Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(from, Systems.MahaonCombat.MinorSkill.Camping);
+
             Consume();
 
             if (!Deleted && Parent == null)

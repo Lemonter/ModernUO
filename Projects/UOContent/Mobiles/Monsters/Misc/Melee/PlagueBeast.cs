@@ -69,8 +69,8 @@ namespace Server.Mobiles
             _devourGoal = Utility.RandomMinMax(15, 25); // How many corpses must be devoured before a metal chest is awarded
         }
 
-        public override string CorpseName => "a plague beast corpse";
-        public override string DefaultName => "a plague beast";
+        public override string CorpseName => "труп чумной твари";
+        public override string DefaultName => "чумная тварь";
         public override bool AutoDispel => true;
         public override Poison PoisonImmune => Poison.Lethal;
 

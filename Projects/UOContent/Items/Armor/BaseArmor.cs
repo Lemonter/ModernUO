@@ -757,8 +757,12 @@ namespace Server.Items
 
             damageTaken = Math.Max(0, damageTaken - absorbed);
 
-            // 25% chance to lower durability
-            if (Utility.Random(4) == 0)
+            // 25% chance to lower durability.
+            // Mahaon: Arms Lore cancels up to half of those rolls at GM - see
+            // SkillHandlers.MahaonArmsLore.TryPreventWear. The wearer is the one who knows
+            // how to take care of the piece, so the roll is theirs.
+            if (Utility.Random(4) == 0 &&
+                !SkillHandlers.MahaonArmsLore.TryPreventWear(Parent as Mobile))
             {
                 if (Core.AOS && ArmorAttributes.SelfRepair > Utility.Random(10))
                 {
@@ -948,7 +952,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(armor);
@@ -961,7 +965,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(armor);
@@ -1006,6 +1010,7 @@ namespace Server.Items
                 }
 
                 from.Delta(MobileDelta.Armor); // Tell them armor rating has changed
+                Systems.MahaonMetals.MahaonMetalWearEffects.OnWorn(this, from);
             }
         }
 
@@ -1105,7 +1110,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -1119,7 +1124,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -1143,7 +1148,7 @@ namespace Server.Items
 
             if (from.Int < intReq || from.Int + intBonus < 1)
             {
-                from.SendMessage("You are not smart enough to equip that.");
+                from.SendMessage("Тебе не хватает ума, чтобы это надеть.");
                 return false;
             }
 
@@ -1167,6 +1172,12 @@ namespace Server.Items
 
         public override bool OnEquip(Mobile from)
         {
+            if (!Systems.MahaonMetals.MahaonMetalWearEffects.CanWear(this, from, out var reason))
+            {
+                from.SendMessage(0x22, reason);
+                return false;
+            }
+
             from.CheckStatTimers();
 
             var strBonus = ComputeStatBonus(StatType.Str);
@@ -1213,6 +1224,7 @@ namespace Server.Items
 
                 m.Delta(MobileDelta.Armor); // Tell them armor rating has changed
                 m.CheckStatTimers();
+                Systems.MahaonMetals.MahaonMetalWearEffects.OnUnworn(this, m);
             }
 
             base.OnRemoved(parent);
@@ -1293,6 +1305,13 @@ namespace Server.Items
         public override void GetProperties(IPropertyList list)
         {
             base.GetProperties(list);
+
+            // Mahaon: always stated — plain iron, plain leather, cloth and dyed pieces
+            // included. See Systems.MahaonMetals.MaterialLineSystem.
+            list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
+
+            Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+            Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
             if (_crafter != null)
             {

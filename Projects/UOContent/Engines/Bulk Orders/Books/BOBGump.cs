@@ -565,7 +565,7 @@ public class BOBGump : DynamicGump
                     if (Book.IsChildOf(_from.Backpack))
                     {
                         _from.Prompt = new SetPricePrompt(this, null);
-                        _from.SendMessage("Type in a price for all deeds in the book:");
+                        _from.SendMessage("Введи цену для всех грамот в книге:");
                     }
 
                     break;

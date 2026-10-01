@@ -42,10 +42,10 @@ namespace Server.Mobiles
             PackItem(new Bone());
         }
 
-        public override string CorpseName => "a Coil corpse";
+        public override string CorpseName => "труп Кольца";
         // TODO: Check faction allegiance
 
-        public override string DefaultName => "Coil";
+        public override string DefaultName => "Кольцо";
 
         public override Poison HitPoison => Poison.Lethal;
         public override Poison PoisonImmune => Poison.Lethal;

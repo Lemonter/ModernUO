@@ -132,14 +132,18 @@ public class PoisonImpl : Poison
                 From.SendLocalizedMessage(1072850);
             }
 
+            // Mahaon: Citrine gem bonus (GemSocketingSystem.GemBonusType.PoisonDamage) —
+            // flat bonus per socketed gem on whatever the poisoner (From) is wearing. This
+            // was the actual tick-damage point the whole time; GetPoisonDamageBonus
+            // existed but was never called from anywhere before this.
+            if (From != null)
+            {
+                damage += Systems.MahaonGems.GemSocketingSystem.GetPoisonDamageBonus(From);
+            }
+
             From?.DoHarmful(_mobile, true);
 
             (_mobile as IHonorTarget)?.ReceivedHonorContext?.OnTargetPoisoned();
-
-            if (From != null)
-            {
-                damage += Server.Systems.MahaonGems.GemSocketingSystem.GetPoisonDamageBonus(From);
-            }
 
             AOS.Damage(_mobile, From, damage, 0, 0, 0, 100, 0);
 

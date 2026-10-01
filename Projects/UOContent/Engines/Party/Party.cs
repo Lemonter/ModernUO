@@ -110,7 +110,7 @@ namespace Server.Engines.PartySystem
         public static void ListenToParty_OnCommand(CommandEventArgs e)
         {
             e.Mobile.BeginTarget(-1, false, TargetFlags.None, ListenToParty_OnTarget);
-            e.Mobile.SendMessage("Target a partied player.");
+            e.Mobile.SendMessage("Укажи игрока из своей группы.");
         }
 
         public static void ListenToParty_OnTarget(Mobile from, object obj)
@@ -121,16 +121,16 @@ namespace Server.Engines.PartySystem
 
                 if (p == null)
                 {
-                    from.SendMessage("They are not in a party.");
+                    from.SendMessage("Они не в группе.");
                 }
                 else if (p.m_Listeners.Remove(from))
                 {
-                    from.SendMessage("You are no longer listening to that party.");
+                    from.SendMessage("Ты больше не слушаешь эту группу.");
                 }
                 else
                 {
                     p.m_Listeners.Add(from);
-                    from.SendMessage("You are now listening to that party.");
+                    from.SendMessage("Ты слушаешь эту группу.");
                 }
             }
         }

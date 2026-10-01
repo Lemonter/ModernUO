@@ -8,7 +8,7 @@ public sealed partial class BloodRose : PowerFactionItem
 {
     public BloodRose() : base(Utility.RandomBool() ? 6378 : 9035) => Hue = 2118;
 
-    public override string DefaultName => "blood rose";
+    public override string DefaultName => "кровавая роза";
 
     public override bool Use(Mobile from)
     {

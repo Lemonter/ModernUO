@@ -5,10 +5,19 @@ using Server.Mobiles;
 namespace Server.Systems.MahaonCities;
 
 /// <summary>
-///     Populates each town with a basic set of working vendors on first server start.
-///     Uses the stock ModernUO vendor classes (they already exist and work out of the
-///     box) rather than inventing new ones — the gap was never "no vendor code", it was
-///     "nobody placed any". Runs once, ever, guarded by a persisted flag.
+///     Populates each town with a basic set of working vendors and the two "rock" utility
+///     stones (CityTravelStone, AuctionStone). Uses the stock ModernUO vendor classes (they
+///     already exist and work out of the box) rather than inventing new ones — the gap was
+///     never "no vendor code", it was "nobody placed any".
+///
+///     GM-command-only (<c>[SeedCities</c>) — deliberately NOT auto-run at startup anymore.
+///     It used to fire once automatically via Initialize(), guarded by a persisted _seeded
+///     flag; on a completely fresh world (no Saves/ folder, e.g. after wiping saves+backups)
+///     that flag resets too, along with CityMarkers (the hand-placed spots this seeder
+///     prefers over guessing) — so it fired again and fell back to randomly scattering
+///     vendors/stones around CityControlSystem.Cities' placeholder vanilla-Felucca
+///     coordinates, with no relation to this shard's actual map layout. Run `[SeedCities`
+///     by hand once city centers/markers are actually correct for this map.
 /// </summary>
 public class CityVendorSeeder : GenericPersistence
 {
@@ -23,20 +32,6 @@ public class CityVendorSeeder : GenericPersistence
     {
         _instance = new CityVendorSeeder();
         CommandSystem.Register("SeedCities", AccessLevel.GameMaster, SeedCities_OnCommand);
-    }
-
-    // Must run after CityControlSystem exists (same assembly, no ordering dependency
-    // issue) but this itself just needs the World loaded, so default Initialize timing
-    // is fine.
-    public static void Initialize()
-    {
-        if (_seeded)
-        {
-            return;
-        }
-
-        SeedAllCities();
-        _seeded = true;
     }
 
     private static void SeedAllCities()

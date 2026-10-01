@@ -42,8 +42,8 @@ namespace Server.Mobiles
             MinTameSkill = 17.1;
         }
 
-        public override string CorpseName => "a bird corpse";
-        public override string DefaultName => "an eagle";
+        public override string CorpseName => "труп птицы";
+        public override string DefaultName => "орёл";
 
         public override int Meat => 1;
         public override MeatType MeatType => MeatType.Bird;

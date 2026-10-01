@@ -18,8 +18,8 @@ public partial class MahaonTree : Item
     private DateTime _plantedTime;
 
     private const int BaseLogYield = 40;
-    private const double FruitTreeYearlyGrowth = 1.10; // +10%/year
-    private const double NonFruitTreeYearlyGrowth = 1.30; // oak/walnut — +30%/year
+    private const double FruitTreeYearlyGrowth = 1.01; // +1%/year — was +10%/year, growth speed cut by 10x
+    private const double NonFruitTreeYearlyGrowth = 1.03; // oak/walnut — +3%/year — was +30%/year
 
     [Constructible]
     public MahaonTree(MahaonTreeSpecies species = MahaonTreeSpecies.Apple)
@@ -46,16 +46,19 @@ public partial class MahaonTree : Item
         return (int)((Core.Now - _plantedTime).Ticks / yearLength.Ticks);
     }
 
-    private const int MaxLogYield = 10_000;
-
-    public int CurrentLogYield()
+    public long CurrentLogYield()
     {
         var growthRate = MahaonTreeSpeciesTable.Get(_species).BearsFruit
             ? FruitTreeYearlyGrowth
             : NonFruitTreeYearlyGrowth;
 
+        // No more cap — an old enough tree can genuinely yield a huge pile of logs now.
+        // The 10x-slower growth rate above is what actually keeps this in check day to
+        // day; whoever hangs onto one tree for years earns the payoff. Logs get split
+        // into multiple stacks at felling time (a single Item's Amount tops out at
+        // 60000) instead of truncating or overflowing one stack.
         var raw = BaseLogYield * Math.Pow(growthRate, YearsOld());
-        return (int)Math.Min(MaxLogYield, Math.Round(raw));
+        return (long)Math.Round(raw);
     }
 
     // Difficulty scales with age but caps at 120 (our real skill cap) — so a fully-trained
@@ -99,16 +102,46 @@ public partial class MahaonTree : Item
             return;
         }
 
-        var amount = CurrentLogYield();
+        var amount = Systems.MahaonWorld.MahaonHouseFenceSystem.ApplyYieldBonus(CurrentLogYield(), Location, Map);
         var lumberjackingSkill = from.Skills[SkillName.Lumberjacking].Value;
         var woodType = MahaonResourceTiers.PickWood(lumberjackingSkill);
-        var log = (Item)Activator.CreateInstance(woodType, amount);
         var loc = Location;
         var map = Map;
 
-        log.MoveToWorld(loc, map); // right at the tree's own spot, one stacked pile — not the chopper's pack
+        // A single Item's Amount tops out at 60000 — split a huge yield into as many full
+        // stacks as needed instead of silently truncating or overflowing one stack (same
+        // approach as the fisherman's bag bulk-carve).
+        const long maxStack = 60_000;
+        var remaining = amount;
+        var stacksCreated = 0;
+        var caughtByBag = false;
 
-        from.SendMessage(0x59, $"Ты валишь дерево одним махом — {amount} брёвен лежат прямо тут. (возраст: {YearsOld()} год(лет))");
+        while (remaining > 0)
+        {
+            var thisStack = (int)Math.Min(remaining, maxStack);
+            remaining -= thisStack;
+            stacksCreated++;
+
+            var log = (Item)Activator.CreateInstance(woodType, thisStack);
+
+            if (Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(from, log))
+            {
+                caughtByBag = true;
+            }
+            else
+            {
+                log.MoveToWorld(loc, map); // right at the tree's own spot — not the chopper's pack
+            }
+        }
+
+        from.SendMessage(
+            0x59,
+            (caughtByBag
+                ? $"Ты валишь дерево одним махом — {amount} брёвен сразу уходят в сумку лесоруба."
+                : $"Ты валишь дерево одним махом — {amount} брёвен лежат прямо тут.")
+            + (stacksCreated > 1 ? $" ({stacksCreated} стопок — больше 60000 в одну не помещается)" : "")
+            + $" (возраст: {YearsOld()} год(лет))"
+        );
 
         Delete(); // whole tree — trunk, foliage, and any fruit left on it — is gone for good
     }

@@ -194,6 +194,19 @@ namespace Server.Engines.Harvest
             }
         }
 
+        public override void OnHarvestFinished(
+            Mobile from, Item tool, HarvestDefinition def, HarvestVein vein,
+            HarvestBank bank, HarvestResource resource, object harvested
+        )
+        {
+            base.OnHarvestFinished(from, tool, def, vein, bank, resource, harvested);
+
+            if (harvested is Log log)
+            {
+                Systems.MahaonCombat.GatheringSpecializationSystem.OnWoodChopped(from, log);
+            }
+        }
+
         public static void Initialize()
         {
             Array.Sort(m_TreeTiles);

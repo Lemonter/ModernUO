@@ -33,8 +33,16 @@ namespace Server.SkillHandlers
             {
                 if (target is Mobile)
                 {
-                    if (from.CheckTargetSkill(SkillName.Forensics, target, 40.0, 100.0))
+                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
+                        from, Systems.MahaonCombat.MinorSkill.Forensics
+                    );
+
+                    if (from.CheckTargetSkill(SkillName.Forensics, target, 40.0 - windowBonus, 100.0))
                     {
+                        Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(
+                            from, Systems.MahaonCombat.MinorSkill.Forensics
+                        );
+
                         if (target is PlayerMobile pm && pm.NpcGuild == NpcGuild.ThievesGuild)
                         {
                             from.SendLocalizedMessage(501004); // That individual is a thief!
@@ -51,8 +59,16 @@ namespace Server.SkillHandlers
                 }
                 else if (target is Corpse c)
                 {
-                    if (from.CheckTargetSkill(SkillName.Forensics, c, 0.0, 100.0))
+                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
+                        from, Systems.MahaonCombat.MinorSkill.Forensics
+                    );
+
+                    if (from.CheckTargetSkill(SkillName.Forensics, c, 0.0 - windowBonus, 100.0))
                     {
+                        Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(
+                            from, Systems.MahaonCombat.MinorSkill.Forensics
+                        );
+
                         if (c.Forensicist != null)
                         {
                             // The forensicist ~1_NAME~ has already discovered that:

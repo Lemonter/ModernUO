@@ -41,8 +41,8 @@ namespace Server.Mobiles
             PackNecroReg(Utility.RandomMinMax(4, 10));
         }
 
-        public override string CorpseName => "a terathan matriarch corpse";
-        public override string DefaultName => "a terathan matriarch";
+        public override string CorpseName => "труп матриарха тератанов";
+        public override string DefaultName => "матриарх тератанов";
 
         public override int TreasureMapLevel => 4;
 

@@ -789,7 +789,23 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         var weapon = Weapon;
 
-        if (weapon == null || !InRange(combatant, weapon.MaxRange))
+        if (weapon == null)
+        {
+            return;
+        }
+
+        // Mahaon: Archery > 90 lets a bow/crossbow (BaseRanged only — see IWeapon.
+        // IsRangedWeapon's doc comment) fire past its own MaxRange, out to double that —
+        // BaseWeapon.GetDelay applies a matching speed penalty for shots actually taken
+        // beyond MaxRange, dropping back to normal speed once the target is back within it.
+        var effectiveMaxRange = weapon.MaxRange;
+
+        if (weapon.IsRangedWeapon && Skills[SkillName.Archery].Value > 90.0)
+        {
+            effectiveMaxRange *= 2;
+        }
+
+        if (!InRange(combatant, effectiveMaxRange))
         {
             return;
         }
@@ -3453,6 +3469,19 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         for (var i = _skillMods.Count - 1; i >= 0; i--)
         {
+            // Skills[mod.Skill]?.Update() below can re-enter this same method (e.g. a
+            // caller removing several mods for the same skill in one pass, each triggering
+            // Skill.Update -> OnSkillChange -> SendSkillChange -> NonRacialValue, which
+            // calls ValidateSkillMods again) — the reentrant call runs its own full
+            // backward pass over _skillMods and can shrink it out from under this one, so
+            // the outer loop's cached index can end up past the end of the (now shorter)
+            // list. The reentrant pass already left the list in a valid state, so it's
+            // safe to just stop once our index no longer exists.
+            if (i >= _skillMods.Count)
+            {
+                continue;
+            }
+
             var mod = _skillMods[i];
 
             if (!mod.CheckCondition())
@@ -3656,6 +3685,10 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         {
             Paralyzed = true;
             Timer.StartTimer(duration, ExpireParalyzed, out _paraTimerToken);
+
+            // Mahaon: paralyze is now one of the two remaining fizzle causes — see
+            // Spell.OnCasterParalyzed/DisturbType.Paralyzed.
+            m_Spell?.OnCasterParalyzed();
         }
     }
 
@@ -3670,6 +3703,9 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         {
             Frozen = true;
             Timer.StartTimer(duration, ExpireFrozen, out _frozenTimerToken);
+
+            // Mahaon: same as Paralyze() above — freeze/stun also fizzles a cast now.
+            m_Spell?.OnCasterParalyzed();
         }
     }
 
@@ -5933,10 +5969,13 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         var oldHits = Hits;
         var newHits = oldHits - amount;
 
-        m_Spell?.OnCasterHurt();
-
-        // if (m_Spell != null && m_Spell.State == SpellState.Casting)
-        // m_Spell.Disturb( DisturbType.Hurt, false, true );
+        // Mahaon: no longer disturbs the caster on its own — plain melee, enemy spells, and
+        // poison ticks all flow through Damage(), so "any damage fizzles a cast" meant every
+        // hit source disturbed equally. The shard owner wants only a called-shot hit on the
+        // caster's chosen casting channel (CastingChannelSystem, checked in Spell.
+        // CheckSequence) or being paralyzed/frozen (Spell.OnCasterParalyzed, called from
+        // Paralyze()/Freeze() below) to fizzle a spell now.
+        // m_Spell?.OnCasterHurt();
 
         if (from != null)
         {

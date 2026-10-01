@@ -74,7 +74,7 @@ public abstract partial class BaseSuit : Item
     {
         if (from.AccessLevel < AccessLevel)
         {
-            from.SendMessage("You may not wear this.");
+            from.SendMessage("Тебе это не надеть.");
             return false;
         }
 

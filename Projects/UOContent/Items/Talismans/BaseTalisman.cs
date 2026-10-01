@@ -564,6 +564,9 @@ public partial class BaseTalisman : Item, IAosItem
     {
         base.GetProperties(list);
 
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
+
         if (Blessed)
         {
             if (BlessedFor != null)

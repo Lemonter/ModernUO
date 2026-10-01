@@ -173,7 +173,8 @@ public static class Paragon
             return false;
         }
 
-        if (bc is BaseChampion or Harrower or BaseVendor or BaseEscortable or Clone || bc.IsParagon)
+        if (bc is BaseChampion or Harrower or BaseVendor or BaseEscortable or Clone || bc.IsParagon ||
+            !bc.CanBeParagon)
         {
             return false;
         }
@@ -217,12 +218,12 @@ public static class Paragon
 
         if (m.AddToBackpack(item))
         {
-            m.SendMessage("As a reward for slaying the mighty paragon, an artifact has been placed in your backpack.");
+            m.SendMessage("За победу над могучим парагоном в твой рюкзак положен артефакт.");
         }
         else
         {
             m.SendMessage(
-                "As your backpack is full, your reward for destroying the legendary paragon has been placed at your feet."
+                "Рюкзак полон, поэтому награда за легендарного парагона положена к твоим ногам."
             );
         }
     }

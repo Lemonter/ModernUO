@@ -51,8 +51,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a bake kitsune corpse";
-        public override string DefaultName => "a bake kitsune";
+        public override string CorpseName => "труп бакэ-кицунэ";
+        public override string DefaultName => "бакэ-кицунэ";
 
         public override int Meat => 5;
         public override int Hides => 10;

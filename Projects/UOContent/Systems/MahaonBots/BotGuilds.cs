@@ -35,10 +35,18 @@ public enum BotGuildRelation
 ///     matter (real Guild, real membership), skip the interactive bits" pattern the rest
 ///     of Mahaon already uses (blueprint buying, gathering, etc).
 /// </summary>
-public static class BotGuilds
+public sealed class BotGuilds : GenericPersistence
 {
+    private static BotGuilds _instance;
+
     private static readonly Dictionary<string, Guild> Registry = new();
     private static readonly Dictionary<(string, string), BotGuildRelation> Relations = new();
+
+    public BotGuilds() : base("MahaonBotGuildRelations", 1)
+    {
+    }
+
+    public static void Configure() => _instance = new BotGuilds();
 
     // 15 flavor names, no particular lore attached — pick freely, rename/replace any of
     // these directly in this array, nothing else references them by name.
@@ -51,6 +59,68 @@ public static class BotGuilds
     };
 
     public static IReadOnlyCollection<Guild> All => Registry.Values;
+
+    /// <summary>
+    ///     Гильдия по умолчанию, когда у маяка своя не задана.
+    ///
+    ///     Она обязана быть устойчивой: все боты одного маяка должны попадать в ОДНУ
+    ///     гильдию. Пока имя выбиралось случайно на каждого бота, толпа у одной точки
+    ///     возрождения оказывалась в полутора десятках разных гильдий — то есть друг другу
+    ///     чужаками, законной добычей для разбойников и поводом для гильдейских войн на
+    ///     пустом месте. Отсюда и была резня на респе.
+    ///
+    ///     Считается по ГОРОДУ, а не по маяку: замысел шарда — один маяк на город, и тогда
+    ///     гильдия у города получается ровно одна, а войны идут между городами, а не внутри
+    ///     улицы. Городов десять, названий пятнадцать, так что каждому достаётся своё —
+    ///     город берёт название по своему месту в общем упорядоченном списке. Если городов
+    ///     станет больше пятнадцати, соседи по остатку начнут делить название; тогда проще
+    ///     дописать имён в NamePool, чем менять правило.
+    ///
+    ///     Маяк без города (поставленный в чистом поле) откатывается на свой серийник —
+    ///     тоже устойчиво, просто название достаётся произвольное.
+    /// </summary>
+    /// <summary>Сколько гильдий уживается в одном городе. Одна на город — скучно: внутри
+    /// стен тогда не может случиться вообще ничего.</summary>
+    public const int GuildsPerCity = 3;
+
+    /// <summary>
+    ///     Гильдии города — устойчивая тройка из общего списка.
+    ///
+    ///     Города берут названия подряд, по месту в упорядоченном списке, так что тройки
+    ///     соседних городов перекрываются: десять городов по три при пятнадцати названиях
+    ///     означает, что почти каждая гильдия живёт в двух городах сразу. Это не изъян, а
+    ///     то, ради чего так и сделано: вражда и союзы получаются и внутри стен, и между
+    ///     городами, а у гильдии появляется своя география вместо приписки к одной точке.
+    /// </summary>
+    public static List<string> NamesForCity(string city)
+    {
+        if (string.IsNullOrEmpty(city))
+        {
+            return null;
+        }
+
+        var cities = new List<string>(MahaonCities.CityControlSystem.Cities.Keys);
+        cities.Sort(System.StringComparer.Ordinal);
+
+        var index = cities.IndexOf(city);
+
+        if (index < 0)
+        {
+            return null;
+        }
+
+        var result = new List<string>(GuildsPerCity);
+
+        for (var i = 0; i < GuildsPerCity; i++)
+        {
+            result.Add(NamePool[(index * GuildsPerCity + i) % NamePool.Length]);
+        }
+
+        return result;
+    }
+
+    public static string NameForBeacon(IEntity beacon) =>
+        NamePool[(int)(beacon?.Serial.Value ?? 0) % NamePool.Length];
 
     /// <summary>The real Guild object for this name, if one's actually been created (i.e.
     /// at least one bot has joined it via Join). Safe to call any time — returns null
@@ -103,6 +173,14 @@ public static class BotGuilds
         }
 
         guild.AddMember(bot);
+
+        // Mobile.GetProperties only shows a non-player mobile's "[Abbreviation]" suffix
+        // when DisplayGuildTitle is explicitly true (m_Player itself gates it for real
+        // players) — bots never got this set, so a guilded bot's guild was invisible over
+        // its head/in its properties even though guild.AddMember succeeded and everything
+        // else (relations, bank, specialization) worked normally.
+        bot.DisplayGuildTitle = true;
+        bot.InvalidateProperties(); // имя вида «Имя Профессия [Гильдия]» пересобирается сразу
 
         if (guild.Leader?.Deleted != false)
         {
@@ -160,4 +238,34 @@ public static class BotGuilds
     public static bool IsAllied(Mobile a, Mobile b) =>
         a?.Guild != null && a.Guild == b?.Guild ||
         GetRelation(a?.Guild?.Name, b?.Guild?.Name) == BotGuildRelation.Ally;
+
+    // Registry doesn't need saving — TryGet rebuilds it from BaseGuild.FindByName, and the
+    // real Guild objects it points to already persist through the engine normally. Only the
+    // war/ally/neutral relation table (keyed by name, no backing Item/Mobile of its own) needs it.
+    public override void Serialize(IGenericWriter writer)
+    {
+        writer.WriteEncodedInt(0); // version
+        writer.WriteEncodedInt(Relations.Count);
+
+        foreach (var ((a, b), relation) in Relations)
+        {
+            writer.Write(a);
+            writer.Write(b);
+            writer.WriteEncodedInt((int)relation);
+        }
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // version
+
+        var count = reader.ReadEncodedInt();
+        for (var i = 0; i < count; i++)
+        {
+            var a = reader.ReadString();
+            var b = reader.ReadString();
+            var relation = (BotGuildRelation)reader.ReadEncodedInt();
+            Relations[(a, b)] = relation;
+        }
+    }
 }

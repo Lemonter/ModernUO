@@ -62,6 +62,8 @@ public partial class TreasureMapChest : LockableContainer
 
         _expireTimer = Timer.DelayCall(TimeSpan.FromHours(3.0), Delete);
         Fill(this, level);
+
+        Systems.MahaonMetals.MahaonLockSystem.AssignRandomLock(this, level / 5.0);
     }
 
     public override int LabelNumber => 3000541;
@@ -285,9 +287,36 @@ public partial class TreasureMapChest : LockableContainer
             cont.DropItem(item);
         }
 
+        // Treasure maps had gold/scrolls/gear/reagents/gems/blueprints but no potions at
+        // all — filled in to match, same tiered pool + distinct-stack helper
+        // BaseTreasureChest already uses so a level-1 map still gives weak potions while a
+        // level-6 one can roll the strong tier, no duplicate piles.
+        var potionCount = level == 0 ? 1 : Math.Min(5, level);
+
+        BaseTreasureChest.DropDistinctStacks(
+            cont, BaseTreasureChest.PotionPoolForLevel(Math.Max(1, level)), potionCount, 1, 2 + level
+        );
+
         if (level == 6 && Core.AOS)
         {
             cont.DropItem(Artifacts.RandomElement().CreateInstance<Item>());
+        }
+
+        if (level is >= 0 and <= 5 && Utility.RandomDouble() < 0.35)
+        {
+            cont.DropItem(new MahaonMysteryBlueprint(level));
+        }
+
+        if (level >= 3 && Utility.RandomDouble() < 0.15)
+        {
+            var allTypes = System.Enum.GetValues<SakuroType>();
+            cont.DropItem(new SakuroBlueprint(allTypes[Utility.Random(allTypes.Length)]));
+        }
+
+        if (level >= 4 && Utility.RandomDouble() < 0.10)
+        {
+            var categories = System.Enum.GetValues<MahaonResourceCategory>();
+            cont.DropItem(new MahaonResourceBagBlueprint(categories[Utility.Random(categories.Length)]));
         }
     }
 

@@ -68,8 +68,8 @@ namespace Server.Mobiles
             // TODO 0-2 spellweaving scroll
         }
 
-        public override string CorpseName => "a cu sidhe corpse";
-        public override string DefaultName => "a cu sidhe";
+        public override string CorpseName => "труп ку ши";
+        public override string DefaultName => "ку ши";
 
         public override bool CanHeal => true;
         public override bool CanHealOwner => true;

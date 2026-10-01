@@ -106,7 +106,7 @@ public abstract partial class HouseDeed : Item
                 case HousePlacementResult.NoSurface:
                     {
                         from.SendMessage(
-                            "The house could not be created here.  Part of the foundation would not be on any surface."
+                            "Дом здесь не построить: часть фундамента повисла бы в воздухе."
                         );
                         break;
                     }

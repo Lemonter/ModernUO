@@ -534,7 +534,7 @@ public class ShardPollGump : DynamicGump
                 }
                 else
                 {
-                    _from.SendMessage("You may not edit an active poll. Deactivate it first.");
+                    _from.SendMessage("Активный опрос не изменить. Сначала отключи его.");
                     _from.SendGump(this);
                 }
             }
@@ -542,11 +542,11 @@ public class ShardPollGump : DynamicGump
             {
                 if (!_poller.Active)
                 {
-                    _from.SendMessage("The poll has been deactivated.");
+                    _from.SendMessage("Опрос отключён.");
                 }
                 else if (_poller.HasAlreadyVoted(sender))
                 {
-                    _from.SendMessage("You have already voted on this poll.");
+                    _from.SendMessage("Ты уже голосовал в этом опросе.");
                 }
                 else
                 {
@@ -601,7 +601,7 @@ public partial class ShardPollPrompt : Prompt
     {
         if (_poller.Active)
         {
-            from.SendMessage("You may not edit an active poll. Deactivate it first.");
+            from.SendMessage("Активный опрос не изменить. Сначала отключи его.");
         }
         else if (text == "DEL")
         {

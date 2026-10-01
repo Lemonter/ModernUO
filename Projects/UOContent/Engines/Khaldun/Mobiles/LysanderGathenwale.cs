@@ -65,7 +65,7 @@ public partial class LysanderGathenwale : BaseCreature
     public override bool ClickTitle => false;
     public override bool ShowFameTitle => false;
     public override bool DeleteCorpseOnDeath => true;
-    public override string DefaultName => "Lysander Gatherwale";
+    public override string DefaultName => "Лисандр Гатерwейл";
 
     public override bool AlwaysMurderer => true;
 

@@ -18,6 +18,15 @@ public class SoulStoneSocketing : GenericPersistence
     private const int MaxSocketsPerItem = 3;
 
     private static readonly Dictionary<Item, List<(SkillName? skill, StatType? stat, double bonus)>> Sockets = new();
+
+    // One soul stone now grants a whole BUNDLE of bonuses at once (3 fixed skills + 1-3
+    // stats, per MahaonSoulStone.ColorToSkills/ColorToStats) rather than a single skill-or-
+    // stat pick — Sockets above stays a flat per-bonus list (ApplyOne/RemoveAll don't care
+    // about grouping, they're all-or-nothing per item either way), but MaxSocketsPerItem is
+    // about how many STONES have been inserted, not how many individual bonuses exist, so
+    // that has to be tracked separately.
+    private static readonly Dictionary<Item, int> SocketSlots = new();
+
     private static readonly Dictionary<Item, List<SkillMod>> ActiveSkillMods = new();
     private static readonly Dictionary<Item, List<StatMod>> ActiveStatMods = new();
 
@@ -28,29 +37,87 @@ public class SoulStoneSocketing : GenericPersistence
     public static void Configure()
     {
         _instance = new SoulStoneSocketing();
+
+        // Same root cause as GemSocketingSystem: the engine sets Item.Parent directly while
+        // loading equipped items, bypassing OnItemAdded/OnItemRemoved (the only place
+        // OnEquipChanged is normally called from), so an already-equipped item's
+        // EquippedSkillMod/StatMod would otherwise never get recreated after a restart.
+        // WorldLoad fires after every persistence (Mobiles/Items included) has finished, so
+        // Parent is reliable here.
+        EventSink.WorldLoad += ReapplyEquippedBonuses;
     }
 
-    public static int SocketCount(Item item) => Sockets.TryGetValue(item, out var list) ? list.Count : 0;
-
-    public static bool TrySocket(Item target, SkillName? skill, StatType? stat, double bonus)
+    private static void ReapplyEquippedBonuses()
     {
+        foreach (var (item, sockets) in Sockets)
+        {
+            if (item.Parent is Mobile owner)
+            {
+                foreach (var (skill, stat, bonus) in sockets)
+                {
+                    ApplyOne(owner, item, skill, stat, bonus);
+                }
+            }
+        }
+    }
+
+    public static int SocketCount(Item item) => SocketSlots.GetValueOrDefault(item, 0);
+
+    /// <summary>Read-only view of what's actually socketed — see
+    /// GemSocketingSystem.GetSockets for the same reasoning on the gem side.</summary>
+    public static IReadOnlyList<(SkillName? skill, StatType? stat, double bonus)> GetSockets(Item item) =>
+        Sockets.TryGetValue(item, out var list) ? list : System.Array.Empty<(SkillName?, StatType?, double)>();
+
+    /// <summary>Called from BaseWeapon/BaseArmor/BaseJewel.GetProperties, alongside
+    /// GemSocketingSystem.AddPropertyLines.</summary>
+    public static void AddPropertyLines(Item item, IPropertyList list)
+    {
+        foreach (var (skill, stat, bonus) in GetSockets(item))
+        {
+            var desc = skill != null
+                ? $"{Server.Systems.MahaonCombat.MahaonSkillTree.RuSkillName(skill.Value)} +{bonus:0.#}"
+                : $"{RuStatName(stat!.Value)} +{(int)bonus}";
+
+            list.Add($"Камень души: {desc}");
+        }
+    }
+
+    private static string RuStatName(StatType stat) => stat switch
+    {
+        StatType.Str => "Сила",
+        StatType.Dex => "Ловкость",
+        StatType.Int => "Интеллект",
+        _            => stat.ToString()
+    };
+
+    /// <summary>Sockets one soul stone's whole bundle of bonuses (see
+    /// MahaonSoulStone.ColorToSkills/ColorToStats) as a single slot — counts once against
+    /// MaxSocketsPerItem regardless of how many individual skill/stat entries it contains.</summary>
+    public static bool TrySocket(Item target, IReadOnlyList<(SkillName? skill, StatType? stat, double bonus)> bonuses)
+    {
+        var slotsUsed = SocketSlots.GetValueOrDefault(target, 0);
+
+        if (slotsUsed >= MaxSocketsPerItem || bonuses.Count == 0)
+        {
+            return false;
+        }
+
         if (!Sockets.TryGetValue(target, out var list))
         {
             Sockets[target] = list = new List<(SkillName?, StatType?, double)>();
         }
 
-        if (list.Count >= MaxSocketsPerItem)
-        {
-            return false;
-        }
-
-        list.Add((skill, stat, bonus));
+        list.AddRange(bonuses);
+        SocketSlots[target] = slotsUsed + 1;
 
         // If it's already being worn, apply immediately rather than waiting for the next
         // equip/unequip cycle.
         if (target.Parent is Mobile owner)
         {
-            ApplyOne(owner, target, skill, stat, bonus);
+            foreach (var (skill, stat, bonus) in bonuses)
+            {
+                ApplyOne(owner, target, skill, stat, bonus);
+            }
         }
 
         return true;
@@ -133,12 +200,13 @@ public class SoulStoneSocketing : GenericPersistence
 
     public override void Serialize(IGenericWriter writer)
     {
-        writer.WriteEncodedInt(0); // version
+        writer.WriteEncodedInt(1); // version — 1 adds SocketSlots (stone count, not bonus count)
         writer.WriteEncodedInt(Sockets.Count);
 
         foreach (var (item, list) in Sockets)
         {
             writer.Write(item);
+            writer.WriteEncodedInt(SocketSlots.GetValueOrDefault(item, 0));
             writer.WriteEncodedInt(list.Count);
 
             foreach (var (skill, stat, bonus) in list)
@@ -162,12 +230,13 @@ public class SoulStoneSocketing : GenericPersistence
 
     public override void Deserialize(IGenericReader reader)
     {
-        reader.ReadEncodedInt(); // version
+        var version = reader.ReadEncodedInt();
 
         var itemCount = reader.ReadEncodedInt();
         for (var i = 0; i < itemCount; i++)
         {
             var item = reader.ReadEntity<Item>();
+            var slots = version >= 1 ? reader.ReadEncodedInt() : 0;
             var socketCount = reader.ReadEncodedInt();
 
             var list = new List<(SkillName?, StatType?, double)>();
@@ -183,6 +252,10 @@ public class SoulStoneSocketing : GenericPersistence
             if (item != null)
             {
                 Sockets[item] = list;
+                // Pre-version-1 saves (one bonus == one slot, the old model) fall back to
+                // the flat bonus count so existing sockets don't silently become "free"
+                // extra slots after this upgrade.
+                SocketSlots[item] = version >= 1 ? slots : list.Count;
             }
         }
     }
@@ -204,9 +277,9 @@ public class SoulStoneSocketTarget : Target
             return;
         }
 
-        if (targeted is not Item item || item is not (BaseWeapon or BaseArmor or BaseJewel))
+        if (targeted is not Item item || !Systems.MahaonGems.GemSocketingSystem.IsSocketable(item))
         {
-            from.SendMessage("Сюда нельзя вставить — только оружие, броня и украшения.");
+            from.SendMessage("Сюда нельзя вставить — только то, что надевают.");
             return;
         }
 
@@ -223,16 +296,32 @@ public class SoulStoneSocketTarget : Target
         }
 
         var bonus = MahaonSoulStone.SizeToBonus(_stone.Size);
-        var skill = MahaonSoulStone.ColorToSkill(_stone.Color);
+        var skills = MahaonSoulStone.ColorToSkills(_stone.Color);
+        var stats = MahaonSoulStone.ColorToStats(_stone.Color);
 
-        StatType? stat = null;
-        if (skill == null)
+        var bundle = new List<(SkillName? skill, StatType? stat, double bonus)>(skills.Length + stats.Length);
+
+        foreach (var skill in skills)
         {
-            stat = Utility.RandomList(StatType.Str, StatType.Dex, StatType.Int);
+            bundle.Add((skill, null, bonus));
         }
 
-        if (SoulStoneSocketing.TrySocket(item, skill, stat, bonus))
+        foreach (var stat in stats)
         {
+            bundle.Add((null, stat, bonus));
+        }
+
+        // Only the FIRST soul stone dyes the item — SocketCount before TrySocket below is
+        // still the pre-insertion count, so 0 here means this is the first one.
+        var isFirstStone = SoulStoneSocketing.SocketCount(item) == 0;
+
+        if (SoulStoneSocketing.TrySocket(item, bundle))
+        {
+            if (isFirstStone)
+            {
+                item.Hue = MahaonSoulStone.ColorToHue(_stone.Color);
+            }
+
             from.SendMessage(0x59, $"Ты вставляешь {SizeRu(_stone.Size)} {ColorRu(_stone.Color)} камень души в {item.Name ?? "предмет"}.");
             _stone.Delete();
         }

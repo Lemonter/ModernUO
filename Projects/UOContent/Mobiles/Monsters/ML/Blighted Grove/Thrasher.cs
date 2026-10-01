@@ -36,8 +36,8 @@ namespace Server.Mobiles
             // TODO: Fame/Karma
         }
 
-        public override string CorpseName => "a Thrasher corpse";
-        public override string DefaultName => "Thrasher";
+        public override string CorpseName => "труп Молотильщика";
+        public override string DefaultName => "Молотильщик";
 
         public override bool GivesMLMinorArtifact => true;
         public override int Hides => 48;

@@ -48,8 +48,8 @@ namespace Server.Mobiles
             PackItem(new Bandage(10));
         }
 
-        public override string CorpseName => "a mummy corpse";
-        public override string DefaultName => "a mummy";
+        public override string CorpseName => "труп мумии";
+        public override string DefaultName => "мумия";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lesser;

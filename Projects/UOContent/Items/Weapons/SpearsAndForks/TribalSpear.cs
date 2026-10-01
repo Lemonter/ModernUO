@@ -30,6 +30,6 @@ namespace Server.Items
 
         public override int VirtualDamageBonus => 25;
 
-        public override string DefaultName => "a tribal spear";
+        public override string DefaultName => "племенное копьё";
     }
 }

@@ -76,7 +76,7 @@ namespace Server.Mobiles
         public override bool ClickTitle => false;
         public override bool ShowFameTitle => false;
 
-        public override string DefaultName => "Zealot of Khaldun";
+        public override string DefaultName => "фанатик Халдуна";
 
         public override bool AlwaysMurderer => true;
         public override bool Unprovokable => true;

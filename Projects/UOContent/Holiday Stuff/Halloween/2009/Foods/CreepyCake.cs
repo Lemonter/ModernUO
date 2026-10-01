@@ -12,6 +12,6 @@ namespace Server.Items
         [Constructible]
         public CreepyCake() : base(0x9e9) => Hue = 0x3E4;
 
-        public override string DefaultName => "Creepy Cake";
+        public override string DefaultName => "жуткий торт";
     }
 }

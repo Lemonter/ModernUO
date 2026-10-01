@@ -31,6 +31,7 @@ public static class BoneFractureSystem
     {
         public FractureLocation Location;
         public Timer Timer;
+        public DateTime HealAt;
     }
 
     private static readonly Dictionary<Mobile, FractureEntry> Active = new();
@@ -73,7 +74,7 @@ public static class BoneFractureSystem
         var scalar = 1.0 - healSkill / 200.0; // 100/100 skill -> 0.5x duration
         var duration = TimeSpan.FromSeconds(BaseDuration.TotalSeconds * Math.Clamp(scalar, 0.5, 1.0));
 
-        var entry = new FractureEntry { Location = location };
+        var entry = new FractureEntry { Location = location, HealAt = Core.Now + duration };
         entry.Timer = Timer.DelayCall(duration, () => Heal(victim));
         Active[victim] = entry;
 
@@ -92,6 +93,23 @@ public static class BoneFractureSystem
 
     public static bool HasFracture(Mobile m, FractureLocation location) =>
         Active.TryGetValue(m, out var entry) && entry.Location == location;
+
+    /// <summary>Which single location is currently fractured, if any — used by
+    /// MahaonStatusGump. Only one fracture is ever tracked at a time per mobile (a new
+    /// break replaces the old one, see Apply).</summary>
+    public static FractureLocation? GetActiveFracture(Mobile m) =>
+        Active.TryGetValue(m, out var entry) ? entry.Location : null;
+
+    public static TimeSpan GetTimeLeft(Mobile m) =>
+        Active.TryGetValue(m, out var entry) ? Utility.Max(entry.HealAt - Core.Now, TimeSpan.Zero) : TimeSpan.Zero;
+
+    public static string RuLocationName(FractureLocation location) => location switch
+    {
+        FractureLocation.Arms  => "рука",
+        FractureLocation.Legs  => "нога",
+        FractureLocation.Hands => "кисть",
+        _                       => "?"
+    };
 
     private static string LocationMessage(FractureLocation location) => location switch
     {

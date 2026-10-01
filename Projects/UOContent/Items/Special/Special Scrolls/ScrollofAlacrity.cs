@@ -52,7 +52,7 @@ public partial class ScrollofAlacrity : SpecialScroll
                     if (!objective.Expired && objective is GainSkillObjectiveInstance objectiveInstance &&
                         objectiveInstance.Handles(Skill))
                     {
-                        from.SendMessage("You are already under the effect of an enhanced skillgain quest.");
+                        from.SendMessage("Ты уже под действием задания на ускоренный рост навыка.");
                         return false;
                     }
                 }

@@ -55,8 +55,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a cow corpse";
-        public override string DefaultName => "a cow";
+        public override string CorpseName => "труп коровы";
+        public override string DefaultName => "корова";
 
         public override int Meat => 8;
         public override int Hides => 12;

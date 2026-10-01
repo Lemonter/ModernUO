@@ -44,8 +44,8 @@ namespace Server.Mobiles
             PackItem(new SpidersSilk(8));
         }
 
-        public override string CorpseName => "a dread spider corpse";
-        public override string DefaultName => "a dread spider";
+        public override string CorpseName => "труп жуткого паука";
+        public override string DefaultName => "жуткий паук";
 
         public override Poison PoisonImmune => Poison.Lethal;
         public override Poison HitPoison => Poison.Lethal;

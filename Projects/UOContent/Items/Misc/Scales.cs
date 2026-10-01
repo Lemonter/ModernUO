@@ -29,7 +29,7 @@ public partial class Scales : Item
         {
             if (targeted == _scales)
             {
-                from.SendMessage("It cannot weigh itself.");
+                from.SendMessage("Само себя оно не взвесит.");
                 return;
             }
 
@@ -40,7 +40,7 @@ public partial class Scales : Item
 
             if (targeted is not Item { Movable: true } item)
             {
-                from.SendMessage("You cannot weigh that.");
+                from.SendMessage("Это не взвесить.");
                 return;
             }
 
@@ -48,7 +48,7 @@ public partial class Scales : Item
 
             if (root != null && root != from || item.Parent == from)
             {
-                from.SendMessage("You decide that item's current location is too awkward to get an accurate result.");
+                from.SendMessage("Вещь лежит неудобно, точного веса не выйдет.");
                 return;
             }
 

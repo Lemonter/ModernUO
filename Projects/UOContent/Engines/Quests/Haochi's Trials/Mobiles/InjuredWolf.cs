@@ -32,8 +32,8 @@ public partial class InjuredWolf : BaseCreature
         SetSkill(SkillName.Wrestling, 20.0, 30.0);
     }
 
-    public override string CorpseName => "an injured wolf corpse";
-    public override string DefaultName => "an injured wolf";
+    public override string CorpseName => "труп раненого волка";
+    public override string DefaultName => "раненый волк";
 
     public override int GetIdleSound() => 0xE9;
 }

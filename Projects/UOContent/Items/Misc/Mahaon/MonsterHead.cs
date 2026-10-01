@@ -23,24 +23,12 @@ public partial class MonsterHead : Item
 
     public override string DefaultName => $"голова: {_monsterName}";
 
+    // Mahaon: the direct double-click-for-stamina turn-in (ArcherStaminaQuestSystem) was
+    // removed — heads mysteriously topping up stamina with no NPC involved wasn't wanted.
+    // MonsterHead is still real crafting material for Sakuro items via SakuroCraftingTool,
+    // so the item/drop itself stays; double-click now just points at that instead.
     public override void OnDoubleClick(Mobile from)
     {
-        if (!IsChildOf(from.Backpack))
-        {
-            from.SendMessage("Это должно быть у тебя в рюкзаке, чтобы использовать.");
-            return;
-        }
-
-        if (from is not Mobiles.PlayerMobile player)
-        {
-            return;
-        }
-
-        from.SendMessage("Ты сдаёшь голову для квеста лучника на стамину. (Подсказка: если хочешь скрафтить из головы сакуро — используй резцовый набор вместо этого.)");
-
-        if (Systems.MahaonArtifacts.ArcherStaminaQuestSystem.TryTurnIn(player, this))
-        {
-            Delete();
-        }
+        from.SendMessage("Используй резцовый набор (Sakuro Crafting Tool), чтобы применить эту голову.");
     }
 }

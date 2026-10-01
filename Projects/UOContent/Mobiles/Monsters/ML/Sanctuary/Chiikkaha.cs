@@ -34,7 +34,7 @@ namespace Server.Mobiles
             Karma = -7500;
         }
 
-        public override string CorpseName => "a Chiikkaha the Toothed corpse";
-        public override string DefaultName => "Chiikkaha the Toothed";
+        public override string CorpseName => "труп Чииккахи Зубастого";
+        public override string DefaultName => "Чииккаха Зубастый";
     }
 }

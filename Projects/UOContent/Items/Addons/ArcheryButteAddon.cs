@@ -241,7 +241,7 @@ namespace Server.Items
                     MessageType.Regular,
                     0x3B2,
                     1010027 + area,
-                    $"{from.Name}\t{(isArrow ? "arrow" : "bolt")}"
+                    $"{from.Name}\t{(isArrow ? "стрела" : "bolt")}"
                 );
             }
             else

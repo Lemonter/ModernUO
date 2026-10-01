@@ -58,7 +58,7 @@ public partial class MorgBergen : BaseCreature
 
     public override bool ShowFameTitle => false;
     public override bool DeleteCorpseOnDeath => true;
-    public override string DefaultName => "Morg Bergen";
+    public override string DefaultName => "Морг Берген";
 
     public override bool AlwaysMurderer => true;
 

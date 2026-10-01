@@ -9,7 +9,7 @@ public partial class PieceWhiteKing : BasePiece
     {
     }
 
-    public override string DefaultName => "white king";
+    public override string DefaultName => "белый король";
 }
 
 [SerializationGenerator(0, false)]
@@ -19,7 +19,7 @@ public partial class PieceBlackKing : BasePiece
     {
     }
 
-    public override string DefaultName => "black king";
+    public override string DefaultName => "чёрный король";
 }
 
 [SerializationGenerator(0, false)]
@@ -29,7 +29,7 @@ public partial class PieceWhiteQueen : BasePiece
     {
     }
 
-    public override string DefaultName => "white queen";
+    public override string DefaultName => "белый ферзь";
 }
 
 [SerializationGenerator(0, false)]
@@ -39,7 +39,7 @@ public partial class PieceBlackQueen : BasePiece
     {
     }
 
-    public override string DefaultName => "black queen";
+    public override string DefaultName => "чёрный ферзь";
 }
 
 [SerializationGenerator(0, false)]
@@ -49,7 +49,7 @@ public partial class PieceWhiteRook : BasePiece
     {
     }
 
-    public override string DefaultName => "white rook";
+    public override string DefaultName => "белая ладья";
 }
 
 [SerializationGenerator(0, false)]
@@ -59,7 +59,7 @@ public partial class PieceBlackRook : BasePiece
     {
     }
 
-    public override string DefaultName => "black rook";
+    public override string DefaultName => "чёрная ладья";
 }
 
 [SerializationGenerator(0, false)]
@@ -69,7 +69,7 @@ public partial class PieceWhiteBishop : BasePiece
     {
     }
 
-    public override string DefaultName => "white bishop";
+    public override string DefaultName => "белый слон";
 }
 
 [SerializationGenerator(0, false)]
@@ -79,7 +79,7 @@ public partial class PieceBlackBishop : BasePiece
     {
     }
 
-    public override string DefaultName => "black bishop";
+    public override string DefaultName => "чёрный слон";
 }
 
 [SerializationGenerator(0, false)]
@@ -89,7 +89,7 @@ public partial class PieceWhiteKnight : BasePiece
     {
     }
 
-    public override string DefaultName => "white knight";
+    public override string DefaultName => "белый конь";
 }
 
 [SerializationGenerator(0, false)]
@@ -99,7 +99,7 @@ public partial class PieceBlackKnight : BasePiece
     {
     }
 
-    public override string DefaultName => "black knight";
+    public override string DefaultName => "чёрный конь";
 }
 
 [SerializationGenerator(0, false)]
@@ -109,7 +109,7 @@ public partial class PieceWhitePawn : BasePiece
     {
     }
 
-    public override string DefaultName => "white pawn";
+    public override string DefaultName => "белая пешка";
 }
 
 [SerializationGenerator(0, false)]
@@ -119,5 +119,5 @@ public partial class PieceBlackPawn : BasePiece
     {
     }
 
-    public override string DefaultName => "black pawn";
+    public override string DefaultName => "чёрная пешка";
 }

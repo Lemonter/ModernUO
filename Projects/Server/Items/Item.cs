@@ -700,8 +700,14 @@ public partial class Item : IHued, IComparable<Item>, ISpawnable, IObjectPropert
 
                 if (m_Amount <= 0)
                 {
+                    // Со стеком вызовов, а не просто с текстом. Раньше сюда клался
+                    // new Exception(...), у которого стека нет по определению: исключение
+                    // получает его в момент броска, а это никогда не бросается. В логе
+                    // оставалась строка «предмет стал нулевым» без единого намёка, КТО его
+                    // таким сделал, и найти виновника можно было только перебором всех
+                    // мест, где кто-то трогает Amount.
                     logger.Error(
-                        new Exception("Item.Amount <= 0 error"),
+                        new Exception($"Item.Amount <= 0 error{Environment.NewLine}{Environment.StackTrace}"),
                         "Item {Type} ({Serial}) was changed to amount of {Amount}, but must be at least 1",
                         GetType(),
                         Serial,

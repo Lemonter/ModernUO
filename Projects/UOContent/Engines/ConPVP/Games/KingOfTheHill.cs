@@ -130,7 +130,7 @@ public partial class HillOfTheKing : Item
 
     private void DeKingify()
     {
-        PublicOverheadMessage(MessageType.Regular, 0x0481, false, "Free!");
+        PublicOverheadMessage(MessageType.Regular, 0x0481, false, "Свободно!");
 
         m_KingTimer?.Stop();
 
@@ -157,7 +157,7 @@ public partial class HillOfTheKing : Item
 
         if (King.Name != null)
         {
-            PublicOverheadMessage(MessageType.Regular, 0x0481, false, $"Taken by {King.Name}!");
+            PublicOverheadMessage(MessageType.Regular, 0x0481, false, $"Захвачено: {King.Name}!");
         }
     }
 
@@ -226,7 +226,7 @@ public partial class HillOfTheKing : Item
 
                 m_Hill.Game.Alert($"{king} ({ti.Name}) is king of {hill}!");
 
-                m_Hill.PublicOverheadMessage(MessageType.Regular, 0x0481, false, "Capture!");
+                m_Hill.PublicOverheadMessage(MessageType.Regular, 0x0481, false, "Захват!");
 
                 pi.Captures++;
                 Captures++;
@@ -279,7 +279,7 @@ public partial class KHBoard : Item
         }
         else
         {
-            from.SendMessage("There is no King of the Hill game in progress.");
+            from.SendMessage("Игра «Царь горы» сейчас не идёт.");
         }
     }
 }

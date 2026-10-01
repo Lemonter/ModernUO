@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackItem(new SpidersSilk(2));
         }
 
-        public override string CorpseName => "a terathan drone corpse";
-        public override string DefaultName => "a terathan drone";
+        public override string CorpseName => "труп тератана-трутня";
+        public override string DefaultName => "тератан-трутень";
 
         public override int Meat => 4;
 

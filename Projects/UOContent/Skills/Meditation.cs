@@ -40,7 +40,7 @@ namespace Server.SkillHandlers
             {
                 m.SendLocalizedMessage(501846); // You are at peace.
 
-                return TimeSpan.FromSeconds(Core.AOS ? 10.0 : 5.0);
+                return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
             }
 
             var isBattlemage = Server.Systems.MahaonProfessions.ProfessionSystem.GetProfession(m) ==
@@ -50,7 +50,7 @@ namespace Server.SkillHandlers
             {
                 m.SendLocalizedMessage(500135); // Regenerative forces cannot penetrate your armor!
 
-                return TimeSpan.FromSeconds(10.0);
+                return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
             }
 
             var oneHanded = m.FindItemOnLayer(Layer.OneHanded);
@@ -96,7 +96,7 @@ namespace Server.SkillHandlers
                 m.SendLocalizedMessage(501850); // You cannot focus your concentration.
             }
 
-            return TimeSpan.FromSeconds(10.0);
+            return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
         }
     }
 }

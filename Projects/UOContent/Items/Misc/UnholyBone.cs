@@ -19,7 +19,7 @@ public partial class UnholyBone : Item, ICarvable
         m_Timer.Start();
     }
 
-    public override string DefaultName => "unholy bone";
+    public override string DefaultName => "нечестивая кость";
 
     public void Carve(Mobile from, Item item)
     {
@@ -30,11 +30,11 @@ public partial class UnholyBone : Item, ICarvable
         {
             if (ItemID == 0xF7E)
             {
-                from.SendMessage("You destroy the bone.");
+                from.SendMessage("Ты разрушаешь кость.");
             }
             else
             {
-                from.SendMessage("You destroy the bone pile.");
+                from.SendMessage("Ты разрушаешь груду костей.");
             }
 
             var gold = new Gold(25, 100);
@@ -47,11 +47,11 @@ public partial class UnholyBone : Item, ICarvable
         }
         else if (ItemID == 0xF7E)
         {
-            from.SendMessage("You damage the bone.");
+            from.SendMessage("Ты повреждаешь кость.");
         }
         else
         {
-            from.SendMessage("You damage the bone pile.");
+            from.SendMessage("Ты повреждаешь груду костей.");
         }
     }
 

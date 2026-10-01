@@ -13,7 +13,7 @@ public partial class Zoel : BaseQuester
     {
     }
 
-    public override string DefaultName => "Elite Ninja Zoel";
+    public override string DefaultName => "элитный ниндзя Зоэль";
 
     public override int TalkNumber => -1;
 

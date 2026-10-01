@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Server.Collections;
@@ -32,7 +32,21 @@ public class GuardedRegion : BaseRegion
 
     public bool GuardsDisabled { get; set; }
 
-    public virtual bool AllowReds => Core.AOS;
+    /// <summary>
+    ///     Пускает ли охраняемая область убийц безнаказанно.
+    ///
+    ///     Было Core.AOS — то есть на современной эпохе true, и стража красных не трогала
+    ///     вовсе. Теперь false: и красные, и серые одинаково зовут стражу.
+    ///
+    ///     ВАЖНО: на текущем шарде это ни на что не влияет. DisableVanillaGuards ставит
+    ///     GuardsDisabled = true всем GuardedRegion, а IsDisabled() закорачивает OnEnter,
+    ///     OnCriminalAction, OnAggressed и CheckGuardCandidate — то есть весь путь, где
+    ///     AllowReds вообще читается. Настоящая стража у нас своя, бродячая: CityGuard,
+    ///     и правило «бьём красных и серых» живёт там, в CityGuard.IsGuardTarget.
+    ///     Строка оставлена, чтобы ванильные регионы вели себя правильно, если их когда-то
+    ///     включат обратно.
+    /// </summary>
+    public virtual bool AllowReds => false;
 
     public virtual Type DefaultGuardType
     {
@@ -64,15 +78,15 @@ public class GuardedRegion : BaseRegion
 
         if (reg == null)
         {
-            from.SendMessage("You are not in a guardable region.");
+            from.SendMessage("Ты не в охраняемой области.");
         }
         else if (reg.GuardsDisabled)
         {
-            from.SendMessage("The guards in this region have been disabled.");
+            from.SendMessage("Стража в этой области отключена.");
         }
         else
         {
-            from.SendMessage("This region is actively guarded.");
+            from.SendMessage("Эта область под охраной.");
         }
     }
 
@@ -87,7 +101,7 @@ public class GuardedRegion : BaseRegion
 
             if (reg == null)
             {
-                from.SendMessage("You are not in a guardable region.");
+                from.SendMessage("Ты не в охраняемой области.");
             }
             else
             {
@@ -114,7 +128,7 @@ public class GuardedRegion : BaseRegion
 
         if (reg == null)
         {
-            from.SendMessage("You are not in a guardable region.");
+            from.SendMessage("Ты не в охраняемой области.");
         }
         else
         {

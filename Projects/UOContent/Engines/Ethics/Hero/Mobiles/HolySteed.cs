@@ -6,7 +6,7 @@ namespace Server.Mobiles;
 [SerializationGenerator(0, false)]
 public partial class HolySteed : BaseMount
 {
-    public override string DefaultName => "a silver steed";
+    public override string DefaultName => "серебряный скакун";
 
     [Constructible]
     public HolySteed() : base(0x75, 0x3EA8, AIType.AI_Melee, FightMode.Aggressor)
@@ -43,7 +43,7 @@ public partial class HolySteed : BaseMount
     }
 
     public override int StepsMax => 6400;
-    public override string CorpseName => "a holy corpse";
+    public override string CorpseName => "святой труп";
     public override bool IsDispellable => false;
     public override bool IsBondable => false;
     public override FoodType FavoriteFood => FoodType.FruitsAndVeggies | FoodType.GrainsAndHay;
@@ -73,7 +73,7 @@ public partial class HolySteed : BaseMount
     {
         if (Ethic.Hero == null || Ethic.Find(from) != Ethic.Hero)
         {
-            from.SendMessage("You may not ride this steed.");
+            from.SendMessage("На этом скакуне тебе не ездить.");
         }
         else
         {

@@ -81,8 +81,16 @@ public static class Snooping
             Titles.AwardKarma(from, -4, true);
         }
 
-        if (from.AccessLevel > AccessLevel.Player || from.CheckTargetSkill(SkillName.Snooping, cont, 0.0, 100.0))
+        var windowBonus = Server.Systems.MahaonCombat.ThievingSpecializationSystem.GetSkillWindowBonus(
+            from, Server.Systems.MahaonCombat.ThievingSpecialization.Snoop
+        );
+
+        if (from.AccessLevel > AccessLevel.Player || from.CheckTargetSkill(SkillName.Snooping, cont, 0.0 - windowBonus, 100.0))
         {
+            Server.Systems.MahaonCombat.ThievingSpecializationSystem.Train(
+                from, Server.Systems.MahaonCombat.ThievingSpecialization.Snoop
+            );
+
             if ((cont as TrappableContainer)?.ExecuteTrap(from) == true)
             {
                 return;

@@ -33,7 +33,7 @@ public partial class DiseasedCat : BaseCreature
         VirtualArmor = 8;
     }
 
-    public override string DefaultName => "a diseased cat";
+    public override string DefaultName => "больная кошка";
 
     public override bool AlwaysMurderer => true;
 }

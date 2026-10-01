@@ -33,7 +33,7 @@ namespace Server.Spells.Eighth
             }
             else if (m is BaseCreature { IsDeadBondedPet: true })
             {
-                Caster.SendMessage("Target can not be revived this way.");
+                Caster.SendMessage("Так эту цель не воскресить.");
             }
             else if (!m.Player)
             {
@@ -72,7 +72,7 @@ namespace Server.Spells.Eighth
         {
             if (DuelContext.CheckSuddenDeath(Caster))
             {
-                Caster.SendMessage(0x22, "You cannot cast this spell when in sudden death.");
+                Caster.SendMessage(0x22, "Во внезапной смерти это заклинание недоступно.");
                 return false;
             }
 

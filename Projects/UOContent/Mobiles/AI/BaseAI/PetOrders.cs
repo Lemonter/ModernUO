@@ -537,8 +537,8 @@ public abstract partial class BaseAI
             if (Mobile.Combatant != null || Mobile.Aggressors.Count > 0 ||
                 Mobile.Aggressed.Count > 0 || Core.TickCount < Mobile.NextCombatTime)
             {
-                from.SendMessage("You can not transfer a pet while in combat.");
-                to.SendMessage("You can not transfer a pet while in combat.");
+                from.SendMessage("Питомца нельзя передать во время боя.");
+                to.SendMessage("Питомца нельзя передать во время боя.");
                 ResumePersistentOrder();
                 return true;
             }

@@ -65,22 +65,32 @@ public class BloodGemSelectTarget : Target
             return;
         }
 
-        gem.Consume();
-        _blood.Consume();
-
         from.SendMessage("Теперь укажи оружие, броню или украшение, куда вставить самоцвет.");
-        from.Target = new BloodGemSocketTarget(skill);
+        from.Target = new BloodGemSocketTarget(_blood, gem, skill);
     }
 }
 
 public class BloodGemSocketTarget : Target
 {
+    private readonly VialOfBlood _blood;
+    private readonly Item _gem;
     private readonly SkillName _skill;
 
-    public BloodGemSocketTarget(SkillName skill) : base(2, false, TargetFlags.None) => _skill = skill;
+    public BloodGemSocketTarget(VialOfBlood blood, Item gem, SkillName skill) : base(2, false, TargetFlags.None)
+    {
+        _blood = blood;
+        _gem = gem;
+        _skill = skill;
+    }
 
     protected override void OnTarget(Mobile from, object targeted)
     {
+        if (_blood.Deleted || _gem.Deleted || !_gem.IsChildOf(from.Backpack))
+        {
+            from.SendMessage("Самоцвет или флакон крови больше недоступны.");
+            return;
+        }
+
         if (targeted is not Item item || item is not (BaseWeapon or BaseArmor or BaseJewel))
         {
             from.SendMessage("Сюда нельзя вставить — только оружие, броня и украшения.");
@@ -99,8 +109,10 @@ public class BloodGemSocketTarget : Target
             return;
         }
 
-        if (SoulStoneSocketing.TrySocket(item, _skill, null, 10))
+        if (SoulStoneSocketing.TrySocket(item, new (SkillName? skill, StatType? stat, double bonus)[] { (_skill, null, 10) }))
         {
+            _gem.Consume();
+            _blood.Consume();
             from.SendMessage(0x59, $"Кровавый самоцвет приживается, даруя навык «{_skill.SkillNameRu()}».");
         }
         else

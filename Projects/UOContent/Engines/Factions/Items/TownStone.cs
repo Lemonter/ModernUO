@@ -30,7 +30,7 @@ public class TownStone : BaseSystemController
         }
     }
 
-    public override string DefaultName => "faction town stone";
+    public override string DefaultName => "городской камень фракции";
 
     public override void OnDoubleClick(Mobile from)
     {

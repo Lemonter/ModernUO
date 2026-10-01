@@ -63,8 +63,11 @@ namespace Server.Spells.First
                     toHeal += Utility.Random(1, 5);
                 }
 
+                var healed = (int)toHeal;
+                Spellweaving.ArcaneEmpowermentSpell.AddHealBonus(Caster, ref healed);
+
                 // m.Heal( toHeal, Caster );
-                SpellHelper.Heal((int)toHeal, m, Caster);
+                SpellHelper.Heal(healed, m, Caster);
 
                 m.FixedParticles(0x376A, 9, 32, 5005, EffectLayer.Waist);
                 m.PlaySound(0x1F2);
@@ -75,7 +78,7 @@ namespace Server.Spells.First
         {
             if (DuelContext.CheckSuddenDeath(Caster))
             {
-                Caster.SendMessage(0x22, "You cannot cast this spell when in sudden death.");
+                Caster.SendMessage(0x22, "Во внезапной смерти это заклинание недоступно.");
                 return false;
             }
 

@@ -7,7 +7,7 @@ namespace Server.Mobiles
     public partial class FleshGolem : BaseCreature
     {
         [Constructible]
-        public FleshGolem() : base(AIType.AI_Melee)
+        public FleshGolem() : base(AIType.AI_Mage)
         {
             Body = 304;
             BaseSoundID = 684;
@@ -28,6 +28,11 @@ namespace Server.Mobiles
             SetResistance(ResistanceType.Poison, 60, 70);
             SetResistance(ResistanceType.Energy, 30, 40);
 
+            // Mahaon: was AI_Melee. Every elemental and golem casts now; the spell
+            // circle is held to 5 by Systems.MahaonCombat.ElementalMagerySystem, so
+            // the Magery here is set for reliable casting, not to limit the circle.
+            SetSkill(SkillName.Magery, 70.1, 90.0);
+            SetSkill(SkillName.EvalInt, 60.1, 80.0);
             SetSkill(SkillName.MagicResist, 50.1, 75.0);
             SetSkill(SkillName.Tactics, 55.1, 80.0);
             SetSkill(SkillName.Wrestling, 60.1, 70.0);
@@ -38,9 +43,9 @@ namespace Server.Mobiles
             VirtualArmor = 34;
         }
 
-        public override string CorpseName => "a flesh golem corpse";
+        public override string CorpseName => "труп мясного голема";
 
-        public override string DefaultName => "a flesh golem";
+        public override string DefaultName => "мясной голем";
 
         public override bool BleedImmune => true;
         public override int TreasureMapLevel => 1;

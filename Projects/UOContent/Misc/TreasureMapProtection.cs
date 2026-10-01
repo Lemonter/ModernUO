@@ -65,7 +65,7 @@ namespace Server
         {
             if (m.AccessLevel > AccessLevel.Player)
             {
-                m.SendMessage("You have entered a protected treasure map area.");
+                m.SendMessage("Ты вошёл в охраняемую зону карты сокровищ.");
             }
         }
 
@@ -73,7 +73,7 @@ namespace Server
         {
             if (m.AccessLevel > AccessLevel.Player)
             {
-                m.SendMessage("You have left a protected treasure map area.");
+                m.SendMessage("Ты покинул охраняемую зону карты сокровищ.");
             }
         }
     }

@@ -63,6 +63,7 @@ namespace Server.Spells.Chivalry
 
                 // TODO: Should caps be applied?
                 var toHeal = Math.Clamp(ComputePowerValue(6) + Utility.RandomMinMax(0, 2), 7, 39);
+                toHeal = (int)(toHeal * Systems.MahaonCombat.ChivalrySchoolSystem.GetHealScalar(Caster));
 
                 if (m.Hits + toHeal > m.HitsMax)
                 {
@@ -84,7 +85,7 @@ namespace Server.Spells.Chivalry
         {
             if (DuelContext.CheckSuddenDeath(Caster))
             {
-                Caster.SendMessage(0x22, "You cannot cast this spell when in sudden death.");
+                Caster.SendMessage(0x22, "Во внезапной смерти это заклинание недоступно.");
                 return false;
             }
 

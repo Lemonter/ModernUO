@@ -49,8 +49,8 @@ namespace Server.Mobiles
             m_NextAbilityTime = Core.Now + TimeSpan.FromSeconds(Utility.RandomMinMax(2, 5));
         }
 
-        public override string CorpseName => "a meer's corpse";
-        public override string DefaultName => "a meer mage";
+        public override string CorpseName => "труп мира";
+        public override string DefaultName => "маг миров";
 
         public override bool AutoDispel => true;
         public override Poison PoisonImmune => Poison.Lethal;

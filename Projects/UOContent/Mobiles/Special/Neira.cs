@@ -82,7 +82,7 @@ public partial class Neira : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => Array.Empty<MonsterStatuetteType>();
 
-    public override string DefaultName => "Neira";
+    public override string DefaultName => "Нейра";
 
     public override bool AlwaysMurderer => true;
     public override bool BardImmune => !Core.SE;

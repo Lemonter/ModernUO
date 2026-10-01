@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ModernUO.CodeGeneratedEvents;
@@ -130,8 +130,18 @@ public static partial class CharacterCreation
     {
         var pre6000ClientSupport = TileMatrix.Pre6000ClientSupport;
         var availableMaps = ExpansionInfo.CoreExpansion.MapSelectionFlags;
+        var feluccaAvailable = availableMaps.Includes(MapSelectionFlags.Felucca);
         var trammelAvailable = availableMaps.Includes(MapSelectionFlags.Trammel);
         var terMerAvailable = availableMaps.Includes(MapSelectionFlags.TerMur);
+
+        // New characters start on Felucca now, not Trammel — per the shard owner's call,
+        // Trammel stays fully playable/travelable, it's just no longer offered as a
+        // starting-city choice on character creation. Falls back to the original
+        // Trammel-based lists only if Felucca somehow isn't available at all.
+        if (feluccaAvailable)
+        {
+            return terMerAvailable ? [..FeluccaStartingCities, ..StartingCitiesSA] : FeluccaStartingCities;
+        }
 
         if (trammelAvailable)
         {
@@ -146,11 +156,6 @@ public static partial class CharacterCreation
             }
 
             return [..NewHavenStartingCities, ..TrammelStartingCities];
-        }
-
-        if (availableMaps.Includes(MapSelectionFlags.Felucca))
-        {
-            return FeluccaStartingCities;
         }
 
         logger.Error("No starting cities are available.");
@@ -1020,7 +1025,10 @@ public static partial class CharacterCreation
                     m.PackItem(new Tongs());
                     m.PackItem(new Pickaxe());
                     m.PackItem(new Pickaxe());
-                    m.PackItem(new IronIngot(50));
+                    // Наш слиток, а не ванильный: ванильные больше нигде не
+                    // принимаются, и стартовый кузнец начинал бы игру с полусотней
+                    // слитков, которыми нельзя ковать.
+                    m.PackItem(new MahaonIngot(Systems.MahaonMetals.MahaonMetal.Iron, 50));
                     EquipItem(m, new HalfApron(Utility.RandomYellowHue()));
                     break;
                 }

@@ -36,7 +36,7 @@ public partial class FierceDragon : BaseCreature
         CantWalk = true;
     }
 
-    public override string DefaultName => "a fierce dragon";
+    public override string DefaultName => "свирепый дракон";
 
     public override int GetIdleSound() => 0x2C4;
 

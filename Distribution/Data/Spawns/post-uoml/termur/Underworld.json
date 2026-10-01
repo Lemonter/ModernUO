@@ -561,22 +561,6 @@
   },
   {
     "$type": "Spawner",
-    "guid": "1b91d22a-24a2-4aee-88fa-36304f40dfdc",
-    "name": "Spawner (603)",
-    "location": [1053, 861, -32],
-    "map": "TerMur",
-    "count": 1,
-    "minDelay": "00:05:00",
-    "maxDelay": "00:10:00",
-    "team": 0,
-    "homeRange": 15,
-    "walkingRange": 20,
-    "entries": [
-      { "name": "NavreyNightEyes", "maxCount": 1, "probability": 100 }
-    ]
-  },
-  {
-    "$type": "Spawner",
     "guid": "a37dcfad-6094-4074-8fc4-ead7d8dd889c",
     "name": "Spawner (603)",
     "location": [1094, 1002, -16],

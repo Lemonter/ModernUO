@@ -22,7 +22,7 @@ public partial class Bandage : Item, IDyable
         Amount = amount;
     }
 
-    public override double DefaultWeight => 0.1;
+    public override double DefaultWeight => 0; // Mahaon: consumables are weightless by design
 
     public virtual bool Dye(Mobile from, DyeTub sender)
     {
@@ -237,6 +237,12 @@ public class BandageContext : Timer
             var healing = Healer.Skills[primarySkill].Value;
             var anatomy = Healer.Skills[secondarySkill].Value;
             var chance = (healing - 68.0) / 50.0 - Slips * 0.02;
+
+            if (petPatient?.IsDeadPet == true)
+            {
+                chance += Systems.MahaonCombat.VeterinarySpecializationSystem.GetResurrectionChanceBonus(Healer);
+            }
+
             checkSkills = healing >= 80.0 && anatomy >= 80.0;
 
             // TODO: Dbl check doesn't check for faction of the horse here?
@@ -263,6 +269,8 @@ public class BandageContext : Timer
 
             if (petPatient?.IsDeadPet == true)
             {
+                Systems.MahaonCombat.VeterinarySpecializationSystem.TrainResurrector(Healer);
+
                 var master = petPatient.ControlMaster;
 
                 if (master != null && Healer == master)
@@ -398,6 +406,11 @@ public class BandageContext : Timer
                 if (Patient.Body.IsMonster || Patient.Body.IsAnimal)
                 {
                     toHeal += Patient.HitsMax / 100.0;
+                    toHeal += Systems.MahaonCombat.VeterinarySpecializationSystem.OnLivingPetHealed(Healer);
+                }
+                else
+                {
+                    toHeal += Systems.MahaonCombat.HealingSpecializationSystem.OnHumanHealed(Healer);
                 }
 
                 if (Core.AOS)
@@ -408,6 +421,11 @@ public class BandageContext : Timer
                 {
                     toHeal -= Slips * 4;
                 }
+
+                // «Длань света» — сигнатурный перк категории Вера. Считается после штрафа
+                // за сбитые бинты, чтобы прибавка шла к тому, что реально дошло до
+                // пациента.
+                toHeal *= Systems.MahaonProfessions.ProfessionBonuses.HealingScalar(Healer);
 
                 if (toHeal < 1)
                 {
@@ -529,6 +547,15 @@ public class BandageContext : Timer
             var context = GetContext(healer);
 
             context?.StopHeal();
+            // «Скорая помощь» — обычный перк категории Вера: бинты у него ложатся на
+            // треть быстрее. Считается последним, поверх всех ветвей выше.
+            if (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                    healer, Systems.MahaonProfessions.ProfessionCategory.Faith
+                ))
+            {
+                seconds *= 0.7;
+            }
+
             seconds *= 1000;
 
             context = new BandageContext(healer, patient, TimeSpan.FromMilliseconds(seconds));

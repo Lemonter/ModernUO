@@ -46,6 +46,15 @@ namespace Server.Mobiles
             AddItem(new FancyShirt());
             AddItem(new Bandana());
 
+            // Mahaon: одетый сет из простой кожи — один тип кожи на весь набор
+            // (не вперемешку), каждый вид NPC-бандита получает СВОЙ тип кожи для
+            // визуального разнообразия. Brigand — обычная кожа (базовые головорезы).
+            AddItem(new LeatherChest { Resource = CraftResource.RegularLeather });
+            AddItem(new LeatherArms { Resource = CraftResource.RegularLeather });
+            AddItem(new LeatherGloves { Resource = CraftResource.RegularLeather });
+            AddItem(new LeatherGorget { Resource = CraftResource.RegularLeather });
+            AddItem(new LeatherLegs { Resource = CraftResource.RegularLeather });
+
             AddItem(
                 Utility.Random(7) switch
                 {

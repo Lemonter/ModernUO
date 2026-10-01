@@ -30,7 +30,7 @@ public partial class ValentinesCard : Item
         _labelNumber = Utility.Random(1077589, 5);
     }
 
-    public override string DefaultName => "a Valentine's card";
+    public override string DefaultName => "валентинка";
 
     /*
      * Five possible messages:

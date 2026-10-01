@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Guilds;
 using Server.Items;
 using Server.Systems.MahaonCities;
@@ -13,11 +13,6 @@ public partial class CityGuard : BaseCreature
 
     [SerializableField(1)]
     private Guild _controllingGuild;
-
-    // Patrol bookkeeping — deliberately not serialized, resets fine on world load.
-    private Point3D _lastLocation;
-    private int _stepsSinceHome;
-    private int _stepThreshold = Utility.RandomMinMax(20, 30);
 
     private const int GuardScanRange = 15;
 
@@ -50,56 +45,71 @@ public partial class CityGuard : BaseCreature
 
     public override bool IsEnemy(Mobile m) =>
         (_controllingGuild != null && CityControlSystem.IsHostileToCity(_city, m)) ||
-        IsSuppressablePK(m) ||
+        IsGuardTarget(m) ||
         base.IsEnemy(m);
 
-    private static bool IsSuppressablePK(Mobile m) => m is BotMobile { IsPk: true };
+    /// <summary>
+    ///     Кого стража берёт сама, без всякого повода со своей стороны: убийц (красных) и
+    ///     преступников (серых). Плюс боты с ролью PK — их флаг выдаётся при создании и к
+    ///     счётчику убийств отношения не имеет.
+    ///
+    ///     Раньше здесь стояло ровно <c>m is BotMobile { IsPk: true }</c>. Это флаг роли,
+    ///     живому игроку взяться ему неоткуда — то есть настоящий игрок мог набить сколько
+    ///     угодно убийств и спокойно ходить мимо поста: стража его попросту не видела.
+    ///     Ванильная стража городов у нас выключена целиком (см. DisableVanillaGuards),
+    ///     так что этот метод — единственное место, где вообще решается, кого стража бьёт.
+    ///
+    ///     Карма сюда намеренно не входит. <see cref="Mobile.Murderer" /> — это
+    ///     Kills >= 5, <see cref="Mobile.Criminal" /> — флаг за конкретное преступление;
+    ///     ни то, ни другое от кармы не зависит, и низкая карма сама по себе ни цвета, ни
+    ///     внимания стражи не даёт.
+    /// </summary>
+    private static bool IsGuardTarget(Mobile m)
+    {
+        if (m is BotMobile { IsPk: true })
+        {
+            return true;
+        }
+
+        // Соседняя стража, персонал, неуязвимые и благословлённые — мимо. Без этой
+        // отсечки два поста разных городов, оба формально Criminal после драки, начали бы
+        // резать друг друга.
+        if (m is BaseGuard or CityGuard || m.AccessLevel > AccessLevel.Player || m.Blessed ||
+            (m as BaseCreature)?.IsInvulnerable == true)
+        {
+            return false;
+        }
+
+        return m.Murderer || m.Criminal;
+    }
 
     public override void OnThink()
     {
         base.OnThink();
 
-        // Mostly just stand there. Only bother with the leash-and-hunt logic below on an
-        // occasional think tick, not every single one — cheap and still looks natural.
+        // Only bother scanning for trouble on an occasional think tick, not every single
+        // one — cheap and still looks natural. Wandering/patrolling itself is handled
+        // entirely by the stock Home/RangeHome walk-back AI (WalkRandomLogic.cs) — no
+        // custom leash here, so no teleport-snapping back into view.
         if (Utility.RandomDouble() > 0.15)
         {
             return;
         }
 
-        // Actively hunt down PK bots causing trouble in the city, rather than waiting to
-        // be attacked first (FightMode.Aggressor alone wouldn't trigger on sight).
+        // Actively hunt down whoever's causing trouble in the city — reds and greys alike —
+        // rather than waiting to be attacked first (FightMode.Aggressor alone wouldn't
+        // trigger on sight).
         if ((Combatant?.Deleted != false || !Combatant.Alive) && Map != null)
         {
             foreach (var mobile in Map.GetMobilesInRange<Mobile>(Location, GuardScanRange))
             {
-                if (mobile.Alive && !mobile.Deleted && IsSuppressablePK(mobile))
+                if (mobile.Alive && !mobile.Deleted && !mobile.Hidden && IsGuardTarget(mobile))
                 {
                     Combatant = mobile;
                     Warmode = true;
                     break;
                 }
             }
-        }
-
-        // Patrol leash: only matters while not in combat — mostly standing still, with an
-        // occasional step already coming from the base wander AI. After enough steps away
-        // from the post, walk back and reset the counter.
-        if (Combatant?.Deleted == false && Combatant.Alive)
-        {
-            return;
-        }
-
-        if (Location != _lastLocation)
-        {
-            _stepsSinceHome++;
-            _lastLocation = Location;
-        }
-
-        if (_stepsSinceHome >= _stepThreshold && Home != Point3D.Zero)
-        {
-            MoveToWorld(Home, Map);
-            _stepsSinceHome = 0;
-            _stepThreshold = Utility.RandomMinMax(20, 30);
         }
     }
 }

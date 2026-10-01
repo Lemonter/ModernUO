@@ -39,9 +39,9 @@ namespace Server.Mobiles
             PackItem(new Log(Utility.RandomMinMax(23, 34)));
         }
 
-        public override string CorpseName => "a treefellow corpse";
+        public override string CorpseName => "труп древня";
 
-        public override string DefaultName => "a feral treefellow";
+        public override string DefaultName => "дикий древень";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

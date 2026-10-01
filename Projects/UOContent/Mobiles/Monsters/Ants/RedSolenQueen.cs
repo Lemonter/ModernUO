@@ -51,9 +51,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a solen queen corpse";
+        public override string CorpseName => "труп королевы соленов";
 
-        public override string DefaultName => "a red solen queen";
+        public override string DefaultName => "красная королева соленов";
 
         public override int GetAngerSound() => 0x259;
 

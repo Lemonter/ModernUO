@@ -83,7 +83,7 @@ public abstract partial class BaseEquipableLight : BaseLight
                 else if (this is Torch)
                 {
                     // 502971 has the wrong message
-                    holder.SendMessage("You cannot hold the torch, so it has been placed at your feet.");
+                    holder.SendMessage("Факел в руках не удержать — он положен к твоим ногам.");
                 }
 
                 // No message for lanterns?

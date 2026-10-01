@@ -12,16 +12,16 @@ public enum TattooType
 }
 
 /// <summary>
-///     Mahaon tattoos: temporary marks that grant a bonus/effect for a fixed duration
-///     (originally a week). Implemented as a lightweight expiry-tracked flag rather than a
-///     worn item, since classic UO has no server-side skin-decal layer — the "tattoo" is
-///     conceptually applied directly to the character.
+///     Тату Mahaon: метки, дающие эффект. Сделаны не носимым предметом, а флагом со сроком
+///     — в классической ультиме нет серверного слоя для рисунка на коже, так что тату
+///     считается нанесённым прямо на персонажа.
+///
+///     Срок необязателен: по умолчанию тату ставится навсегда. Временные (с явным сроком)
+///     остались для служебных случаев — например, ботам их выдают на срок жизни бота.
 /// </summary>
 public class TattooSystem : GenericPersistence
 {
     private static TattooSystem _instance;
-
-    private static readonly TimeSpan DefaultDuration = TimeSpan.FromDays(7);
 
     private static readonly Dictionary<Mobile, Dictionary<TattooType, DateTime>> ActiveTattoos = new();
 
@@ -40,6 +40,13 @@ public class TattooSystem : GenericPersistence
         Timer.DelayCall(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10), CleanupExpired);
     }
 
+    /// <summary>
+    ///     Ставит тату. Без указания срока — навсегда.
+    ///
+    ///     Раньше по умолчанию было семь дней, и тату ловца душ приходилось перебивать
+    ///     каждую неделю. За вещь ценой в пять тысяч это ощущается не как украшение, а как
+    ///     подписка; владелец шарда решил, что колют её один раз и насовсем.
+    /// </summary>
     public static void ApplyTattoo(Mobile m, TattooType type, TimeSpan? duration = null)
     {
         if (!ActiveTattoos.TryGetValue(m, out var tattoos))
@@ -47,8 +54,16 @@ public class TattooSystem : GenericPersistence
             ActiveTattoos[m] = tattoos = new Dictionary<TattooType, DateTime>();
         }
 
-        tattoos[type] = Core.Now + (duration ?? DefaultDuration);
-        m.SendMessage(0x59, $"Тату «{type}» приживается. Оно исчезнет через {(duration ?? DefaultDuration).TotalDays:F0} дн.");
+        if (duration == null)
+        {
+            tattoos[type] = DateTime.MaxValue;
+            m.SendMessage(0x59, $"Тату «{type}» приживается. Оно останется с тобой навсегда.");
+
+            return;
+        }
+
+        tattoos[type] = Core.Now + duration.Value;
+        m.SendMessage(0x59, $"Тату «{type}» приживается. Оно исчезнет через {duration.Value.TotalDays:F0} дн.");
     }
 
     public static bool HasActiveTattoo(Mobile m, TattooType type) =>

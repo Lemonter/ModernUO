@@ -61,7 +61,7 @@ namespace Server.Spells.Second
         {
             if (DuelContext.CheckSuddenDeath(Caster))
             {
-                Caster.SendMessage(0x22, "You cannot cast this spell when in sudden death.");
+                Caster.SendMessage(0x22, "Во внезапной смерти это заклинание недоступно.");
                 return false;
             }
 

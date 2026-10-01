@@ -54,8 +54,8 @@ namespace Server.Mobiles
             PackItem(new Seed());
         }
 
-        public override string CorpseName => "a plant corpse";
-        public override string DefaultName => "a bog thing";
+        public override string CorpseName => "труп растения";
+        public override string DefaultName => "болотная тварь";
 
         public override bool BardImmune => !Core.AOS;
         public override Poison PoisonImmune => Poison.Lethal;

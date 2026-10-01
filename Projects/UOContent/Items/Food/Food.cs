@@ -298,7 +298,7 @@ public partial class Ribs : Food
         FillFactor = 5;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: weightless
 }
 
 [SerializationGenerator(0, false)]

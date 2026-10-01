@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class SeaHorse : BaseMount
     {
-        public override string DefaultName => "a sea horse";
+        public override string DefaultName => "морской конёк";
 
         [Constructible]
         public SeaHorse() : base(0x90, 0x3EB3, AIType.AI_Animal, FightMode.Aggressor)
@@ -16,6 +16,6 @@ namespace Server.Mobiles
             Skills.Tactics.Base = 30.0 + Utility.RandomDouble() * 15.0;
         }
 
-        public override string CorpseName => "a sea horse corpse";
+        public override string CorpseName => "труп морского конька";
     }
 }

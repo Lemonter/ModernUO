@@ -61,6 +61,41 @@ public partial class MahaonBotBeacon : Item
     private readonly List<PlayerMobile> _ownedBots = new();
 
     private static readonly List<MahaonBotBeacon> AllBeacons = new();
+
+    /// <summary>
+    ///     Насколько широко вокруг маяка нельзя начинать драку.
+    ///
+    ///     Боты возрождаются прямо у своего маяка, а разбойник ищет жертв в двадцати
+    ///     тайлах вокруг себя — то есть у того же маяка. Получалась ловушка: убитый
+    ///     вставал и тут же получал снова. Минуты неприкосновенности после возрождения
+    ///     мало, потому что охотник просто ждёт, когда она кончится; нужна именно тихая
+    ///     зона вокруг самой точки.
+    ///
+    ///     Это не защита от урона: уже начатую драку сюда можно притащить, и вмешаться в
+    ///     неё тоже можно. Запрещено только выбирать здесь новую жертву.
+    /// </summary>
+    public const int PeaceRadius = 16;
+
+    /// <summary>Стоит ли этот некто вплотную к какому-нибудь маяку.</summary>
+    public static bool IsNearAnyBeacon(Mobile m)
+    {
+        if (m?.Map == null)
+        {
+            return false;
+        }
+
+        for (var i = 0; i < AllBeacons.Count; i++)
+        {
+            var beacon = AllBeacons[i];
+
+            if (!beacon.Deleted && beacon.Map == m.Map && beacon.GetDistanceToSqrt(m.Location) <= PeaceRadius)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     private static readonly TimeSpan SpawnTick = TimeSpan.FromSeconds(12); // 5/min
     private static readonly TimeSpan ResurrectTick = TimeSpan.FromSeconds(4); // much more frequent than spawning
 
@@ -215,6 +250,49 @@ public partial class MahaonBotBeacon : Item
         return count;
     }
 
+    /// <summary>
+    ///     В какую гильдию маяк отдаёт конкретного бота.
+    ///
+    ///     Своя гильдия маяка, если задана, — тогда все его боты в ней одной, это явный
+    ///     выбор ГМа. Иначе бот попадает в одну из гильдий своего города, и в какую именно
+    ///     — решает его собственный серийник: выбор устойчивый (бот не меняет гильдию от
+    ///     перезапуска к перезапуску) и при этом город получается населён несколькими
+    ///     гильдиями сразу.
+    ///
+    ///     Случайный выбор на каждого бота, который тут был раньше, не годится именно
+    ///     из-за неустойчивости: бот менял гильдию при каждой перерегистрации, а вместе с
+    ///     ней менялись друзья и враги.
+    /// </summary>
+    public string GuildNameFor(PlayerMobile bot)
+    {
+        if (!string.IsNullOrEmpty(GuildName))
+        {
+            return GuildName;
+        }
+
+        var cityGuilds = Systems.MahaonBots.BotGuilds.NamesForCity(CityName);
+
+        if (cityGuilds is not { Count: > 0 })
+        {
+            return Systems.MahaonBots.BotGuilds.NameForBeacon(this);
+        }
+
+        return cityGuilds[(int)(bot?.Serial.Value ?? 0) % cityGuilds.Count];
+    }
+
+    /// <summary>Гильдии, в которых маяк вправе держать своих ботов — для проверки, не
+    /// оказался ли бот в чужой.</summary>
+    public List<string> AllowedGuildNames()
+    {
+        if (!string.IsNullOrEmpty(GuildName))
+        {
+            return new List<string> { GuildName };
+        }
+
+        return Systems.MahaonBots.BotGuilds.NamesForCity(CityName) ??
+               new List<string> { Systems.MahaonBots.BotGuilds.NameForBeacon(this) };
+    }
+
     public void Claim(PlayerMobile bot)
     {
         if (!_ownedBots.Contains(bot))
@@ -307,13 +385,18 @@ public partial class MahaonBotBeacon : Item
         var name = Systems.MahaonBots.BotNameGenerator.Generate();
         var bot = BotMobile.Create(name, spot, Map, bestArchetype, forceThief: bestIsThief);
 
-        Systems.MahaonBots.BotController.RegisterBot(bot, spot, Map);
+        // CityName (informational-only until now) doubles as HomeCity/CurrentCity here —
+        // without it every beacon-spawned bot had no city to fall back to, so getting
+        // "stuck" while traveling or dying anywhere on the map always teleported/
+        // resurrected it right back to this exact beacon tile instead of the nearer city.
+        Systems.MahaonBots.BotController.RegisterBot(bot, spot, Map, CityName);
         Claim(bot);
 
-        if (!string.IsNullOrEmpty(GuildName))
-        {
-            Systems.MahaonBots.BotGuilds.Join(GuildName, bot);
-        }
+        // Гильдия у бота всегда есть: своя у маяка, если задана, иначе общая для всех
+        // ботов ЭТОГО маяка. Раньше безгильдейный маяк отдавал ботов на волю случайного
+        // выбора в BotMobile.ApplyNameTemplate, и соседи по точке возрождения оказывались
+        // чужаками друг другу.
+        Systems.MahaonBots.BotGuilds.Join(GuildNameFor(bot), bot);
 
         if (Systems.MahaonBots.BotController.TryGetProfile(bot, out var profile))
         {
@@ -341,6 +424,23 @@ public partial class MahaonBotBeacon : Item
     public override void OnDelete()
     {
         AllBeacons.Remove(this);
+
+        // Раньше маяк удалялся, а его боты оставались навсегда — сироты копились
+        // годами, отсюда и рост времени сохранения, и зависание при попытке [ClearBots
+        // удалить всё разом. Копируем список перед перебором — на случай, если Delete()
+        // где-то triggers обратный вызов к самому маяку (не хочу мутировать _ownedBots
+        // во время его же перебора).
+        var toDelete = new List<PlayerMobile>(_ownedBots);
+
+        foreach (var bot in toDelete)
+        {
+            if (!bot.Deleted)
+            {
+                bot.Delete();
+            }
+        }
+
+        _ownedBots.Clear();
         base.OnDelete();
     }
 

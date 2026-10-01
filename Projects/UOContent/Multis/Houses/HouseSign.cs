@@ -3,6 +3,7 @@ using ModernUO.Serialization;
 using Server.Collections;
 using Server.ContextMenus;
 using Server.Gumps;
+using Server.Items;
 
 namespace Server.Multis;
 
@@ -126,7 +127,11 @@ public partial class HouseSign : Item
             }
         }
 
-        if (Owner.IsAosRules)
+        if (Owner.IsOwner(m))
+        {
+            m.SendGump(new MahaonHouseMenuGump(Owner));
+        }
+        else if (Owner.IsAosRules)
         {
             HouseGumpAOS.DisplayTo(m, Owner, HouseGumpPageAOS.Information);
         }

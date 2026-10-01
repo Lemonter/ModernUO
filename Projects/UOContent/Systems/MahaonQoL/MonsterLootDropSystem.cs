@@ -55,9 +55,9 @@ public static class MonsterLootDropSystem
         {
             Item meat = bc.MeatType switch
             {
-                MeatType.Ribs    => new RawRibs(bc.Meat),
-                MeatType.Bird    => new RawBird(bc.Meat),
-                MeatType.LambLeg => new RawLambLeg(bc.Meat),
+                MeatType.Ribs    => new RawRibs(bc.Meat * yieldMultiplier),
+                MeatType.Bird    => new RawBird(bc.Meat * yieldMultiplier),
+                MeatType.LambLeg => new RawLambLeg(bc.Meat * yieldMultiplier),
                 _                => null
             };
 
@@ -76,12 +76,7 @@ public static class MonsterLootDropSystem
         {
             DropScales(corpse, bc.ScaleType, bc.Scales * yieldMultiplier);
         }
-
-        ConvertVanillaGold(corpse);
     }
-
-    /// <summary>See CurrencyHelper.ConvertVanillaGold — same conversion, just triggered on kill.</summary>
-    private static void ConvertVanillaGold(Corpse corpse) => CurrencyHelper.ConvertVanillaGold(corpse);
 
     private static void DropScales(Corpse corpse, ScaleType type, int amount)
     {

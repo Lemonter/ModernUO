@@ -53,8 +53,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a lady of the snow corpse";
-        public override string DefaultName => "a lady of the snow";
+        public override string CorpseName => "труп снежной госпожи";
+        public override string DefaultName => "снежная госпожа";
 
         public override bool BleedImmune => true;
         public override bool CanRummageCorpses => true;

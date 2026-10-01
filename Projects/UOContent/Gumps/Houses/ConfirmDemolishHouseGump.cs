@@ -98,7 +98,7 @@ public class ConfirmDemolishHouseGump : StaticGump<ConfirmDemolishHouseGump>
 
         if (from.AccessLevel >= AccessLevel.GameMaster)
         {
-            from.SendMessage("You do not get a refund for your house as you are not a player");
+            from.SendMessage("Возврат за дом не положен — ты не игрок");
         }
         else if (_house.IsAosRules && _house.Price > 0)
         {
@@ -118,7 +118,7 @@ public class ConfirmDemolishHouseGump : StaticGump<ConfirmDemolishHouseGump>
             var deed = _house.GetDeed();
             if (deed == null)
             {
-                from.SendMessage("Unable to refund house.");
+                from.SendMessage("Вернуть деньги за дом не удалось.");
                 return;
             }
 

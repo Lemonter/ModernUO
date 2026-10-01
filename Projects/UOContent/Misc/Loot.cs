@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using Server.Items;
 
@@ -157,6 +157,15 @@ namespace Server
             typeof(BlackPearl), typeof(Bloodmoss), typeof(Garlic),
             typeof(Ginseng), typeof(MandrakeRoot), typeof(Nightshade),
             typeof(SulfurousAsh), typeof(SpidersSilk)
+        };
+
+        /// <summary>The eleven virtue essences of Ter Mur — see Items/Resources/Essences.cs.</summary>
+        public static Type[] ImbuingEssenceTypes { get; } =
+        {
+            typeof(EssencePrecision), typeof(EssenceAchievement), typeof(EssenceBalance),
+            typeof(EssenceControl), typeof(EssenceDiligence), typeof(EssenceDirection),
+            typeof(EssenceFeeling), typeof(EssenceOrder), typeof(EssencePassion),
+            typeof(EssencePersistence), typeof(EssenceSingularity)
         };
 
         public static Type[] NecroRegTypes { get; } =
@@ -695,6 +704,8 @@ namespace Server
         public static Item RandomGem() => Construct(GemTypes);
 
         public static Item RandomReagent() => Construct(RegTypes);
+
+        public static Item RandomEssence() => Construct(ImbuingEssenceTypes);
 
         public static Item RandomNecromancyReagent() => Construct(NecroRegTypes);
 

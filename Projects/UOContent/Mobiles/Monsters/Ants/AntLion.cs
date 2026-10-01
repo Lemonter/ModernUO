@@ -61,8 +61,8 @@ namespace Server.Mobiles
 
             // TODO: skeleton
         }
-        public override string CorpseName => "an ant lion corpse";
-        public override string DefaultName => "an ant lion";
+        public override string CorpseName => "труп муравьиного льва";
+        public override string DefaultName => "муравьиный лев";
 
         public override int GetAngerSound() => 0x5A;
 

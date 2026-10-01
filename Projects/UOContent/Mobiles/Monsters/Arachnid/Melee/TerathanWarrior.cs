@@ -45,8 +45,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a terathan warrior corpse";
-        public override string DefaultName => "a terathan warrior";
+        public override string CorpseName => "труп тератана-воина";
+        public override string DefaultName => "тератан-воин";
 
         public override int TreasureMapLevel => 1;
         public override int Meat => 4;

@@ -109,8 +109,8 @@ namespace Server.Mobiles
         {
         }
 
-        public override string CorpseName => "a chaos dragoon elite corpse";
-        public override string DefaultName => "a chaos dragoon elite";
+        public override string CorpseName => "труп элитного драгуна хаоса";
+        public override string DefaultName => "элитный драгун хаоса";
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.AOS;
         public override bool CanRummageCorpses => true;

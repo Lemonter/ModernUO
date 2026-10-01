@@ -56,8 +56,8 @@ namespace Server.Mobiles
             // TODO: Bandage self
         }
 
-        public override string CorpseName => "a jukan corpse";
-        public override string DefaultName => "a juka lord";
+        public override string CorpseName => "труп джукана";
+        public override string DefaultName => "лорд джука";
 
         public override bool AlwaysMurderer => true;
         public override bool BardImmune => !Core.AOS;

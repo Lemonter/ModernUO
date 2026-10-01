@@ -103,7 +103,7 @@ public abstract partial class BaseDockedBoat : Item
 
         if (!ContentFeatureFlags.BoatPlacement && from.AccessLevel < FeatureFlagSettings.RequiredAccessLevel)
         {
-            from.SendMessage(0x22, "Boat placement is temporarily disabled.");
+            from.SendMessage(0x22, "Размещение кораблей временно отключено.");
             return;
         }
 

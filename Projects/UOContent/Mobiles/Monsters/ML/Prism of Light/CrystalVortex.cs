@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackArcaneScroll(0, 2);
         }
 
-        public override string CorpseName => "a crystal vortex corpse";
-        public override string DefaultName => "a crystal vortex";
+        public override string CorpseName => "труп кристаллического вихря";
+        public override string DefaultName => "кристаллический вихрь";
 
         public override void GenerateLoot()
         {

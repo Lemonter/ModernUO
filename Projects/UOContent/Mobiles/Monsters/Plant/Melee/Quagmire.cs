@@ -38,8 +38,8 @@ namespace Server.Mobiles
             VirtualArmor = 32;
         }
 
-        public override string CorpseName => "a quagmire corpse";
-        public override string DefaultName => "a quagmire";
+        public override string CorpseName => "труп трясины";
+        public override string DefaultName => "трясина";
 
         public override Poison PoisonImmune => Poison.Lethal;
         public override Poison HitPoison => Poison.Lethal;

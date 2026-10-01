@@ -56,8 +56,16 @@ public static class MahaonResourceTiers
         (typeof(YewLog), 60, 12),
         (typeof(HeartwoodLog), 80, 8),
         (typeof(BloodwoodLog), 100, 5),
+        (typeof(BananaLog), 102, 4),
+        (typeof(CoconutLog), 105, 3.2),
+        (typeof(PalmLog), 107, 2.5),
         (typeof(FrostwoodLog), 110, 3)
     };
+
+    /// <summary>Read-only view of the wood tiers for anything that needs to describe the
+    /// table rather than roll on it — the website's reference pages, mainly. Exposed here
+    /// so nobody has to keep a second copy of these thresholds in sync by hand.</summary>
+    public static IReadOnlyList<(Type type, double minSkill, double weight)> WoodTiers => WoodTable;
 
     public static Type PickOre(double skill)
     {
@@ -73,7 +81,10 @@ public static class MahaonResourceTiers
     public static Type PickWood(double skill) => PickWeighted(WoodTable, skill);
 
     // 1:1 — CraftResource's metal order (Iron..Valorite) is exactly OreTable's order.
-    private const double ToolMatchBonus = 2.0;
+    // Public: also the shared multiplier for the MahaonOre/MahaonMetal match in
+    // MahaonMiningSwings.ApplyToolBonus (real ore drops are MahaonOre now, not these
+    // vanilla-typed classes — see that method for why the two paths coexist).
+    public const double ToolMatchBonus = 2.0;
 
     /// <summary>A pick made of iron gives a bonus specifically on iron ore, agapite on
     /// agapite, and so on — 1:1 by tier. Any other tool (or a mismatched metal) gives no
@@ -89,14 +100,18 @@ public static class MahaonResourceTiers
         return OreTable[toolIndex].type == oreType ? ToolMatchBonus : 1.0;
     }
 
-    // Metal has 9 tiers, wood only has 7 — Agapite/Verite/Valorite all point at the best
-    // wood (Frostwood) since there's no higher wood tier to give them individually. Every
-    // wood species still gets covered by some metal.
-    private static readonly int[] MetalToWoodTier = { 0, 1, 2, 3, 4, 5, 6, 6, 6 };
+    // Metal has 9 tiers, wood now has 10 (Banana/Coconut/Palm added between Bloodwood and
+    // Frostwood) — the mismatch flipped from "too few woods" to "too few metals", so one
+    // wood tier necessarily goes without a dedicated tool-match partner instead of the old
+    // "top 3 metals share 1 wood" compression. Valorite still matches the single best wood
+    // (Frostwood, index 9) rather than the second-best (Palm, index 8) — Palm is the one
+    // tier left uncovered, a minor gap in a minor bonus mechanic.
+    private static readonly int[] MetalToWoodTier = { 0, 1, 2, 3, 4, 5, 6, 7, 9 };
 
-    /// <summary>Same idea as the ore bonus, but wood only has 7 real tiers against metal's
-    /// 9, so the top three metals (Agapite/Verite/Valorite) all match Frostwood instead of
-    /// each getting their own — every wood species still ends up covered by some metal.</summary>
+    /// <summary>Same idea as the ore bonus, but wood has 10 real tiers against metal's 9,
+    /// so one wood tier (Palm) ends up with no dedicated metal match — every other wood
+    /// species still gets covered by some metal, top metal (Valorite) matching top wood
+    /// (Frostwood).</summary>
     public static double WoodToolBonus(CraftResource toolResource, Type woodType)
     {
         var toolIndex = (int)toolResource - 1;

@@ -6,7 +6,7 @@ namespace Server.Mobiles
     [SerializationGenerator(2, false)]
     public partial class SwampDragon : BaseMount
     {
-        public override string DefaultName => "a swamp dragon";
+        public override string DefaultName => "болотный дракон";
 
         [Constructible]
         public SwampDragon() : base(0x31A, 0x3EBD, AIType.AI_Melee, FightMode.Aggressor)
@@ -45,7 +45,7 @@ namespace Server.Mobiles
             MinTameSkill = 93.9;
         }
 
-        public override string CorpseName => "a swamp dragon corpse";
+        public override string CorpseName => "труп болотного дракона";
 
         [InvalidateProperties]
         [SerializableField(0)]

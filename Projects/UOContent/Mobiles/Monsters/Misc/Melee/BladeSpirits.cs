@@ -43,8 +43,8 @@ namespace Server.Mobiles
             ControlSlots = Core.SE ? 2 : 1;
         }
 
-        public override string CorpseName => "a blade spirit corpse";
-        public override string DefaultName => "a blade spirit";
+        public override string CorpseName => "труп духа клинка";
+        public override string DefaultName => "дух клинка";
 
         public override bool DeleteCorpseOnDeath => Core.AOS;
         public override bool IsHouseSummonable => true;

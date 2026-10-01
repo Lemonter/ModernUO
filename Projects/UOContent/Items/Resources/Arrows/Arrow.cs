@@ -12,7 +12,7 @@ public partial class Arrow : Item, ICommodity
         Amount = amount;
     }
 
-    public override double DefaultWeight => 0.1;
+    public override double DefaultWeight => 0; // Mahaon: weightless
     int ICommodity.DescriptionNumber => LabelNumber;
     bool ICommodity.IsDeedable => true;
 }

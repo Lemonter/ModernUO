@@ -27,7 +27,7 @@ public partial class Chyloth : BaseQuester
     {
     }
 
-    public override string DefaultName => "Chyloth";
+    public override string DefaultName => "Хилот";
 
     public BellOfTheDead Bell { get; set; }
 
@@ -131,7 +131,7 @@ public partial class Chyloth : BaseQuester
         }
 
         PublicOverheadMessage(MessageType.Regular, 0x3B2, 1050015);                        // Feel the wrath of my legions!!!
-        PublicOverheadMessage(MessageType.Regular, 0x3B2, false, "MUHAHAHAHA HAHAH HAHA"); // A wee bit crazy, aren't we?
+        PublicOverheadMessage(MessageType.Regular, 0x3B2, false, "МУХАХАХАХА ХАХАХ ХАХА"); // A wee bit crazy, aren't we?
 
         var dragon = new SkeletalDragon();
 

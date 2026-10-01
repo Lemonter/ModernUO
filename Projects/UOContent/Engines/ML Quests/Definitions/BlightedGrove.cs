@@ -198,7 +198,7 @@ namespace Server.Engines.MLQuests.Definitions
         }
 
         public override bool IsInvulnerable => true;
-        public override string DefaultName => "Jamal";
+        public override string DefaultName => "Джамал";
     }
 
     [QuesterName("Iosep (Jhelom)")]
@@ -221,7 +221,7 @@ namespace Server.Engines.MLQuests.Definitions
         }
 
         public override bool IsInvulnerable => true;
-        public override string DefaultName => "Iosep";
+        public override string DefaultName => "Иосеп";
 
         public override bool CanShout => true;
 

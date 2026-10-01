@@ -1,6 +1,7 @@
 using System;
 using ModernUO.Serialization;
 using Server.Engines.CannedEvil;
+using Server.Gumps;
 using Server.Mobiles;
 using Server.Targeting;
 
@@ -34,11 +35,13 @@ namespace Server.Items
         public override void OnDoubleClick(Mobile from)
         {
             from.SendLocalizedMessage(502464); // Target the animal you wish to herd.
-            from.Target = new HerdingTarget();
+            from.Target = new HerdingTarget(this);
         }
 
         private class HerdingTarget : Target
         {
+            private readonly ShepherdsCrook _crook;
+
             private static readonly Type[] m_ChampTamables =
             {
                 typeof(StrongMongbat), typeof(Imp), typeof(Scorpion), typeof(GiantSpider),
@@ -48,8 +51,9 @@ namespace Server.Items
                 typeof(LesserHiryu), typeof(Hiryu)
             };
 
-            public HerdingTarget() : base(10, false, TargetFlags.None)
+            public HerdingTarget(ShepherdsCrook crook) : base(10, false, TargetFlags.None)
             {
+                _crook = crook;
             }
 
             protected override void OnTarget(Mobile from, object targ)
@@ -68,12 +72,20 @@ namespace Server.Items
 
                 if (bc.Controlled)
                 {
-                    bc.PrivateOverheadMessage(
-                        MessageType.Regular,
-                        0x3B2,
-                        502467, // That animal looks tame already.
-                        from.NetState
-                    );
+                    if (bc.ControlMaster == from)
+                    {
+                        from.CloseGump<AnimalTrainingGump>();
+                        from.SendGump(new AnimalTrainingGump(from, bc, _crook));
+                    }
+                    else
+                    {
+                        bc.PrivateOverheadMessage(
+                            MessageType.Regular,
+                            0x3B2,
+                            502467, // That animal looks tame already.
+                            from.NetState
+                        );
+                    }
                 }
                 else
                 {

@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class FrenziedOstard : BaseMount
     {
-        public override string DefaultName => "a frenzied ostard";
+        public override string DefaultName => "бешеный остард";
 
         [Constructible]
         public FrenziedOstard() : base(0xDA, 0x3EA4, AIType.AI_Melee)
@@ -43,7 +43,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 5120;
-        public override string CorpseName => "an ostard corpse";
+        public override string CorpseName => "труп остарда";
 
         public override int Meat => 3;
         public override FoodType FavoriteFood => FoodType.Meat | FoodType.Fish | FoodType.Eggs | FoodType.FruitsAndVeggies;

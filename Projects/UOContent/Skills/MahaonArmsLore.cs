@@ -16,6 +16,45 @@ public static class MahaonArmsLore
         Timer.DelayCall(TimeSpan.Zero, () => SkillInfo.Table[(int)SkillName.ArmsLore].Callback = OnUse);
     }
 
+    /// <summary>
+    ///     Mahaon: knowing your gear means it lasts longer. Rolled at every point where a
+    ///     weapon or a piece of armour is about to lose durability (BaseWeapon.OnHit and
+    ///     BaseArmor.OnHit) - on success the wear simply does not happen this time.
+    ///
+    ///     Scales straight off the skill: nothing at 0, MaxWearReduction at 100. Applied to
+    ///     the owner of the item, so a bot or a monster benefits from its own Arms Lore
+    ///     exactly the way a player does.
+    /// </summary>
+    private const double MaxWearReduction = 0.50;
+
+    public static double GetWearReduction(Mobile owner)
+    {
+        var skill = owner?.Skills.ArmsLore.Value ?? 0.0;
+
+        return Math.Clamp(skill / 100.0, 0.0, 1.0) * MaxWearReduction;
+    }
+
+    /// <summary>True when this instance of wear should be skipped entirely.</summary>
+    public static bool TryPreventWear(Mobile owner)
+    {
+        var reduction = GetWearReduction(owner);
+
+        if (reduction <= 0.0)
+        {
+            return false;
+        }
+
+        if (Utility.RandomDouble() >= reduction)
+        {
+            return false;
+        }
+
+        // Using the knowledge is how it is practised.
+        owner?.CheckSkill(SkillName.ArmsLore, 0, 100);
+
+        return true;
+    }
+
     public static TimeSpan OnUse(Mobile m)
     {
         m.Target = new InternalTarget();

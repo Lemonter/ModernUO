@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Server.Items;
 
 namespace Server.Engines.Craft
@@ -29,6 +29,18 @@ namespace Server.Engines.Craft
         public int LastGroupIndex { get; set; }
 
         public bool DoNotColor { get; set; }
+
+        /// <summary>
+        ///     Учебная работа: ресурсы тратятся и навык растёт как обычно, но готовое
+        ///     изделие в рюкзак не попадает, а следующая попытка запускается сама — пока
+        ///     есть из чего делать и цел инструмент.
+        ///
+        ///     Живёт в контексте, а не в самом предмете: контекст и так у каждого игрока
+        ///     свой на каждую ремесленную систему, и галочка обязана быть именно такой —
+        ///     кузнец может точить болванки вхолостую, оставаясь при этом обычным портным.
+        ///     Сохранять нечего, контекст и сам не переживает перезапуск.
+        /// </summary>
+        public bool Practice { get; set; }
 
         public CraftMarkOption MarkOption { get; set; }
 

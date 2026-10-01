@@ -14,7 +14,7 @@ public partial class Grizelda : BaseQuester
     }
 
     public override bool ClickTitle => true;
-    public override string DefaultName => "Grizelda";
+    public override string DefaultName => "Гризельда";
 
     public override void InitBody()
     {

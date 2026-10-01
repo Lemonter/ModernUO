@@ -42,7 +42,7 @@ namespace Server.Mobiles
             VirtualArmor = 32;
         }
 
-        public override string CorpseName => "a charred corpse";
+        public override string CorpseName => "обугленный труп";
 
         public override int TreasureMapLevel => 1;
         public override int Meat => 1;

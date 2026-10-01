@@ -35,8 +35,8 @@ namespace Server.Mobiles
             VirtualArmor = 55;
         }
 
-        public override string CorpseName => "a doppleganger corpse";
-        public override string DefaultName => "a doppleganger";
+        public override string CorpseName => "труп двойника";
+        public override string DefaultName => "двойник";
 
         public override int Hides => 6;
         public override int Meat => 1;

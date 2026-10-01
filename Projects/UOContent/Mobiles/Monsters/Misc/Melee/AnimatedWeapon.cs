@@ -73,14 +73,14 @@ namespace Server.Mobiles
             ControlSlots = 4;
         }
 
-        public override string CorpseName => "an animated weapon corpse";
+        public override string CorpseName => "труп оживлённого оружия";
         public override bool DeleteCorpseOnDeath => true;
         public override bool IsHouseSummonable => true;
 
         public override double DispelDifficulty => 0.0;
         public override double DispelFocus => 20.0;
 
-        public override string DefaultName => "an animated weapon";
+        public override string DefaultName => "оживлённое оружие";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

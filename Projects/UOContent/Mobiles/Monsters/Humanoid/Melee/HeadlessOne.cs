@@ -47,8 +47,8 @@ namespace Server.Mobiles
             AddItem(bodyPart);
         }
 
-        public override string CorpseName => "a headless corpse";
-        public override string DefaultName => "a headless one";
+        public override string CorpseName => "обезглавленный труп";
+        public override string DefaultName => "безголовый";
 
         public override bool CanRummageCorpses => true;
         public override int Meat => 1;

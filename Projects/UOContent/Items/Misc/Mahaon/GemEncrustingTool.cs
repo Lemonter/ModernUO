@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Systems.MahaonGems;
 using Server.Targeting;
 
@@ -48,7 +48,7 @@ public class GemPickTarget : Target
             return;
         }
 
-        from.SendMessage("Теперь укажи оружие, броню или украшение, куда вставить камень.");
+        from.SendMessage("Теперь укажи вещь, куда вставить камень — подойдёт всё, что надеваешь.");
         from.Target = new GemSocketTarget(gem);
     }
 }
@@ -66,9 +66,9 @@ public class GemSocketTarget : Target
             return;
         }
 
-        if (targeted is not Item item || item is not (BaseWeapon or BaseArmor or BaseJewel))
+        if (targeted is not Item item || !Systems.MahaonGems.GemSocketingSystem.IsSocketable(item))
         {
-            from.SendMessage("Сюда нельзя вставить — только оружие, броня и украшения.");
+            from.SendMessage("Сюда нельзя вставить — только то, что надевают.");
             return;
         }
 
@@ -78,27 +78,12 @@ public class GemSocketTarget : Target
             return;
         }
 
-        if (GemSocketingSystem.SocketCount(item) >= 3)
+        if (GemSocketingSystem.SocketCount(item) >= GemSocketingSystem.MaxSocketsPerItem)
         {
             from.SendMessage("В этот предмет больше не вставить камней — все слоты заняты.");
             return;
         }
 
-        if (!from.CheckSkill(SkillName.Tinkering, 0.0, 100.0))
-        {
-            from.SendMessage(0x22, "Не получилось — камень треснул при вставке.");
-            _gem.Delete();
-            return;
-        }
-
-        if (GemSocketingSystem.TrySocket(from, item, _gem))
-        {
-            from.SendMessage(0x59, $"Ты вставляешь {_gem.Name ?? _gem.GetType().Name} в {item.Name ?? "предмет"}.");
-            _gem.Delete();
-        }
-        else
-        {
-            from.SendMessage("Не получилось.");
-        }
+        GemSocketingSystem.BeginSocket(from, item, _gem);
     }
 }

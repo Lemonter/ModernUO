@@ -14,7 +14,7 @@ public partial class Horus : BaseQuester
     {
     }
 
-    public override string DefaultName => "Horus";
+    public override string DefaultName => "Гор";
 
     public override void InitBody()
     {

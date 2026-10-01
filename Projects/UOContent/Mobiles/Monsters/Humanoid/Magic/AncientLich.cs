@@ -47,7 +47,7 @@ namespace Server.Mobiles
             PackNecroReg(30, 275);
         }
 
-        public override string CorpseName => "an ancient lich's corpse";
+        public override string CorpseName => "труп древнего лича";
         public override bool IsUndead => true;
 
         private BaseAI _mahaonForcedAI;

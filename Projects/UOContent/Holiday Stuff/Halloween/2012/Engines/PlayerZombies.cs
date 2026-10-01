@@ -192,7 +192,7 @@ namespace Server.Engines.Events
             VirtualArmor = 18;
         }
 
-        public override string CorpseName => "a rotting corpse";
+        public override string CorpseName => "гниющий труп";
 
         public override bool BleedImmune => true;
 

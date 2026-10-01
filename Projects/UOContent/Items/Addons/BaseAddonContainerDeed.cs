@@ -137,7 +137,7 @@ public abstract partial class BaseAddonContainerDeed : Item, ICraftable
             }
             else if (res == AddonFitResult.DoorsNotClosed)
             {
-                from.SendMessage("You must close all house doors before placing this.");
+                from.SendMessage("Прежде закрой все двери дома.");
             }
             else if (res == AddonFitResult.DoorTooClose)
             {

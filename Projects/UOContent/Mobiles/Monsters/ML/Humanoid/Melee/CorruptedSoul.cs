@@ -40,7 +40,7 @@ namespace Server.Mobiles
 
         public override bool DeleteCorpseOnDeath => true;
 
-        public override string DefaultName => "a corrupted soul";
+        public override string DefaultName => "испорченная душа";
 
         public override bool AlwaysAttackable => true;
         public override bool BleedImmune => true; // NEED TO VERIFY

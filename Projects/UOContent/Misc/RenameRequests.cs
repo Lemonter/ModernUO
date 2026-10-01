@@ -25,7 +25,7 @@ public static class RenameRequests
         }
         else
         {
-            from.SendMessage("That name is unacceptable.");
+            from.SendMessage("Такое имя неприемлемо.");
         }
     }
 }

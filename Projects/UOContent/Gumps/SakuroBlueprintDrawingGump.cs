@@ -60,9 +60,8 @@ public class SakuroBlueprintDrawingGump : DynamicGump
         var drawPrice = System.Math.Max(1, fullPrice / 200);
 
         var backpack = _player.Backpack;
-        var cost = CurrencyHelper.ToCopperValue(drawPrice, 0, 0);
 
-        if (backpack == null || !CurrencyHelper.TryWithdrawCopperValue(backpack, cost))
+        if (backpack == null || !backpack.ConsumeTotal(typeof(Gold), drawPrice))
         {
             _player.SendMessage(0x22, $"Нужно {drawPrice} золота, чтобы начертить этот чертёж.");
             _player.SendGump(new SakuroBlueprintDrawingGump(_player));

@@ -12,7 +12,7 @@ public partial class NameChangeDeed : Item
     [Constructible]
     public NameChangeDeed() : base(0x14F0) => LootType = LootType.Blessed;
 
-    public override string DefaultName => "a name change deed";
+    public override string DefaultName => "грамота смены имени";
 
     public override void OnDoubleClick(Mobile from)
     {
@@ -90,12 +90,12 @@ public class NameChangeDeedGump : StaticGump<NameChangeDeedGump>
 
         if (!NameVerification.ValidatePlayerName(newName))
         {
-            m.SendMessage("That name is unacceptable.");
+            m.SendMessage("Такое имя неприемлемо.");
             return;
         }
 
         m.RawName = newName.ToString();
-        m.SendMessage("Your name has been changed!");
+        m.SendMessage("Твоё имя изменено!");
         m.SendMessage($"You are now known as {newName}");
         _sender.Delete();
     }

@@ -41,8 +41,8 @@ namespace Server.Mobiles
             MinTameSkill = 77.1;
         }
 
-        public override string CorpseName => "a giant toad corpse";
-        public override string DefaultName => "a giant toad";
+        public override string CorpseName => "труп гигантской жабы";
+        public override string DefaultName => "гигантская жаба";
 
         public override int Hides => 12;
         public override HideType HideType => HideType.Spined;

@@ -7,8 +7,8 @@ namespace Server.Mobiles
     {
         public EnragedRabbit(Mobile summoner) : base(summoner) => Body = 0xcd;
 
-        public override string CorpseName => "a hare corpse";
-        public override string DefaultName => "a rabbit";
+        public override string CorpseName => "труп зайца";
+        public override string DefaultName => "кролик";
 
         public override int GetAttackSound() => 0xC9;
 
@@ -22,8 +22,8 @@ namespace Server.Mobiles
     {
         public EnragedHart(Mobile summoner) : base(summoner) => Body = 0xea;
 
-        public override string CorpseName => "a deer corpse";
-        public override string DefaultName => "a great hart";
+        public override string CorpseName => "труп оленя";
+        public override string DefaultName => "благородный олень";
 
         public override int GetAttackSound() => 0x82;
 
@@ -37,8 +37,8 @@ namespace Server.Mobiles
     {
         public EnragedHind(Mobile summoner) : base(summoner) => Body = 0xed;
 
-        public override string CorpseName => "a deer corpse";
-        public override string DefaultName => "a hind";
+        public override string CorpseName => "труп оленя";
+        public override string DefaultName => "лань";
 
         public override int GetAttackSound() => 0x82;
 
@@ -56,8 +56,8 @@ namespace Server.Mobiles
             BaseSoundID = 0xa3;
         }
 
-        public override string CorpseName => "a bear corpse";
-        public override string DefaultName => "a black bear";
+        public override string CorpseName => "труп медведя";
+        public override string DefaultName => "чёрный медведь";
     }
 
     [SerializationGenerator(0, false)]
@@ -69,8 +69,8 @@ namespace Server.Mobiles
             BaseSoundID = 0x2ee;
         }
 
-        public override string CorpseName => "an eagle corpse";
-        public override string DefaultName => "an eagle";
+        public override string CorpseName => "труп орла";
+        public override string DefaultName => "орёл";
     }
 
     [SerializationGenerator(0, false)]

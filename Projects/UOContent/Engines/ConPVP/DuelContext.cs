@@ -148,7 +148,7 @@ public partial class DuelContext
             return true;
         }
 
-        from.SendMessage("The dueling ruleset prevents you from using this move.");
+        from.SendMessage("Правила дуэли запрещают этот приём.");
         return false;
     }
 
@@ -171,7 +171,7 @@ public partial class DuelContext
 
         if (spell is RecallSpell)
         {
-            from.SendMessage("You may not cast this spell.");
+            from.SendMessage("Это заклинание тебе недоступно.");
         }
 
         string title;
@@ -226,7 +226,7 @@ public partial class DuelContext
             return true;
         }
 
-        from.SendMessage("The dueling ruleset prevents you from casting this spell.");
+        from.SendMessage("Правила дуэли запрещают это заклинание.");
         return false;
     }
 
@@ -249,7 +249,7 @@ public partial class DuelContext
             return true;
         }
 
-        from.SendMessage("The dueling ruleset prevents you from equipping this item.");
+        from.SendMessage("Правила дуэли запрещают надевать этот предмет.");
         return false;
     }
 
@@ -292,7 +292,7 @@ public partial class DuelContext
 
         if (message)
         {
-            from.SendMessage("The dueling ruleset prevents you from using this combat ability.");
+            from.SendMessage("Правила дуэли запрещают эту боевую способность.");
         }
 
         return false;
@@ -391,7 +391,7 @@ public partial class DuelContext
             }
         }
 
-        from.SendMessage("The dueling ruleset prevents you from using this skill.");
+        from.SendMessage("Правила дуэли запрещают этот навык.");
         return false;
     }
 
@@ -507,19 +507,19 @@ public partial class DuelContext
 
         if (title != null && option != null && StartedBeginCountdown && !Started)
         {
-            from.SendMessage("You may not use this item before the duel begins.");
+            from.SendMessage("Этим нельзя пользоваться до начала дуэли.");
             return false;
         }
 
         if (item is BasePotion && item is not BaseExplosionPotion && item is not BaseRefreshPotion && IsSuddenDeath)
         {
-            from.SendMessage(0x22, "You may not drink potions in sudden death.");
+            from.SendMessage(0x22, "Во внезапной смерти зелья пить нельзя.");
             return false;
         }
 
         if (item is Bandage && IsSuddenDeath)
         {
-            from.SendMessage(0x22, "You may not use bandages in sudden death.");
+            from.SendMessage(0x22, "Во внезапной смерти бинты использовать нельзя.");
             return false;
         }
 
@@ -528,7 +528,7 @@ public partial class DuelContext
             return true;
         }
 
-        from.SendMessage("The dueling ruleset prevents you from using this item.");
+        from.SendMessage("Правила дуэли запрещают этот предмет.");
         return false;
     }
 
@@ -1108,8 +1108,8 @@ public partial class DuelContext
                 }
 
                 pl.Mobile.SendSound(0x1E1);
-                pl.Mobile.SendMessage(0x22, "Warning! Warning! Warning!");
-                pl.Mobile.SendMessage(0x22, "Sudden death will be active soon!");
+                pl.Mobile.SendMessage(0x22, "Тревога! Тревога! Тревога!");
+                pl.Mobile.SendMessage(0x22, "Скоро начнётся внезапная смерть!");
             }
         }
 
@@ -1137,10 +1137,10 @@ public partial class DuelContext
                 }
 
                 pl.Mobile.SendSound(0x1E1);
-                pl.Mobile.SendMessage(0x22, "Warning! Warning! Warning!");
+                pl.Mobile.SendMessage(0x22, "Тревога! Тревога! Тревога!");
                 pl.Mobile.SendMessage(
                     0x22,
-                    "Sudden death has ACTIVATED. You are now unable to perform any beneficial actions."
+                    "Внезапная смерть НАЧАЛАСЬ. Полезные действия больше недоступны."
                 );
             }
         }
@@ -1380,7 +1380,7 @@ public partial class DuelContext
         }
         else
         {
-            from.SendMessage("That's not a player.");
+            from.SendMessage("Это не игрок.");
         }
     }
 
@@ -1408,23 +1408,23 @@ public partial class DuelContext
             {
                 e.Mobile.SendMessage(
                     0x22,
-                    "You have recently been in combat with another player and must wait before starting a duel."
+                    "Ты недавно дрался с игроком — придётся подождать перед дуэлью."
                 );
             }
             else if (pm.DuelContext != null)
             {
                 if (pm.DuelContext.Initiator == pm)
                 {
-                    e.Mobile.SendMessage(0x22, "You have already started a duel.");
+                    e.Mobile.SendMessage(0x22, "Ты уже начал дуэль.");
                 }
                 else
                 {
-                    e.Mobile.SendMessage(0x22, "You have already been challenged in a duel.");
+                    e.Mobile.SendMessage(0x22, "Тебе уже бросили вызов на дуэль.");
                 }
             }
             else if (TournamentController.IsActive)
             {
-                e.Mobile.SendMessage(0x22, "You may not start a duel while a tournament is active.");
+                e.Mobile.SendMessage(0x22, "Нельзя начать дуэль во время турнира.");
             }
             else
             {
@@ -1520,7 +1520,7 @@ public partial class DuelContext
             }
             else if (pm.DuelContext.Finished)
             {
-                e.Mobile.SendMessage(0x22, "The duel is already finished.");
+                e.Mobile.SendMessage(0x22, "Дуэль уже закончена.");
             }
             else if (!pm.DuelContext.Started)
             {
@@ -1529,7 +1529,7 @@ public partial class DuelContext
 
                 if (pm.DuelContext.StartedBeginCountdown)
                 {
-                    e.Mobile.SendMessage(0x22, "The duel has not yet started.");
+                    e.Mobile.SendMessage(0x22, "Дуэль ещё не началась.");
                 }
                 else
                 {
@@ -1667,11 +1667,11 @@ public partial class DuelContext
                 {
                     if (pm.DuelContext.IsOneVsOne)
                     {
-                        e.Mobile.SendMessage(0x22, "You may not yield a 1 on 1 match.");
+                        e.Mobile.SendMessage(0x22, "В поединке один на один сдаться нельзя.");
                     }
                     else if (pl.Eliminated)
                     {
-                        e.Mobile.SendMessage(0x22, "You have already been eliminated.");
+                        e.Mobile.SendMessage(0x22, "Ты уже выбыл.");
                     }
                     else
                     {
@@ -1778,7 +1778,7 @@ public partial class DuelContext
                     {
                         if (Rematch)
                         {
-                            mob.SendMessage(0x22, "You have rejected the rematch.");
+                            mob.SendMessage(0x22, "Ты отказался от повторного боя.");
                         }
                         else
                         {
@@ -1987,10 +1987,10 @@ public partial class DuelContext
                             if (party.Members.Count + party.Candidates.Count >= Party.Capacity)
                             {
                                 player.SendMessage(
-                                    "You could not be added to the team party because it is at full capacity."
+                                    "Тебя не взяли в группу: она заполнена."
                                 );
                                 leader.SendMessage(
-                                    "{0} could not be added to the team party because it is at full capacity."
+                                    "{0} не взяли в группу: она заполнена."
                                 );
                             }
                             else
@@ -2405,7 +2405,7 @@ public partial class DuelContext
                         var dp = p.Players[j];
 
                         dp?.Mobile.SendMessage(
-                            "The duel could not be started because there are no arenas. If you want to stop waiting for a free arena, yield the duel."
+                            "Дуэль не началась: арен нет вовсе. Если не хочешь ждать — сдайся."
                         );
                     }
                 }
@@ -2487,7 +2487,7 @@ public partial class DuelContext
                         var dp = p.Players[j];
 
                         dp?.Mobile.SendMessage(
-                            "The duel could not be started because all arenas are full. If you want to stop waiting for a free arena, yield the duel."
+                            "Дуэль не началась: все арены заняты. Если не хочешь ждать свободную — сдайся."
                         );
                     }
                 }
@@ -2631,7 +2631,7 @@ public partial class DuelContext
         {
         }
 
-        public override string DefaultName => "return teleporter";
+        public override string DefaultName => "телепорт возврата";
 
         public void Register(Mobile mob)
         {
@@ -2767,7 +2767,7 @@ public partial class DuelContext
 
         public override bool SkipSerialization => true;
 
-        public override string DefaultName => "spectator moongate";
+        public override string DefaultName => "лунные врата зрителей";
 
         public override void CheckGate(Mobile m, int range)
         {
@@ -2775,7 +2775,7 @@ public partial class DuelContext
             {
                 m.SendMessage(
                     0x22,
-                    "You have recently been in combat with another player and cannot use this moongate."
+                    "Ты недавно дрался с игроком — этими вратами пока не воспользоваться."
                 );
             }
             else
@@ -2790,7 +2790,7 @@ public partial class DuelContext
             {
                 m.SendMessage(
                     0x22,
-                    "You have recently been in combat with another player and cannot use this moongate."
+                    "Ты недавно дрался с игроком — этими вратами пока не воспользоваться."
                 );
             }
             else

@@ -44,8 +44,8 @@ namespace Server.Mobiles
             MinTameSkill = 96.3;
         }
 
-        public override string CorpseName => "a white wyrm corpse";
-        public override string DefaultName => "a white wyrm";
+        public override string CorpseName => "труп белого вирма";
+        public override string DefaultName => "белый вирм";
         public override bool IsDragonKind => true;
 
         public override bool ReacquireOnMovement => true;

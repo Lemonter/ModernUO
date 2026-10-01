@@ -40,6 +40,11 @@ namespace Server.Mobiles
 
             VirtualArmor = 30;
 
+            // Mahaon: одна роба одного цвета на весь набор (не броня — заклинателю
+            // это не мешает кастовать), отличается по оттенку от других NPC-магов.
+            AddItem(new Robe(0x3F1));
+            AddItem(new Sandals(0x3F1));
+
             PackReg(6);
 
             if (Utility.RandomDouble() < 0.05)
@@ -48,10 +53,10 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a glowing orc corpse";
+        public override string CorpseName => "светящийся труп орка";
         public override InhumanSpeech SpeechType => InhumanSpeech.Orc;
 
-        public override string DefaultName => "an orcish mage";
+        public override string DefaultName => "орочий маг";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 1;

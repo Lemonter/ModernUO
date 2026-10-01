@@ -3739,7 +3739,7 @@ namespace Server.Multis
 
             public override bool SkipSerialization => true;
 
-            public override string DefaultName => "a house transfer contract";
+            public override string DefaultName => "договор передачи дома";
 
             public override void GetProperties(IPropertyList list)
             {

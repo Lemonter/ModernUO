@@ -85,8 +85,12 @@ namespace Server.Engines.Harvest
             // whitelisted mountain graphics. The whitelist only controls whether running a
             // spot dry offers to start a real mine; everything else still mines normally
             // instead of falling through to the old vanilla one-shot pile.
-            if (m_System is Mining && targeted is StaticTarget genericStatic && genericStatic.ItemID is not
-                (0xED3 or 0xEDF or 0xEE0 or 0xEE1 or 0xEE2 or 0xEE8)) // graves stay on the vanilla/quest path below
+            // Могилы и надгробия сюда не попадают — у них своя ветка ниже (копка кладбищ).
+            // Список берётся оттуда же целиком: раньше здесь были перечислены руками шесть
+            // земляных холмиков, а полсотни надгробий уходили в обычную добычу руды и
+            // выдавали из могилы железо.
+            if (m_System is Mining && targeted is StaticTarget genericStatic &&
+                Array.IndexOf(Systems.MahaonGraves.GraveDigging.GraveTiles, genericStatic.ItemID) < 0)
             {
                 var loc = new Point3D(genericStatic.X, genericStatic.Y, genericStatic.Z);
 
@@ -106,27 +110,34 @@ namespace Server.Engines.Harvest
                 var itemID = target.ItemID;
 
                 // grave
-                if (itemID is 0xED3 or 0xEDF or 0xEE0 or 0xEE1 or 0xEE2 or 0xEE8)
+                if (Array.IndexOf(Systems.MahaonGraves.GraveDigging.GraveTiles, itemID) >= 0)
                 {
+                    // Задание Ведьмы важнее обычной копки: у него своя, разовая награда, и
+                    // перебивать её костями было бы обидно.
                     if (from is PlayerMobile player)
                     {
                         var qs = player.Quest;
-                        if (qs is not WitchApprenticeQuest)
+
+                        if (qs is WitchApprenticeQuest)
                         {
-                            return;
-                        }
+                            var obj = qs.FindObjective<FindIngredientObjective>();
 
-                        var obj = qs.FindObjective<FindIngredientObjective>();
+                            if (obj?.Completed == false && obj.Ingredient == Ingredient.Bones)
+                            {
+                                // You finish your grim work, finding some of the specific bones listed in the Hag's recipe.
+                                player.SendLocalizedMessage(1055037);
+                                obj.Complete();
 
-                        if (obj?.Completed == false && obj.Ingredient == Ingredient.Bones)
-                        {
-                            // You finish your grim work, finding some of the specific bones listed in the Hag's recipe.
-                            player.SendLocalizedMessage(1055037);
-                            obj.Complete();
-
-                            return;
+                                return;
+                            }
                         }
                     }
+
+                    // Mahaon: раньше на этом всё и заканчивалось — могилы не делали ничего
+                    // ни для кого, кроме одного квеста, и лопата по ним просто молчала.
+                    // Теперь это полноценная добыча со своим истощением и восстановлением.
+                    Systems.MahaonGraves.GraveDigging.System.StartHarvesting(from, m_Tool, targeted);
+                    return;
                 }
             }
 

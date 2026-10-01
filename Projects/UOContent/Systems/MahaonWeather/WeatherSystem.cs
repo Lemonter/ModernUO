@@ -19,8 +19,14 @@ public enum MahaonWeather
 ///     Not on a timer like SeasonSystem — purely a button push from LemWeatherGump. Global
 ///     across every map/facet; no per-region weather here.
 /// </summary>
-public static class WeatherSystem
+public sealed class WeatherSystem : GenericPersistence
 {
+    private static WeatherSystem _instance;
+
+    public WeatherSystem() : base("MahaonWeather", 1)
+    {
+    }
+
     // Real UO WeatherType byte values (ClassicUO's Game/Weather.cs WT_* enum) — 0xFF isn't
     // a real weather type, so sending it just never matches a render case client-side,
     // which is the conventional "turn it off" signal every classic-era server has used.
@@ -48,6 +54,7 @@ public static class WeatherSystem
 
     public static void Configure()
     {
+        _instance = new WeatherSystem();
         CommandSystem.Register("LemWeather", AccessLevel.GameMaster, LemWeather_OnCommand);
         _resyncTimer = Timer.DelayCall(ResyncInterval, ResyncInterval, ResyncAll);
     }
@@ -96,4 +103,16 @@ public static class WeatherSystem
     }
 
     public static string NameRu(MahaonWeather weather) => NamesRu[(int)weather];
+
+    public override void Serialize(IGenericWriter writer)
+    {
+        writer.WriteEncodedInt(0); // version
+        writer.WriteEncodedInt((int)Current);
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // version
+        Current = (MahaonWeather)reader.ReadEncodedInt();
+    }
 }

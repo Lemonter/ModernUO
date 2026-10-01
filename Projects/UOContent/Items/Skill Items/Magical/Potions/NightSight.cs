@@ -19,7 +19,7 @@ public partial class NightSightPotion : BasePotion
 
         if (!from.BeginAction<LightCycle>())
         {
-            from.SendMessage("You already have night sight.");
+            from.SendMessage("Ночное зрение у тебя уже есть.");
             return false;
         }
 

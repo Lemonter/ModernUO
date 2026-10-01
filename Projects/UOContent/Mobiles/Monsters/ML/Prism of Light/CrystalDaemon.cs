@@ -55,8 +55,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "a crystal daemon corpse";
-        public override string DefaultName => "a crystal daemon";
+        public override string CorpseName => "труп кристаллического демона";
+        public override string DefaultName => "кристаллический демон";
 
         public override void GenerateLoot()
         {

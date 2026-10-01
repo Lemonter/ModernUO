@@ -26,7 +26,7 @@ namespace Server.Engines.ConPVP
         {
             if (m.Player && Sigil.ExistsOn(m))
             {
-                m.SendMessage(0x22, "You are holding a sigil and cannot enter this zone.");
+                m.SendMessage(0x22, "У тебя в руках сигил — сюда нельзя.");
                 return false;
             }
 
@@ -40,7 +40,7 @@ namespace Server.Engines.ConPVP
 
             if (DuelContext.CheckCombat(m))
             {
-                m.SendMessage(0x22, "You have recently been in combat and cannot enter this zone.");
+                m.SendMessage(0x22, "Ты недавно был в бою — сюда пока нельзя.");
                 return false;
             }
 
@@ -49,12 +49,12 @@ namespace Server.Engines.ConPVP
 
         public override void OnEnter(Mobile m)
         {
-            m.SendMessage("You have entered a dueling safezone. No combat other than duels are allowed in this zone.");
+            m.SendMessage("Ты вошёл в дуэльную безопасную зону. Здесь разрешены только дуэли.");
         }
 
         public override void OnExit(Mobile m)
         {
-            m.SendMessage("You have left a dueling safezone. Combat is now unrestricted.");
+            m.SendMessage("Ты покинул дуэльную безопасную зону. Бой снова без ограничений.");
         }
 
         public override bool CanUseStuckMenu(Mobile m) => false;

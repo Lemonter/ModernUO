@@ -1575,7 +1575,7 @@ namespace Server.Guilds
                 {
                     if (stone.Guild.Disbanded)
                     {
-                        from.SendMessage("The guild associated with that Guildstone no longer exists");
+                        from.SendMessage("Гильдии, привязанной к этому камню, больше нет");
                         return;
                     }
 
@@ -1588,7 +1588,7 @@ namespace Server.Guilds
 
                 if (g == null)
                 {
-                    from.SendMessage("That is not in a guild!");
+                    from.SendMessage("Это не в гильдии!");
                     return;
                 }
 

@@ -76,7 +76,7 @@ namespace Server.Gumps
                 else if (targetState?.IsLeaving == true)
                 {
                     // OSI does this quite strangely, so we'll just do it this way
-                    m_Mobile.SendMessage("That person is quitting their faction and so you may not recruit them.");
+                    m_Mobile.SendMessage("Этот человек выходит из фракции, завербовать его нельзя.");
                 }
                 else if (m_Mobile.AccessLevel >= AccessLevel.GameMaster || m_Guild.Leader == m_Mobile)
                 {

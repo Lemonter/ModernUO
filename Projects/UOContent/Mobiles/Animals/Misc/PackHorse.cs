@@ -55,8 +55,8 @@ namespace Server.Mobiles
             AddItem(pack);
         }
 
-        public override string CorpseName => "a horse corpse";
-        public override string DefaultName => "a pack horse";
+        public override string CorpseName => "труп лошади";
+        public override string DefaultName => "вьючная лошадь";
 
         public override int Meat => 3;
         public override int Hides => 10;

@@ -41,7 +41,7 @@ public partial class Silvani : BaseCreature
         VirtualArmor = 50;
     }
 
-    public override string DefaultName => "Silvani";
+    public override string DefaultName => "Сильвани";
 
     public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

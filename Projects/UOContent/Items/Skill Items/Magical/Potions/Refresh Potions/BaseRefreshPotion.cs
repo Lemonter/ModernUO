@@ -20,7 +20,7 @@ public abstract partial class BaseRefreshPotion : BasePotion
 
         if (from.Stam >= from.StamMax)
         {
-            from.SendMessage("You decide against drinking this potion, as you are already at full stamina.");
+            from.SendMessage("Ты решаешь не пить зелье — выносливость и так полная.");
             return false;
         }
 

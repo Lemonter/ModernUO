@@ -17,8 +17,14 @@ public enum MahaonSeason
 ///     confirmed working). Broadcasts a message to everyone online when the season
 ///     changes, and tells a player the current season on login.
 /// </summary>
-public static class SeasonSystem
+public sealed class SeasonSystem : GenericPersistence
 {
+    private static SeasonSystem _instance;
+
+    public SeasonSystem() : base("MahaonSeason", 1)
+    {
+    }
+
     // 30 minutes per season for now, while testing tree growth — change to
     // TimeSpan.FromHours(1) once the fast cycle's confirmed working end to end.
     public static readonly TimeSpan SeasonLength = TimeSpan.FromMinutes(30);
@@ -31,7 +37,16 @@ public static class SeasonSystem
 
     public static void Configure()
     {
-        SyncNativeMapSeason();
+        _instance = new SeasonSystem();
+
+        // Configure() runs before World.Load(), so CurrentSeason is still the Spring
+        // default here — syncing now would push the wrong value to every map and then
+        // never get corrected. WorldLoad fires once World.Load() (Deserialize included)
+        // has finished, covering both a restored season and a genuinely fresh world (no
+        // save file — Deserialize never runs, CurrentSeason stays Spring, still needs this
+        // one guaranteed sync).
+        EventSink.WorldLoad += SyncNativeMapSeason;
+
         Timer.DelayCall(SeasonLength, SeasonLength, AdvanceSeason);
     }
 
@@ -98,4 +113,16 @@ public static class SeasonSystem
     }
 
     public static string NameRu(MahaonSeason season) => SeasonNamesRu[(int)season];
+
+    public override void Serialize(IGenericWriter writer)
+    {
+        writer.WriteEncodedInt(0); // version
+        writer.WriteEncodedInt((int)CurrentSeason);
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // version
+        CurrentSeason = (MahaonSeason)reader.ReadEncodedInt();
+    }
 }

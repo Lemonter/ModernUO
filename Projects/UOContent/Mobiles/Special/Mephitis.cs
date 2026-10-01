@@ -56,7 +56,7 @@ public partial class Mephitis : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => new[] { MonsterStatuetteType.Spider };
 
-    public override string DefaultName => "Mephitis";
+    public override string DefaultName => "Мефитис";
 
     public override Poison PoisonImmune => Poison.Lethal;
     public override Poison HitPoison => Poison.Lethal;

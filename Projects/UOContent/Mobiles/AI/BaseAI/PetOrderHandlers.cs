@@ -261,11 +261,11 @@ public abstract partial class BaseAI
     {
         if (Mobile.Summoned)
         {
-            Mobile.ControlMaster?.SendMessage("You cannot rename a summoned creature.");
+            Mobile.ControlMaster?.SendMessage("Призванное существо не переименовать.");
         }
         else
         {
-            Mobile.ControlMaster?.SendMessage("Change name on pet health bar.");
+            Mobile.ControlMaster?.SendMessage("Сменить имя на полоске здоровья питомца.");
         }
     }
 }

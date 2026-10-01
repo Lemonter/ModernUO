@@ -69,7 +69,7 @@ public partial class Barracoon : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => new[] { MonsterStatuetteType.Slime };
 
-    public override string DefaultName => "Barracoon";
+    public override string DefaultName => "Барракун";
 
     public override bool AlwaysMurderer => true;
     public override bool AutoDispel => true;

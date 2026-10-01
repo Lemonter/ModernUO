@@ -6,10 +6,19 @@ namespace Server.Systems.MahaonCities;
 /// <summary>
 ///     A bare ModernUO install has zero wildlife — no spawner data ships with it (that's
 ///     historically been a separate scripts/data drop in the RunUO/ServUO family). This is
-///     a minimal stand-in: scatter common animals around each city's outskirts once, so
-///     the world isn't completely dead. Not a real spawner system (no respawn-on-death,
+///     a minimal stand-in: scatter common animals around each city's outskirts, so the
+///     world isn't completely dead. Not a real spawner system (no respawn-on-death,
 ///     no density tuning) — a proper one (XmlSpawner-for-Modernuo or similar) is the real
 ///     long-term answer if this needs to scale up.
+///
+///     GM-command-only (<c>[SeedWildlife</c>) — deliberately NOT auto-run at startup
+///     anymore. It used to fire once automatically via Initialize(), guarded by a
+///     persisted _seeded flag; on a completely fresh world (no Saves/ folder, e.g. after
+///     wiping saves+backups) that flag resets too, so it fired again with
+///     CityControlSystem.Cities' placeholder vanilla-Felucca coordinates and no
+///     CityMarkers set — producing randomly-scattered animals with no relation to this
+///     shard's actual map layout. Run `[SeedWildlife` by hand once city centers/markers
+///     are actually correct for this map.
 /// </summary>
 public class WildlifeSeeder : GenericPersistence
 {
@@ -43,17 +52,6 @@ public class WildlifeSeeder : GenericPersistence
     {
         _instance = new WildlifeSeeder();
         CommandSystem.Register("SeedWildlife", AccessLevel.GameMaster, SeedWildlife_OnCommand);
-    }
-
-    public static void Initialize()
-    {
-        if (_seeded)
-        {
-            return;
-        }
-
-        SeedAll();
-        _seeded = true;
     }
 
     private static void SeedAll()

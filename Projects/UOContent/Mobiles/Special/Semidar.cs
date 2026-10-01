@@ -56,7 +56,7 @@ public partial class Semidar : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => Array.Empty<MonsterStatuetteType>();
 
-    public override string DefaultName => "Semidar";
+    public override string DefaultName => "Семидар";
 
     public override bool Unprovokable => true;
     public override Poison PoisonImmune => Poison.Lethal;

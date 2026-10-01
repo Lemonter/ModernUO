@@ -3,7 +3,11 @@
     "$type": "Spawner",
     "guid": "0cd9c91b-ab80-4dbd-8594-ace0132a0fc8",
     "name": "Spawner (123)",
-    "location": [1521, 1457, 15],
+    "location": [
+      1521,
+      1457,
+      15
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -12,14 +16,46 @@
     "homeRange": 0,
     "walkingRange": 1,
     "entries": [
-      { "name": "ChaosGuard", "maxCount": 1, "probability": 100 }
+      {
+        "name": "ChaosGuard",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "66a96867-e312-4646-a898-a2619ed172f5",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1521,
+      1457,
+      15
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "112087fa-8961-4d69-a729-19390bb722c5",
     "name": "Spawner (123)",
-    "location": [1126, 3688, -2],
+    "location": [
+      1126,
+      3688,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -28,16 +64,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "53fd1e25-703f-4d0c-8139-320d12a52abb",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1126,
+      3688,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "17960040-e115-49e8-a1f3-f14583d9517f",
     "name": "Spawner (123)",
-    "location": [603, 2141, 0],
+    "location": [
+      603,
+      2141,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -46,14 +122,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "20b450d2-2982-451c-8f37-a96709d3f981",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      603,
+      2141,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1de05315-2afe-4cc6-8b83-22fe3ebab00e",
     "name": "Spawner (123)",
-    "location": [2994, 3451, 16],
+    "location": [
+      2994,
+      3451,
+      16
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -62,16 +170,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ed2957b4-9fd8-4076-bbba-1ccfee052df5",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2994,
+      3451,
+      16
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "26a2621e-6b2c-47ef-b957-4d5630091661",
     "name": "Spawner (123)",
-    "location": [1399, 3743, -21],
+    "location": [
+      1399,
+      3743,
+      -21
+    ],
     "map": "Trammel",
     "count": 10,
     "minDelay": "00:05:00",
@@ -80,23 +228,91 @@
     "homeRange": 10,
     "walkingRange": 10,
     "entries": [
-      { "name": "HireBard", "maxCount": 5, "probability": 100 },
-      { "name": "HireBardArcher", "maxCount": 5, "probability": 100 },
-      { "name": "HireBeggar", "maxCount": 5, "probability": 100 },
-      { "name": "HireFighter", "maxCount": 5, "probability": 100 },
-      { "name": "HireMage", "maxCount": 5, "probability": 100 },
-      { "name": "HireRanger", "maxCount": 5, "probability": 100 },
-      { "name": "HireRangerArcher", "maxCount": 5, "probability": 100 },
-      { "name": "HireSailor", "maxCount": 5, "probability": 100 },
-      { "name": "HireThief", "maxCount": 5, "probability": 100 },
-      { "name": "HirePaladin", "maxCount": 5, "probability": 100 }
+      {
+        "name": "HireBard",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireBardArcher",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireBeggar",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireFighter",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireMage",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireRanger",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireRangerArcher",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireSailor",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HireThief",
+        "maxCount": 5,
+        "probability": 100
+      },
+      {
+        "name": "HirePaladin",
+        "maxCount": 5,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e2f14083-3125-400d-b082-3c7803b32c80",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1399,
+      3743,
+      -21
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2b35dd52-619d-448f-86d1-8aaa6f146ac7",
     "name": "Spawner (123)",
-    "location": [1829, 2811, 0],
+    "location": [
+      1829,
+      2811,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -105,14 +321,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "46effe46-00b1-462c-bd21-3afb6f9c9cb3",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1829,
+      2811,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2e006ab7-3370-4b4e-8fbc-cfa849b3d0c5",
     "name": "Spawner (123)",
-    "location": [7082, 367, 0],
+    "location": [
+      7082,
+      367,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -121,14 +369,46 @@
     "homeRange": 4,
     "walkingRange": 4,
     "entries": [
-      { "name": "Olaeni", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Olaeni",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c0e69a40-7547-49fd-ace5-16a68b64a4ca",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7082,
+      367,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "31d1057e-9886-428e-82ef-4c08bf202117",
     "name": "Spawner (123)",
-    "location": [3815, 1217, 0],
+    "location": [
+      3815,
+      1217,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -137,16 +417,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "6862b1a1-9016-4c38-b860-dc63dab5cae7",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3815,
+      1217,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3203a756-0011-4741-9fae-8a1c92166c45",
     "name": "Spawner (123)",
-    "location": [3749, 1404, 0],
+    "location": [
+      3749,
+      1404,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -155,16 +475,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "dd901060-5786-4793-a38d-29fdc44b99aa",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3749,
+      1404,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "34473f72-e1ae-4968-97aa-0388ead486b9",
     "name": "Spawner (123)",
-    "location": [3773, 1308, 0],
+    "location": [
+      3773,
+      1308,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -173,14 +533,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4e1f9455-4bfe-4ed9-941d-0fcbe09ace14",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3773,
+      1308,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "36bf73a1-cc52-4776-8b8b-99088d86d03c",
     "name": "Spawner (123)",
-    "location": [627, 864, 0],
+    "location": [
+      627,
+      864,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -189,14 +581,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "98b20b9a-21f1-46ea-a5bf-a1280802b630",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      627,
+      864,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "37d7e7c7-3ef0-4b63-bc92-87b172a02533",
     "name": "Spawner (123)",
-    "location": [7053, 338, 0],
+    "location": [
+      7053,
+      338,
+      0
+    ],
     "map": "Trammel",
     "count": 2,
     "minDelay": "00:05:00",
@@ -205,15 +629,51 @@
     "homeRange": 6,
     "walkingRange": 6,
     "entries": [
-      { "name": "aneen", "maxCount": 1, "probability": 100 },
-      { "name": "Bird", "maxCount": 1, "probability": 100 }
+      {
+        "name": "aneen",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Bird",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f9a4d7c7-bed0-44e6-b240-e982e8edec34",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7053,
+      338,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "4258947f-59d2-4fbb-98e7-11b65f16d8a9",
     "name": "Spawner (123)",
-    "location": [7063, 350, 0],
+    "location": [
+      7063,
+      350,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -222,15 +682,51 @@
     "homeRange": 4,
     "walkingRange": 4,
     "entries": [
-      { "name": "Bolaevin", "maxCount": 1, "probability": 100 },
-      { "name": "Bird", "maxCount": 2, "probability": 100 }
+      {
+        "name": "Bolaevin",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Bird",
+        "maxCount": 2,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e0ca8014-676f-4ee8-8d31-69d43ff743bd",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7063,
+      350,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "46dc4d43-91c1-4d09-a0e0-9d2e89804977",
     "name": "Spawner (123)",
-    "location": [7090, 387, 0],
+    "location": [
+      7090,
+      387,
+      0
+    ],
     "map": "Trammel",
     "count": 2,
     "minDelay": "00:05:00",
@@ -239,15 +735,51 @@
     "homeRange": 8,
     "walkingRange": 8,
     "entries": [
-      { "name": "Aluniol", "maxCount": 1, "probability": 100 },
-      { "name": "Rebinil", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Aluniol",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Rebinil",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4aac30ef-f117-4e58-a38b-db27be8fcb9a",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7090,
+      387,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "56ff4f2b-88cc-44ce-bc5c-cadd416e069d",
     "name": "Spawner (123)",
-    "location": [3721, 2161, 20],
+    "location": [
+      3721,
+      2161,
+      20
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -256,14 +788,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7db3534b-0acb-425c-85c5-26bbd2c41aef",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3721,
+      2161,
+      20
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "64802440-be2d-4b3e-babb-d8612ae85e90",
     "name": "Spawner (123)",
-    "location": [2875, 675, 0],
+    "location": [
+      2875,
+      675,
+      0
+    ],
     "map": "Trammel",
     "count": 6,
     "minDelay": "00:05:00",
@@ -272,14 +836,46 @@
     "homeRange": 2,
     "walkingRange": 2,
     "entries": [
-      { "name": "TreasureChestLevel1", "maxCount": 6, "probability": 100 }
+      {
+        "name": "TreasureChestLevel1",
+        "maxCount": 6,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "83086490-f0be-4670-9d7d-61b4364c530a",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2875,
+      675,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "65e4866a-41f4-47ec-8f26-aa92f48aac80",
     "name": "Spawner (123)",
-    "location": [2895, 686, 0],
+    "location": [
+      2895,
+      686,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -288,14 +884,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ffe4c344-685b-40db-ad1e-9c6979216deb",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2895,
+      686,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "756f5e4b-690b-4d80-a775-3ff67397e700",
     "name": "Spawner (123)",
-    "location": [2891, 3474, 15],
+    "location": [
+      2891,
+      3474,
+      15
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -304,14 +932,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7944d7d5-098c-4a24-94cd-985cc6ec971c",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2891,
+      3474,
+      15
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "76bb7e24-7ad9-4dc2-97c8-f575ff05a259",
     "name": "Spawner (123)",
-    "location": [1914, 2687, 0],
+    "location": [
+      1914,
+      2687,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -320,14 +980,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "dd2a4fbc-a2c3-4842-a85b-d64c2833922a",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1914,
+      2687,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "79236906-51cd-4390-86c5-36b5ea71f943",
     "name": "Spawner (123)",
-    "location": [2874, 692, 0],
+    "location": [
+      2874,
+      692,
+      0
+    ],
     "map": "Trammel",
     "count": 2,
     "minDelay": "00:05:00",
@@ -336,15 +1028,51 @@
     "homeRange": 1,
     "walkingRange": 1,
     "entries": [
-      { "name": "TreasureChestLevel1", "maxCount": 1, "probability": 100 },
-      { "name": "TreasureChestLevel2", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TreasureChestLevel1",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TreasureChestLevel2",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d3541e07-1dc8-48f4-91b5-62707eefad1d",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2874,
+      692,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "81d50c82-2e5a-41d8-b572-f50a66302d6e",
     "name": "Spawner (123)",
-    "location": [2254, 1207, 0],
+    "location": [
+      2254,
+      1207,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -353,14 +1081,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "dcec6d4d-5f19-4d5e-b14c-657fab85420b",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2254,
+      1207,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "81e6cbf7-1e74-4547-b10f-024a75b64d40",
     "name": "Spawner (123)",
-    "location": [2068, 2854, 0],
+    "location": [
+      2068,
+      2854,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -369,16 +1129,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f52af27b-a1ec-444c-a485-96ced658244e",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2068,
+      2854,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "81ee4607-e452-45ca-ac26-7c5a8d47f201",
     "name": "Spawner (123)",
-    "location": [1662, 1611, 19],
+    "location": [
+      1662,
+      1611,
+      19
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -387,14 +1187,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9c6de3ac-27b2-4b62-9548-d3efc4dfad02",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1662,
+      1611,
+      19
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "82760905-485e-4bbe-83b6-56ccc903665a",
     "name": "Spawner (123)",
-    "location": [1372, 3916, -2],
+    "location": [
+      1372,
+      3916,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -403,16 +1235,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "81db798c-a3b8-41da-b5ce-b94b8481ddd4",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1372,
+      3916,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "852fdf43-a6c6-4fb9-acd9-35b1943f4d11",
     "name": "Spawner (123)",
-    "location": [1483, 1760, -2],
+    "location": [
+      1483,
+      1760,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -421,16 +1293,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0c264db5-3c75-47bc-b087-fac5ba1b2649",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1483,
+      1760,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "86739b8d-2726-43ff-aeaa-562873cee364",
     "name": "Spawner (123)",
-    "location": [1813, 2834, 0],
+    "location": [
+      1813,
+      2834,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -439,15 +1351,51 @@
     "homeRange": 2,
     "walkingRange": 2,
     "entries": [
-      { "name": "TreasureChestLevel3", "maxCount": 1, "probability": 100 },
-      { "name": "TreasureChestLevel4", "maxCount": 2, "probability": 100 }
+      {
+        "name": "TreasureChestLevel3",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TreasureChestLevel4",
+        "maxCount": 2,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "17813db9-13d2-4359-91eb-cc5f34e68fc9",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1813,
+      2834,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "88ba3663-c0bb-4d49-bcb5-cc4b6490b9cf",
     "name": "Spawner (123)",
-    "location": [673, 2235, -3],
+    "location": [
+      673,
+      2235,
+      -3
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -456,16 +1404,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "b817ac75-92fc-4256-be2f-bc4e99884761",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      673,
+      2235,
+      -3
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "8b75bcf8-7b83-4d94-8573-92aff88cd41f",
     "name": "Spawner (123)",
-    "location": [3652, 2619, 0],
+    "location": [
+      3652,
+      2619,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -474,14 +1462,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "43d3b1b0-c5d9-4952-93df-23e24d152bff",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3652,
+      2619,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "8d746f23-5e37-467c-9b8c-2af3b1ba0882",
     "name": "Spawner (123)",
-    "location": [5685, 3148, -4],
+    "location": [
+      5685,
+      3148,
+      -4
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -490,14 +1510,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4c2f14d1-0a10-41d4-9801-66ce1bce490e",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      5685,
+      3148,
+      -4
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "8d7c52fa-6f53-40ae-8f24-1daf0a7ce571",
     "name": "Spawner (123)",
-    "location": [1400, 1628, 28],
+    "location": [
+      1400,
+      1628,
+      28
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -506,14 +1558,46 @@
     "homeRange": 0,
     "walkingRange": 1,
     "entries": [
-      { "name": "OrderGuard", "maxCount": 1, "probability": 100 }
+      {
+        "name": "OrderGuard",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "399be78a-ea38-46d6-8886-c22895ffb2d3",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1400,
+      1628,
+      28
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "93c7a59d-449b-4993-b89d-8261edf96f2d",
     "name": "Spawner (123)",
-    "location": [2515, 557, 0],
+    "location": [
+      2515,
+      557,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -522,14 +1606,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "5953b906-e6f6-4932-8548-d9e0acdd8501",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2515,
+      557,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "995f4053-0947-4757-8665-98cdac36ca2b",
     "name": "Spawner (123)",
-    "location": [6989, 342, 0],
+    "location": [
+      6989,
+      342,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -538,14 +1654,46 @@
     "homeRange": 8,
     "walkingRange": 8,
     "entries": [
-      { "name": "Tyeelor", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tyeelor",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "db2777b0-6628-440a-92af-5084c1c57598",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      6989,
+      342,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "99c8e802-f37a-4f2e-b5d5-23239e0ba219",
     "name": "Spawner (123)",
-    "location": [7048, 382, 0],
+    "location": [
+      7048,
+      382,
+      0
+    ],
     "map": "Trammel",
     "count": 6,
     "minDelay": "00:05:00",
@@ -554,19 +1702,71 @@
     "homeRange": 12,
     "walkingRange": 12,
     "entries": [
-      { "name": "abbein", "maxCount": 1, "probability": 100 },
-      { "name": "taellia", "maxCount": 1, "probability": 100 },
-      { "name": "vicaie", "maxCount": 1, "probability": 100 },
-      { "name": "mallew", "maxCount": 1, "probability": 100 },
-      { "name": "jothan", "maxCount": 1, "probability": 100 },
-      { "name": "alethanian", "maxCount": 1, "probability": 100 }
+      {
+        "name": "abbein",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "taellia",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "vicaie",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "mallew",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "jothan",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "alethanian",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "12a3330e-7adb-4d5f-8dfe-a359ef646378",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7048,
+      382,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9e077b7d-aea5-4e45-9435-4cce0aaa6962",
     "name": "Spawner (123)",
-    "location": [4398, 1049, -2],
+    "location": [
+      4398,
+      1049,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -575,16 +1775,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "99039571-b78e-4505-a335-cdfbf771b435",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      4398,
+      1049,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9f7c934c-8e02-433d-a88f-4c8769a02081",
     "name": "Spawner (123)",
-    "location": [7031, 409, 7],
+    "location": [
+      7031,
+      409,
+      7
+    ],
     "map": "Trammel",
     "count": 2,
     "minDelay": "00:05:00",
@@ -593,15 +1833,51 @@
     "homeRange": 10,
     "walkingRange": 10,
     "entries": [
-      { "name": "Alelle", "maxCount": 1, "probability": 100 },
-      { "name": "Daelas", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Alelle",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Daelas",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "752c5728-44b3-4616-a889-1150fa830e3a",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7031,
+      409,
+      7
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a1fec8b0-aeb0-4cfe-bedb-a630f60f483b",
     "name": "Spawner (123)",
-    "location": [1400, 1623, 28],
+    "location": [
+      1400,
+      1623,
+      28
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -610,14 +1886,46 @@
     "homeRange": 0,
     "walkingRange": 1,
     "entries": [
-      { "name": "OrderGuard", "maxCount": 1, "probability": 100 }
+      {
+        "name": "OrderGuard",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "522355cb-5312-4bd1-8ddd-f1e7c4ef8a51",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1400,
+      1623,
+      28
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "bc65ad16-fde0-4172-b5c9-df90020f5ed5",
     "name": "Spawner (123)",
-    "location": [3674, 2291, -2],
+    "location": [
+      3674,
+      2291,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -626,16 +1934,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7748262d-6824-4e58-b321-c255b9a29bf6",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3674,
+      2291,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "c26e2162-6a56-4eeb-b6ec-300b0ef5ed0f",
     "name": "Spawner (123)",
-    "location": [1330, 3778, 0],
+    "location": [
+      1330,
+      3778,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -644,14 +1992,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "bc2ac8e8-24f2-406c-af24-40fc22093b6e",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1330,
+      3778,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ce3d7ff4-6411-4a30-914a-6b2bd1b9c752",
     "name": "Spawner (123)",
-    "location": [3645, 2661, -2],
+    "location": [
+      3645,
+      2661,
+      -2
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -660,16 +2040,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "8065ffb8-57a7-491a-9709-c0e570f39849",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3645,
+      2661,
+      -2
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d351ad8d-c82c-43b5-a10c-b7d42d47cc9f",
     "name": "Spawner (123)",
-    "location": [1421, 1698, 0],
+    "location": [
+      1421,
+      1698,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -678,14 +2098,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "db2ffc0a-0a22-4766-af8d-771eec2500a8",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1421,
+      1698,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d9dbef7c-e798-47c8-8939-7bbb74d297a9",
     "name": "Spawner (123)",
-    "location": [573, 2246, 0],
+    "location": [
+      573,
+      2246,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -694,16 +2146,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "defa6f29-b80d-48c5-9e74-12ccd47218e8",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      573,
+      2246,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "e1071149-0c52-45c8-a0db-75da33c0a77e",
     "name": "Spawner (123)",
-    "location": [631, 883, 0],
+    "location": [
+      631,
+      883,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -712,16 +2204,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f7626f4b-f5c0-49ce-ab5c-3c1b529cee89",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      631,
+      883,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ea87d9c8-52d9-492a-9a5f-9b32bf2ee832",
     "name": "Spawner (123)",
-    "location": [3041, 827, -3],
+    "location": [
+      3041,
+      827,
+      -3
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -730,16 +2262,56 @@
     "homeRange": 10,
     "walkingRange": 20,
     "entries": [
-      { "name": "EscortableMage", "maxCount": 3, "probability": 100 },
-      { "name": "SeekerOfAdventure", "maxCount": 3, "probability": 100 },
-      { "name": "Noble", "maxCount": 3, "probability": 100 }
+      {
+        "name": "EscortableMage",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "SeekerOfAdventure",
+        "maxCount": 3,
+        "probability": 100
+      },
+      {
+        "name": "Noble",
+        "maxCount": 3,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "942a4582-3cc9-4f44-95b4-4bc4722608b1",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      3041,
+      827,
+      -3
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f539d13c-6972-46fe-bce6-a09531c3473a",
     "name": "Spawner (123)",
-    "location": [2884, 692, 0],
+    "location": [
+      2884,
+      692,
+      0
+    ],
     "map": "Trammel",
     "count": 3,
     "minDelay": "00:05:00",
@@ -748,15 +2320,51 @@
     "homeRange": 1,
     "walkingRange": 1,
     "entries": [
-      { "name": "TreasureChestLevel2", "maxCount": 2, "probability": 100 },
-      { "name": "TreasureChestLevel3", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TreasureChestLevel2",
+        "maxCount": 2,
+        "probability": 100
+      },
+      {
+        "name": "TreasureChestLevel3",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d6e357f5-902b-4874-8bf6-366ae53c3c28",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      2884,
+      692,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "faa84300-0e93-40c1-a328-863f8ed209fe",
     "name": "Spawner (123)",
-    "location": [5290, 3987, 37],
+    "location": [
+      5290,
+      3987,
+      37
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -765,14 +2373,46 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d454ffb9-f392-482c-8702-7e221fde7bfe",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      5290,
+      3987,
+      37
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fc87ea0f-7cd3-413a-a409-d1b304ec5299",
     "name": "Spawner (123)",
-    "location": [1525, 1457, 15],
+    "location": [
+      1525,
+      1457,
+      15
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -781,14 +2421,46 @@
     "homeRange": 0,
     "walkingRange": 1,
     "entries": [
-      { "name": "ChaosGuard", "maxCount": 1, "probability": 100 }
+      {
+        "name": "ChaosGuard",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e4a167aa-4d92-4733-834f-b0ed4d1073ec",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      1525,
+      1457,
+      15
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fd8c35db-5081-4db5-9859-2873a070fbac",
     "name": "Spawner (123)",
-    "location": [7010, 363, 0],
+    "location": [
+      7010,
+      363,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -797,14 +2469,46 @@
     "homeRange": 8,
     "walkingRange": 8,
     "entries": [
-      { "name": "athialon", "maxCount": 1, "probability": 100 }
+      {
+        "name": "athialon",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1b46c2b4-36d7-4bf1-af7f-a352086d8ab7",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      7010,
+      363,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ffaf3446-ee45-4f0f-9020-7508409e7da0",
     "name": "Spawner (123)",
-    "location": [4451, 1153, 0],
+    "location": [
+      4451,
+      1153,
+      0
+    ],
     "map": "Trammel",
     "count": 1,
     "minDelay": "00:05:00",
@@ -813,7 +2517,35 @@
     "homeRange": 1,
     "walkingRange": 5,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9f2abd84-9498-4a3a-b687-b8f25bc6f24a",
+    "name": "Guard Spawner (Spawner (123))",
+    "location": [
+      4451,
+      1153,
+      0
+    ],
+    "map": "Trammel",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   }
 ]

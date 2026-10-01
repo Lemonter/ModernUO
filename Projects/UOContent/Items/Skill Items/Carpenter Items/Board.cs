@@ -138,3 +138,30 @@ public partial class YewBoard : Board
     {
     }
 }
+
+[SerializationGenerator(0, false)]
+public partial class BananaBoard : Board
+{
+    [Constructible]
+    public BananaBoard(int amount = 1) : base(CraftResource.BananaWood, amount)
+    {
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class CoconutBoard : Board
+{
+    [Constructible]
+    public CoconutBoard(int amount = 1) : base(CraftResource.CoconutWood, amount)
+    {
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class PalmBoard : Board
+{
+    [Constructible]
+    public PalmBoard(int amount = 1) : base(CraftResource.PalmWood, amount)
+    {
+    }
+}

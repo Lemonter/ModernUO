@@ -6811,11 +6811,6 @@
   },
   {
     "src": { "map": "TerMur", "loc": [7149, 756, 25] },
-    "dst": { "map": "Felucca", "loc": [511, 585, 11] },
-    "back": false
-  },
-  {
-    "src": { "map": "TerMur", "loc": [7149, 756, 25] },
     "dst": { "map": "TerMur", "loc": [511, 585, 9] },
     "back": false
   },

@@ -6,7 +6,7 @@ namespace Server.Mobiles;
 [SerializationGenerator(0, false)]
 public partial class UnholySteed : BaseMount
 {
-    public override string DefaultName => "a dark steed";
+    public override string DefaultName => "тёмный скакун";
 
     [Constructible]
     public UnholySteed() : base(0x74, 0x3EA7, AIType.AI_Melee, FightMode.Aggressor)
@@ -43,7 +43,7 @@ public partial class UnholySteed : BaseMount
     }
 
     public override int StepsMax => 6400;
-    public override string CorpseName => "an unholy corpse";
+    public override string CorpseName => "нечестивый труп";
     public override bool IsDispellable => false;
     public override bool IsBondable => false;
     public override FoodType FavoriteFood => FoodType.FruitsAndVeggies | FoodType.GrainsAndHay;
@@ -73,7 +73,7 @@ public partial class UnholySteed : BaseMount
     {
         if (Ethic.Evil == null || Ethic.Find(from) != Ethic.Evil)
         {
-            from.SendMessage("You may not ride this steed.");
+            from.SendMessage("На этом скакуне тебе не ездить.");
         }
         else
         {

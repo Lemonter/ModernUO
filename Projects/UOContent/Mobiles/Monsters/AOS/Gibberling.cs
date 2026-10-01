@@ -40,9 +40,9 @@ namespace Server.Mobiles
             VirtualArmor = 27;
         }
 
-        public override string CorpseName => "a gibberling corpse";
+        public override string CorpseName => "труп гиберлинга";
 
-        public override string DefaultName => "a gibberling";
+        public override string DefaultName => "гиберлинг";
 
         public override int TreasureMapLevel => 1;
 

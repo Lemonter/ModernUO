@@ -54,12 +54,12 @@ namespace Server.Mobiles
             PackArcanceScroll(0.05);
         }
 
-        public override string CorpseName => "a dryad's corpse";
+        public override string CorpseName => "труп дриады";
         public override bool InitialInnocent => true;
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 
-        public override string DefaultName => "a dryad";
+        public override string DefaultName => "дриада";
 
         public override int Meat => 1;
 

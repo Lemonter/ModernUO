@@ -7,7 +7,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Hiryu : BaseMount
     {
-        public override string DefaultName => "a hiryu";
+        public override string DefaultName => "хирю";
 
         [Constructible]
         public Hiryu() : base(243, 0x3E94, AIType.AI_Melee)
@@ -55,7 +55,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a hiryu corpse";
+        public override string CorpseName => "труп хирю";
         public override double WeaponAbilityChance => 0.07; /* 1 in 15 chance of using per landed hit */
 
         public override bool StatLossAfterTame => true;

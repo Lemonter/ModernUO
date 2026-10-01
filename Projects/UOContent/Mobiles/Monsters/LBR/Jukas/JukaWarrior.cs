@@ -47,8 +47,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a jukan corpse";
-        public override string DefaultName => "a juka warrior";
+        public override string CorpseName => "труп джукана";
+        public override string DefaultName => "воин джука";
 
         public override bool AlwaysMurderer => true;
         public override bool CanRummageCorpses => true;
@@ -95,7 +95,7 @@ namespace Server.Mobiles
                 case 2:
                     {
                         AOS.Damage(defender, this, Utility.Random(10, 5), 100, 0, 0, 0, 0);
-                        defender.SendAsciiMessage("You have been hit by a critical strike!");
+                        defender.SendAsciiMessage("Тебя достали критическим ударом!");
                         break;
                     }
             }

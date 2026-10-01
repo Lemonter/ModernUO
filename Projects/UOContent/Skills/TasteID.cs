@@ -34,8 +34,14 @@ namespace Server.SkillHandlers
                 }
                 else if (targeted is Food food)
                 {
-                    if (from.CheckTargetSkill(SkillName.TasteID, food, 0, 100))
+                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
+                        from, Systems.MahaonCombat.MinorSkill.TasteID
+                    );
+
+                    if (from.CheckTargetSkill(SkillName.TasteID, food, 0 - windowBonus, 100))
                     {
+                        Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(from, Systems.MahaonCombat.MinorSkill.TasteID);
+
                         if (food.Poison != null)
                         {
                             food.SendLocalizedMessageTo(from, 1038284); // It appears to have poison smeared on it.

@@ -11,12 +11,20 @@ namespace Server.Systems.MahaonBots;
 ///     Crafter/Trader from the roll entirely regardless of percent — a PK guild doesn't
 ///     want tradesmen at all, not just fewer of them.
 /// </summary>
-public static class GuildSpecialization
+public sealed class GuildSpecialization : GenericPersistence
 {
+    private static GuildSpecialization _instance;
+
     public const int DefaultPvpPercent = 50;
 
     private static readonly Dictionary<string, int> PvpPercentByGuild = new();
     private static readonly Dictionary<string, bool> AllowsCraftsByGuild = new();
+
+    public GuildSpecialization() : base("MahaonGuildSpecialization", 1)
+    {
+    }
+
+    public static void Configure() => _instance = new GuildSpecialization();
 
     public static int GetPvpPercent(string guildName) =>
         guildName != null && PvpPercentByGuild.TryGetValue(guildName, out var pct) ? pct : DefaultPvpPercent;
@@ -44,40 +52,43 @@ public static class GuildSpecialization
         AllowsCraftsByGuild[guildName] = allows;
     }
 
-    /// <summary>Rolls a BotArchetype biased by this guild's specialization — called from
-    /// wherever a beacon assigned to a guild picks what to spawn next, instead of the
-    /// beacon's own flat per-archetype target counts alone.</summary>
-    public static BotArchetype RollArchetype(string guildName)
+    public override void Serialize(IGenericWriter writer)
     {
-        var pvpPercent = GetPvpPercent(guildName);
-        var allowsCrafts = GetAllowsCrafts(guildName);
+        writer.WriteEncodedInt(0); // version
 
-        if (Utility.Random(100) < pvpPercent)
+        writer.WriteEncodedInt(PvpPercentByGuild.Count);
+        foreach (var (guildName, pct) in PvpPercentByGuild)
         {
-            // PvP-leaning roll — Warrior/Mage/Archer only, evenly split.
-            return Utility.Random(3) switch
-            {
-                0 => BotArchetype.Warrior,
-                1 => BotArchetype.Mage,
-                _ => BotArchetype.Archer
-            };
+            writer.Write(guildName);
+            writer.WriteEncodedInt(pct);
         }
 
-        // PvE-leaning roll — crafts included only if this guild allows them.
-        return allowsCrafts
-            ? Utility.Random(5) switch
-            {
-                0 => BotArchetype.Warrior,
-                1 => BotArchetype.Mage,
-                2 => BotArchetype.Archer,
-                3 => BotArchetype.Crafter,
-                _ => BotArchetype.Trader
-            }
-            : Utility.Random(3) switch
-            {
-                0 => BotArchetype.Warrior,
-                1 => BotArchetype.Mage,
-                _ => BotArchetype.Archer
-            };
+        writer.WriteEncodedInt(AllowsCraftsByGuild.Count);
+        foreach (var (guildName, allows) in AllowsCraftsByGuild)
+        {
+            writer.Write(guildName);
+            writer.Write(allows);
+        }
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // version
+
+        var pvpCount = reader.ReadEncodedInt();
+        for (var i = 0; i < pvpCount; i++)
+        {
+            var guildName = reader.ReadString();
+            var pct = reader.ReadEncodedInt();
+            PvpPercentByGuild[guildName] = pct;
+        }
+
+        var craftsCount = reader.ReadEncodedInt();
+        for (var i = 0; i < craftsCount; i++)
+        {
+            var guildName = reader.ReadString();
+            var allows = reader.ReadBool();
+            AllowsCraftsByGuild[guildName] = allows;
+        }
     }
 }

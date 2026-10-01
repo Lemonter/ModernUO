@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Mobiles;
@@ -66,58 +66,6 @@ public partial class BrigandCamp : BaseCamp
 
         _prisoner.YellHue = Utility.RandomList(0x57, 0x67, 0x77, 0x87, 0x117);
         AddMobile(_prisoner, 2, Utility.RandomMinMax(-2, 2), Utility.RandomMinMax(-2, 2), 0);
-    }
-
-    private void AddCampChests()
-    {
-        LockableContainer chest = Utility.Random(3) switch
-        {
-            0 => new MetalChest(),
-            1 => new MetalGoldenChest(),
-            _ => new WoodenChest()
-        };
-
-        chest.LiftOverride = true;
-
-        TreasureMapChest.Fill(chest, 1);
-
-        AddItem(chest, -2, -2, 0);
-
-        LockableContainer crates = Utility.Random(4) switch
-        {
-            0 => new SmallCrate(),
-            1 => new MediumCrate(),
-            2 => new LargeCrate(),
-            _ => new LockableBarrel()
-        };
-
-        crates.TrapType = TrapType.ExplosionTrap;
-        crates.TrapPower = Utility.RandomMinMax(30, 40);
-        crates.TrapLevel = 2;
-
-        crates.RequiredSkill = 76;
-        crates.LockLevel = 66;
-        crates.MaxLockLevel = 116;
-        crates.Locked = true;
-
-        crates.DropItem(new Gold(Utility.RandomMinMax(100, 400)));
-        crates.DropItem(new Arrow(10));
-        crates.DropItem(new Bolt(10));
-
-        crates.LiftOverride = true;
-
-        crates.DropItem(
-            Utility.Random(5) switch
-            {
-                0 => new LesserCurePotion(),
-                1 => new LesserExplosionPotion(),
-                2 => new LesserHealPotion(),
-                3 => new LesserPoisonPotion(),
-                _ => null // 4
-            }
-        );
-
-        AddItem(crates, 2, 2, 0);
     }
 
     // Don't refresh decay timer

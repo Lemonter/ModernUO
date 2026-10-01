@@ -48,8 +48,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a gargoyle corpse";
-        public override string DefaultName => "a gargoyle destroyer";
+        public override string CorpseName => "труп гаргульи";
+        public override string DefaultName => "гаргулья-разрушитель";
 
         public override bool BardImmune => !Core.AOS;
         public override int Meat => 1;

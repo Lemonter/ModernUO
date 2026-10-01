@@ -32,6 +32,10 @@ public static class BleedingSystem
 
     public static bool IsBleeding(Mobile m) => Active.ContainsKey(m);
 
+    /// <summary>Roughly how many seconds of bleeding are left — one tick is one second, so
+    /// this doubles as a seconds estimate. Used by MahaonStatusGump. 0 if not bleeding.</summary>
+    public static int TicksLeft(Mobile m) => Active.TryGetValue(m, out var entry) ? entry.TicksLeft : 0;
+
     public static void ApplyBleed(Mobile victim)
     {
         if (victim.Deleted || !victim.Alive)

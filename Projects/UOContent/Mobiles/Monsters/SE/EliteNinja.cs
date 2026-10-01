@@ -83,7 +83,7 @@ namespace Server.Mobiles
         }
 
         public override bool ClickTitle => false;
-        public override string DefaultName => "an elite ninja";
+        public override string DefaultName => "элитный ниндзя";
 
         public override bool BardImmune => true;
 

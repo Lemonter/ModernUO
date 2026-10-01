@@ -40,7 +40,11 @@ public static class CorpsePackets
         {
             var item = list[i];
 
-            if (!item.Deleted && beholder.CanSee(item) && item.Parent == beheld)
+            // Пустая ячейка в списке снаряжения трупа роняла вход в игру целиком:
+            // SendEverything шлёт содержимое каждого видимого трупа, и один null здесь
+            // означал NullReferenceException в цикле логина — персонаж не мог войти,
+            // пока труп не сгниёт. Откуда берётся null, см. Corpse.EquipItems.
+            if (item?.Deleted == false && beholder?.CanSee(item) == true && item.Parent == beheld)
             {
                 writer.Write((byte)(item.Layer + 1));
                 writer.Write(item.Serial);
@@ -98,7 +102,8 @@ public static class CorpsePackets
         {
             var child = list[i];
 
-            if (!child.Deleted && child.Parent == beheld && beholder.CanSee(child))
+            // То же самое, что и в SendCorpseEquip выше: null в списке валит вход в игру.
+            if (child?.Deleted == false && child.Parent == beheld && beholder?.CanSee(child) == true)
             {
                 writer.Write(child.Serial);
                 writer.Write((ushort)child.ItemID);

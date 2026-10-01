@@ -24,11 +24,24 @@ public static class CombatLogSystem
         target?.SendMessage(Hue, $"{caster?.Name ?? "Кто-то"} использовал заклинание {spellName} и нанёс вам {damage} урона.");
     }
 
-    public static void LogMeleeHit(Mobile attacker, Mobile defender, int damage, string locationRu = null)
+    public static void LogMeleeHit(Mobile attacker, Mobile defender, int damage, string locationRu = null, string armorNameRu = null)
     {
         var locationSuffix = locationRu != null ? $" в {locationRu}" : "";
+        var armorSuffix = armorNameRu != null ? $" (по {armorNameRu})" : "";
 
-        attacker?.SendMessage(Hue, $"Вы ударили {defender.Name}{locationSuffix} на {damage}.");
-        defender?.SendMessage(Hue, $"{attacker?.Name ?? "Кто-то"} ударил вас{locationSuffix} на {damage}.");
+        attacker?.SendMessage(Hue, $"Вы ударили {defender.Name}{locationSuffix}{armorSuffix} на {damage}.");
+        defender?.SendMessage(Hue, $"{attacker?.Name ?? "Кто-то"} ударил вас{locationSuffix}{armorSuffix} на {damage}.");
+    }
+
+    public static void LogMiss(Mobile attacker, Mobile defender)
+    {
+        attacker?.SendMessage(Hue, $"Вы промахнулись мимо {defender.Name}.");
+        defender?.SendMessage(Hue, $"{attacker?.Name ?? "Кто-то"} промахнулся мимо вас.");
+    }
+
+    public static void LogParry(Mobile attacker, Mobile defender)
+    {
+        attacker?.SendMessage(Hue, $"{defender.Name} парировал вашу атаку.");
+        defender?.SendMessage(Hue, $"Вы парировали атаку {attacker?.Name ?? "кого-то"}.");
     }
 }

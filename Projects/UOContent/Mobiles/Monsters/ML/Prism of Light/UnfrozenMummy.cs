@@ -58,8 +58,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "an unfrozen mummy corpse";
-        public override string DefaultName => "an unfrozen mummy";
+        public override string CorpseName => "труп оттаявшей мумии";
+        public override string DefaultName => "оттаявшая мумия";
 
         public override void GenerateLoot()
         {

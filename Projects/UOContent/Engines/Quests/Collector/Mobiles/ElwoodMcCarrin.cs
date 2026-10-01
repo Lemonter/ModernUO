@@ -12,7 +12,7 @@ public partial class ElwoodMcCarrin : BaseQuester
     {
     }
 
-    public override string DefaultName => "Elwood McCarrin";
+    public override string DefaultName => "Элвуд Маккаррин";
 
     public override void InitBody()
     {

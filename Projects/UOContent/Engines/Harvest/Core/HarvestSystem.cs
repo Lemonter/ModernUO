@@ -291,6 +291,11 @@ namespace Server.Engines.Harvest
         {
             Systems.MahaonProfessions.ProfessionHarvestBonus.ApplyCraftsmanBonus(m, item);
 
+            if (Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(m, item))
+            {
+                return true;
+            }
+
             if (m.PlaceInBackpack(item))
             {
                 return true;

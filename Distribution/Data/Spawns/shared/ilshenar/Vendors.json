@@ -3,7 +3,11 @@
     "$type": "Spawner",
     "guid": "0457d1c2-1736-4b97-96be-0625a8a08c91",
     "name": "Spawner (312)",
-    "location": [1497, 614, -14],
+    "location": [
+      1497,
+      614,
+      -14
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -12,15 +16,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 },
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "b4429d88-246f-40fe-87e4-3e236b426e38",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1497,
+      614,
+      -14
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "07dcfcfd-1f11-4fe7-8cc5-d1981fb1e74f",
     "name": "Spawner (312)",
-    "location": [868, 657, -40],
+    "location": [
+      868,
+      657,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -29,14 +69,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Scribe",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "da216c9e-3bc1-4569-8a75-ac154640c758",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      868,
+      657,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "12d3edd5-4ebb-41a7-82ff-2d2ab3c4adef",
     "name": "Spawner (312)",
-    "location": [1318, 1328, -14],
+    "location": [
+      1318,
+      1328,
+      -14
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -45,15 +117,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ccb681be-da4c-4106-b193-894f1a49e4b5",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1318,
+      1328,
+      -14
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "14094381-ef68-4f89-b700-0d824d8968b2",
     "name": "Spawner (312)",
-    "location": [1261, 582, -18],
+    "location": [
+      1261,
+      582,
+      -18
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -62,15 +170,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "26dc819d-d254-4ffd-8814-d16f6d8182c5",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1261,
+      582,
+      -18
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "20c754a1-ce9b-4068-89ae-b50d95a64c82",
     "name": "Spawner (312)",
-    "location": [854, 680, -40],
+    "location": [
+      854,
+      680,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -79,15 +223,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c0d128fd-3e8a-4825-bdfd-ee18885ec96b",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      854,
+      680,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2b7c425b-7a52-414a-a76a-cb0734c3165c",
     "name": "Spawner (312)",
-    "location": [1388, 428, -23],
+    "location": [
+      1388,
+      428,
+      -23
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -96,14 +276,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "GypsyAnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "GypsyAnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7a61e8a2-c841-46ca-baf1-e2b55a804b59",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1388,
+      428,
+      -23
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2d27bf3f-df46-48bb-a611-a0f17e8d1051",
     "name": "Spawner (312)",
-    "location": [1226, 554, -12],
+    "location": [
+      1226,
+      554,
+      -12
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -112,14 +324,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "GypsyBanker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "GypsyBanker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2c7de449-5a98-40d1-b204-e329ae548adb",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1226,
+      554,
+      -12
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "305ecea0-47a1-4561-bf25-5d879a152003",
     "name": "Spawner (312)",
-    "location": [859, 698, -40],
+    "location": [
+      859,
+      698,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -128,14 +372,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1324b1a9-efa3-4c55-9ec3-8d0e73e02320",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      859,
+      698,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "32050353-d0d9-4b06-afee-a65fae031a98",
     "name": "Spawner (312)",
-    "location": [896, 610, -40],
+    "location": [
+      896,
+      610,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -144,14 +420,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "TailorGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TailorGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "51a24042-bf4f-422b-adf4-5bb6e15ad8c9",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      896,
+      610,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "33de0f8c-f6ba-4e9b-a09b-dc36c96db2ea",
     "name": "Spawner (312)",
-    "location": [1394, 441, 13],
+    "location": [
+      1394,
+      441,
+      13
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -160,14 +468,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "FortuneTeller", "maxCount": 1, "probability": 100 }
+      {
+        "name": "FortuneTeller",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a26b1c65-740f-4428-84cb-48cea693a49c",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1394,
+      441,
+      13
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "37693d18-5f7b-4461-b8a3-49202500e8da",
     "name": "Spawner (312)",
-    "location": [1235, 543, -15],
+    "location": [
+      1235,
+      543,
+      -15
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -176,14 +516,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "FortuneTeller", "maxCount": 1, "probability": 100 }
+      {
+        "name": "FortuneTeller",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "67bfb2a3-9622-450d-b25c-28d52cff4dc6",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1235,
+      543,
+      -15
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3ba1aca3-914a-4c73-91b0-12e42056659e",
     "name": "Spawner (312)",
-    "location": [1499, 619, -19],
+    "location": [
+      1499,
+      619,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -192,14 +564,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "AnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "AnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f675e12d-0766-4922-84c5-1fcb8e173317",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1499,
+      619,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "4d6ef24f-8252-459b-a03b-d6fdaeb96597",
     "name": "Spawner (312)",
-    "location": [872, 586, -40],
+    "location": [
+      872,
+      586,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -208,15 +612,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "dbf14cb8-1970-495e-a888-9ff898481426",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      872,
+      586,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "4e5b8807-7ced-4f40-ae49-c4507b82fb78",
     "name": "Spawner (312)",
-    "location": [1253, 588, -19],
+    "location": [
+      1253,
+      588,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -225,15 +665,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "54f70b8b-e58a-4de9-88f0-ef4a1ba20640",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1253,
+      588,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "5053b0d7-ca6f-4156-bb35-28f937b1db6b",
     "name": "Spawner (312)",
-    "location": [824, 602, -40],
+    "location": [
+      824,
+      602,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -242,15 +718,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "da15af68-51fa-4d1c-a01a-34ae07828e42",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      824,
+      602,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "52da389e-73f7-493e-b830-88dc0c4525f4",
     "name": "Spawner (312)",
-    "location": [1598, 539, -19],
+    "location": [
+      1598,
+      539,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -259,15 +771,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2616f020-ce66-4a1a-b9ff-7ff78e1ba94c",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1598,
+      539,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "5568a6cc-21a3-4550-9cc2-3ad836c7983b",
     "name": "Spawner (312)",
-    "location": [1600, 552, -16],
+    "location": [
+      1600,
+      552,
+      -16
+    ],
     "map": "Ilshenar",
     "count": 3,
     "minDelay": "00:05:00",
@@ -276,16 +824,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 },
-      { "name": "TailorGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TailorGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "51dee1a7-1db2-49ed-a5da-0c746d71b859",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1600,
+      552,
+      -16
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "5d0135b3-074b-49ae-b850-25281059b466",
     "name": "Spawner (312)",
-    "location": [575, 537, -69],
+    "location": [
+      575,
+      537,
+      -69
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -294,15 +882,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "fbadf374-4bc2-44bc-9325-57ffaec7a86b",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      575,
+      537,
+      -69
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "6670bd00-6ae7-43fd-a102-f77c877c6107",
     "name": "Spawner (312)",
-    "location": [1518, 619, -19],
+    "location": [
+      1518,
+      619,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -311,15 +935,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "73cec8c1-6769-47f3-9805-47b72b228f07",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1518,
+      619,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "68189f98-29d3-49e2-a415-c57862584b26",
     "name": "Spawner (312)",
-    "location": [1628, 548, -11],
+    "location": [
+      1628,
+      548,
+      -11
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -328,15 +988,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "18f2a9fc-d80a-4e3d-beed-e4702df308d4",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1628,
+      548,
+      -11
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "69fd06d1-04cb-457e-bbd9-e02475f6c4a8",
     "name": "Spawner (312)",
-    "location": [896, 610, -40],
+    "location": [
+      896,
+      610,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -345,15 +1041,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0002d76c-8c0e-499c-8333-194ea3c800cd",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      896,
+      610,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "6ce1b420-27ed-4adf-9ba2-0eeb9b0600fe",
     "name": "Spawner (312)",
-    "location": [826, 679, -40],
+    "location": [
+      826,
+      679,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -362,15 +1094,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1d67bd77-e42c-499e-8375-3a96fcfccc96",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      826,
+      679,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "724e9d36-13e4-4abc-ac60-18aa45fd712f",
     "name": "Spawner (312)",
-    "location": [792, 665, 0],
+    "location": [
+      792,
+      665,
+      0
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -379,15 +1147,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "dbbf5035-8f13-496c-a106-12f250cf79f3",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      792,
+      665,
+      0
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "751c4f29-04b6-4c50-b914-591862159429",
     "name": "Spawner (312)",
-    "location": [808, 586, -40],
+    "location": [
+      808,
+      586,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -396,15 +1200,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 },
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "45d0c373-471e-487c-8685-06f9545b5cf5",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      808,
+      586,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "7c9b9466-17bc-4285-8c04-294fa9b2b885",
     "name": "Spawner (312)",
-    "location": [1400, 434, -11],
+    "location": [
+      1400,
+      434,
+      -11
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -413,14 +1253,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "GypsyMaiden", "maxCount": 1, "probability": 100 }
+      {
+        "name": "GypsyMaiden",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "fe169e1b-8123-4fbf-840e-37a3b64a0113",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1400,
+      434,
+      -11
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "81fc796d-04ed-48fb-a783-ad6ce619b116",
     "name": "Spawner (312)",
-    "location": [808, 697, -40],
+    "location": [
+      808,
+      697,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -429,15 +1301,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 },
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f20ec23c-f32d-49d3-92ed-1e7953a6b005",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      808,
+      697,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "826d7ee8-c78b-47ea-9ead-b30014afbe4d",
     "name": "Spawner (312)",
-    "location": [791, 618, 0],
+    "location": [
+      791,
+      618,
+      0
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -446,14 +1354,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "StoneCrafter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "StoneCrafter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "cd137d53-a3e1-4747-9684-553b9c4d707b",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      791,
+      618,
+      0
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "84e30990-a039-4283-9bf3-00d8e70489de",
     "name": "Spawner (312)",
-    "location": [840, 707, 0],
+    "location": [
+      840,
+      707,
+      0
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -462,14 +1402,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "47638a3d-0dd1-44bd-84da-4684631a38c4",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      840,
+      707,
+      0
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "93dc7896-715b-44ad-b6e5-01a37dd42f81",
     "name": "Spawner (312)",
-    "location": [1405, 439, 2],
+    "location": [
+      1405,
+      439,
+      2
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -478,14 +1450,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "GypsyBanker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "GypsyBanker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "5512dfb8-119b-46a0-a9b5-d8ea7931ab8b",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1405,
+      439,
+      2
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9a08c2d8-b7b6-4b2f-b550-008e42f3a68b",
     "name": "Spawner (312)",
-    "location": [855, 603, -40],
+    "location": [
+      855,
+      603,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -494,15 +1498,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "15157ef4-0d29-49c1-afc5-b06b9739db29",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      855,
+      603,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9c4eb8ed-3851-4ff2-80a6-a0c6f6c3f948",
     "name": "Spawner (312)",
-    "location": [774, 1144, -30],
+    "location": [
+      774,
+      1144,
+      -30
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -511,14 +1551,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1e2c66ae-f7d0-481a-9c9c-b331d574ea86",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      774,
+      1144,
+      -30
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9fffcfc7-2091-4013-b643-205c9567c311",
     "name": "Spawner (312)",
-    "location": [1505, 611, -19],
+    "location": [
+      1505,
+      611,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 3,
     "minDelay": "00:05:00",
@@ -527,16 +1599,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Mage", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mage",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "MageGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "17f12dc9-c694-4c64-b7ff-13aace7d59a4",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1505,
+      611,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b40eb968-c112-4c66-a331-b96a7d08622b",
     "name": "Spawner (312)",
-    "location": [1514, 611, -14],
+    "location": [
+      1514,
+      611,
+      -14
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -545,14 +1657,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Baker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Baker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "5c1b064c-2e96-4986-8023-87e9074f68b0",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1514,
+      611,
+      -14
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b523ffff-8496-40a1-b051-f2e81e74263c",
     "name": "Spawner (312)",
-    "location": [1610, 556, -19],
+    "location": [
+      1610,
+      556,
+      -19
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -561,15 +1705,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "8f4d10c9-8d23-4702-b4ad-850a6c3648ef",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1610,
+      556,
+      -19
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ba48a4cb-841e-4be5-8ef9-1f06970d1829",
     "name": "Spawner (312)",
-    "location": [1093, 955, -38],
+    "location": [
+      1093,
+      955,
+      -38
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -578,15 +1758,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a823e1ad-624f-4eb7-8a95-f121ca115a42",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1093,
+      955,
+      -38
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "bae2beb6-304b-4002-b459-680d881199e5",
     "name": "Spawner (312)",
-    "location": [1566, 1049, -8],
+    "location": [
+      1566,
+      1049,
+      -8
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -595,14 +1811,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "62e4e391-a965-47bc-86bf-55bc34f686ba",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1566,
+      1049,
+      -8
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "bce87417-e533-491a-8a6a-734227db69db",
     "name": "Spawner (312)",
-    "location": [1225, 563, -18],
+    "location": [
+      1225,
+      563,
+      -18
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -611,14 +1859,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "GypsyAnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "GypsyAnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ef81587b-3034-4ca6-acc6-e8d46a73ef5c",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1225,
+      563,
+      -18
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "c8e54c5c-c4fb-4aa2-8da2-40d6c7c23d72",
     "name": "Spawner (312)",
-    "location": [1605, 541, -13],
+    "location": [
+      1605,
+      541,
+      -13
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -627,14 +1907,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "52359cd2-ef48-46ea-afdd-8b48fa0c3d2e",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1605,
+      541,
+      -13
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ce3b9e5a-5028-4768-86ca-ebc7591eb49d",
     "name": "Spawner (312)",
-    "location": [840, 571, 0],
+    "location": [
+      840,
+      571,
+      0
+    ],
     "map": "Ilshenar",
     "count": 3,
     "minDelay": "00:05:00",
@@ -643,16 +1955,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Mage", "maxCount": 1, "probability": 100 },
-      { "name": "Glassblower", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mage",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Glassblower",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "MageGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0db05e8c-461d-4796-b431-7445d18ac3a6",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      840,
+      571,
+      0
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d10ff188-6468-434f-b032-dc92db16a183",
     "name": "Spawner (312)",
-    "location": [284, 536, -24],
+    "location": [
+      284,
+      536,
+      -24
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -661,15 +2013,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1ddee6aa-f784-4aa4-a6d8-39e72a743eb3",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      284,
+      536,
+      -24
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d3f80bac-4411-4382-8781-582340ff4f03",
     "name": "Spawner (312)",
-    "location": [1620, 554, -20],
+    "location": [
+      1620,
+      554,
+      -20
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -678,14 +2066,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a9a66192-df46-481e-b444-2aeb3e8ab06f",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1620,
+      554,
+      -20
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "de233679-dda4-4826-be6f-66a66bc3ed0c",
     "name": "Spawner (312)",
-    "location": [869, 625, -40],
+    "location": [
+      869,
+      625,
+      -40
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -694,14 +2114,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Scribe",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4e68e5da-a762-407a-96fb-1a768f31605d",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      869,
+      625,
+      -40
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "e9c58794-1e68-4a12-8e96-fe9695224e36",
     "name": "Spawner (312)",
-    "location": [1364, 1051, -13],
+    "location": [
+      1364,
+      1051,
+      -13
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -710,15 +2162,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "464e92f6-4dc8-4813-a982-7f5c64c709ed",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1364,
+      1051,
+      -13
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ee8d0d83-c586-49d8-8de2-038e1d6f2848",
     "name": "Spawner (312)",
-    "location": [682, 297, -41],
+    "location": [
+      682,
+      297,
+      -41
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -727,15 +2215,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "5c322531-97d5-4f07-93fb-adb9055cedbb",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      682,
+      297,
+      -41
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f38481b6-0a95-44e0-af74-8cc94195e282",
     "name": "Spawner (312)",
-    "location": [369, 1432, 15],
+    "location": [
+      369,
+      1432,
+      15
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -744,15 +2268,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "accb6eca-3aa6-4453-b3bb-2a1615a45fc5",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      369,
+      1432,
+      15
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f4a51238-7658-469e-9ff3-eec8ba035f95",
     "name": "Spawner (312)",
-    "location": [665, 665, -35],
+    "location": [
+      665,
+      665,
+      -35
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -761,14 +2321,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "7a95e0c6-b312-4517-afef-54d430fb3fb4",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      665,
+      665,
+      -35
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fd5a6f5e-87cf-40c3-bbf6-d42f59e8f730",
     "name": "Spawner (312)",
-    "location": [766, 641, 0],
+    "location": [
+      766,
+      641,
+      0
+    ],
     "map": "Ilshenar",
     "count": 2,
     "minDelay": "00:05:00",
@@ -777,15 +2369,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "fcf7102b-8ee4-43f1-9943-a7151ef72fc4",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      766,
+      641,
+      0
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "ff91a9cc-14c5-4a0d-a138-20f24c30cee0",
     "name": "Spawner (312)",
-    "location": [1407, 428, -8],
+    "location": [
+      1407,
+      428,
+      -8
+    ],
     "map": "Ilshenar",
     "count": 1,
     "minDelay": "00:05:00",
@@ -794,7 +2422,35 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "FortuneTeller", "maxCount": 1, "probability": 100 }
+      {
+        "name": "FortuneTeller",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e3402d4c-2db1-4b0e-8b92-e75c2cb03921",
+    "name": "Guard Spawner (Spawner (312))",
+    "location": [
+      1407,
+      428,
+      -8
+    ],
+    "map": "Ilshenar",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   }
 ]

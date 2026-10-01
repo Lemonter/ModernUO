@@ -3,7 +3,11 @@
     "$type": "Spawner",
     "guid": "7bd2b3c7-3c39-40c5-9c3b-98b73d060c65",
     "name": "Spawner (604)",
-    "location": [976, 3881, -42],
+    "location": [
+      976,
+      3881,
+      -42
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -12,14 +16,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Baker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Baker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a878f71c-8122-4db0-af77-8c995fa001d5",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      976,
+      3881,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a80c5b72-e181-4266-8109-9c7a5eaf6a10",
     "name": "Spawner (604)",
-    "location": [1010, 3883, -42],
+    "location": [
+      1010,
+      3883,
+      -42
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -28,15 +64,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4ddaef9c-c73b-4999-954f-75ccfd4d694c",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      1010,
+      3883,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "99c47ee2-bbb0-4d0b-9294-18104ebb0f6b",
     "name": "Spawner (604)",
-    "location": [1013, 3913, -42],
+    "location": [
+      1013,
+      3913,
+      -42
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -45,15 +117,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "db8979b9-997b-4826-85d5-332bbdc7015a",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      1013,
+      3913,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "6b95fe1b-1c63-479d-b481-1b4d4c929a79",
     "name": "Spawner (604)",
-    "location": [977, 3909, -42],
+    "location": [
+      977,
+      3909,
+      -42
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -62,15 +170,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c8ba5e43-6076-47eb-8136-79cb0ed72770",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      977,
+      3909,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "9c632527-c639-469c-9ded-ca859e4a8859",
     "name": "Spawner (604)",
-    "location": [943, 3924, -42],
+    "location": [
+      943,
+      3924,
+      -42
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -79,14 +223,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "936a0c50-7f5b-4ba1-be43-889d1de622b2",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      943,
+      3924,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b317c56d-c032-4e81-aa3a-78988500a740",
     "name": "Spawner (604)",
-    "location": [1020, 3884, -42],
+    "location": [
+      1020,
+      3884,
+      -42
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -95,15 +271,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "433c4d67-9299-4a6b-9b13-a9ae114bff4b",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      1020,
+      3884,
+      -42
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "556fdb4d-f7f2-4ba0-9d01-d94a76ee7a28",
     "name": "Spawner (604)",
-    "location": [740, 3466, -19],
+    "location": [
+      740,
+      3466,
+      -19
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -112,14 +324,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "09eff274-fc79-4b6e-b226-95fc13441a36",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      740,
+      3466,
+      -19
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "65b19c79-0f40-4772-9037-1cad0769456d",
     "name": "Spawner (604)",
-    "location": [772, 3467, -20],
+    "location": [
+      772,
+      3467,
+      -20
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -128,14 +372,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Scribe",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "8f4df2b5-c2ae-4ca6-a0ee-ea95fd23ef28",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      772,
+      3467,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fd3342ae-de6c-436e-964a-e410ba1f983b",
     "name": "Spawner (604)",
-    "location": [773, 3478, -20],
+    "location": [
+      773,
+      3478,
+      -20
+    ],
     "map": "TerMur",
     "count": 3,
     "minDelay": "00:05:00",
@@ -144,16 +420,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Herbalist", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "CustomHairstylist", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Herbalist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "CustomHairstylist",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c9843219-b178-4c2b-b019-685b2d47293d",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      773,
+      3478,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fcffbb1c-fb73-4c59-9257-52e1d6ebadb4",
     "name": "Spawner (604)",
-    "location": [772, 3490, -20],
+    "location": [
+      772,
+      3490,
+      -20
+    ],
     "map": "TerMur",
     "count": 3,
     "minDelay": "00:05:00",
@@ -162,16 +478,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Mage", "maxCount": 1, "probability": 100 },
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 },
-      { "name": "MageGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mage",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "MageGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "3acf622f-c743-438a-869c-e9fb1a2828a5",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      772,
+      3490,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "bb731ab1-950e-4e4b-8e55-6378eeb2c3b0",
     "name": "Spawner (604)",
-    "location": [783, 3491, -20],
+    "location": [
+      783,
+      3491,
+      -20
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -180,15 +536,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 },
-      { "name": "HealerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "HealerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "525d3793-0270-413d-b74e-f694803ca324",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      783,
+      3491,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "36f1b1bc-0754-4605-929a-d7c8e030a80b",
     "name": "Spawner (604)",
-    "location": [797, 3494, 0],
+    "location": [
+      797,
+      3494,
+      0
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -197,15 +589,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 },
-      { "name": "Cobbler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cobbler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4324cfec-c0b7-44df-ae2b-f0d417cc76f2",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      797,
+      3494,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "28cda9f4-bbd1-451d-acb0-f568361a7d6f",
     "name": "Spawner (604)",
-    "location": [805, 3491, -20],
+    "location": [
+      805,
+      3491,
+      -20
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -214,14 +642,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Baker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Baker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e85a8a41-83af-4350-b65c-209d36bb2c57",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      805,
+      3491,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "0bd1f793-51e9-4dbe-ab5c-dbd452e85d8c",
     "name": "Spawner (604)",
-    "location": [817, 3456, -10],
+    "location": [
+      817,
+      3456,
+      -10
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -230,14 +690,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Butcher", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Butcher",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "658a13a8-c2e3-4a36-b957-5771f5f94afb",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      817,
+      3456,
+      -10
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "5f573458-bb63-4617-b2c4-c73762718dae",
     "name": "Spawner (604)",
-    "location": [817, 3438, 0],
+    "location": [
+      817,
+      3438,
+      0
+    ],
     "map": "TerMur",
     "count": 3,
     "minDelay": "00:05:00",
@@ -246,16 +738,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Carpenter", "maxCount": 1, "probability": 100 },
-      { "name": "Architect", "maxCount": 1, "probability": 100 },
-      { "name": "RealEstateBroker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Carpenter",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Architect",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "RealEstateBroker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "585e6440-a870-49b3-bf3a-8107390a0333",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      817,
+      3438,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "37378f9d-5e71-46a8-8d15-0b98d48a3d04",
     "name": "Spawner (604)",
-    "location": [817, 3426, 0],
+    "location": [
+      817,
+      3426,
+      0
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -264,15 +796,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 },
-      { "name": "TinkerGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TinkerGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "8f970fb8-5ab2-4994-8730-ed724365c39d",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      817,
+      3426,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2088913c-0ec7-4225-8f9d-1112e817542b",
     "name": "Spawner (604)",
-    "location": [816, 3419, 0],
+    "location": [
+      816,
+      3419,
+      0
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -281,15 +849,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 },
-      { "name": "BlacksmithGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "BlacksmithGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d349bcf7-ca44-4ed4-bb85-c8a06a1f2a8b",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      816,
+      3419,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "094d18b0-4b1a-491d-ae33-2463d400904b",
     "name": "Spawner (604)",
-    "location": [805, 3397, 0],
+    "location": [
+      805,
+      3397,
+      0
+    ],
     "map": "TerMur",
     "count": 3,
     "minDelay": "00:05:00",
@@ -298,16 +902,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 },
-      { "name": "TailorGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "TailorGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "d3277135-d084-49e8-bfa8-2613de88a084",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      805,
+      3397,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b9c41d27-d185-41dc-aa13-7258c018abc1",
     "name": "Spawner (604)",
-    "location": [804, 3387, 0],
+    "location": [
+      804,
+      3387,
+      0
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -316,15 +960,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tanner", "maxCount": 1, "probability": 100 },
-      { "name": "Furtrader", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tanner",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Furtrader",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "37fd22f8-85ff-4a42-88e3-814bd1294a8f",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      804,
+      3387,
+      0
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "720f9c6d-c0e6-4f66-aca9-cca448a5d02d",
     "name": "Spawner (604)",
-    "location": [851, 3404, -20],
+    "location": [
+      851,
+      3404,
+      -20
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -333,14 +1013,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "AnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "AnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f1a07aab-f728-48cf-ae3d-1ab2c9ec7dba",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      851,
+      3404,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "0197b002-1c6d-45ac-8d7d-21706a854586",
     "name": "Spawner (604)",
-    "location": [833, 3439, -20],
+    "location": [
+      833,
+      3439,
+      -20
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -349,15 +1061,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4187246a-44c6-471a-921a-ec0419ebf61c",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      833,
+      3439,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3e2450a8-7aa3-434a-a144-dfc36f784d9e",
     "name": "Spawner (604)",
-    "location": [843, 3439, -20],
+    "location": [
+      843,
+      3439,
+      -20
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -366,15 +1114,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 },
-      { "name": "Minter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Minter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "23edc522-4e40-4c46-813e-94225cc596e9",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      843,
+      3439,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f2b8fe59-6e8b-4db1-a20c-9663efe3b725",
     "name": "Spawner (604)",
-    "location": [702, 3435, -20],
+    "location": [
+      702,
+      3435,
+      -20
+    ],
     "map": "TerMur",
     "count": 3,
     "minDelay": "00:05:00",
@@ -383,15 +1167,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 },
-      { "name": "Weaver", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "89d80509-6617-47d6-bde6-5ba92b0e5c7f",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      702,
+      3435,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "59459615-255f-449a-b4ee-c6adf848c09a",
     "name": "Spawner (604)",
-    "location": [727, 3425, -20],
+    "location": [
+      727,
+      3425,
+      -20
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -400,15 +1220,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 },
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c17ab450-dec2-48ce-b679-3cb9ef8fcc62",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      727,
+      3425,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fa9d60df-aa99-4934-bfab-35066f170481",
     "name": "Spawner (604)",
-    "location": [715, 3446, -20],
+    "location": [
+      715,
+      3446,
+      -20
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -417,15 +1273,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Farmer", "maxCount": 1, "probability": 100 },
-      { "name": "Farmer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Farmer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Farmer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2d66310f-4acc-4a29-96b1-8eeea79a00ed",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      715,
+      3446,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "27644d88-d3d5-458f-902d-78b7b59eaf95",
     "name": "Spawner (604)",
-    "location": [713, 3438, -20],
+    "location": [
+      713,
+      3438,
+      -20
+    ],
     "map": "TerMur",
     "count": 4,
     "minDelay": "00:05:00",
@@ -434,16 +1326,56 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "TavernKeeper", "maxCount": 1, "probability": 100 },
-      { "name": "Waiter", "maxCount": 1, "probability": 100 },
-      { "name": "Barkeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TavernKeeper",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Waiter",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Barkeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "69c11981-f3cc-4269-b730-88812f3b0326",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      713,
+      3438,
+      -20
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "2a0e5133-2658-44f4-95ca-bcc5d68ddaeb",
     "name": "Spawner (604)",
-    "location": [794, 3446, -10],
+    "location": [
+      794,
+      3446,
+      -10
+    ],
     "map": "TerMur",
     "count": 2,
     "minDelay": "00:05:00",
@@ -452,15 +1384,51 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Farmer", "maxCount": 1, "probability": 100 },
-      { "name": "Farmer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Farmer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Farmer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9ae10705-bc36-4d06-8052-fd80241b5f58",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      794,
+      3446,
+      -10
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "6d91f1ff-12e5-4d75-aa5a-033ff00b9a24",
     "name": "Spawner (604)",
-    "location": [779, 3431, -10],
+    "location": [
+      779,
+      3431,
+      -10
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -469,14 +1437,46 @@
     "homeRange": 0,
     "walkingRange": 5,
     "entries": [
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1c6a07f5-8afc-49f6-9e1a-f4c3f76344f3",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      779,
+      3431,
+      -10
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a1ba61c1-0fc5-46a4-b7de-1350606fb0fc",
     "name": "Spawner (604)",
-    "location": [842, 3453, -18],
+    "location": [
+      842,
+      3453,
+      -18
+    ],
     "map": "TerMur",
     "count": 1,
     "minDelay": "00:05:00",
@@ -485,7 +1485,35 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "00f6f696-3eb6-4a41-b281-2b26ca29702a",
+    "name": "Guard Spawner (Spawner (604))",
+    "location": [
+      842,
+      3453,
+      -18
+    ],
+    "map": "TerMur",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   }
 ]

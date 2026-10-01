@@ -239,7 +239,51 @@ public static class MineComplexSystem
         var entrance = new Teleporter(entrancePoint, outsideMap) { Name = "вход в шахту" };
         entrance.MoveToWorld(outsideLoc, outsideMap);
 
+        MarkEntrance(from, outsideLoc, outsideMap, eastWest, forwardSign);
+
         from.SendMessage(0x59, "Ты выкапываешь вход и укрепляешь небольшую камеру в толще горы.");
+    }
+
+    /// <summary>
+    ///     Обозначает вход снаружи.
+    ///
+    ///     Сам вход — это Teleporter, а он невидим: до сих пор выкопанная шахта ничем не
+    ///     отличалась от обычного склона горы, и найти её можно было только помня, где
+    ///     копал. Ставим три вещи, все видимые издалека:
+    ///
+    ///     — две жаровни по бокам от проёма. Горят вечно (Duration = Zero) и светят, так
+    ///       что ночью вход виден с расстояния;
+    ///     — деревянный столб с табличкой прямо перед входом, с именем хозяина: по щелчку
+    ///       видно, чья это шахта, а не просто «дыра в горе».
+    ///
+    ///     Каждая вещь ставится только если тайл её принимает — жаровня, упавшая внутрь
+    ///     скалы, никому не поможет.
+    /// </summary>
+    private static void MarkEntrance(Mobile from, Point3D outsideLoc, Map map, bool eastWest, int forwardSign)
+    {
+        // Столб развёрнут по оси прохода: 0xB98 и 0xB99 — те же деревянные указатели,
+        // что стоят в ванильных пещерах (см. Data/Decoration/Britannia/_orccave.cfg).
+        var sign = new Sign(eastWest ? 0xB98 : 0xB99)
+        {
+            Name = $"шахта {from.Name ?? "неизвестного"}",
+            Movable = false
+        };
+
+        PlaceMarker(sign, OffsetAlong(outsideLoc, eastWest, forwardSign, -1, 1), map);
+
+        PlaceMarker(new Brazier(), OffsetAlong(outsideLoc, eastWest, forwardSign, 0, -1), map);
+        PlaceMarker(new Brazier(), OffsetAlong(outsideLoc, eastWest, forwardSign, 0, 1), map);
+    }
+
+    private static void PlaceMarker(Item item, Point3D loc, Map map)
+    {
+        if (map == null || !map.CanFitItem(loc, 16))
+        {
+            item.Delete(); // тайл занят или это сплошная скала — метку туда не поставить
+            return;
+        }
+
+        item.MoveToWorld(loc, map);
     }
 
     private static Point3D OffsetAlong(Point3D entrance, bool eastWest, int forwardSign, int along, int across) =>
@@ -400,9 +444,9 @@ public static class MineComplexSystem
         }
         else
         {
-            var oreType = MahaonResourceTiers.PickOre(miningSkill);
-            var amount = Math.Max(1, MahaonResourceTiers.YieldCount(miningSkill) / 3);
-            ore = MahaonResourceTiers.CreateOre(oreType, amount);
+            var metal = Systems.MahaonMetals.MahaonOreGenerator.PickMetal(miningSkill);
+            var amount = Math.Max(1, Systems.MahaonMetals.MahaonOreGenerator.YieldCount(miningSkill) / 3);
+            ore = new MahaonOre(metal, amount);
         }
 
         if (wall.OreReserve > 0)
@@ -583,6 +627,21 @@ public static class MineComplexSystem
         from.SendMessage(0x59, "Ты вклиниваешь опорную балку на место.");
     }
 
+    /// <summary>Отодвигает того, кто стоит на обваливающемся тайле, на соседний свободный.
+    /// Не нашлось ни одного — оставляем как есть: лучше неудобно, чем выбросить человека
+    /// неизвестно куда.</summary>
+    private static void ShoveOut(Mobile m, Point3D loc, Map map)
+    {
+        foreach (var neighbor in Neighbors(loc))
+        {
+            if (!HasAnyStructureAt(neighbor, map) && map.CanFit(neighbor, 16, false, false))
+            {
+                m.MoveToWorld(neighbor, map);
+                return;
+            }
+        }
+    }
+
     private static bool HasAnyStructureAt(Point3D loc, Map map)
     {
         foreach (var item in map.GetItemsInRange<Item>(loc, 0))
@@ -631,10 +690,10 @@ public static class MineComplexSystem
         }
         else
         {
-            var oreType = MahaonResourceTiers.PickOre(miningSkill);
-            resourceName = oreType.Name;
-            resourceNameRu = OreNamesRu.GetValueOrDefault(oreType, oreType.Name);
-            hue = OreHues[Array.IndexOf(OreTiers, oreType) is var idx && idx >= 0 ? idx : 0];
+            var metal = Systems.MahaonMetals.MahaonOreGenerator.PickMetal(miningSkill);
+            resourceName = $"MahaonMetal:{metal}";
+            resourceNameRu = Systems.MahaonMetals.MahaonMetalTable.Get(metal).RuName;
+            hue = 0; // цвета для новых металлов ещё не определены пользователем
         }
 
         wall.MarkAsVein(resourceName, resourceNameRu, hue);
@@ -652,6 +711,16 @@ public static class MineComplexSystem
 
     private static Item CreateVeinResource(string resourceName, int amount)
     {
+        if (resourceName.StartsWith("MahaonMetal:", StringComparison.Ordinal))
+        {
+            var metalName = resourceName["MahaonMetal:".Length..];
+
+            if (Enum.TryParse<Systems.MahaonMetals.MahaonMetal>(metalName, out var metal))
+            {
+                return new MahaonOre(metal, amount);
+            }
+        }
+
         foreach (var oreType in OreTiers)
         {
             if (oreType.Name == resourceName)
@@ -668,7 +737,7 @@ public static class MineComplexSystem
             }
         }
 
-        return new IronOre(amount);
+        return new MahaonOre(Systems.MahaonMetals.MahaonMetal.Iron, amount);
     }
 
     private static Point3D[] Neighbors(Point3D p) =>
@@ -700,14 +769,34 @@ public static class MineComplexSystem
 
             if (!supported && Utility.RandomDouble() < CollapseChanceIfUnsupported)
             {
+                // Сначала вытолкнуть тех, кто стоит ровно на обваливающемся тайле: сюда
+                // сейчас встанет непроходимая стена, и предупреждение в чат от этого никого
+                // не спасало — человек просто оказывался замурован.
+                var trapped = new List<Mobile>();
+
                 foreach (var mobile in map.GetMobilesInRange(loc, 1))
                 {
                     mobile.SendMessage(0x22, "Шахта стонет и обрушивается вокруг тебя!");
+
+                    if (mobile.Location == loc)
+                    {
+                        trapped.Add(mobile);
+                    }
+                }
+
+                foreach (var mobile in trapped)
+                {
+                    ShoveOut(mobile, loc, map);
                 }
 
                 floor.Delete();
-                var rubble = new MineRockWall();
-                rubble.MoveToWorld(loc, map);
+
+                // Обвал ставил стену конструктором по умолчанию: запас руды ноль, центр
+                // (0,0,0), графика — та самая «запасная, в норме не должна появляться».
+                // Первая же попытка её копнуть уводила запас в минус, стена исчезала и
+                // разрасталась во все стороны от несуществующего центра. Теперь завал —
+                // обычная стена, привязанная сама к себе.
+                PlaceWall(loc, map, loc, 0, SkillCap / 2, false, false, false, false);
             }
         });
     }

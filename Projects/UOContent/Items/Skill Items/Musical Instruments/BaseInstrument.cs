@@ -183,9 +183,24 @@ public abstract partial class BaseInstrument : Item, ICraftable, ISlayer
 
     public int GetUsesScalar() => _quality == InstrumentQuality.Exceptional ? 200 : 100;
 
+    /// <summary>
+    ///     Инструмент, выданный перком «Слово громче стали»: неподвижный, невидимый и
+    ///     благословлённый. Такое сочетание не выпадает ни из лута, ни из крафта, поэтому
+    ///     служит признаком — отдельное сохраняемое поле заводить не пришлось, а значит и
+    ///     мигрировать сохранённый мир не нужно.
+    /// </summary>
+    public bool IsBardGranted => !Movable && !Visible && LootType == LootType.Blessed;
+
     public void ConsumeUse(Mobile from)
     {
         // TODO: Confirm what must happen here?
+
+        // Выданный перком инструмент не изнашивается — он существует только чтобы
+        // удовлетворить проверку «инструмент в рюкзаке».
+        if (IsBardGranted)
+        {
+            return;
+        }
 
         if (UsesRemaining > 1)
         {
@@ -210,7 +225,15 @@ public abstract partial class BaseInstrument : Item, ICraftable, ISlayer
         return null;
     }
 
-    public static int GetBardRange(Mobile bard, SkillName skill) => 8 + (int)(bard.Skills[skill].Value / 15);
+    /// <summary>
+    ///     «Дальний зов» — обычный перк категории Бард: его песню слышно на восемь клеток
+    ///     дальше. Это ровно вдвое больше базовой восьмёрки, с которой начинают все.
+    /// </summary>
+    public static int GetBardRange(Mobile bard, SkillName skill) =>
+        8 + (int)(bard.Skills[skill].Value / 15) +
+        (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+            bard, Systems.MahaonProfessions.ProfessionCategory.Bard
+        ) ? 8 : 0);
 
     public static void PickInstrument(Mobile from, InstrumentPickedCallback callback)
     {
@@ -218,6 +241,33 @@ public abstract partial class BaseInstrument : Item, ICraftable, ISlayer
         if (instrument != null)
         {
             callback?.Invoke(from, instrument);
+        }
+        else if (Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+                     from, Systems.MahaonProfessions.ProfessionCategory.Bard
+                 ))
+        {
+            // Mahaon: «Слово громче стали» — сигнатурный перк категории Бард. Каждое
+            // бардовское умение жёстко требует инструмент в рюкзаке, иначе просто не
+            // запускается. Барду инструмент выдаётся сам: невидимый, невыбрасываемый и
+            // без износа — он существует только чтобы удовлетворить эту проверку.
+            var granted = new Lute
+            {
+                Movable = false,
+                Visible = false,
+                LootType = LootType.Blessed
+            };
+
+            if (from.Backpack?.TryDropItem(from, granted, false) == true)
+            {
+                SetInstrument(from, granted);
+                callback?.Invoke(from, granted);
+            }
+            else
+            {
+                granted.Delete();
+                from.SendLocalizedMessage(500617); // What instrument shall you play?
+                from.BeginTarget(1, false, TargetFlags.None, OnPickedInstrument, callback);
+            }
         }
         else
         {
@@ -346,6 +396,18 @@ public abstract partial class BaseInstrument : Item, ICraftable, ISlayer
                     val += 10.0; // -20%
                 }
             }
+        }
+
+        // «Верный слух» — обычный перк категории Бард. Сложность здесь и есть порог, по
+        // которому потом проверяется навык, так что десять пунктов вниз — это заметно
+        // чаще удавшийся разлад, провокация или миротворчество. Инструмент лежит в
+        // рюкзаке барда, поэтому владельца берём отсюда.
+        if (RootParent is Mobile bard &&
+            Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                bard, Systems.MahaonProfessions.ProfessionCategory.Bard
+            ))
+        {
+            val -= 10.0;
         }
 
         return val;

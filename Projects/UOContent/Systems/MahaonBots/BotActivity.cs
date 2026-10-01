@@ -25,3 +25,25 @@ public enum BotActivity
     SoloHunting, // fighting whatever's around at the hunting spot
     ReturningFromHunt // walking back to town after a hunting trip
 }
+
+public static class BotActivityExtensions
+{
+    /// <summary>
+    ///     Идёт ли бот куда-то с этим занятием. Быстрый тик движения (PollMovement)
+    ///     шагает только за такими; всем прочим достаточно медленного тика решений.
+    ///
+    ///     Держится здесь, вплотную к самому перечислению, чтобы новое занятие нельзя было
+    ///     завести, забыв о нём: забытое занятие означало неподвижного бота, который при
+    ///     этом считает, что идёт.
+    /// </summary>
+    public static bool IsTravel(this BotActivity activity) => activity is
+        BotActivity.TravelingToGather or
+        BotActivity.ReturningFromGather or
+        BotActivity.TravelingToDungeon or
+        BotActivity.ReturningHome or
+        BotActivity.TravelingToMarket or
+        BotActivity.BankingTrip or
+        BotActivity.CityTraveling or
+        BotActivity.TravelingToHunt or
+        BotActivity.ReturningFromHunt;
+}

@@ -1,8 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Server.Engines.ConPVP;
 using Server.Engines.PartySystem;
 using Server.Factions;
 using Server.Guilds;
+using Server.Systems.MahaonBots;
 using Server.Items;
 using Server.Mobiles;
 using Server.Multis;
@@ -463,7 +464,20 @@ namespace Server.Misc
                     return Notoriety.Ally;
                 }
 
-                if (sourceGuild.IsEnemy(targetGuild))
+                // Гильдейские войны ботов живут в своей таблице (BotGuilds), а не в
+                // Guild.Enemies — см. развёрнутое объяснение почему в шапке BotGuilds.
+                // Из-за этого движок их попросту не видел: враг по войне оставался для
+                // него синим, а значит удар по нему шёл как нападение на невиновного
+                // (Mobile.IsHarmfulCriminal сравнивает ровно с Notoriety.Innocent) —
+                // бот сереет, и городская стража, которая теперь берёт и серых, идёт
+                // резать обоих участников совершенно законной войны.
+                //
+                // Здесь война становится видимой всему серверу разом: оранжевый цвет,
+                // удар без криминала, стража не вмешивается. Союзы из той же таблицы
+                // намеренно НЕ подставляются в ветку Ally выше — это сделало бы удар по
+                // союзнику тоже безнаказанным, а такого никто не просил.
+                if (sourceGuild.IsEnemy(targetGuild) ||
+                    BotGuilds.GetRelation(sourceGuild.Name, targetGuild.Name) == BotGuildRelation.War)
                 {
                     return Notoriety.Enemy;
                 }

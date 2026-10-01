@@ -107,8 +107,19 @@ public class AuctionHouseSystem : GenericPersistence
             return AuctionBuyResult.OwnListing;
         }
 
+        // Defense in depth against a listing whose Price is outside int range (a bad price
+        // shouldn't be creatable anymore — see AuctionPriceGump's own bound — but a stale
+        // listing from before that check existed could still be sitting in a live save).
+        // (int)listing.Price would silently wrap for a price outside int range, and a
+        // wrapped non-positive amount makes ConsumeTotal treat the purchase as already paid
+        // for regardless of the buyer's real gold.
+        if (listing.Price is <= 0 or > int.MaxValue)
+        {
+            return AuctionBuyResult.CantAfford;
+        }
+
         var backpack = buyer.Backpack;
-        if (backpack == null || !CurrencyHelper.TryWithdrawCopperValue(backpack, listing.Price))
+        if (backpack == null || !backpack.ConsumeTotal(typeof(Gold), (int)listing.Price))
         {
             return AuctionBuyResult.CantAfford;
         }
@@ -137,13 +148,14 @@ public class AuctionHouseSystem : GenericPersistence
 
         if (listing.Seller is PlayerMobile sellerPm)
         {
-            var sellerBank = sellerPm.BankBox;
-            if (sellerBank != null)
+            if (sellerPm.BankBox != null)
             {
-                CurrencyHelper.DepositCopperValue(sellerBank, sellerCut);
+                Banker.Deposit(sellerPm, (int)sellerCut);
                 sellerPm.SendMessage(0x59, $"Твой лот продан за {listing.Price} золота (в банк зачислено {sellerCut} после комиссии аукциона).");
             }
         }
+
+        Systems.MahaonBots.BotHotMarkets.OnNotableSale(listing.City, listing.Item.GetType().Name, listing.Price);
 
         return AuctionBuyResult.Success;
     }
@@ -196,9 +208,27 @@ public class AuctionHouseSystem : GenericPersistence
         if (listing.Seller is PlayerMobile pm)
         {
             var bank = pm.BankBox;
+
             if (bank?.TryDropItem(pm, listing.Item, false) == true)
             {
                 pm.SendMessage(0x59, $"Твой непроданный лот ({listing.Item.Name ?? listing.Item.GetType().Name}) возвращён в банк.");
+                return;
+            }
+
+            // Mahaon: банк переполнен (GlobalMaxItems = 125) — раньше падало сюда и
+            // бросало предмет на землю рядом с ботом НАВСЕГДА, что и разрослось до
+            // почти 2 млн предметов по всему миру за долгую жизнь шарда. Вместо этого —
+            // честная, пусть и упрощённая, ликвидация: конвертируем в золото через
+            // тот же Banker.Deposit, что использует обычная банковская механика, и
+            // удаляем сам предмет. Не идеальная рыночная оценка (нет универсального
+            // способа узнать цену произвольного предмета без вендора, у которого он
+            // явно зарегистрирован в SellInfo) — честная приближённая эвристика.
+            if (bank != null)
+            {
+                var estimatedValue = EstimateLiquidationValue(listing.Item);
+                Banker.Deposit(pm, estimatedValue);
+                pm.SendMessage(0x59, $"Банк переполнен — непроданный лот ликвидирован за {estimatedValue} золота.");
+                listing.Item.Delete();
                 return;
             }
         }
@@ -208,6 +238,17 @@ public class AuctionHouseSystem : GenericPersistence
         {
             listing.Item.MoveToWorld(listing.Seller.Location, listing.Seller.Map);
         }
+    }
+
+    private static int EstimateLiquidationValue(Item item)
+    {
+        var baseValue = item switch
+        {
+            BaseWeapon or BaseArmor or BaseJewel => 80,
+            _                                      => 8
+        };
+
+        return baseValue * Math.Max(1, item.Amount);
     }
 
     public override void Serialize(IGenericWriter writer)

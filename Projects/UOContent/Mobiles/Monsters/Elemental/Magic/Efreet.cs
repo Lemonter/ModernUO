@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 56;
         }
 
-        public override string CorpseName => "an efreet corpse";
-        public override string DefaultName => "an efreet";
+        public override string CorpseName => "труп ифрита";
+        public override string DefaultName => "ифрит";
 
         public override int TreasureMapLevel => Core.AOS ? 4 : 5;
 

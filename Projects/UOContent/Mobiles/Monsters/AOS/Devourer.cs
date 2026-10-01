@@ -44,8 +44,8 @@ namespace Server.Mobiles
             PackNecroReg(24, 45);
         }
 
-        public override string CorpseName => "a devourer of souls corpse";
-        public override string DefaultName => "a devourer of souls";
+        public override string CorpseName => "труп пожирателя душ";
+        public override string DefaultName => "пожиратель душ";
 
         public override Poison PoisonImmune => Poison.Lethal;
 

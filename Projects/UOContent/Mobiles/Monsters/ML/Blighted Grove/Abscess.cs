@@ -41,8 +41,8 @@ namespace Server.Mobiles
             // TODO: Fame/Karma
         }
 
-        public override string CorpseName => "an Abscess corpse";
-        public override string DefaultName => "Abscess";
+        public override string CorpseName => "труп Нарыва";
+        public override string DefaultName => "Нарыв";
 
         public override bool GivesMLMinorArtifact => true;
 

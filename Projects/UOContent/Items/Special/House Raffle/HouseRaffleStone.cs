@@ -203,7 +203,7 @@ public partial class HouseRaffleStone : Item
         }
     }
 
-    public override string DefaultName => "a house raffle stone";
+    public override string DefaultName => "камень розыгрыша дома";
 
     public override bool DisplayWeight => false;
 

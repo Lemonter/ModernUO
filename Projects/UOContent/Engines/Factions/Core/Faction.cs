@@ -854,7 +854,7 @@ public abstract class Faction : IComparable<Faction>, ISpanParsable<Faction>
     [Description("Sets the targeted player as the faction commander.")]
     public static void FactionCommander_OnCommand(CommandEventArgs e)
     {
-        e.Mobile.SendMessage("Target a player to make them the faction commander.");
+        e.Mobile.SendMessage("Укажи игрока, которого сделать командиром фракции.");
         e.Mobile.BeginTarget(-1, false, TargetFlags.None, FactionCommander_OnTarget);
     }
 
@@ -868,16 +868,16 @@ public abstract class Faction : IComparable<Faction>, ISpanParsable<Faction>
             if (pl != null)
             {
                 pl.Faction.Commander = targ;
-                from.SendMessage("You have appointed them as the faction commander.");
+                from.SendMessage("Ты назначил их командиром фракции.");
             }
             else
             {
-                from.SendMessage("They are not in a faction.");
+                from.SendMessage("Они не состоят во фракции.");
             }
         }
         else
         {
-            from.SendMessage("That is not a player.");
+            from.SendMessage("Это не игрок.");
         }
     }
 
@@ -902,18 +902,18 @@ public abstract class Faction : IComparable<Faction>, ISpanParsable<Faction>
             // from.SendGump( new Gumps.PropertiesGump( from, faction.Election ) );
             else
             {
-                from.SendMessage("That stone has no faction assigned.");
+                from.SendMessage("У этого камня нет фракции.");
             }
         }
         else
         {
-            from.SendMessage("That is not a faction stone.");
+            from.SendMessage("Это не камень фракции.");
         }
     }
 
     public static void FactionKick_OnCommand(CommandEventArgs e)
     {
-        e.Mobile.SendMessage("Target a player to remove them from their faction.");
+        e.Mobile.SendMessage("Укажи игрока, которого выгнать из фракции.");
         e.Mobile.BeginTarget(-1, false, TargetFlags.None, FactionKick_OnTarget);
     }
 
@@ -927,17 +927,17 @@ public abstract class Faction : IComparable<Faction>, ISpanParsable<Faction>
             {
                 pl.Faction.RemoveMember(mob);
 
-                mob.SendMessage("You have been kicked from your faction.");
-                from.SendMessage("They have been kicked from their faction.");
+                mob.SendMessage("Тебя выгнали из фракции.");
+                from.SendMessage("Их выгнали из фракции.");
             }
             else
             {
-                from.SendMessage("They are not in a faction.");
+                from.SendMessage("Они не состоят во фракции.");
             }
         }
         else
         {
-            from.SendMessage("That is not a player.");
+            from.SendMessage("Это не игрок.");
         }
     }
 
@@ -1489,7 +1489,7 @@ public class FactionKickCommand : BaseCommand
                     if (pl != null)
                     {
                         pl.Faction.RemoveMember(mob);
-                        mob.SendMessage("You have been kicked from your faction.");
+                        mob.SendMessage("Тебя выгнали из фракции.");
                         AddResponse("They have been kicked from their faction.");
                     }
                     else
@@ -1524,7 +1524,7 @@ public class FactionKickCommand : BaseCommand
                                 if (pl != null)
                                 {
                                     pl.Faction.RemoveMember(mob);
-                                    mob.SendMessage("You have been kicked from your faction.");
+                                    mob.SendMessage("Тебя выгнали из фракции.");
                                     AddResponse("They have been kicked from their faction.");
                                 }
                             }

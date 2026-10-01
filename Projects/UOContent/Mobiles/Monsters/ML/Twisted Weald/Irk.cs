@@ -53,8 +53,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "an Irk corpse";
-        public override string DefaultName => "Irk";
+        public override string CorpseName => "труп Досады";
+        public override string DefaultName => "Досада";
         public override int DefaultHue => 0x489;
 
         // TODO: Angry fire

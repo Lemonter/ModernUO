@@ -52,9 +52,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a solen warrior corpse";
+        public override string CorpseName => "труп солена-воина";
 
-        public override string DefaultName => "a black solen warrior";
+        public override string DefaultName => "чёрный солен-воин";
 
         public override int GetAngerSound() => 0xB5;
 

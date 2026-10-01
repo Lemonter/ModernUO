@@ -104,6 +104,14 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
 
     public TileMatrix Tiles => m_Tiles ??= new TileMatrix(this, m_FileIndex, MapID, Width, Height);
 
+    /// <summary>
+    ///     Номер в именах файлов карты (mapN.mul, staidxN.mul, staticsN.mul). Обычно
+    ///     совпадает с MapID, но задаётся отдельно в определении карты и может не совпадать.
+    ///     Нужен тем, кто читает статику файла напрямую, минуя TileMatrix с его вечным кэшем
+    ///     блоков.
+    /// </summary>
+    public int FileIndex => m_FileIndex;
+
     public int MapID { get; }
 
     public int MapIndex { get; }

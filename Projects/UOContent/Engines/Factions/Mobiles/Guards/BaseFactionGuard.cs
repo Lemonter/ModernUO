@@ -141,12 +141,12 @@ namespace Server.Factions
                 {
                     case 0:
                         {
-                            Say($"I warn you, {m.Name}, you would do well to leave this area before someone shows you the world of gray.");
+                            Say($"Предупреждаю, {m.Name}: уходи отсюда, пока тебе не показали серый мир.");
                             break;
                         }
                     case 1:
                         {
-                            Say($"It would be wise to leave this area, {m.Name}, lest your head become my commanders' trophy.");
+                            Say($"Умнее будет уйти, {m.Name}, иначе твоя голова станет трофеем моего командира.");
                             break;
                         }
                     case 2:
@@ -156,17 +156,17 @@ namespace Server.Factions
                         }
                     case 3:
                         {
-                            Say($"Your presence here is an insult, {m.Name}. Be gone now, knave.");
+                            Say($"Твоё присутствие здесь — оскорбление, {m.Name}. Прочь, холоп.");
                             break;
                         }
                     case 4:
                         {
-                            Say($"Dost thou wish to be hung by your toes, {m.Name}? Nay? Then come no closer.");
+                            Say($"Хочешь болтаться вверх ногами, {m.Name}? Нет? Тогда не подходи.");
                             break;
                         }
                     default: // 5
                         {
-                            Say($"Hey, {m.Name}. Yeah, you. Get out of here before I beat you with a stick.");
+                            Say($"Эй, {m.Name}. Да, ты. Убирайся, пока я не отходил тебя палкой.");
                             break;
                         }
                 }

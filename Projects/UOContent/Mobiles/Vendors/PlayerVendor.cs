@@ -733,7 +733,7 @@ public partial class PlayerVendor : Mobile
 
         if (!ContentFeatureFlags.PlayerVendors && from.AccessLevel < AccessLevel.Administrator)
         {
-            from.SendMessage(0x22, "Player vendor transactions are temporarily disabled.");
+            from.SendMessage(0x22, "Сделки с торговцами игроков временно отключены.");
             return;
         }
 
@@ -755,7 +755,7 @@ public partial class PlayerVendor : Mobile
         }
         else if (vi.Created + TimeSpan.FromMinutes(1.0) > Core.Now)
         {
-            from.SendMessage("You cannot buy this item right now.  Please wait one minute and try again.");
+            from.SendMessage("Сейчас эту вещь купить нельзя. Подожди минуту и попробуй снова.");
         }
         else
         {
@@ -768,7 +768,7 @@ public partial class PlayerVendor : Mobile
         if (HoldGold > 0)
         {
             SayTo(to, $"How much of the {HoldGold} that I'm holding would you like?");
-            to.SendMessage("Enter the amount of gold you wish to withdraw (ESC = CANCEL):");
+            to.SendMessage("Сколько золота снять? (ESC — отмена)");
 
             to.Prompt = new CollectGoldPrompt(this);
         }
@@ -1192,7 +1192,7 @@ public partial class PlayerVendor : Mobile
                 if (price > 100000000)
                 {
                     price = 100000000;
-                    from.SendMessage("You cannot price items above 100,000,000 gold.  The price has been adjusted.");
+                    from.SendMessage("Цена не может быть выше 100 000 000 золота. Цена исправлена.");
                 }
 
                 setPrice = true;

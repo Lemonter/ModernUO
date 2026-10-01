@@ -30,7 +30,7 @@ public class FactionStone : BaseSystemController
         }
     }
 
-    public override string DefaultName => "faction stone";
+    public override string DefaultName => "камень фракции";
 
     public override void OnDoubleClick(Mobile from)
     {

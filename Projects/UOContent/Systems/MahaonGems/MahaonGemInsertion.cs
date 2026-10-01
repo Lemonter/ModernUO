@@ -1,4 +1,4 @@
-using Server.Systems.MahaonGems;
+﻿using Server.Systems.MahaonGems;
 using Server.Targeting;
 
 namespace Server.Items;
@@ -21,7 +21,7 @@ public static class MahaonGemInsertion
             return;
         }
 
-        from.SendMessage("Укажи оружие, броню или украшение, куда вставить камень.");
+        from.SendMessage("Укажи вещь, куда вставить камень — подойдёт всё, что надеваешь.");
         from.Target = new MahaonGemDirectSocketTarget(gem);
     }
 }
@@ -39,9 +39,21 @@ public class MahaonGemDirectSocketTarget : Target
             return;
         }
 
-        if (targeted is not Item item || item is not (BaseWeapon or BaseArmor or BaseJewel))
+        // Через GemSocketingSystem.IsSocketable, а не по трём базовым классам.
+        //
+        // Здесь и была причина, по которой робу инкрустировать не получалось. Общую
+        // проверку давно переписали на «есть слой экипировки» — именно затем, чтобы
+        // принимались роба, плащ, шляпа, сапоги, штаны, пояс, колчан, талисман и книга
+        // заклинаний, ни один из которых не наследует BaseWeapon/BaseArmor/BaseJewel. Но
+        // правка легла только в тулзу (GemEncrustingTool), а сюда — нет. А сюда и ходят
+        // чаще: это прямой путь, двойной клик по самому камню, ради которого трёхшаговый
+        // флоу тулзы и заводился как запасной.
+        //
+        // Дублировать условие нельзя в принципе: ровно от дубля оно и разъехалось. Один
+        // источник истины — IsSocketable.
+        if (targeted is not Item item || !GemSocketingSystem.IsSocketable(item))
         {
-            from.SendMessage("Сюда нельзя вставить — только оружие, броня и украшения.");
+            from.SendMessage("Сюда нельзя вставить — только то, что надевают.");
             return;
         }
 
@@ -51,27 +63,12 @@ public class MahaonGemDirectSocketTarget : Target
             return;
         }
 
-        if (GemSocketingSystem.SocketCount(item) >= 3)
+        if (GemSocketingSystem.SocketCount(item) >= GemSocketingSystem.MaxSocketsPerItem)
         {
             from.SendMessage("В этот предмет больше не вставить камней — все слоты заняты.");
             return;
         }
 
-        if (!from.CheckSkill(SkillName.Tinkering, 0.0, 100.0))
-        {
-            from.SendMessage(0x22, "Не получилось — камень треснул при вставке.");
-            _gem.Delete();
-            return;
-        }
-
-        if (GemSocketingSystem.TrySocket(from, item, _gem))
-        {
-            from.SendMessage(0x59, $"Ты вставляешь {_gem.Name ?? _gem.GetType().Name} в {item.Name ?? "предмет"}.");
-            _gem.Delete();
-        }
-        else
-        {
-            from.SendMessage("Не получилось.");
-        }
+        GemSocketingSystem.BeginSocket(from, item, _gem);
     }
 }

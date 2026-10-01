@@ -25,7 +25,7 @@ public partial class Guillotine : Item
             if (Utility.Random(Math.Max((from.X - p.X).Abs(), (from.Y - p.Y).Abs())) < 1)
             {
                 Effects.PlaySound(from.Location, from.Map, from.GetHurtSound());
-                from.PublicOverheadMessage(MessageType.Regular, from.SpeechHue, true, "Ouch!");
+                from.PublicOverheadMessage(MessageType.Regular, from.SpeechHue, true, "Ой!");
                 SpellHelper.Damage(TimeSpan.FromSeconds(0.5), from, Utility.Dice(2, 10, 5));
             }
 

@@ -669,6 +669,21 @@ public partial class Corpse : Container, ICarvable
 
     public void AddCarvedItem(Item carved, Mobile carver)
     {
+        // Skinning resources (hides/wool/feather — the hunter's bag's carcass half) are
+        // handed straight to the carver's matching bag when they have one, instead of
+        // landing on the corpse to be dragged in by hand like everything else looted here.
+        if (carver != null && Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(carver, carved))
+        {
+            if (InstancedCorpse)
+            {
+                _instancedItems ??= new Dictionary<Item, InstancedItemInfo>();
+
+                _instancedItems.Add(carved, new InstancedItemInfo(carved, carver));
+            }
+
+            return;
+        }
+
         DropItem(carved);
 
         if (InstancedCorpse)
@@ -844,6 +859,27 @@ public partial class Corpse : Container, ICarvable
         }
 
         _equipItems = reader.ReadEntityList<Item>();
+    }
+
+    /// <summary>
+    ///     Выбрасывает пустые ячейки из списков снаряжения трупа.
+    ///
+    ///     Предмет, надетый на покойника, может быть удалён, пока труп ещё лежит в мире, —
+    ///     командой чистки, разбором вещей бота, чем угодно. Ссылка на него при этом
+    ///     остаётся в списке, и при следующей загрузке мира на её месте оказывается null:
+    ///     правило миграции для List&lt;Item&gt; читает элементы поштучно и пустые не
+    ///     отсеивает, в отличие от ReadEntityList.
+    ///
+    ///     Одна такая дырка роняла вход в игру целиком — SendEverything шлёт содержимое
+    ///     каждого видимого трупа, и NullReferenceException прилетал в цикл логина.
+    ///     Пакеты теперь и сами устойчивы к null (см. CorpsePackets), но носить дырявые
+    ///     списки в мире незачем.
+    /// </summary>
+    [AfterDeserialization]
+    private void AfterDeserialization()
+    {
+        _equipItems?.RemoveAll(item => item == null);
+        _restoreEquip?.RemoveAll(item => item == null);
     }
 
     public bool DevourCorpse()
@@ -1177,6 +1213,7 @@ public partial class Corpse : Container, ICarvable
     public override void OnDoubleClick(Mobile from)
     {
         Open(from, Core.AOS);
+        Systems.MahaonLooting.AutoLootSystem.TryAutoLoot(from, this);
     }
 
     public override bool CheckContentDisplay(Mobile from) => false;

@@ -12,7 +12,7 @@ public partial class AnsellaGryen : BaseQuester
     {
     }
 
-    public override string DefaultName => "Ansella Gryen";
+    public override string DefaultName => "Анселла Грин";
 
     public override void InitBody()
     {

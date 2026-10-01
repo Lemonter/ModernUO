@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Server.Items;
+using Server.Systems.MahaonCombat;
 
 namespace Server.Systems.MahaonMining;
 
@@ -80,6 +81,14 @@ public static class MahaonFishingSwings
             else
             {
                 var fish = new Fish();
+
+                // Was missing entirely — FishingSpecializationSystem.OnFishCaught was only
+                // wired into vanilla Fishing.cs's harvest completion, which HarvestTarget.cs
+                // never reaches for a real fishing-tool click (redirected here instead,
+                // same pattern already fixed for Mining/Lumberjacking), so "Рыбак мелководья"/
+                // "Рыбак глубин" could never actually grow from real play.
+                var deepWater = SpecialFishingNet.FullValidation(map, targetLoc.X, targetLoc.Y);
+                FishingSpecializationSystem.OnFishCaught(from, fish, deepWater);
 
                 if (from.Backpack?.TryDropItem(from, fish, false) != true)
                 {

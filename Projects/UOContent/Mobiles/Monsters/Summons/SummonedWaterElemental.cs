@@ -69,8 +69,8 @@ namespace Server.Mobiles
 
         public override bool DeleteCorpseOnDeath => Summoned;
 
-        public override string CorpseName => "a water elemental corpse";
-        public override string DefaultName => "a water elemental";
+        public override string CorpseName => "труп водяного элементаля";
+        public override string DefaultName => "водяной элементаль";
 
         public override bool BleedImmune => true;
         

@@ -46,7 +46,7 @@ public static class Tracking
             gumps.Send(new TrackWhatGump());
         }
 
-        return TimeSpan.FromSeconds(10.0); // 10 second delay before being able to re-use a skill
+        return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
     }
 
     public static void AddInfo(Mobile tracker, Mobile target)
@@ -127,6 +127,14 @@ public class TrackWhatGump : StaticGump<TrackWhatGump>
         if (info.ButtonID is >= 1 and <= 4 && state.Mobile is PlayerMobile pm)
         {
             var success = pm.CheckSkill(SkillName.Tracking, 0.0, 21.1);
+
+            if (success)
+            {
+                Systems.MahaonCombat.TrackingSpecializationSystem.Train(
+                    pm, (Systems.MahaonCombat.TrackingSpecialization)(info.ButtonID - 1)
+                );
+            }
+
             TrackWhoGump.DisplayTo(success, pm, info.ButtonID - 1);
         }
     }
@@ -164,6 +172,14 @@ public class TrackWhoGump : DynamicGump
 
         // 10 tiles base + 10 tiles per 10 skill
         var range = 10 + (int)from.Skills.Tracking.Value / 10 * 10;
+
+        // «Чутьё следопыта» — обычный перк категории Следопыт: видит вдвое дальше.
+        if (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                from, Systems.MahaonProfessions.ProfessionCategory.Ranger
+            ))
+        {
+            range *= 2;
+        }
 
         var mobs = GetClosestMobs(from, range, type);
 

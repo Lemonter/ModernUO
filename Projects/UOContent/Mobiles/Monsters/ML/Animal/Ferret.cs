@@ -48,8 +48,8 @@ namespace Server.Mobiles
             m_CanTalk = true;
         }
 
-        public override string CorpseName => "a ferret corpse";
-        public override string DefaultName => "a ferret";
+        public override string CorpseName => "труп хорька";
+        public override string DefaultName => "хорёк";
 
         public override int Meat => 1;
         public override FoodType FavoriteFood => FoodType.Fish;

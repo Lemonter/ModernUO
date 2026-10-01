@@ -60,6 +60,26 @@ public partial class MahaonRaidSpawner : Item
             return;
         }
 
+        var (raiderCount, cityLabel) = TriggerSpawn();
+
+        from.SendMessage(0x59, $"Набег запущен: {raiderCount} врагов, {_defenderCount} защитников у {cityLabel}.");
+    }
+
+    /// <summary>The actual spawn logic, split out from OnDoubleClick so
+    /// Systems.MahaonQuests.MahaonVersaSystem can trigger a raid on its own decision —
+    /// no player double-clicked anything, so there's no "from" Mobile to permission-check
+    /// against; this is a system-level trigger, same spawn code either way. Returns how
+    /// many raiders actually got created and a label for whatever called this to use in
+    /// its own message (marker's city name if one was found, generic fallback otherwise).</summary>
+    public (int raiderCount, string cityLabel) TriggerSpawn()
+    {
+        var type = AssemblyHandler.FindTypeByName(_mobTypeName);
+
+        if (type == null || !typeof(BaseCreature).IsAssignableFrom(type))
+        {
+            return (0, "точки спауна");
+        }
+
         var marker = FindNearestMarker();
         var targetLoc = marker?.Location ?? Location;
         var targetMap = marker?.Map ?? Map;
@@ -83,7 +103,7 @@ public partial class MahaonRaidSpawner : Item
 
         for (var i = 0; i < _defenderCount; i++)
         {
-            var defender = new MahaonTownDefender();
+            BaseCreature defender = i % 3 == 2 ? new MahaonTownDefenderMage() : new MahaonTownDefender();
             var spawnLoc = FindNearbySpawnPoint(targetLoc, targetMap, 6);
             defender.MoveToWorld(spawnLoc, targetMap);
             defender.Home = targetLoc;
@@ -102,10 +122,7 @@ public partial class MahaonRaidSpawner : Item
             Effects.SendLocationEffect(fireLoc, targetMap, 0x3E23, 16, 10);
         }
 
-        from.SendMessage(
-            0x59,
-            $"Набег запущен: {raiders.Count} врагов, {_defenderCount} защитников у {(marker != null ? marker.CityName : "точки спауна")}."
-        );
+        return (raiders.Count, marker != null ? marker.CityName : "точки спауна");
     }
 
     private MahaonRaidMarker FindNearestMarker()

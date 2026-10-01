@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 80;
         }
 
-        public override string CorpseName => "a skeletal dragon corpse";
-        public override string DefaultName => "a skeletal dragon";
+        public override string CorpseName => "труп скелетного дракона";
+        public override string DefaultName => "скелетный дракон";
 
         public override bool ReacquireOnMovement => true;
 

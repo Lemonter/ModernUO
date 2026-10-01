@@ -37,7 +37,7 @@ public partial class SilverRing : BaseRing
 [SerializationGenerator(0, false)]
 public partial class WeddingRing : BaseRing
 {
-    public override string DefaultName => "wedding ring";
+    public override string DefaultName => "обручальное кольцо";
 
     [Constructible]
     public WeddingRing() : base(0x108a)

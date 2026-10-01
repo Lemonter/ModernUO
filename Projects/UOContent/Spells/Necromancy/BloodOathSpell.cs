@@ -68,7 +68,8 @@ public class BloodOathSpell : NecromancerSpell, ITargetingSpell<Mobile>
              * The actual OSI formula is /8, matching RunUO/ServUO.
              */
 
-            m.Spell?.OnCasterHurt();
+            // Mahaon: no longer disturbs the target's own cast — enemy spells don't fizzle
+            // casting anymore (see Spell.OnCasterHurt's doc comment).
 
             Caster.PlaySound(0x175);
 

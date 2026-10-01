@@ -407,7 +407,7 @@ public class RunebookGump : DynamicGump
                 _book.Description = text.AsSpan().Trim().FixHtml();
                 _book.SendGumpTo(from);
 
-                from.SendMessage("The book's title has been changed.");
+                from.SendMessage("Название книги изменено.");
             }
             else
             {

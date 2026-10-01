@@ -53,9 +53,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string DefaultName => "Red Death";
+        public override string DefaultName => "Красная Смерть";
 
-        public override string CorpseName => "a Red Death corpse";
+        public override string CorpseName => "труп Красной Смерти";
 
         public override bool GivesMLMinorArtifact => true;
         public override bool AlwaysMurderer => true;

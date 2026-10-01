@@ -8,7 +8,7 @@ public sealed partial class ClarityPotion : PowerFactionItem
 {
     public ClarityPotion() : base(3628) => Hue = 1154;
 
-    public override string DefaultName => "clarity potion";
+    public override string DefaultName => "зелье ясности";
 
     public override bool Use(Mobile from)
     {

@@ -39,7 +39,7 @@ public partial class ArcaneFey : BaseCreature
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a pixie corpse";
+    public override string CorpseName => "труп пикси";
     public override double DispelDifficulty => 70.0;
     public override double DispelFocus => 20.0;
 

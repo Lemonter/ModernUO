@@ -407,7 +407,7 @@ public partial class BaseEscortable : BaseCreature
         if (EscortTable.TryGetValue(m, out var escortable) && escortable?.Deleted == false &&
             escortable.GetEscorter() == m)
         {
-            Say("I see you already have an escort.");
+            Say("Я вижу, тебя уже кто-то сопровождает.");
             return false;
         }
 
@@ -418,11 +418,11 @@ public partial class BaseEscortable : BaseCreature
 
             if (minutes == 1)
             {
-                Say($"You must rest {minutes} minute before we set out on this journey.");
+                Say($"Мне нужно отдохнуть {minutes} минуту, прежде чем мы отправимся в путь.");
             }
             else
             {
-                Say($"You must rest {minutes} minutes before we set out on this journey.");
+                Say($"Мне нужно отдохнуть {minutes} минут, прежде чем мы отправимся в путь.");
             }
 
             return false;

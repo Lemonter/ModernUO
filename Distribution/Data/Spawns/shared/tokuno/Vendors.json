@@ -3,7 +3,11 @@
     "$type": "Spawner",
     "guid": "03112703-010a-4495-90de-3dceafabf6bb",
     "name": "Spawner (504)",
-    "location": [502, 589, 24],
+    "location": [
+      502,
+      589,
+      24
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -12,14 +16,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f025179a-be1f-4a4b-8ffd-f690ed5efd32",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      502,
+      589,
+      24
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "0360875a-9408-4f4a-a42c-200f359baccb",
     "name": "Spawner (504)",
-    "location": [756, 1302, 25],
+    "location": [
+      756,
+      1302,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -28,14 +64,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2c64c3ba-91c9-43bb-a321-af54e914abdb",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      756,
+      1302,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1159a610-a01a-4cac-841f-ca37fcf2ab21",
     "name": "Spawner (504)",
-    "location": [1177, 985, 38],
+    "location": [
+      1177,
+      985,
+      38
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -44,14 +112,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a9cc705f-9b35-44ea-b7f5-4ec022f74590",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      1177,
+      985,
+      38
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "117e79c9-e92c-4094-89af-ceef02b6d875",
     "name": "Spawner (504)",
-    "location": [724, 1297, 25],
+    "location": [
+      724,
+      1297,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -60,14 +160,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Jeweler", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Jeweler",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "93d68e00-99a0-44f1-b552-ad7d1a1bff83",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      724,
+      1297,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "11f9b7fa-b1ea-4a93-848a-5339c852afa5",
     "name": "Spawner (504)",
-    "location": [695, 1297, 25],
+    "location": [
+      695,
+      1297,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -76,14 +208,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Mage", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mage",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "cfc0820c-df95-455b-94f3-cda2474abaa5",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      695,
+      1297,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1457ebfc-398e-415e-b091-20427af4fb70",
     "name": "Spawner (504)",
-    "location": [691, 1264, 47],
+    "location": [
+      691,
+      1264,
+      47
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -92,14 +256,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Mapmaker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Mapmaker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "672460bb-c49c-4251-883d-717af4a687e4",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      691,
+      1264,
+      47
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "152e7156-8c9c-4aae-a560-7972868cbc57",
     "name": "Spawner (504)",
-    "location": [789, 1278, 25],
+    "location": [
+      789,
+      1278,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -108,14 +304,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "AnimalTrainer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "AnimalTrainer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e495a3fe-5dc4-4770-b90f-d8990e4e5f52",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      789,
+      1278,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "15590b9b-8815-4906-8e9e-d08a54b6a2f1",
     "name": "Spawner (504)",
-    "location": [773, 1248, 26],
+    "location": [
+      773,
+      1248,
+      26
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -124,14 +352,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9d333428-e96f-484e-9215-404c0ebd9a87",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      773,
+      1248,
+      26
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "16523597-999a-4504-aa59-7b01c881978d",
     "name": "Spawner (504)",
-    "location": [689, 1255, 25],
+    "location": [
+      689,
+      1255,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -140,14 +400,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Scribe", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Scribe",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0f5eefeb-9db7-4899-8481-9cebea5360f0",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      689,
+      1255,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1990cbea-3f71-44da-aec2-0af4e07e3618",
     "name": "Spawner (504)",
-    "location": [702, 1298, 25],
+    "location": [
+      702,
+      1298,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -156,14 +448,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Alchemist", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Alchemist",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "316c5d25-8c9c-48bb-89ec-bb1ea15910aa",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      702,
+      1298,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1b386724-c26f-4714-80b3-edaaa46b3ab4",
     "name": "Spawner (504)",
-    "location": [683, 1298, 25],
+    "location": [
+      683,
+      1298,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -172,14 +496,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Herbalist", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Herbalist",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "641bdf87-cb31-4106-9c74-a47681478d35",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      683,
+      1298,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1bef801b-5ac8-4cde-a3bd-71fff904d997",
     "name": "Spawner (504)",
-    "location": [679, 1207, 25],
+    "location": [
+      679,
+      1207,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -188,14 +544,46 @@
     "homeRange": 0,
     "walkingRange": 0,
     "entries": [
-      { "name": "InnKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "InnKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0d174917-c4e0-44d6-b0ad-0b83e4c1507b",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      679,
+      1207,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "1f9e3288-f988-4ea3-95e8-251aa38d064c",
     "name": "Spawner (504)",
-    "location": [692, 1213, 25],
+    "location": [
+      692,
+      1213,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -204,14 +592,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "TavernKeeper", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TavernKeeper",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "97afa221-3c66-485d-a037-5c1200e58bde",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      692,
+      1213,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "21467215-aae1-4e1c-bf72-1137b91b71eb",
     "name": "Spawner (504)",
-    "location": [730, 1282, 25],
+    "location": [
+      730,
+      1282,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -220,14 +640,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Provisioner", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Provisioner",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "aff6616a-4fa2-4661-89e9-57306e536aa6",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      730,
+      1282,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "294130b1-fd5a-4cef-9c68-a5491f5e59c6",
     "name": "Spawner (504)",
-    "location": [226, 786, 57],
+    "location": [
+      226,
+      786,
+      57
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -236,14 +688,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ee2d3d39-26f0-4825-ac4b-8a757c4e9bda",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      226,
+      786,
+      57
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "30f1eaf5-633e-494a-aadb-2997f3e8d0a4",
     "name": "Spawner (504)",
-    "location": [735, 1256, 30],
+    "location": [
+      735,
+      1256,
+      30
+    ],
     "map": "Tokuno",
     "count": 30,
     "minDelay": "00:05:00",
@@ -252,18 +736,66 @@
     "homeRange": 60,
     "walkingRange": 80,
     "entries": [
-      { "name": "Noble", "maxCount": 10, "probability": 100 },
-      { "name": "Peasant", "maxCount": 10, "probability": 100 },
-      { "name": "hirebeggar", "maxCount": 10, "probability": 100 },
-      { "name": "Samurai", "maxCount": 10, "probability": 100 },
-      { "name": "Ninja", "maxCount": 10, "probability": 100 }
+      {
+        "name": "Noble",
+        "maxCount": 10,
+        "probability": 100
+      },
+      {
+        "name": "Peasant",
+        "maxCount": 10,
+        "probability": 100
+      },
+      {
+        "name": "hirebeggar",
+        "maxCount": 10,
+        "probability": 100
+      },
+      {
+        "name": "Samurai",
+        "maxCount": 10,
+        "probability": 100
+      },
+      {
+        "name": "Ninja",
+        "maxCount": 10,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "5d4dfe99-48a2-4842-a3f8-10278f2c95a1",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      735,
+      1256,
+      30
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "33f10364-0097-42d5-95b1-c3f73750fda0",
     "name": "Spawner (504)",
-    "location": [720, 1213, 45],
+    "location": [
+      720,
+      1213,
+      45
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -272,14 +804,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Tinker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tinker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "296b1449-fd3e-49f9-aa9c-0d87dc17880d",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      720,
+      1213,
+      45
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "3df1960a-2e81-4997-ab85-3f1062065c7d",
     "name": "Spawner (504)",
-    "location": [763, 247, 71],
+    "location": [
+      763,
+      247,
+      71
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -288,14 +852,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "96c18ab7-d2c5-4930-9a17-3978adc7c161",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      763,
+      247,
+      71
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "448a5e8c-0682-488b-ba85-4a457ed8329c",
     "name": "Spawner (504)",
-    "location": [742, 1304, 25],
+    "location": [
+      742,
+      1304,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -304,14 +900,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "1609b806-2083-4798-a1b0-c9991f75a6df",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      742,
+      1304,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "4830fbdc-9c83-4e22-af7a-cd868807eb9c",
     "name": "Spawner (504)",
-    "location": [297, 637, 15],
+    "location": [
+      297,
+      637,
+      15
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -320,14 +948,46 @@
     "homeRange": 2,
     "walkingRange": 2,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "3a1f5039-3954-433e-8f86-508c03327e13",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      297,
+      637,
+      15
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "57f4d4ba-3841-4d12-bec6-37b059c49840",
     "name": "Spawner (504)",
-    "location": [248, 1089, 10],
+    "location": [
+      248,
+      1089,
+      10
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -336,14 +996,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ef38edf5-635d-4910-9016-b066fea55ac6",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      248,
+      1089,
+      10
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "5ada367e-0bcb-487e-9e44-ef259bfec2c7",
     "name": "Spawner (504)",
-    "location": [781, 1219, 25],
+    "location": [
+      781,
+      1219,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -352,14 +1044,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Healer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Healer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "144f9465-d64c-49f8-bc30-064582561145",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      781,
+      1219,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "67fe5dc9-67d2-4e5f-afab-03691f497fed",
     "name": "Spawner (504)",
-    "location": [661, 1209, 25],
+    "location": [
+      661,
+      1209,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -368,14 +1092,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c850ad43-b55f-4037-949b-dbd955b6ca73",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      661,
+      1209,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "698d030e-cf3f-40fd-be6e-4a92866dbfb1",
     "name": "Spawner (504)",
-    "location": [668, 1254, 25],
+    "location": [
+      668,
+      1254,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -384,14 +1140,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "BardGuildmaster", "maxCount": 1, "probability": 100 }
+      {
+        "name": "BardGuildmaster",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "fe23172e-2def-4868-a5bf-380695ec9614",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      668,
+      1254,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "7dad1cc2-dfab-490e-915f-8d00ed39f14c",
     "name": "Spawner (504)",
-    "location": [749, 1303, 25],
+    "location": [
+      749,
+      1303,
+      25
+    ],
     "map": "Tokuno",
     "count": 2,
     "minDelay": "00:05:00",
@@ -400,15 +1188,51 @@
     "homeRange": 4,
     "walkingRange": 4,
     "entries": [
-      { "name": "Armorer", "maxCount": 1, "probability": 100 },
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Armorer",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "efc66822-c754-438e-b019-a02fd8986a60",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      749,
+      1303,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "80122c8e-85c4-41a7-a347-d8c0074e6031",
     "name": "Spawner (504)",
-    "location": [371, 431, 32],
+    "location": [
+      371,
+      431,
+      32
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -417,14 +1241,46 @@
     "homeRange": 5,
     "walkingRange": 5,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f6abe4af-f5a9-4f04-addf-2fe5cc62645c",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      371,
+      431,
+      32
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "840e2e09-7a7e-43cc-a5d0-a5be3d4e00d6",
     "name": "Spawner (504)",
-    "location": [669, 1266, 47],
+    "location": [
+      669,
+      1266,
+      47
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -433,14 +1289,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Shipwright", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Shipwright",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "2293cc7f-cb97-44e3-97ef-01598bc5cda3",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      669,
+      1266,
+      47
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "876d5b73-9f59-4446-8144-dd997bf93916",
     "name": "Spawner (504)",
-    "location": [1152, 936, 65],
+    "location": [
+      1152,
+      936,
+      65
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -449,14 +1337,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "ca048566-170f-4dd4-8f46-fe27bace35b0",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      1152,
+      936,
+      65
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "8c714386-6b61-4f4e-9eec-f75cd78010a6",
     "name": "Spawner (504)",
-    "location": [732, 1256, 30],
+    "location": [
+      732,
+      1256,
+      30
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -465,14 +1385,46 @@
     "homeRange": 0,
     "walkingRange": 0,
     "entries": [
-      { "name": "TownCrier", "maxCount": 1, "probability": 100 }
+      {
+        "name": "TownCrier",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "677ed85a-ddef-4f19-b78a-4b2b3178064f",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      732,
+      1256,
+      30
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "901b6857-11f1-4c9f-bb1f-1399406dc3b6",
     "name": "Spawner (504)",
-    "location": [399, 549, 15],
+    "location": [
+      399,
+      549,
+      15
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -481,14 +1433,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "31e5525e-f90f-474f-a76a-7f0957dd5800",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      399,
+      549,
+      15
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "95447e64-a9d3-45ca-81c7-318441ca97d4",
     "name": "Spawner (504)",
-    "location": [1111, 495, 18],
+    "location": [
+      1111,
+      495,
+      18
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -497,14 +1481,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "f329777d-77be-46ea-a8a4-3e83478c4eac",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      1111,
+      495,
+      18
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "97d04faf-bf2f-4085-bdb9-2a6538c4a97a",
     "name": "Spawner (504)",
-    "location": [720, 1211, 25],
+    "location": [
+      720,
+      1211,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -513,14 +1529,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Tanner", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tanner",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "36befa74-5769-44ea-813f-1aa4aa963fd7",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      720,
+      1211,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "a4b62432-203b-4b3e-894c-651e62d68567",
     "name": "Spawner (504)",
-    "location": [739, 1223, 45],
+    "location": [
+      739,
+      1223,
+      45
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -529,14 +1577,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Carpenter", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Carpenter",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "c14cb387-fb4c-478e-b10c-7ba84b2fb808",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      739,
+      1223,
+      45
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "af820fc2-57d8-4b19-9a54-9bb57f9736cb",
     "name": "Spawner (504)",
-    "location": [1221, 494, 27],
+    "location": [
+      1221,
+      494,
+      27
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -545,14 +1625,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "66fe7b45-4518-405d-8996-6bc5413d7e4c",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      1221,
+      494,
+      27
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b4b940cb-17ef-4234-842c-2bdcbd7827f0",
     "name": "Spawner (504)",
-    "location": [779, 1259, 26],
+    "location": [
+      779,
+      1259,
+      26
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -561,14 +1673,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "4c7fe168-978c-4cf4-8035-a2e5e656532f",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      779,
+      1259,
+      26
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b5b2efe1-d96b-4d37-ac13-ec6251ad23f9",
     "name": "Spawner (504)",
-    "location": [895, 519, 53],
+    "location": [
+      895,
+      519,
+      53
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -577,14 +1721,46 @@
     "homeRange": 2,
     "walkingRange": 2,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "97689ab3-0f08-4830-b6f2-34f1a743de8b",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      895,
+      519,
+      53
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "b65649fc-1b3a-4124-b063-0f0e7b35d3d2",
     "name": "Spawner (504)",
-    "location": [979, 238, 21],
+    "location": [
+      979,
+      238,
+      21
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -593,14 +1769,46 @@
     "homeRange": 5,
     "walkingRange": 5,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9ed8ad3d-8655-4522-83db-960540ba42a0",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      979,
+      238,
+      21
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "bdc0117b-2e5b-458b-90ca-0f3bfa5489e8",
     "name": "Spawner (504)",
-    "location": [703, 1262, 25],
+    "location": [
+      703,
+      1262,
+      25
+    ],
     "map": "Tokuno",
     "count": 3,
     "minDelay": "00:05:00",
@@ -609,16 +1817,56 @@
     "homeRange": 0,
     "walkingRange": 10,
     "entries": [
-      { "name": "Baker", "maxCount": 1, "probability": 100 },
-      { "name": "Butcher", "maxCount": 1, "probability": 100 },
-      { "name": "Cook", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Baker",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Butcher",
+        "maxCount": 1,
+        "probability": 100
+      },
+      {
+        "name": "Cook",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "6d2f7240-3a81-4b15-9e0c-5cf89f9b0876",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      703,
+      1262,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "cfc1714e-8851-4cf8-a9a5-bb1d4d9236b0",
     "name": "Spawner (504)",
-    "location": [558, 534, 32],
+    "location": [
+      558,
+      534,
+      32
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -627,14 +1875,46 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a7fba092-c3e4-4e61-88f9-da7dc108e4b4",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      558,
+      534,
+      32
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d001030a-99d7-4146-83f9-b5e1aff453b0",
     "name": "Spawner (504)",
-    "location": [729, 1249, 25],
+    "location": [
+      729,
+      1249,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -643,14 +1923,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Banker", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Banker",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "b31017ad-2381-465a-a648-61d17960d66a",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      729,
+      1249,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "d64f79d1-bb69-4aab-8099-04cc92244b60",
     "name": "Spawner (504)",
-    "location": [806, 1308, 25],
+    "location": [
+      806,
+      1308,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -659,14 +1971,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Weaponsmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Weaponsmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "59950b2e-d087-4253-960b-38a84ad12348",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      806,
+      1308,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "dc6b9648-9165-491e-87b2-f5950d8e38ad",
     "name": "Spawner (504)",
-    "location": [744, 1210, 25],
+    "location": [
+      744,
+      1210,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -675,14 +2019,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Weaver", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Weaver",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "04bde768-d838-46d8-a50b-9ad2fd36a5ae",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      744,
+      1210,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "e081b4f9-5c48-4808-82e7-f8bb95309a19",
     "name": "Spawner (504)",
-    "location": [744, 1219, 25],
+    "location": [
+      744,
+      1219,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -691,14 +2067,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Tailor", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Tailor",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "9e7aac10-603d-4b3f-968a-2908c4760fc3",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      744,
+      1219,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f44766ae-31e3-46fa-94ce-869a53621012",
     "name": "Spawner (504)",
-    "location": [662, 1210, 25],
+    "location": [
+      662,
+      1210,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -707,14 +2115,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Blacksmith", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Blacksmith",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e40718f0-eb58-4cde-8ee3-dc5db55d22ce",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      662,
+      1210,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f50b6789-7be4-43f0-a1be-c53e85a6997b",
     "name": "Spawner (504)",
-    "location": [675, 1265, 25],
+    "location": [
+      675,
+      1265,
+      25
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -723,14 +2163,46 @@
     "homeRange": 4,
     "walkingRange": 4,
     "entries": [
-      { "name": "Bard", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Bard",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "a46d93e4-e14d-4deb-b47a-3428a34ec4dc",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      675,
+      1265,
+      25
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "f6481ae3-b345-40ab-aaa2-2eea59aee211",
     "name": "Spawner (504)",
-    "location": [781, 1301, 26],
+    "location": [
+      781,
+      1301,
+      26
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -739,14 +2211,46 @@
     "homeRange": 0,
     "walkingRange": 4,
     "entries": [
-      { "name": "Bowyer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "Bowyer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "0218bb9f-5c00-46e3-89aa-34ce57a4a94e",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      781,
+      1301,
+      26
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   },
   {
     "$type": "Spawner",
     "guid": "fb70140d-b0d9-41c7-9975-c8136c4ee686",
     "name": "Spawner (504)",
-    "location": [1166, 802, 27],
+    "location": [
+      1166,
+      802,
+      27
+    ],
     "map": "Tokuno",
     "count": 1,
     "minDelay": "00:05:00",
@@ -755,7 +2259,35 @@
     "homeRange": 3,
     "walkingRange": 3,
     "entries": [
-      { "name": "WanderingHealer", "maxCount": 1, "probability": 100 }
+      {
+        "name": "WanderingHealer",
+        "maxCount": 1,
+        "probability": 100
+      }
+    ]
+  },
+  {
+    "$type": "Spawner",
+    "guid": "e9264fb1-e9a4-4ed7-95df-666cf902b3fd",
+    "name": "Guard Spawner (Spawner (504))",
+    "location": [
+      1166,
+      802,
+      27
+    ],
+    "map": "Tokuno",
+    "count": 2,
+    "minDelay": "00:05:00",
+    "maxDelay": "00:10:00",
+    "team": 0,
+    "homeRange": 10,
+    "walkingRange": 40,
+    "entries": [
+      {
+        "name": "MahaonTownDefender",
+        "maxCount": 2,
+        "probability": 100
+      }
     ]
   }
 ]

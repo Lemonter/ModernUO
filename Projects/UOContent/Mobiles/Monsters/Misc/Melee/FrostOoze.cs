@@ -36,8 +36,8 @@ namespace Server.Mobiles
             VirtualArmor = 38;
         }
 
-        public override string CorpseName => "a frost ooze corpse";
-        public override string DefaultName => "a frost ooze";
+        public override string CorpseName => "труп морозной слизи";
+        public override string DefaultName => "морозная слизь";
 
         public override void GenerateLoot()
         {

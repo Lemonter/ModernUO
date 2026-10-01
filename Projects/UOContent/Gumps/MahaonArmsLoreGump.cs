@@ -4,7 +4,7 @@ using Server.Systems.MahaonGems;
 
 namespace Server.Gumps;
 
-public class MahaonArmsLoreGump : StaticGump<MahaonArmsLoreGump>
+public class MahaonArmsLoreGump : DynamicGump
 {
     private readonly Item _item;
 
@@ -12,7 +12,13 @@ public class MahaonArmsLoreGump : StaticGump<MahaonArmsLoreGump>
 
     public MahaonArmsLoreGump(Item item) : base(50, 50) => _item = item;
 
-    protected override void BuildLayout(ref StaticGumpBuilder builder)
+    // Was StaticGump<MahaonArmsLoreGump> with no Cached override — same bug as
+    // MahaonAnimalLoreGump had: StaticGump caches its compiled layout per-TYPE (static
+    // field), so this bakes in whichever item was FIRST examined after server start and
+    // resends those exact durability/socket numbers for every item forever after. Every
+    // other Mahaon *LoreGump/*InfoGump sibling already either uses DynamicGump or
+    // explicitly sets `Cached => false` — this one was just missed.
+    protected override void BuildLayout(ref DynamicGumpBuilder builder)
     {
         builder.AddPage();
         builder.AddBackground(0, 0, 300, 300, 5054);

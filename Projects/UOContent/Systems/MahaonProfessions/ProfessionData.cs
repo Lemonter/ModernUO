@@ -9,36 +9,112 @@ public enum ProfessionCategory
     Warrior,
     Thief,
     Bard,
-    Ranger
+    Ranger,
+
+    // Mahaon: добавлены строго в конец - значение enum лежит в сейве через
+    // ProfessionData.All, вставка в середину переименовала бы всем профессию.
+    // Категории под то, чего на исходном шарде не существовало: он застыл на UO конца
+    // девяностых, где не было ни некромантии, ни рыцарства, ни мистицизма, ни плетения,
+    // ни восточных школ.
+    Necromancy,
+    Faith,
+    Mysticism,
+    Weaving,
+    Bushido,
+    Ninjitsu
 }
 
 public enum MahaonProfession
 {
-    // Magic
-    Wizard, BattleMage, Illusionist, Trickster, Witch,
-    // Craft
-    Grandmaster, Sutler, Artisan, Craftsman, Merchant,
-    // Warrior
-    Paladin, Warrior, Mercenary, Scout, Knight,
-    // Thief
-    Saboteur, Safecracker, Assassin, Cardsharp, Robber,
-    // Bard
-    Fakir, Musician, Troubadour, ConArtist, WanderingActor,
-    // Ranger
-    Gamekeeper, Hunter, Marksman, ForestBandit, Traveler
+    // Магия
+    Wizard,
+    BattleMage,
+    Illusionist,
+    Trickster,
+    Witch,
+    // Ремесло
+    Grandmaster,
+    Sutler,
+    Artisan,
+    Craftsman,
+    Merchant,
+    // Воин
+    Paladin,
+    Warrior,
+    Mercenary,
+    Scout,
+    Knight,
+    // Вор
+    Saboteur,
+    Safecracker,
+    Assassin,
+    Cardsharp,
+    Robber,
+    // Бард
+    Fakir,
+    Musician,
+    Troubadour,
+    ConArtist,
+    WanderingActor,
+    // Рейнджер
+    Gamekeeper,
+    Hunter,
+    Marksman,
+    ForestBandit,
+    Traveler,
+
+    // --- новые категории, дописаны в конец ради совместимости сейва ---
+    // Некромантия
+    Warlock,
+    DeathKnight,
+    Defiler,
+    Mourner,
+    Embalmer,
+    // Вера
+    Templar,
+    Exorcist,
+    Preacher,
+    Inquisitor,
+    PilgrimBrother,
+    // Мистицизм
+    Seer,
+    Imbuer,
+    ElementalFighter,
+    ElementalCaller,
+    Shaman,
+    // Плетение
+    Weaver,
+    Druid,
+    GroveSinger,
+    GroveKeeper,
+    DuskWeaver,
+    // Бусидо
+    Swordmaster,
+    WarriorMonk,
+    HorseArcher,
+    Stargazer,
+    HouseGuardian,
+    // Ниндзюцу
+    Infiltrator,
+    MountainWanderer,
+    ShadowBinder,
+    Trapper,
+    Puppeteer
 }
 
 /// <summary>
-///     Every profession is a hybrid of a primary category (which grants the full 5/4/3-skill
-///     class kit at up to 120) and a secondary category (which grants that category's
-///     signature passive ability, not its skills). Stat numbers are caps to grow toward, not
-///     starting values — same idea as skills.
+///     Профессия - это пара категорий. Первичная даёт полный набор навыков до 120 и все
+///     три перка своей категории; вторичная - только сигнатурный перк своей, но в полную
+///     силу. Поэтому Паладин (Воин+Магия) и Боевой маг (Магия+Воин) - разные персонажи,
+///     а не зеркало.
 ///
-///     Reconstructed from the archived site's actual per-profession pages
-///     (kingsofmahaon.narod.ru/prof1.htm through prof6.htm), not guessed from the category
-///     table alone. Two professions (Трубадур, Егерь) had no surviving page text on the
-///     source site itself — those stat/secondary values are the user's own best estimate,
-///     not sourced. Everything else here is read directly off the real page text.
+///     Первые тридцать восстановлены с архива настоящего шарда
+///     (kingsofmahaon.narod.ru/prof1.htm ... prof6.htm) и не менялись: имена, категории,
+///     статкапы как есть. Единственная правка - вторички Факира и Бродячего актёра:
+///     в архиве у первого её не было вовсе, у второго стояло Ремесло, дублируя
+///     Менестреля. Свободными оставались Магия и Рейнджер, их и проставил.
+///
+///     Остальные тридцать придуманы с нуля под шесть новых категорий.
 /// </summary>
 public readonly struct ProfessionInfo
 {
@@ -46,6 +122,15 @@ public readonly struct ProfessionInfo
     public readonly ProfessionCategory SecondaryCategory;
     public readonly string MaleName;
     public readonly string FemaleName;
+    // Пределы характеристик по профессиям больше не различаются: у всех по сотне на
+    // каждую, то есть СУММА 300 — именно она и работает.
+    //
+    // Различаться им было бессмысленно: отдельную характеристику игрока ограничивает
+    // общешардовая настройка stats.statMax (SkillCheck.CanRaise, у нас 125), а профессия
+    // задавала только сумму (Mobile.StatCap) — числа вроде «Сила 140» не значили ровным
+    // счётом ничего, потому что до 125 рос кто угодно, а выше не рос никто.
+    //
+    // Поля оставлены: из них складывается StatCap и на них смотрит обучение ботов.
     public readonly int StrCap;
     public readonly int DexCap;
     public readonly int IntCap;
@@ -67,116 +152,236 @@ public readonly struct ProfessionInfo
 
 public static class ProfessionData
 {
-    /// <summary>The full class skill kit per category, each capped at 120 for anyone whose
-    /// primary category this is. Everyone else caps at the standard 100.</summary>
+    /// <summary>
+    ///     Полный набор навыков категории - до 120 у того, чья это первичная категория,
+    ///     и до 100 у всех остальных.
+    ///
+    ///     Раньше шесть категорий покрывали 25 навыков из 58. Без профессии оставались
+    ///     не только школы, появившиеся после 2000 года, но и Mining/Lumberjacking/Fishing
+    ///     (при живой категории "Ремесло", которая из этого сырья всё и делает), Anatomy,
+    ///     Healing, Parry, MagicResist, Alchemy, Inscribe и ещё десяток вещей возрастом
+    ///     старше самого шарда. Теперь покрыты все 58.
+    ///
+    ///     Навык намеренно может входить в несколько категорий: Anatomy честно
+    ///     принадлежит и Воину, и Вере, и Бусидо.
+    /// </summary>
     public static readonly Dictionary<ProfessionCategory, SkillName[]> CategorySkills = new()
     {
-        [ProfessionCategory.Magic] = new[] { SkillName.Magery, SkillName.EvalInt, SkillName.Meditation },
+        [ProfessionCategory.Magic] = new[]
+        {
+            SkillName.Magery, SkillName.EvalInt, SkillName.Meditation, SkillName.Inscribe, SkillName.ItemID
+        },
         [ProfessionCategory.Craft] = new[]
         {
-            SkillName.ArmsLore, SkillName.Blacksmith, SkillName.Carpentry, SkillName.Tailoring, SkillName.Tinkering
+            SkillName.Blacksmith, SkillName.Carpentry, SkillName.Tailoring, SkillName.Tinkering,
+            SkillName.ArmsLore, SkillName.Fletching, SkillName.Alchemy, SkillName.Cooking, SkillName.Mining,
+            SkillName.Lumberjacking
         },
         [ProfessionCategory.Warrior] = new[]
         {
-            SkillName.Fencing, SkillName.Macing, SkillName.Swords, SkillName.Wrestling, SkillName.Tactics
+            SkillName.Swords, SkillName.Fencing, SkillName.Macing, SkillName.Wrestling, SkillName.Tactics,
+            SkillName.Anatomy, SkillName.Parry, SkillName.Healing
         },
         [ProfessionCategory.Thief] = new[]
         {
-            SkillName.Hiding, SkillName.Stealth, SkillName.Lockpicking, SkillName.Stealing
+            SkillName.Hiding, SkillName.Stealth, SkillName.Stealing, SkillName.Lockpicking, SkillName.Snooping,
+            SkillName.RemoveTrap, SkillName.DetectHidden, SkillName.Poisoning
         },
         [ProfessionCategory.Bard] = new[]
         {
-            SkillName.Provocation, SkillName.Peacemaking, SkillName.Musicianship, SkillName.Discordance
+            SkillName.Provocation, SkillName.Peacemaking, SkillName.Musicianship, SkillName.Discordance,
+            SkillName.Begging, SkillName.TasteID
         },
         [ProfessionCategory.Ranger] = new[]
         {
-            SkillName.AnimalTaming, SkillName.Archery, SkillName.Tracking, SkillName.Veterinary
+            SkillName.Archery, SkillName.Tracking, SkillName.AnimalTaming, SkillName.AnimalLore,
+            SkillName.Veterinary, SkillName.Herding, SkillName.Camping, SkillName.Cartography, SkillName.Fishing
+        },
+        [ProfessionCategory.Necromancy] = new[]
+        {
+            SkillName.Necromancy, SkillName.SpiritSpeak, SkillName.Forensics, SkillName.MagicResist
+        },
+        [ProfessionCategory.Faith] = new[]
+        {
+            SkillName.Chivalry, SkillName.Focus, SkillName.Healing, SkillName.Anatomy
+        },
+        [ProfessionCategory.Mysticism] = new[]
+        {
+            SkillName.Mysticism, SkillName.Focus, SkillName.Imbuing, SkillName.MagicResist
+        },
+        [ProfessionCategory.Weaving] = new[] { SkillName.Spellweaving, SkillName.Meditation, SkillName.AnimalLore },
+        [ProfessionCategory.Bushido] = new[]
+        {
+            SkillName.Bushido, SkillName.Parry, SkillName.Tactics, SkillName.Anatomy
+        },
+        [ProfessionCategory.Ninjitsu] = new[]
+        {
+            SkillName.Ninjitsu, SkillName.Throwing, SkillName.Hiding, SkillName.Stealth, SkillName.Poisoning
         }
     };
 
     public static readonly Dictionary<MahaonProfession, ProfessionInfo> All = new()
     {
-        // -- Magic (primary) --------------------------------------------------------------
+        // -- Магия --
         [MahaonProfession.Wizard] = new(ProfessionCategory.Magic, ProfessionCategory.Craft,
-            "Волшебник", "Волшебница", 60, 100, 120),
+            "Волшебник", "Волшебница", 100, 100, 100),
         [MahaonProfession.BattleMage] = new(ProfessionCategory.Magic, ProfessionCategory.Warrior,
-            "Боевой маг", "Чародейка", 80, 100, 120),
+            "Боевой маг", "Чародейка", 100, 100, 100),
         [MahaonProfession.Illusionist] = new(ProfessionCategory.Magic, ProfessionCategory.Thief,
-            "Иллюзионист", "Иллюзионистка", 60, 100, 140),
+            "Иллюзионист", "Иллюзионистка", 100, 100, 100),
         [MahaonProfession.Trickster] = new(ProfessionCategory.Magic, ProfessionCategory.Bard,
-            "Фокусник", "Фокусница", 60, 100, 140),
+            "Фокусник", "Фокусница", 100, 100, 100),
         [MahaonProfession.Witch] = new(ProfessionCategory.Magic, ProfessionCategory.Ranger,
-            "Ведьмак", "Ведьма", 40, 100, 140),
+            "Ведьмак", "Ведьма", 100, 100, 100),
 
-        // -- Craft (primary) ---------------------------------------------------------------
+        // -- Ремесло --
         [MahaonProfession.Grandmaster] = new(ProfessionCategory.Craft, ProfessionCategory.Magic,
-            "Великиймастер", "Рукодельница", 80, 100, 60),
+            "Великий мастер", "Рукодельница", 100, 100, 100),
         [MahaonProfession.Sutler] = new(ProfessionCategory.Craft, ProfessionCategory.Warrior,
-            "Маркитант", "Маркитантка", 120, 100, 40),
+            "Маркитант", "Маркитантка", 100, 100, 100),
         [MahaonProfession.Artisan] = new(ProfessionCategory.Craft, ProfessionCategory.Thief,
-            "Мастеровой", "Мастерица", 100, 100, 60),
+            "Мастеровой", "Мастерица", 100, 100, 100),
         [MahaonProfession.Craftsman] = new(ProfessionCategory.Craft, ProfessionCategory.Bard,
-            "Искусник", "Искусница", 100, 100, 60),
+            "Искусник", "Искусница", 100, 100, 100),
         [MahaonProfession.Merchant] = new(ProfessionCategory.Craft, ProfessionCategory.Ranger,
-            "Купец", "Купчиха", 80, 100, 60),
+            "Купец", "Купчиха", 100, 100, 100),
 
-        // -- Warrior (primary) --------------------------------------------------------------
+        // -- Воин --
         [MahaonProfession.Paladin] = new(ProfessionCategory.Warrior, ProfessionCategory.Magic,
-            "Паладин", "Воительница веры", 120, 100, 60),
+            "Паладин", "Воительница веры", 100, 100, 100),
         [MahaonProfession.Warrior] = new(ProfessionCategory.Warrior, ProfessionCategory.Craft,
-            "Гридень", "Амазонка", 140, 100, 40),
+            "Гридень", "Амазонка", 100, 100, 100),
         [MahaonProfession.Mercenary] = new(ProfessionCategory.Warrior, ProfessionCategory.Thief,
-            "Наемник", "Наемница", 140, 100, 60),
+            "Наемник", "Наемница", 100, 100, 100),
         [MahaonProfession.Scout] = new(ProfessionCategory.Warrior, ProfessionCategory.Bard,
-            "Разведчик", "Разведчица", 140, 100, 60),
+            "Разведчик", "Разведчица", 100, 100, 100),
         [MahaonProfession.Knight] = new(ProfessionCategory.Warrior, ProfessionCategory.Ranger,
-            "Рыцарь", "Странствующая дева", 120, 100, 60),
+            "Рыцарь", "Странствующая дева", 100, 100, 100),
 
-        // -- Thief (primary) ----------------------------------------------------------------
+        // -- Вор --
         [MahaonProfession.Saboteur] = new(ProfessionCategory.Thief, ProfessionCategory.Magic,
-            "Диверсант", "Лазутчица", 60, 140, 80),
+            "Диверсант", "Лазутчица", 100, 100, 100),
         [MahaonProfession.Safecracker] = new(ProfessionCategory.Thief, ProfessionCategory.Craft,
-            "Медвежатник", "Взломщица", 80, 140, 60),
+            "Медвежатник", "Взломщица", 100, 100, 100),
         [MahaonProfession.Assassin] = new(ProfessionCategory.Thief, ProfessionCategory.Warrior,
-            "Наемный убийца", "Убийца", 100, 140, 60),
+            "Наемный убийца", "Убийца", 100, 100, 100),
         [MahaonProfession.Cardsharp] = new(ProfessionCategory.Thief, ProfessionCategory.Bard,
-            "Шулер", "Картежница", 80, 140, 80),
+            "Шулер", "Картежница", 100, 100, 100),
         [MahaonProfession.Robber] = new(ProfessionCategory.Thief, ProfessionCategory.Ranger,
-            "Грабитель", "Грабительница", 60, 140, 80),
+            "Грабитель", "Грабительница", 100, 100, 100),
 
-        // -- Bard (primary) -----------------------------------------------------------------
-        // Fakir shows no allowed spells and no other-category ability text on the source
-        // page at all — the one profession in the whole list with no clear secondary, so it
-        // stays that way here too rather than inventing one.
-        [MahaonProfession.Fakir] = new(ProfessionCategory.Bard, ProfessionCategory.Bard,
-            "Факир", "Байдера", 40, 140, 100),
+        // -- Бард --
+        [MahaonProfession.Fakir] = new(ProfessionCategory.Bard, ProfessionCategory.Magic,
+            "Факир", "Байдера", 100, 100, 100),
         [MahaonProfession.Musician] = new(ProfessionCategory.Bard, ProfessionCategory.Craft,
-            "Менестрель", "Певица", 60, 140, 80),
-        // No surviving page text for Трубадур — stats and secondary are the user's own
-        // estimate, not sourced like the rest of this table.
+            "Менестрель", "Певица", 100, 100, 100),
         [MahaonProfession.Troubadour] = new(ProfessionCategory.Bard, ProfessionCategory.Warrior,
-            "Трубадур", "Танцовщица", 60, 140, 80),
+            "Трубадур", "Танцовщица", 100, 100, 100),
         [MahaonProfession.ConArtist] = new(ProfessionCategory.Bard, ProfessionCategory.Thief,
-            "Аферист", "Аферистка", 60, 140, 100),
-        [MahaonProfession.WanderingActor] = new(ProfessionCategory.Bard, ProfessionCategory.Craft,
-            "Бродячий актер", "Актриса", 40, 140, 100),
+            "Аферист", "Аферистка", 100, 100, 100),
+        [MahaonProfession.WanderingActor] = new(ProfessionCategory.Bard, ProfessionCategory.Ranger,
+            "Бродячий актер", "Актриса", 100, 100, 100),
 
-        // -- Ranger (primary) ---------------------------------------------------------------
-        // No surviving page text for Егерь — stats are the user's own estimate; secondary
-        // follows the same row-pattern (row 1 -> Magic) seen consistently across the other
-        // four fully-documented categories.
+        // -- Рейнджер --
         [MahaonProfession.Gamekeeper] = new(ProfessionCategory.Ranger, ProfessionCategory.Magic,
-            "Егерь", "Смотрительница леса", 60, 140, 80),
+            "Егерь", "Смотрительница леса", 100, 100, 100),
         [MahaonProfession.Hunter] = new(ProfessionCategory.Ranger, ProfessionCategory.Craft,
-            "Охотник", "Охотница", 80, 140, 60),
-        // Стрелок is confirmed Ranger+Warrior directly by the user, overriding the source
-        // page's own unclear "Magic Resistance to 200" text.
+            "Охотник", "Охотница", 100, 100, 100),
         [MahaonProfession.Marksman] = new(ProfessionCategory.Ranger, ProfessionCategory.Warrior,
-            "Стрелок", "Лучница", 100, 140, 60),
+            "Стрелок", "Лучница", 100, 100, 100),
         [MahaonProfession.ForestBandit] = new(ProfessionCategory.Ranger, ProfessionCategory.Thief,
-            "Лесной разбойник", "Лесная разбойница", 80, 140, 80),
+            "Лесной разбойник", "Лесная разбойница", 100, 100, 100),
         [MahaonProfession.Traveler] = new(ProfessionCategory.Ranger, ProfessionCategory.Bard,
-            "Путешественник", "Путешественница", 80, 140, 80)
+            "Путешественник", "Путешественница", 100, 100, 100),
+
+        // -- Некромантия --
+        [MahaonProfession.Warlock] = new(ProfessionCategory.Necromancy, ProfessionCategory.Magic,
+            "Чернокнижник", "Чернокнижница", 100, 100, 100),
+        [MahaonProfession.DeathKnight] = new(ProfessionCategory.Necromancy, ProfessionCategory.Warrior,
+            "Рыцарь смерти", "Дева смерти", 100, 100, 100),
+        [MahaonProfession.Defiler] = new(ProfessionCategory.Necromancy, ProfessionCategory.Thief,
+            "Осквернитель", "Осквернительница", 100, 100, 100),
+        [MahaonProfession.Mourner] = new(ProfessionCategory.Necromancy, ProfessionCategory.Bard,
+            "Плакальщик", "Плакальщица", 100, 100, 100),
+        [MahaonProfession.Embalmer] = new(ProfessionCategory.Necromancy, ProfessionCategory.Craft,
+            "Бальзамировщик", "Бальзамировщица", 100, 100, 100),
+
+        // -- Вера --
+        [MahaonProfession.Templar] = new(ProfessionCategory.Faith, ProfessionCategory.Warrior,
+            "Храмовник", "Храмовница", 100, 100, 100),
+        [MahaonProfession.Exorcist] = new(ProfessionCategory.Faith, ProfessionCategory.Magic,
+            "Экзорцист", "Экзорцистка", 100, 100, 100),
+        [MahaonProfession.Preacher] = new(ProfessionCategory.Faith, ProfessionCategory.Bard,
+            "Проповедник", "Проповедница", 100, 100, 100),
+        [MahaonProfession.Inquisitor] = new(ProfessionCategory.Faith, ProfessionCategory.Thief,
+            "Инквизитор", "Инквизиторша", 100, 100, 100),
+        [MahaonProfession.PilgrimBrother] = new(ProfessionCategory.Faith, ProfessionCategory.Ranger,
+            "Странствующий брат", "Странствующая сестра", 100, 100, 100),
+
+        // -- Мистицизм --
+        [MahaonProfession.Seer] = new(ProfessionCategory.Mysticism, ProfessionCategory.Magic,
+            "Прорицатель", "Прорицательница", 100, 100, 100),
+        [MahaonProfession.Imbuer] = new(ProfessionCategory.Mysticism, ProfessionCategory.Craft,
+            "Наделяющий", "Наделяющая", 100, 100, 100),
+        [MahaonProfession.ElementalFighter] = new(ProfessionCategory.Mysticism, ProfessionCategory.Warrior,
+            "Ратник стихий", "Дева стихий", 100, 100, 100),
+        [MahaonProfession.ElementalCaller] = new(ProfessionCategory.Mysticism, ProfessionCategory.Faith,
+            "Заклинатель стихий", "Заклинательница стихий", 100, 100, 100),
+        [MahaonProfession.Shaman] = new(ProfessionCategory.Mysticism, ProfessionCategory.Ranger,
+            "Шаман", "Шаманка", 100, 100, 100),
+
+        // -- Плетение --
+        [MahaonProfession.Weaver] = new(ProfessionCategory.Weaving, ProfessionCategory.Magic,
+            "Плетельщик", "Плетельщица", 100, 100, 100),
+        [MahaonProfession.Druid] = new(ProfessionCategory.Weaving, ProfessionCategory.Ranger,
+            "Друид", "Друидесса", 100, 100, 100),
+        [MahaonProfession.GroveSinger] = new(ProfessionCategory.Weaving, ProfessionCategory.Bard,
+            "Певец рощи", "Певица рощи", 100, 100, 100),
+        [MahaonProfession.GroveKeeper] = new(ProfessionCategory.Weaving, ProfessionCategory.Faith,
+            "Хранитель рощи", "Хранительница рощи", 100, 100, 100),
+        [MahaonProfession.DuskWeaver] = new(ProfessionCategory.Weaving, ProfessionCategory.Thief,
+            "Сумеречный плетельщик", "Сумеречная плетельщица", 100, 100, 100),
+
+        // -- Бусидо --
+        [MahaonProfession.Swordmaster] = new(ProfessionCategory.Bushido, ProfessionCategory.Warrior,
+            "Мечник", "Мечница", 100, 100, 100),
+        [MahaonProfession.WarriorMonk] = new(ProfessionCategory.Bushido, ProfessionCategory.Faith,
+            "Воин-монах", "Воительница-монахиня", 100, 100, 100),
+        [MahaonProfession.HorseArcher] = new(ProfessionCategory.Bushido, ProfessionCategory.Ranger,
+            "Конный лучник", "Конная лучница", 100, 100, 100),
+        [MahaonProfession.Stargazer] = new(ProfessionCategory.Bushido, ProfessionCategory.Magic,
+            "Звездочёт", "Звездочётка", 100, 100, 100),
+        [MahaonProfession.HouseGuardian] = new(ProfessionCategory.Bushido, ProfessionCategory.Craft,
+            "Хранитель дома", "Хранительница дома", 100, 100, 100),
+
+        // -- Ниндзюцу --
+        [MahaonProfession.Infiltrator] = new(ProfessionCategory.Ninjitsu, ProfessionCategory.Thief,
+            "Лазутчик", "Лазутчица", 100, 100, 100),
+        [MahaonProfession.MountainWanderer] = new(ProfessionCategory.Ninjitsu, ProfessionCategory.Warrior,
+            "Горный странник", "Горная странница", 100, 100, 100),
+        [MahaonProfession.ShadowBinder] = new(ProfessionCategory.Ninjitsu, ProfessionCategory.Magic,
+            "Заклинатель теней", "Заклинательница теней", 100, 100, 100),
+        [MahaonProfession.Trapper] = new(ProfessionCategory.Ninjitsu, ProfessionCategory.Ranger,
+            "Ловчий", "Ловчая", 100, 100, 100),
+        [MahaonProfession.Puppeteer] = new(ProfessionCategory.Ninjitsu, ProfessionCategory.Bard,
+            "Кукловод", "Кукловодша", 100, 100, 100)
+    };
+
+    public static string RuCategoryName(ProfessionCategory category) => category switch
+    {
+        ProfessionCategory.Magic       => "Магия",
+        ProfessionCategory.Craft       => "Ремесло",
+        ProfessionCategory.Warrior     => "Воин",
+        ProfessionCategory.Thief       => "Вор",
+        ProfessionCategory.Bard        => "Бард",
+        ProfessionCategory.Ranger      => "Рейнджер",
+        ProfessionCategory.Necromancy  => "Некромантия",
+        ProfessionCategory.Faith       => "Вера",
+        ProfessionCategory.Mysticism   => "Мистицизм",
+        ProfessionCategory.Weaving     => "Плетение",
+        ProfessionCategory.Bushido     => "Бусидо",
+        ProfessionCategory.Ninjitsu    => "Ниндзюцу",
+        _ => category.ToString()
     };
 
     public static string GetName(MahaonProfession profession, bool female) =>

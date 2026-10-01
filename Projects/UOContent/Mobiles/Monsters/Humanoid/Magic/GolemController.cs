@@ -54,7 +54,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a golem controller corpse";
+        public override string CorpseName => "труп повелителя големов";
 
         public override bool ClickTitle => false;
         public override bool ShowFameTitle => false;

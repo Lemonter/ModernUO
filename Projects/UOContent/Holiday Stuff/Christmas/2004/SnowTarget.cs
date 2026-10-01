@@ -31,7 +31,7 @@ public class SnowTarget : Target
 
         if (from.Region.IsPartOf<SafeZone>() || targ.Region.IsPartOf<SafeZone>())
         {
-            from.SendMessage("You may not throw snow here.");
+            from.SendMessage("Здесь снежками не покидаешься.");
             return;
         }
 

@@ -67,8 +67,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a kappa corpse";
-        public override string DefaultName => "a kappa";
+        public override string CorpseName => "труп каппы";
+        public override string DefaultName => "каппа";
 
         private static MonsterAbility[] _abilities = { MonsterAbilities.DrainLifeAttack };
         public override MonsterAbility[] GetMonsterAbilities() => _abilities;

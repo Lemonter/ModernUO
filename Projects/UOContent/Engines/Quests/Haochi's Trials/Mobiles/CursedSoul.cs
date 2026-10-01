@@ -47,6 +47,6 @@ public partial class CursedSoul : BaseCreature
         );
     }
 
-    public override string CorpseName => "a cursed soul corpse";
-    public override string DefaultName => "a cursed soul";
+    public override string CorpseName => "труп проклятой души";
+    public override string DefaultName => "проклятая душа";
 }

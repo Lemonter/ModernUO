@@ -1,4 +1,6 @@
 using ModernUO.Serialization;
+using Server.Items;
+using Server.Systems.MahaonMetals;
 using Server.Misc;
 
 namespace Server.Mobiles
@@ -37,9 +39,21 @@ namespace Server.Mobiles
             Karma = -1500;
 
             VirtualArmor = 28;
+
+            // Mahaon: полный латный набор одного цвета (тёмная сталь) + щит и оружие —
+            // раньше этот ratman был совсем безоружным и голым.
+            // Mahaon: 0x3B2 вообще не был цветом металла — латы теперь мельхиоровые,
+            // с настоящим материалом в тултипе (см. Orc.cs).
+            AddItem(MahaonMetalTracker.Forge(new PlateChest(), MahaonMetal.Melchior));
+            AddItem(MahaonMetalTracker.Forge(new PlateArms(), MahaonMetal.Melchior));
+            AddItem(MahaonMetalTracker.Forge(new PlateGloves(), MahaonMetal.Melchior));
+            AddItem(MahaonMetalTracker.Forge(new PlateGorget(), MahaonMetal.Melchior));
+            AddItem(MahaonMetalTracker.Forge(new PlateLegs(), MahaonMetal.Melchior));
+            AddItem(MahaonMetalTracker.Forge(new MetalKiteShield(), MahaonMetal.Melchior));
+            AddItem(new WarMace());
         }
 
-        public override string CorpseName => "a ratman's corpse";
+        public override string CorpseName => "труп крысолюда";
         public override InhumanSpeech SpeechType => InhumanSpeech.Ratman;
 
         public override bool CanRummageCorpses => true;

@@ -36,8 +36,8 @@ namespace Server.Mobiles
             PackItem(new Nightshade(Utility.RandomMinMax(2, 3)));
         }
 
-        public override string CorpseName => "a gazer larva corpse";
-        public override string DefaultName => "a gazer larva";
+        public override string CorpseName => "труп личинки газера";
+        public override string DefaultName => "личинка газера";
 
         public override int Meat => 1;
 

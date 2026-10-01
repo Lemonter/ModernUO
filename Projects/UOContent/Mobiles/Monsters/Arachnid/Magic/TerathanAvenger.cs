@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 50;
         }
 
-        public override string CorpseName => "a terathan avenger corpse";
-        public override string DefaultName => "a terathan avenger";
+        public override string CorpseName => "труп тератана-мстителя";
+        public override string DefaultName => "тератан-мститель";
 
         public override Poison PoisonImmune => Poison.Deadly;
         public override Poison HitPoison => Poison.Deadly;

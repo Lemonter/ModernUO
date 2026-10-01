@@ -10,7 +10,7 @@ public partial class Zeefzorpul : BaseQuester
     {
     }
 
-    public override string DefaultName => "Zeefzorpul";
+    public override string DefaultName => "Зифзорпул";
 
     public override bool SkipSerialization => true;
 

@@ -110,7 +110,7 @@ public partial class WarriorGuard : BaseGuard
 
                 if (oldFocus?.Alive == false)
                 {
-                    Say("Thou hast suffered thy punishment, scoundrel.");
+                    Say("Ты понёс наказание, негодяй.");
                 }
 
                 if (value != null)
@@ -169,7 +169,7 @@ public partial class WarriorGuard : BaseGuard
         }
         else if (!CanSee(target) && UseSkill(SkillName.DetectHidden))
         {
-            Say("Reveal!");
+            Say("Явись!");
         }
     }
 }

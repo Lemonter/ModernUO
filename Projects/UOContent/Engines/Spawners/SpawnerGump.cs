@@ -114,6 +114,14 @@ public class SpawnerGump : Gump
                 textIndex,
                 name
             );
+
+            // Русское название — только подпись рядом, не трогает сам редактируемый
+            // textbox выше (там реальное имя C#-класса для поиска типа рефлексией).
+            if (Systems.MahaonCreatures.MahaonCreatureNameTableBySpawnerType.TryGet(name, out var ruName))
+            {
+                AddLabelCropped(232, 22 * i + 23 + offset, 36, 18, 0x384, ruName);
+            }
+
             AddTextEntry(270, 22 * i + 21 + offset, 30, 21, 0, textIndex + 1, maxCount);    // max count
             AddTextEntry(308, 22 * i + 21 + offset, 30, 21, 0, textIndex + 2, probability); // probability
 

@@ -167,3 +167,39 @@ public partial class YewLog : Log
 
     public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 95, new YewBoard());
 }
+
+// Mahaon: 3 new top-tier wood species, minSkill 102/105/107 in
+// MahaonResourceTiers.WoodTable — between Bloodwood(100) and Frostwood(110). The
+// TryCreateBoards skill gate below matches those same thresholds one-for-one.
+[SerializationGenerator(0, false)]
+public partial class BananaLog : Log
+{
+    [Constructible]
+    public BananaLog(int amount = 1) : base(CraftResource.BananaWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 102, new BananaBoard());
+}
+
+[SerializationGenerator(0, false)]
+public partial class CoconutLog : Log
+{
+    [Constructible]
+    public CoconutLog(int amount = 1) : base(CraftResource.CoconutWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 105, new CoconutBoard());
+}
+
+[SerializationGenerator(0, false)]
+public partial class PalmLog : Log
+{
+    [Constructible]
+    public PalmLog(int amount = 1) : base(CraftResource.PalmWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 107, new PalmBoard());
+}

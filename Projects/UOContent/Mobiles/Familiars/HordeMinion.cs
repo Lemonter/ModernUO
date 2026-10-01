@@ -50,10 +50,10 @@ public partial class HordeMinionFamiliar : BaseFamiliar
         AddItem(pack);
     }
 
-    public override string CorpseName => "a horde minion corpse";
+    public override string CorpseName => "труп отродья орды";
     public override bool DisplayWeight => true;
 
-    public override string DefaultName => "a horde minion";
+    public override string DefaultName => "отродье орды";
 
     public override void OnThink()
     {

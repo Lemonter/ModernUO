@@ -56,7 +56,8 @@ public class StrangleSpell : NecromancerSpell, ITargetingSpell<Mobile>
              * for a target at 20% Stamina the damage multiplier is 2.6
              */
 
-            m.Spell?.OnCasterHurt();
+            // Mahaon: no longer disturbs the target's own cast — enemy spells don't fizzle
+            // casting anymore (see Spell.OnCasterHurt's doc comment).
 
             m.PlaySound(0x22F);
             m.FixedParticles(0x36CB, 1, 9, 9911, 67, 5, EffectLayer.Head);

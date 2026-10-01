@@ -49,8 +49,8 @@ namespace Server.Mobiles
             );
         }
 
-        public override string CorpseName => "a rotting corpse";
-        public override string DefaultName => "a zombie";
+        public override string CorpseName => "гниющий труп";
+        public override string DefaultName => "зомби";
         public override bool IsUndead => true;
 
         public override bool BleedImmune => true;

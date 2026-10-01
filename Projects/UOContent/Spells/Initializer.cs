@@ -169,34 +169,34 @@ namespace Server.Spells
                     Register(606, typeof(SummonFeySpell));
                     Register(607, typeof(SummonFiendSpell));
                     Register(608, typeof(ReaperFormSpell));
-                    // Register(609, typeof(WildfireSpell));
+                    Register(609, typeof(WildfireSpell));
                     Register(610, typeof(EssenceOfWindSpell));
-                    // Register(611, typeof(DryadAllureSpell));
+                    Register(611, typeof(DryadAllureSpell));
                     Register(612, typeof(EtherealVoyageSpell));
                     Register(613, typeof(WordOfDeathSpell));
                     Register(614, typeof(GiftOfLifeSpell));
-                    // Register(615, typeof(ArcaneEmpowermentSpell));
+                    Register(615, typeof(ArcaneEmpowermentSpell));
                 }
 
                 if (Core.SA)
                 {
                     // Mysticism spells
-                    // Register(677, typeof(NetherBoltSpell));
-                    // Register(678, typeof(HealingStoneSpell));
-                    // Register(679, typeof(PurgeMagicSpell));
-                    // Register(680, typeof(EnchantSpell));
-                    // Register(681, typeof(SleepSpell));
+                    Register(677, typeof(NetherBoltSpell));
+                    Register(678, typeof(HealingStoneSpell));
+                    Register(679, typeof(PurgeMagicSpell));
+                    Register(680, typeof(EnchantSpell));
+                    Register(681, typeof(SleepSpell));
                     Register(682, typeof(EagleStrikeSpell));
                     Register(683, typeof(AnimatedWeaponSpell));
                     Register(684, typeof(StoneFormSpell));
-                    // Register(685, typeof(SpellTriggerSpell));
-                    // Register(686, typeof(MassSleepSpell));
+                    Register(685, typeof(SpellTriggerSpell));
+                    Register(686, typeof(MassSleepSpell));
                     Register(687, typeof(CleansingWindsSpell));
                     Register(688, typeof(BombardSpell));
                     Register(689, typeof(SpellPlagueSpell));
                     Register(690, typeof(HailStormSpell));
                     Register(691, typeof(NetherCycloneSpell));
-                    // Register(692, typeof(RisingColossusSpell));
+                    Register(692, typeof(RisingColossusSpell));
                 }
             }
         }

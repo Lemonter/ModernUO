@@ -41,8 +41,8 @@ namespace Server.Mobiles
             MinTameSkill = 59.1;
         }
 
-        public override string CorpseName => "a snake corpse";
-        public override string DefaultName => "a snake";
+        public override string CorpseName => "труп змеи";
+        public override string DefaultName => "змея";
 
         public override Poison PoisonImmune => Poison.Lesser;
         public override Poison HitPoison => Poison.Lesser;

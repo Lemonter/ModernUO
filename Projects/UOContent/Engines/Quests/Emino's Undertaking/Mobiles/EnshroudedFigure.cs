@@ -12,7 +12,7 @@ public partial class EnshroudedFigure : BaseQuester
     {
     }
 
-    public override string DefaultName => "an enshrouded figure";
+    public override string DefaultName => "закутанная фигура";
 
     public override int TalkNumber => -1;
 

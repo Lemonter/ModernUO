@@ -147,7 +147,7 @@ public class SheriffGump : FactionGump
             }
             else if (BaseBoat.FindBoatAt(m_From.Location, m_From.Map) != null)
             {
-                m_From.SendMessage("You cannot place a guard here");
+                m_From.SendMessage("Здесь нельзя поставить стража");
             }
             else if (m_Town.Silver >= guardList.Definition.Price)
             {

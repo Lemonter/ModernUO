@@ -121,7 +121,7 @@ namespace Server.Items
 
                 if (mod == null)
                 {
-                    defender.SendMessage("You receive a concussion blow!");
+                    defender.SendMessage("Тебя оглушают ударом!");
                     defender.AddStatMod(
                         new StatMod(
                             StatType.Int,
@@ -131,7 +131,7 @@ namespace Server.Items
                         )
                     );
 
-                    attacker.SendMessage("You deliver a concussion blow!");
+                    attacker.SendMessage("Ты наносишь оглушающий удар!");
                     attacker.PlaySound(0x308);
                 }
             }

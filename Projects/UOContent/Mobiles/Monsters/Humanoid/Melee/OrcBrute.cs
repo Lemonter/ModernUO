@@ -55,8 +55,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an orcish corpse";
-        public override string DefaultName => "an orc brute";
+        public override string CorpseName => "труп орка";
+        public override string DefaultName => "орк-громила";
 
         public override bool BardImmune => !Core.AOS;
         public override Poison PoisonImmune => Poison.Lethal;

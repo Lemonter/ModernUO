@@ -12,7 +12,7 @@ public partial class IngotStone : Item
         Hue = 0x480;
     }
 
-    public override string DefaultName => "an Ingot stone";
+    public override string DefaultName => "камень слитков";
 
     public override void OnDoubleClick(Mobile from)
     {

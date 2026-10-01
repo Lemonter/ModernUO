@@ -86,11 +86,11 @@ public abstract partial class Ethic : EthicsEntity
 
         if (itemEthic == Hero)
         {
-            (from == newOwner ? to : from).SendMessage("Only heroes may receive this item.");
+            (from == newOwner ? to : from).SendMessage("Эту вещь могут получить только герои.");
         }
         else if (itemEthic == Evil)
         {
-            (from == newOwner ? to : from).SendMessage("Only the evil may receive this item.");
+            (from == newOwner ? to : from).SendMessage("Эту вещь могут получить только злодеи.");
         }
 
         return false;
@@ -107,11 +107,11 @@ public abstract partial class Ethic : EthicsEntity
 
         if (itemEthic == Hero)
         {
-            from.SendMessage("Only heroes may wear this item.");
+            from.SendMessage("Эту вещь могут носить только герои.");
         }
         else if (itemEthic == Evil)
         {
-            from.SendMessage("Only the evil may wear this item.");
+            from.SendMessage("Эту вещь могут носить только злодеи.");
         }
 
         return false;

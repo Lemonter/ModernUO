@@ -41,8 +41,8 @@ namespace Server.Mobiles
             MinTameSkill = -0.9;
         }
 
-        public override string CorpseName => "a rat corpse";
-        public override string DefaultName => "a sewer rat";
+        public override string CorpseName => "труп крысы";
+        public override string DefaultName => "канализационная крыса";
 
         public override int Meat => 1;
         public override FoodType FavoriteFood => FoodType.Meat | FoodType.Eggs | FoodType.FruitsAndVeggies;

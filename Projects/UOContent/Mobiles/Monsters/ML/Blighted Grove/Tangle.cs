@@ -39,8 +39,8 @@ namespace Server.Mobiles
             // TODO: Fame/Karma?
         }
 
-        public override string CorpseName => "a Tangle corpse";
-        public override string DefaultName => "Tangle";
+        public override string CorpseName => "труп Клубка";
+        public override string DefaultName => "Клубок";
 
         public override Poison PoisonImmune => Poison.Lethal;
 

@@ -20,5 +20,5 @@ public partial class TailorBag : Bag
         DropItem(new Dyes());
     }
 
-    public override string DefaultName => "a Tailoring Kit";
+    public override string DefaultName => "набор портного";
 }

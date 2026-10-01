@@ -40,7 +40,8 @@ namespace Server.Spells.First
                 var length = SpellHelper.GetHarmfulDuration(Caster, m);
                 SpellHelper.AddStatCurse(Caster, m, StatType.Str, length, false);
 
-                m.Spell?.OnCasterHurt();
+                // Mahaon: no longer disturbs the target's own cast — enemy spells don't
+                // fizzle casting anymore (see Spell.OnCasterHurt's doc comment).
 
                 m.Paralyzed = false;
 

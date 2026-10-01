@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 using Server.Misc;
 
 namespace Server.Mobiles
@@ -48,7 +49,16 @@ namespace Server.Mobiles
                 }
             );
 
-            PackItem(new RingmailChest());
+            // Mahaon: раньше кольчуга просто лежала в сумке, никогда не надетая — теперь
+            // реально одета, плюс полный набор кольчуги/цепной брони одного цвета и
+            // алебарда вместо мелкого лута в руках. Цвет — под тон металла среднего
+            // тира добычи (около 60-80 mining).
+            // Mahaon: верит — настоящий материал, а не просто подкраска (см. Orc.cs).
+            AddItem(MahaonMetalTracker.Forge(new ChainChest(), MahaonMetal.Verite));
+            AddItem(MahaonMetalTracker.Forge(new ChainLegs(), MahaonMetal.Verite));
+            AddItem(MahaonMetalTracker.Forge(new RingmailArms(), MahaonMetal.Verite));
+            AddItem(MahaonMetalTracker.Forge(new RingmailGloves(), MahaonMetal.Verite));
+            AddItem(new Halberd());
 
             if (Utility.RandomDouble() < 0.3)
             {
@@ -61,10 +71,10 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an orcish corpse";
+        public override string CorpseName => "труп орка";
         public override InhumanSpeech SpeechType => InhumanSpeech.Orc;
 
-        public override string DefaultName => "an orcish lord";
+        public override string DefaultName => "орочий лорд";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 1;

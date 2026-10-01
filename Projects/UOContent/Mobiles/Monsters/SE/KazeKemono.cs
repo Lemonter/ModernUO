@@ -46,8 +46,8 @@ namespace Server.Mobiles
             Karma = -8000;
         }
 
-        public override string CorpseName => "a kaze kemono corpse";
-        public override string DefaultName => "a kaze kemono";
+        public override string CorpseName => "труп кадзэ кэмоно";
+        public override string DefaultName => "кадзэ кэмоно";
 
         public override bool BleedImmune => true;
 

@@ -35,7 +35,7 @@ public partial class Henchman : BaseCreature
         SetSkill(SkillName.Tactics, 50.0);
     }
 
-    public override string DefaultName => "a henchman";
+    public override string DefaultName => "подручный";
 
     public override bool AlwaysMurderer => true;
 }

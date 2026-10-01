@@ -130,7 +130,7 @@ public partial class BagOfSending : Item, TranslocationItem
     {
         if (from.Region.IsPartOf<JailRegion>())
         {
-            from.SendMessage("You may not do that in jail.");
+            from.SendMessage("В тюрьме так нельзя.");
         }
         else if (!IsChildOf(from.Backpack))
         {
@@ -187,7 +187,7 @@ public partial class BagOfSending : Item, TranslocationItem
 
             if (from.Region.IsPartOf<JailRegion>())
             {
-                from.SendMessage("You may not do that in jail.");
+                from.SendMessage("В тюрьме так нельзя.");
                 return;
             }
 

@@ -35,6 +35,12 @@ public class CityControlSystem : GenericPersistence
 
     private const int GuardsPerCity = 6;
 
+    // How far a guard is allowed to wander from its post while patrolling — the stock
+    // WalkRandomWithHome AI (Mobiles/AI/BaseAI/WalkRandomLogic.cs) already walks a mobile
+    // back toward Home once it exceeds RangeHome, no teleporting involved, so this alone is
+    // what keeps guards inside the city instead of drifting into the wilderness.
+    private const int GuardPatrolRadius = 20;
+
     private static readonly Dictionary<string, Guild> Control = new();
     private static readonly Dictionary<string, int> TaxRate = new();
 
@@ -124,6 +130,12 @@ public class CityControlSystem : GenericPersistence
         Control[city] = guild;
         TaxRate[city] = 0;
         SpawnGuards(city, guild);
+        Server.Systems.MahaonAi.MahaonForumBridge.OnCityCaptured(city, guild);
+
+        // The site's city map would otherwise show the old owner until the next scheduled
+        // snapshot — up to 20 minutes of being plainly wrong about the one thing that page
+        // exists to show.
+        Server.Systems.MahaonAi.MahaonWorldSnapshotBridge.PushNow();
     }
 
     private static void SpawnGuards(string city, Guild guild)
@@ -142,7 +154,7 @@ public class CityControlSystem : GenericPersistence
                 var guard = new CityGuard(city, guild);
                 guard.MoveToWorld(loc, map);
                 guard.Home = loc;
-                guard.RangeHome = 8;
+                guard.RangeHome = GuardPatrolRadius;
             }
 
             return;
@@ -168,7 +180,7 @@ public class CityControlSystem : GenericPersistence
             var guard = new CityGuard(city, guild);
             guard.MoveToWorld(loc, info.map);
             guard.Home = loc;
-            guard.RangeHome = 8;
+            guard.RangeHome = GuardPatrolRadius;
         }
     }
 

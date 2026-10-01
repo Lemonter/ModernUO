@@ -21,7 +21,7 @@ public partial class HagStew : BaseAddon
     {
         if (!from.InRange(GetWorldLocation(), 2))
         {
-            from.SendMessage("You are too far away.");
+            from.SendMessage("Слишком далеко.");
         }
         else
         {

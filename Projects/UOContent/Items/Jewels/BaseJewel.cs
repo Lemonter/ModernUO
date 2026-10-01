@@ -205,7 +205,7 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
             {
                 // Gems were no longer available (or unknown type): craft a plain piece
                 // rather than naming it for gems that were never consumed.
-                from.SendAsciiMessage("You lack the gemstones to set into this piece.");
+                from.SendAsciiMessage("Не хватает самоцветов, чтобы вставить в эту вещь.");
             }
 
             context.PendingGemType = GemType.None;
@@ -328,6 +328,20 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
 
     public override void OnAdded(IEntity parent)
     {
+        if (parent is Mobile wearer)
+        {
+            if (!Systems.MahaonMetals.MahaonMetalWearEffects.CanWear(this, wearer, out var reason))
+            {
+                wearer.SendMessage(0x22, reason);
+                var item = this;
+                Timer.DelayCall(TimeSpan.Zero, () => wearer.Backpack?.TryDropItem(wearer, item, false));
+            }
+            else
+            {
+                Systems.MahaonMetals.MahaonMetalWearEffects.OnWorn(this, wearer);
+            }
+        }
+
         if (Core.AOS && parent is Mobile from)
         {
             SkillBonuses.AddTo(from);
@@ -362,6 +376,11 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
 
     public override void OnRemoved(IEntity parent)
     {
+        if (parent is Mobile wearer)
+        {
+            Systems.MahaonMetals.MahaonMetalWearEffects.OnUnworn(this, wearer);
+        }
+
         if (Core.AOS && parent is Mobile from)
         {
             SkillBonuses.Remove();
@@ -379,6 +398,13 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
     public override void GetProperties(IPropertyList list)
     {
         base.GetProperties(list);
+
+        // Mahaon: always stated, standard resources and dyed pieces included. See
+        // Systems.MahaonMetals.MaterialLineSystem.
+        list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
+
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
         SkillBonuses.GetProperties(list);
 

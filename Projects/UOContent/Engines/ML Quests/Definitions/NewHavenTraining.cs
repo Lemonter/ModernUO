@@ -305,7 +305,7 @@ public partial class Andric : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Andric";
+    public override string DefaultName => "Андрик";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -362,7 +362,7 @@ public partial class Kashiel : BaseCreature
         AddItem(new CompositeBow());
     }
 
-    public override string DefaultName => "Kashiel";
+    public override string DefaultName => "Кашиэль";
     public override bool IsInvulnerable => true;
 }
 
@@ -392,7 +392,7 @@ public partial class Asandos : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Asandos";
+    public override string DefaultName => "Асандос";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -431,7 +431,7 @@ public partial class Clairesse : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Clarisse";
+    public override string DefaultName => "Кларисса";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -480,7 +480,7 @@ public partial class Gervis : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Gervis";
+    public override string DefaultName => "Гервис";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -524,7 +524,7 @@ public partial class Mugg : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Mugg";
+    public override string DefaultName => "Магг";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -558,7 +558,7 @@ public partial class Lowel : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lowel";
+    public override string DefaultName => "Лоуэл";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -597,7 +597,7 @@ public partial class Lyle : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lyle";
+    public override string DefaultName => "Лайл";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -637,7 +637,7 @@ public partial class Nibbet : BaseCreature
         AddItem(new FullApron(0x288));
     }
 
-    public override string DefaultName => "Nibbet";
+    public override string DefaultName => "Ниббет";
     public override bool IsInvulnerable => true;
 }
 
@@ -665,7 +665,7 @@ public partial class Norton : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Norton";
+    public override string DefaultName => "Нортон";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -708,7 +708,7 @@ public partial class Sadrah : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Sadrah";
+    public override string DefaultName => "Садра";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -756,7 +756,7 @@ public partial class Hargrove : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Hargrove";
+    public override string DefaultName => "Харгроув";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

@@ -55,11 +55,11 @@ namespace Server.Mobiles
             PackItem(new Rope { ItemID = 0x14FA });
         }
 
-        public override string CorpseName => "a leviathan corpse";
+        public override string CorpseName => "труп левиафана";
 
         public Mobile Fisher { get; set; }
 
-        public override string DefaultName => "a leviathan";
+        public override string DefaultName => "левиафан";
 
         public override int TreasureMapLevel => 5;
 
@@ -112,12 +112,12 @@ namespace Server.Mobiles
             // TODO: Confirm messages
             if (m.AddToBackpack(item))
             {
-                m.SendMessage("As a reward for slaying the mighty leviathan, an artifact has been placed in your backpack.");
+                m.SendMessage("За победу над могучим левиафаном в твой рюкзак положен артефакт.");
             }
             else
             {
                 m.SendMessage(
-                    "As your backpack is full, your reward for destroying the legendary leviathan has been placed at your feet."
+                    "Рюкзак полон, поэтому награда за легендарного левиафана положена к твоим ногам."
                 );
             }
         }

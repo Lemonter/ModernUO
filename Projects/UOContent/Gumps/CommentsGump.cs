@@ -85,7 +85,7 @@ namespace Server.Gumps
         {
             if (target is not Mobile m || !m.Player)
             {
-                from.SendMessage("You must target a player.");
+                from.SendMessage("Укажи игрока.");
                 return;
             }
 

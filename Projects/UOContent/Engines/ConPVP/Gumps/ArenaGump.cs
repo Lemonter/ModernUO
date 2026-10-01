@@ -17,13 +17,13 @@ public partial class ArenasMoongate : Item
         Light = LightType.Circle300;
     }
 
-    public override string DefaultName => "arena moongate";
+    public override string DefaultName => "лунные врата арены";
 
     public bool UseGate(Mobile from)
     {
         if (DuelContext.CheckCombat(from))
         {
-            from.SendMessage(0x22, "You have recently been in combat with another player and cannot use this moongate.");
+            from.SendMessage(0x22, "Ты недавно дрался с игроком — этими вратами пока не воспользоваться.");
             return false;
         }
 
@@ -238,7 +238,7 @@ public class ArenaGump : DynamicGump
         {
             from.SendMessage(
                 0x22,
-                "You have recently been in combat with another player and cannot use this moongate."
+                "Ты недавно дрался с игроком — этими вратами пока не воспользоваться."
             );
         }
         else if (from.Spell != null)

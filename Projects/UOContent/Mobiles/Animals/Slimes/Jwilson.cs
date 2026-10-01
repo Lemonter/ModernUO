@@ -23,8 +23,8 @@ namespace Server.Mobiles
             Karma = -Utility.Random(624);
         }
 
-        public override string CorpseName => "a jwilson corpse";
-        public override string DefaultName => "a jwilson";
+        public override string CorpseName => "труп джвилсона";
+        public override string DefaultName => "джвилсон";
 
         public override int GetAngerSound() => 0x1C8;
 

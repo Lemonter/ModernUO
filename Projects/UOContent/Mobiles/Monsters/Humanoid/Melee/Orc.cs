@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 using Server.Misc;
 
 namespace Server.Mobiles
@@ -54,6 +55,15 @@ namespace Server.Mobiles
 
             PackItem(new ThighBoots());
 
+            // Mahaon: набор медной кольчуги, один металл на весь набор плюс щит. Раньше
+            // тут стоял голый Hue — вещи были цветные, но материал нигде не значился;
+            // теперь MahaonMetalTracker знает, из чего они, и тултип это показывает.
+            AddItem(MahaonMetalTracker.Forge(new RingmailChest(), MahaonMetal.Cooper));
+            AddItem(MahaonMetalTracker.Forge(new RingmailArms(), MahaonMetal.Cooper));
+            AddItem(MahaonMetalTracker.Forge(new RingmailGloves(), MahaonMetal.Cooper));
+            AddItem(MahaonMetalTracker.Forge(new RingmailLegs(), MahaonMetal.Cooper));
+            AddItem(MahaonMetalTracker.Forge(new MetalShield(), MahaonMetal.Cooper));
+
             PackItem(
                 Utility.Random(3) switch
                 {
@@ -69,7 +79,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an orcish corpse";
+        public override string CorpseName => "труп орка";
         public override InhumanSpeech SpeechType => InhumanSpeech.Orc;
 
         public override bool CanRummageCorpses => true;
