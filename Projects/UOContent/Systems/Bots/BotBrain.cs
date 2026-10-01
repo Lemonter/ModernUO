@@ -14,7 +14,7 @@ namespace Server.Systems.Bots;
 public partial class BotBrain
 {
     [DirtyTrackingEntity]
-    private BotMobile _bot;
+    private PlayerMobile _bot;
 
     [SerializableField(0)]
     private Map _homeMap;
@@ -58,9 +58,9 @@ public partial class BotBrain
 
     // Declared first: the generator picks the first matching constructor, and a deserialized brain
     // must know its bot to mark it dirty.
-    public BotBrain(BotMobile bot) => _bot = bot;
+    public BotBrain(PlayerMobile bot) => _bot = bot;
 
-    public BotBrain(BotMobile bot, Point3D home, Map homeMap, string homeCity) : this(bot)
+    public BotBrain(PlayerMobile bot, Point3D home, Map homeMap, string homeCity) : this(bot)
     {
         _home = home;
         _homeMap = homeMap;
@@ -79,7 +79,7 @@ public partial class BotBrain
     // Bell-ish: most characters are moderate, a few are extreme.
     private static byte RollTrait() => (byte)((Utility.Random(101) + Utility.Random(101) + Utility.Random(101)) / 3);
 
-    public BotMobile Bot => _bot;
+    public PlayerMobile Bot => _bot;
 
     public static double Trait(byte value) => value / 100.0;
 
@@ -156,6 +156,14 @@ public partial class BotBrain
     internal Items.Corpse OwnCorpse;
 
     public BotGoal Goal { get; private set; }
+
+    /// <summary>The last thing worth telling about the bot's own day, and when it happened.</summary>
+    internal string LastNews;
+    internal long LastNewsTick;
+
+    /// <summary>A goal the owner of a possessed character asked for. While set, the brain weighs
+    /// only it and the upkeep that keeps it going (supplies, selling, the bank, a corpse run).</summary>
+    public BotGoal Focus { get; set; }
 
     public BotAction Action { get; private set; }
 
@@ -238,6 +246,12 @@ public partial class BotBrain
 
                     if (_plan.Count == 0)
                     {
+                        if (Goal?.News is { Length: > 0 } news)
+                        {
+                            LastNews = news[Utility.Random(news.Length)];
+                            LastNewsTick = now;
+                        }
+
                         Goal?.OnCompleted(this);
                         Goal = null;
                     }
@@ -291,6 +305,11 @@ public partial class BotBrain
         foreach (var goal in BotGoals.All)
         {
             if (_goalCooldownUntil.TryGetValue(goal, out var until) && now - until < 0)
+            {
+                continue;
+            }
+
+            if (Focus != null && goal != Focus && !goal.IsUpkeep)
             {
                 continue;
             }

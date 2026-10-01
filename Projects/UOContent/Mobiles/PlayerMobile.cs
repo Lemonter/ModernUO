@@ -238,7 +238,6 @@ namespace Server.Mobiles
             get
             {
                 var baseMaxWeight = (Core.ML && Race == Race.Human ? 100 : 40) + (int)(3.5 * Str) +
-                                    Systems.MahaonBots.BotController.GetCarryWeightBonus(this) +
                                     // «Крепкая спина» — обычный перк Ремесла, а значит
                                     // только первичной категории: вторичка теперь даёт
                                     // лишь сигнатурный перк.
@@ -2639,8 +2638,7 @@ namespace Server.Mobiles
         {
             if (this is BotMobile deadBotForLoot)
             {
-                Systems.MahaonBots.BotController.RecordBestGear(deadBotForLoot);
-                Systems.MahaonBots.BotController.DismissPetOnDeath(deadBotForLoot);
+                Systems.MahaonBots.GuildBank.OnMemberDeath(deadBotForLoot);
             }
 
             base.OnDeath(c);
@@ -2765,7 +2763,6 @@ namespace Server.Mobiles
             {
                 var killerDesc = LastKiller?.Name ?? "неизвестного противника";
                 Systems.MahaonBots.BotRumors.NotableDeath(deadBot, killerDesc);
-                Systems.MahaonBots.BotController.ScheduleResurrection(deadBot);
 
                 if (LastKiller is PlayerMobile bountyKiller)
                 {
@@ -2947,7 +2944,7 @@ namespace Server.Mobiles
             // final damage. Real players with Thief skill aren't affected — this is
             // specifically the bot flavor ability requested for them.
             if (this is BotMobile &&
-                Systems.MahaonBots.BotController.IsProfessionCategory(this, Systems.MahaonProfessions.ProfessionCategory.Thief) &&
+                BotMobile.IsProfessionCategory(this, Systems.MahaonProfessions.ProfessionCategory.Thief) &&
                 Utility.RandomDouble() < 0.3)
             {
                 PublicOverheadMessage(MessageType.Emote, 0x480, false, "*уворачивается*");
@@ -4341,10 +4338,9 @@ namespace Server.Mobiles
 
             // Mahaon: a [BecomeBot-possessed character keeps acting after the real client
             // disconnects — internalizing it on the usual logout timer would yank it off
-            // the map mid-task (BotController's poll loop doesn't check NetState at all, so
-            // it would just keep dispatching a bot stuck in Map.Internal). Effectively
+            // the map mid-task (the brain stops thinking once its body is in Map.Internal). Effectively
             // "never" for as long as the AI control stays on.
-            if (Systems.MahaonBots.BotController.TryGetProfile(this, out _))
+            if (Systems.Bots.BotSystem.IsPossessed(this))
             {
                 return TimeSpan.FromDays(365);
             }

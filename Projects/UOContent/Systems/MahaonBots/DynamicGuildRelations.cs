@@ -26,6 +26,9 @@ public static class DynamicGuildRelations
 {
     private static readonly TimeSpan PollInterval = TimeSpan.FromHours(2);
 
+    // Neutral guilds that change their stance fall out more often than they make friends.
+    private const double GuildTurnsToWarChance = 0.6;
+
     /// <summary>Вероятность сдвига для пары гильдий, между бойцами которых не было вообще
     /// ничего. Только для таких пар — там, где история есть, решает она.</summary>
     private const double ShiftChancePerPair = 0.08;
@@ -125,7 +128,7 @@ public static class DynamicGuildRelations
     {
         // Neutral tips toward War slightly more often than Ally — a bit more chaos than
         // peace, reads as a livelier world than a 50/50 coin flip would.
-        BotGuildRelation.Neutral => Utility.RandomDouble() < BotTuning.GuildTurnsToWarChance
+        BotGuildRelation.Neutral => Utility.RandomDouble() < GuildTurnsToWarChance
             ? BotGuildRelation.War
             : BotGuildRelation.Ally,
         // War and Ally both cool back down to Neutral eventually rather than flipping

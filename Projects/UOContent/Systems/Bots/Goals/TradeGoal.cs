@@ -10,6 +10,11 @@ public sealed class TradeGoal : BotGoal
 
     public override string Name => "Торговля";
 
+    public override bool IsUpkeep => true;
+
+    public override string[] News =>
+        ["Распродался, кошель потяжелел.", "Торговцы совсем цены не держат.", "Выставил кое-что на аукцион."];
+
     public override double Score(BotBrain brain)
     {
         var value = BotGoods.ValueCarried(brain.Bot);

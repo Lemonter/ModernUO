@@ -28,6 +28,7 @@ public static class BotGoals
     public static readonly LeadGroupGoal LeadGroup = new();
     public static readonly FollowGroupGoal FollowGroup = new();
     public static readonly PkGoal Pk = new();
+    public static readonly OutfitGoal Outfit = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit];
 }

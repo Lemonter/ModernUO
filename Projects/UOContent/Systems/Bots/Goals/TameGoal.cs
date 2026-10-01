@@ -11,6 +11,8 @@ public sealed class TameGoal : BotGoal
 
     public override string Name => "Приручение";
 
+    public override string[] News => ["Приручил себе зверушку.", "Зверь теперь за мной ходит, представляешь?"];
+
     private static bool IsTamer(Mobile bot) => bot.Skills.AnimalTaming.Value >= 40 && bot.Skills.AnimalLore.Value >= 30;
 
     public override double Score(BotBrain brain)

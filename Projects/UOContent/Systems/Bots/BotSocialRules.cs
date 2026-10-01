@@ -6,11 +6,13 @@ namespace Server.Systems.Bots;
 /// <summary>Who is on whose side, and where an outlaw may go.</summary>
 public static class BotSocialRules
 {
-    /// <summary>Guild mates, allied guilds, and members of the same hunting group.</summary>
+    /// <summary>Guild mates, allied guilds, members of the same hunting group, and anyone the bot
+    /// has come to like through help given and received.</summary>
     public static bool IsFriend(Mobile a, Mobile b) =>
         a != null && b != null && a != b &&
         (MahaonBots.BotGuilds.IsAllied(a, b) ||
-         a is BotMobile { Brain.Group: { } ga } && b is BotMobile { Brain.Group: { } gb } && ga == gb);
+         a.GetBrain()?.Group is { } ga && ga == b.GetBrain()?.Group ||
+         MahaonBots.BotRelationships.IsFriendlyTo(a, b));
 
     public static bool IsAtWar(Mobile a, Mobile b) => MahaonBots.BotGuilds.IsAtWar(a, b);
 

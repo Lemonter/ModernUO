@@ -19,6 +19,13 @@ public sealed class GatherGoal : BotGoal
         _                 => "Рыбалка"
     };
 
+    public override string[] News => _kind switch
+    {
+        ResourceKind.Ore  => ["Весь день руду копал, спина отваливается.", "Нашёл неплохую жилу, между прочим.", "Кирка уже еле держится."],
+        ResourceKind.Wood => ["Нарубил дров на целую зиму.", "В лесу сегодня тихо.", "Топор затупился, а деревья не кончаются."],
+        _                 => ["Рыба сегодня клевала как бешеная.", "Наловил рыбы, кому продать?", "Сидел с удочкой с самого утра."]
+    };
+
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;

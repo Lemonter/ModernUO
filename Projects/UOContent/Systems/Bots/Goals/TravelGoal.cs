@@ -8,6 +8,8 @@ public sealed class TravelGoal : BotGoal
 {
     public override string Name => "Путешествие";
 
+    public override string[] News => ["Только с дороги.", "Долгий был путь.", "В пути разбойников видел, обошлось."];
+
     public override double Score(BotBrain brain) => brain.Restlessness * (0.3 + BotBrain.Trait(brain.Wanderlust) * 0.8);
 
     public override List<BotAction> Plan(BotBrain brain)

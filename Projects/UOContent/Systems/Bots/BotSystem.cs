@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Server.Commands;
 using Server.Engines.Pathing.Nav;
@@ -8,51 +7,49 @@ using Server.Targeting;
 
 namespace Server.Systems.Bots;
 
-public enum BotEngine
-{
-    V1,
-    V2
-}
-
 /// <summary>
-/// Entry point of the v2 bots: which engine drives bots, registration, startup and the admin
-/// commands. While v2 grows to cover everything v1 does, both engines exist side by side and
-/// [BotEngine switches every bot between them live.
+/// Entry point of the bots: registration, startup and the admin commands. Spawned bots
+/// (<see cref="BotMobile"/>) carry their brain in their save; a player who hands their own
+/// character to the AI with [BecomeBot gets a brain for as long as that lasts.
 ///
-///   [BotEngine v1|v2 — which engine drives the bots (persisted).
-///   [BotInspect      — a bot's needs, character, goal, plan and why.
-///   [BotStats        — scheduler and population figures.
+///   [BotInspect — a bot's needs, character, goal, plan and why.
+///   [BotStats   — scheduler and population figures.
+///   [ClearBots  — deletes every spawned bot (beacons spawn new ones).
 /// </summary>
 public static class BotSystem
 {
     private static readonly ILogger logger = LogFactory.GetLogger(typeof(BotSystem));
 
-    private const string EngineSetting = "bots.engine";
-
-    private static readonly HashSet<BotMobile> _bots = [];
+    private static readonly HashSet<PlayerMobile> _bots = [];
+    private static readonly Dictionary<PlayerMobile, BotBrain> _possessed = new();
     private static readonly List<BotMobile> _loaded = [];
     private static bool _initialized;
 
-    public static BotEngine Engine { get; private set; } = BotEngine.V1;
-
     public static int Count => _bots.Count;
 
-    public static IReadOnlyCollection<BotMobile> Bots => _bots;
+    public static IReadOnlyCollection<PlayerMobile> Bots => _bots;
 
-    public static bool IsV2(BotMobile bot) => bot.Brain is { Registered: true };
+    /// <summary>The brain driving <paramref name="m"/>, if any: a spawned bot's own, or a possessed
+    /// player's.</summary>
+    public static BotBrain GetBrain(this Mobile m) =>
+        m switch
+        {
+            BotMobile bot                                                  => bot.Brain,
+            PlayerMobile pm when _possessed.TryGetValue(pm, out var brain) => brain,
+            _                                                              => null
+        };
+
+    public static bool IsActive(Mobile m) => m.GetBrain() is { Registered: true };
+
+    public static bool IsPossessed(Mobile m) => m is PlayerMobile pm && _possessed.ContainsKey(pm);
 
     public static void Configure()
     {
-        Engine = ServerConfiguration.GetOrUpdateSetting(EngineSetting, "v1")
-            .Equals("v2", StringComparison.OrdinalIgnoreCase)
-            ? BotEngine.V2
-            : BotEngine.V1;
-
         BotScheduler.BudgetMs = ServerConfiguration.GetOrUpdateSetting("bots.thinkBudgetMs", 4.0);
 
-        CommandSystem.Register("BotEngine", AccessLevel.Administrator, OnBotEngine);
         CommandSystem.Register("BotInspect", AccessLevel.GameMaster, OnBotInspect);
         CommandSystem.Register("BotStats", AccessLevel.GameMaster, OnBotStats);
+        CommandSystem.Register("ClearBots", AccessLevel.Administrator, OnClearBots);
     }
 
     /// <summary>After the nav graphs (priority 60): bots plan routes from their first thought.</summary>
@@ -65,47 +62,33 @@ public static class BotSystem
         BotScheduler.Start();
         _initialized = true;
 
-        if (Engine == BotEngine.V2)
+        foreach (var bot in _loaded)
         {
-            foreach (var bot in _loaded)
+            if (!bot.Deleted)
             {
-                if (!bot.Deleted)
-                {
-                    Register(bot, bot.Location, bot.Map, null);
-                }
+                Register(bot, bot.Location, bot.Map, null);
             }
         }
 
         _loaded.Clear();
 
         logger.Information(
-            "Bots: engine {Engine}, {Cities} towns known, {Shrines} ankh spots, {Bots} bots on v2",
-            Engine,
+            "Bots: {Bots} bots, {Cities} towns known, {Shrines} ankh spots",
+            _bots.Count,
             WorldCatalog.Cities.Count,
-            ShrineAtlas.Count,
-            _bots.Count
+            ShrineAtlas.Count
         );
     }
 
     internal static void OnBotLoaded(BotMobile bot)
     {
-        if (!_initialized)
+        if (_initialized)
         {
-            _loaded.Add(bot);
-        }
-    }
-
-    /// <summary>The one place new bots join an engine: the beacon and any other spawner call this
-    /// instead of an engine directly.</summary>
-    public static void RegisterNew(BotMobile bot, Point3D home, Map map, string homeCity)
-    {
-        if (Engine == BotEngine.V2)
-        {
-            Register(bot, home, map, homeCity);
+            Register(bot, bot.Location, bot.Map, null);
         }
         else
         {
-            MahaonBots.BotController.RegisterBot(bot, home, map, homeCity);
+            _loaded.Add(bot);
         }
     }
 
@@ -133,83 +116,53 @@ public static class BotSystem
         BotScheduler.Schedule(bot.Brain, Utility.Random(3000));
     }
 
-    public static void Unregister(BotMobile bot)
+    /// <summary>Hands a player's own character to the AI. The brain lives in memory only: a
+    /// restart gives the character back.</summary>
+    public static BotBrain Possess(PlayerMobile player)
+    {
+        if (player is BotMobile || player.Deleted)
+        {
+            return null;
+        }
+
+        if (_possessed.TryGetValue(player, out var existing))
+        {
+            return existing;
+        }
+
+        var brain = new BotBrain(player, player.Location, player.Map, WorldCatalog.FindNearest(player.Map, player.Location)?.Name)
+        {
+            Registered = true
+        };
+
+        _possessed[player] = brain;
+        _bots.Add(player);
+        BotScheduler.Schedule(brain, 500);
+        return brain;
+    }
+
+    public static void Unregister(PlayerMobile bot)
     {
         if (bot == null || !_bots.Remove(bot))
         {
             return;
         }
 
-        if (bot.Brain != null)
+        var brain = bot.GetBrain();
+        _possessed.Remove(bot);
+
+        if (brain != null)
         {
-            bot.Brain.Group?.Remove(bot);
-            bot.Brain.ClearPlan();
-            bot.Brain.Registered = false;
+            brain.Group?.Remove(bot);
+            brain.ClearPlan();
+            brain.Registered = false;
         }
 
         BotSpeech.Forget(bot);
     }
 
-    private static void SwitchEngine(BotEngine engine)
-    {
-        if (engine == Engine)
-        {
-            return;
-        }
-
-        Engine = engine;
-        ServerConfiguration.SetSetting(EngineSetting, engine == BotEngine.V2 ? "v2" : "v1");
-
-        // Every bot the beacons own, whichever engine had it, moves to the new one.
-        var all = new List<BotMobile>(_bots);
-        foreach (var bot in MahaonBots.BotController.RegisteredBotMobiles())
-        {
-            if (!_bots.Contains(bot))
-            {
-                all.Add(bot);
-            }
-        }
-
-        foreach (var bot in all)
-        {
-            var home = bot.Brain?.Home ?? bot.Location;
-            var map = bot.Brain?.HomeMap ?? bot.Map;
-
-            if (engine == BotEngine.V2)
-            {
-                MahaonBots.BotController.UnregisterBot(bot);
-                Register(bot, home, map, bot.Brain?.HomeCity);
-            }
-            else
-            {
-                Unregister(bot);
-                MahaonBots.BotController.RegisterBot(bot, home, map, bot.Brain?.HomeCity);
-            }
-        }
-    }
-
-    [Usage("BotEngine [v1|v2]")]
-    [Description("Shows or switches the engine that drives the bots.")]
-    private static void OnBotEngine(CommandEventArgs e)
-    {
-        if (e.Length > 0)
-        {
-            var arg = e.GetString(0);
-            if (arg.Equals("v2", StringComparison.OrdinalIgnoreCase))
-            {
-                SwitchEngine(BotEngine.V2);
-            }
-            else if (arg.Equals("v1", StringComparison.OrdinalIgnoreCase))
-            {
-                SwitchEngine(BotEngine.V1);
-            }
-        }
-
-        e.Mobile.SendMessage($"Bot engine: {Engine}. Bots on v2: {_bots.Count}.");
-    }
-
     [Usage("BotInspect")]
-    [Description("Shows a v2 bot's needs, character, goal scores and plan.")]
+    [Description("Shows a bot's needs, character, goal scores and plan.")]
     private static void OnBotInspect(CommandEventArgs e)
     {
         e.Mobile.SendMessage("Target a bot.");
@@ -219,16 +172,37 @@ public static class BotSystem
             TargetFlags.None,
             (from, targeted) =>
             {
-                if (targeted is BotMobile { Brain: not null } bot)
+                if (targeted is PlayerMobile pm && pm.GetBrain() != null)
                 {
-                    BotInspectGump.DisplayTo(from, bot);
+                    BotInspectGump.DisplayTo(from, pm);
                 }
                 else
                 {
-                    from.SendMessage("That is not a v2 bot.");
+                    from.SendMessage("That is not a bot.");
                 }
             }
         );
+    }
+
+    [Usage("ClearBots")]
+    [Description("Deletes every spawned bot. Possessed players are released, not deleted.")]
+    private static void OnClearBots(CommandEventArgs e)
+    {
+        var deleted = 0;
+        foreach (var bot in new List<PlayerMobile>(_bots))
+        {
+            if (bot is BotMobile)
+            {
+                bot.Delete();
+                deleted++;
+            }
+            else
+            {
+                Unregister(bot);
+            }
+        }
+
+        e.Mobile.SendMessage($"Deleted {deleted} bots.");
     }
 
     [Usage("BotStats")]
@@ -247,12 +221,12 @@ public static class BotSystem
                 dead++;
             }
 
-            var name = bot.Brain?.Goal?.Name ?? "—";
+            var name = bot.GetBrain()?.Goal?.Name ?? "—";
             goals[name] = goals.GetValueOrDefault(name) + 1;
         }
 
         var m = e.Mobile;
-        m.SendMessage($"Bots v2: {_bots.Count} ({dead} dead), queue {BotScheduler.QueueLength}.");
+        m.SendMessage($"Bots: {_bots.Count} ({dead} dead), queue {BotScheduler.QueueLength}.");
         m.SendMessage(
             $"Thinks: {thinks}, avg {avg:F3} ms, max {BotScheduler.ThinkMsMax:F2} ms, total {BotScheduler.ThinkMsTotal:F0} ms, budget overruns {BotScheduler.BudgetOverruns}."
         );

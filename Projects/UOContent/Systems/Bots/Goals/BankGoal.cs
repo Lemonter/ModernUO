@@ -7,6 +7,8 @@ public sealed class BankGoal : BotGoal
 {
     public override string Name => "В банк";
 
+    public override bool IsUpkeep => true;
+
     public override double Score(BotBrain brain)
     {
         var gold = brain.Bot.Backpack?.GetAmount(typeof(Gold)) ?? 0;

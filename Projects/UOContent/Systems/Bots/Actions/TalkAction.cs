@@ -30,12 +30,19 @@ public sealed class TalkAction : BotAction
         // Alternate: even lines are ours, odd lines the partner's (when the partner is a bot).
         if (_lines % 2 == 0)
         {
-            BotSpeech.Say(bot, _lines == 0 ? BotTopic.Greeting : BotTopic.SmallTalk, target: _partner);
+            if (_lines == 0)
+            {
+                BotSpeech.Say(bot, BotTopic.Greeting, target: _partner);
+            }
+            else
+            {
+                BotSpeech.Chat(bot, _partner);
+            }
         }
-        else if (_partner is BotMobile { Brain: { } other } partnerBot)
+        else if (_partner.GetBrain() is { } other && _partner is var partnerBot)
         {
             partnerBot.Direction = partnerBot.GetDirectionTo(bot);
-            BotSpeech.Say(partnerBot, BotTopic.SmallTalk, target: bot);
+            BotSpeech.Chat(partnerBot, bot);
             other.OnSocialized(0.3);
         }
 

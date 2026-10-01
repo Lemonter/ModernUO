@@ -9,7 +9,7 @@ namespace Server.Systems.MahaonMasteries;
 ///     this ModernUO codebase (confirmed: zero mastery-related members anywhere in
 ///     Projects/Server/Skills.cs). Rather than patch the engine's Skill class, this holds
 ///     the exact same state externally, GenericPersistence-backed, same pattern as
-///     AuctionHouseSystem/BotController for "state that isn't itself a serialized Item/
+///     AuctionHouseSystem/BotGuilds for "state that isn't itself a serialized Item/
 ///     Mobile field." Every call site that would have read `m.Skills[x].VolumeLearned` or
 ///     `m.Skills.CurrentMastery` in the original source reads through here instead.
 /// </summary>

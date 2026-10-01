@@ -18,6 +18,13 @@ public abstract class BotGoal
 
     public abstract List<BotAction> Plan(BotBrain brain);
 
+    /// <summary>Keeps other work going rather than being work itself; still weighed while a
+    /// possessed character is focused on one goal.</summary>
+    public virtual bool IsUpkeep => false;
+
+    /// <summary>What a bot that just finished this goal may tell the next person it talks to.</summary>
+    public virtual string[] News => null;
+
     public virtual void OnCompleted(BotBrain brain)
     {
     }

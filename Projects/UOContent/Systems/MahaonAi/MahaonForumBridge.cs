@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Server.Guilds;
 using Server.Logging;
 using Server.Mobiles;
+using Server.Systems.Bots;
 using Server.Systems.MahaonBots;
 
 namespace Server.Systems.MahaonAi;
@@ -161,8 +162,39 @@ public static class MahaonForumBridge
 
     private static string GuildNameOf(Mobile bot) => bot?.Guild?.Name;
 
-    private static PersonalityTrait TraitOf(Mobile bot) =>
-        BotController.TryGetProfile(bot as PlayerMobile, out var profile) ? profile.Personality.Trait : PersonalityTrait.Balanced;
+    private enum PersonalityTrait
+    {
+        Balanced,
+        Aggressive,
+        Cautious,
+        Greedy,
+        Generous
+    }
+
+    /// <summary>The voice a bot writes in: whichever of its caution or greed strays furthest from
+    /// the middle, if either strays far enough to show.</summary>
+    private static PersonalityTrait TraitOf(Mobile bot)
+    {
+        if (bot.GetBrain() is not { } brain)
+        {
+            return PersonalityTrait.Balanced;
+        }
+
+        var caution = brain.Caution - 50;
+        var greed = brain.Greed - 50;
+
+        if (Math.Max(Math.Abs(caution), Math.Abs(greed)) < 15)
+        {
+            return PersonalityTrait.Balanced;
+        }
+
+        if (Math.Abs(caution) >= Math.Abs(greed))
+        {
+            return caution > 0 ? PersonalityTrait.Cautious : PersonalityTrait.Aggressive;
+        }
+
+        return greed > 0 ? PersonalityTrait.Greedy : PersonalityTrait.Generous;
+    }
 
     // ---- Гильдийные войны ----
 

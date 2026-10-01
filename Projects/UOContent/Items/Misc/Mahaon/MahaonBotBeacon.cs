@@ -55,9 +55,8 @@ public partial class MahaonBotBeacon : Item
         "Знак Памяти Отряда Рассвета"
     };
 
-    // Bots owned by this beacon — tracked in memory only, same as the rest of the bot
-    // system (BotProfile itself isn't persisted to disk either), so this plain field
-    // (not [SerializableField]) is intentional.
+    // Bots owned by this beacon — memory only: each bot's brain remembers its beacon and
+    // reclaims its slot on load (BotSystem.Register), so this field needs no serializing.
     private readonly List<PlayerMobile> _ownedBots = new();
 
     private static readonly List<MahaonBotBeacon> AllBeacons = new();
@@ -97,7 +96,6 @@ public partial class MahaonBotBeacon : Item
         return false;
     }
     private static readonly TimeSpan SpawnTick = TimeSpan.FromSeconds(12); // 5/min
-    private static readonly TimeSpan ResurrectTick = TimeSpan.FromSeconds(4); // much more frequent than spawning
 
     [Constructible]
     public MahaonBotBeacon() : base(0x2D12)
@@ -108,7 +106,6 @@ public partial class MahaonBotBeacon : Item
 
         AllBeacons.Add(this);
         Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
-        Timer.DelayCall(ResurrectTick, ResurrectTick, TryResurrectOwnedDead);
     }
 
     [AfterDeserialization]
@@ -116,7 +113,6 @@ public partial class MahaonBotBeacon : Item
     {
         AllBeacons.Add(this);
         Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
-        Timer.DelayCall(ResurrectTick, ResurrectTick, TryResurrectOwnedDead);
     }
 
     // Both old versions (0 and 1) still had TargetCounts as a single int[5] indexed by
@@ -241,7 +237,7 @@ public partial class MahaonBotBeacon : Item
         foreach (var bot in _ownedBots)
         {
             if (bot is BotMobile { Archetype: BotArchetype.Trader } &&
-                Systems.MahaonBots.BotController.IsProfessionCategory(bot, Systems.MahaonProfessions.ProfessionCategory.Thief))
+                BotMobile.IsProfessionCategory(bot, Systems.MahaonProfessions.ProfessionCategory.Thief))
             {
                 count++;
             }
@@ -298,23 +294,6 @@ public partial class MahaonBotBeacon : Item
         if (!_ownedBots.Contains(bot))
         {
             _ownedBots.Add(bot);
-        }
-    }
-
-    private void TryResurrectOwnedDead()
-    {
-        if (Deleted)
-        {
-            return;
-        }
-
-        foreach (var bot in _ownedBots)
-        {
-            // v2 bots walk to a healer as ghosts on their own.
-            if (bot is BotMobile botMobile && !bot.Deleted && !bot.Alive && !Systems.Bots.BotSystem.IsV2(botMobile))
-            {
-                Systems.MahaonBots.BotController.PerformResurrection(botMobile);
-            }
         }
     }
 
@@ -390,24 +369,15 @@ public partial class MahaonBotBeacon : Item
         // without it every beacon-spawned bot had no city to fall back to, so getting
         // "stuck" while traveling or dying anywhere on the map always teleported/
         // resurrected it right back to this exact beacon tile instead of the nearer city.
-        Systems.Bots.BotSystem.RegisterNew(bot, spot, Map, CityName);
+        Systems.Bots.BotSystem.Register(bot, spot, Map, CityName);
         Claim(bot);
-
-        if (bot.Brain != null)
-        {
-            bot.Brain.OwnerBeacon = this;
-        }
+        bot.Brain.OwnerBeacon = this;
 
         // Гильдия у бота всегда есть: своя у маяка, если задана, иначе общая для всех
         // ботов ЭТОГО маяка. Раньше безгильдейный маяк отдавал ботов на волю случайного
         // выбора в BotMobile.ApplyNameTemplate, и соседи по точке возрождения оказывались
         // чужаками друг другу.
         Systems.MahaonBots.BotGuilds.Join(GuildNameFor(bot), bot);
-
-        if (Systems.MahaonBots.BotController.TryGetProfile(bot, out var profile))
-        {
-            profile.OwnerBeacon = this;
-        }
     }
 
     private Point3D FindSpawnSpot()

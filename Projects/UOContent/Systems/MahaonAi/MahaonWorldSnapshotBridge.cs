@@ -140,7 +140,7 @@ public static class MahaonWorldSnapshotBridge
             WindStrength = WindManager.Strength,
             WindGustStrength = WindManager.GustStrength,
             PlayersOnline = CountOnlinePlayers(),
-            Bots = BotController.CountActive(),
+            Bots = Systems.Bots.BotSystem.Count,
             ActiveRaiders = RaidEventSystem.GetActiveRaiderCount(),
             SecondsUntilNextRaid = (long)RaidEventSystem.GetTimeUntilNextRaid().TotalSeconds,
             Cities = cities

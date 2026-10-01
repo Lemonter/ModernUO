@@ -166,4 +166,66 @@ public static class GuildBank
 
         return true;
     }
+
+    // Rarer gems have proportionally lower weight — Diamond (the same one used for the
+    // random-skill socket bonus, the strongest of the set) is by far the least likely.
+    //
+    // Таблица хранит фабрики, а не типы. Раньше здесь лежали typeof(...) и камень
+    // создавался через Activator.CreateInstance(type) — а у всех наших самоцветов
+    // конструктор вида «Emerald(int amount = 1)». Параметр со значением по умолчанию
+    // конструктором без параметров для рефлексии не считается, поэтому каждая смерть
+    // бота в гильдии роняла сервер MissingMethodException прямо посреди OnDeath.
+    // Делегат проверяется компилятором и упасть так не может в принципе.
+    private static readonly (System.Func<Item> make, int weight)[] GuildDeathGemTable =
+    {
+        (() => new Amber(), 30),
+        (() => new Tourmaline(), 30),
+        (() => new Amethyst(), 20),
+        (() => new Sapphire(), 15),
+        (() => new Emerald(), 15),
+        (() => new Ruby(), 10),
+        (() => new Citrine(), 8),
+        (() => new StarSapphire(), 5),
+        (() => new Diamond(), 2)
+    };
+
+    /// <summary>A guild member's death feeds the guild bank a gem.</summary>
+    public static void OnMemberDeath(Mobile bot)
+    {
+        var guildName = bot.Guild?.Name;
+        if (string.IsNullOrEmpty(guildName))
+        {
+            return;
+        }
+
+        var totalWeight = 0;
+        foreach (var (_, weight) in GuildDeathGemTable)
+        {
+            totalWeight += weight;
+        }
+
+        var roll = Utility.Random(totalWeight);
+        System.Func<Item> chosen = null;
+
+        foreach (var (make, weight) in GuildDeathGemTable)
+        {
+            if (roll < weight)
+            {
+                chosen = make;
+                break;
+            }
+
+            roll -= weight;
+        }
+
+        var gem = chosen?.Invoke();
+
+        if (gem == null)
+        {
+            return;
+        }
+
+        var bank = GuildBank.GetOrCreate(guildName);
+        bank?.DropItem(gem);
+    }
 }

@@ -19,7 +19,7 @@ public static class BotGoods
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
-        bot is Mobiles.BotMobile { Brain: { } brain } && brain.IsLoot(item) && item.Parent == bot.Backpack;
+        bot.GetBrain() is { } brain && brain.IsLoot(item) && item.Parent == bot.Backpack;
 
     public static int BaseUnitPrice(Item item) => item switch
     {

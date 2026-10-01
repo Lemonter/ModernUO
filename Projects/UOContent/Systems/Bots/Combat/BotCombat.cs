@@ -22,6 +22,7 @@ public sealed class BotCombatState
         NextPotionTick = now;
         NextSongTick = now;
         FleeUntil = now;
+        LastBlameTick = now;
     }
 
     public Mobile Opponent;
@@ -36,6 +37,11 @@ public sealed class BotCombatState
 
     internal GoToAction Approach;
     internal Mobile ApproachTarget;
+
+    // Who the bot last held to account for hitting it, and when, so a long fight sours the
+    // relationship blow by blow rather than once per think.
+    internal Mobile LastBlamed;
+    internal long LastBlameTick;
 }
 
 /// <summary>
@@ -127,6 +133,7 @@ public static class BotCombat
             if (best.Player)
             {
                 brain.AddGrudge(best, 30 * 60_000);
+                Blame(brain, best);
             }
 
             return best;
@@ -162,7 +169,8 @@ public static class BotCombat
                 return attacker;
             }
 
-            if (!IsValidFoe(bot, m) || BotSocialRules.IsFriend(bot, m))
+            // Nobody picks a new fight next to a beacon, where bots rise from the dead.
+            if (!IsValidFoe(bot, m) || BotSocialRules.IsFriend(bot, m) || Items.MahaonBotBeacon.IsNearAnyBeacon(m))
             {
                 continue;
             }
@@ -180,6 +188,25 @@ public static class BotCombat
         }
 
         return null;
+    }
+
+    private const long BlameIntervalMs = 10_000;
+
+    /// <summary>Feeds the guild politics: pairwise relationships are what DynamicGuildRelations
+    /// turns into wars and alliances.</summary>
+    private static void Blame(BotBrain brain, Mobile attacker)
+    {
+        var state = brain.Combat;
+        var now = Core.TickCount;
+
+        if (state.LastBlamed == attacker && now - state.LastBlameTick < BlameIntervalMs)
+        {
+            return;
+        }
+
+        state.LastBlamed = attacker;
+        state.LastBlameTick = now;
+        MahaonBots.BotRelationships.OnAttacked(brain.Bot, attacker);
     }
 
     private static bool IsValidFoe(Mobile bot, Mobile m) =>

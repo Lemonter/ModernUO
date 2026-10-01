@@ -18,6 +18,8 @@ public sealed class HuntAction : BotAction
     private readonly int _quota;
     private readonly int _maxFame;
 
+    private const int NotableFame = 15_000;
+
     private long _deadline;
     private int _kills;
     private Mobile _prey;
@@ -40,6 +42,15 @@ public sealed class HuntAction : BotAction
         if (_prey != null && (_prey.Deleted || !_prey.Alive))
         {
             _kills++;
+
+            // A kill like this gets talked about.
+            if (_prey is BaseCreature { Fame: >= NotableFame } notable && !notable.Deleted)
+            {
+                MahaonBots.BotRumors.Spread(
+                    $"Говорят, {bot.Name} {(brain.Group != null ? "со своим отрядом" : "в одиночку")} одолел {notable.Name}!"
+                );
+            }
+
             _prey = null;
         }
 

@@ -32,7 +32,7 @@ public sealed class NavRoute
     /// <summary>Estimated length in tenths of a tile.</summary>
     public int Cost { get; }
 
-    /// <summary>Graph nodes the search expanded — a cost measure for [NavRoute and [BotPerf.</summary>
+    /// <summary>Graph nodes the search expanded — a cost measure for [NavRoute and [NavStats.</summary>
     public int Expanded { get; }
 
     public NavWaypoint Goal => Waypoints[^1];

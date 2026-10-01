@@ -9,6 +9,9 @@ public sealed class HuntGoal : BotGoal
 
     public override string Name => "Охота";
 
+    public override string[] News =>
+        ["Только с охоты, еле ноги унёс.", "Набил тварей, добыча неплохая.", "Чуть не сожрали меня там."];
+
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;
@@ -49,6 +52,8 @@ public sealed class HuntGoal : BotGoal
 public sealed class CorpseRunGoal : BotGoal
 {
     public override string Name => "За своим трупом";
+
+    public override bool IsUpkeep => true;
 
     public override double Score(BotBrain brain) =>
         brain.OwnCorpse is { Deleted: false } corpse && corpse.Items.Count > 0 && corpse.Map == brain.Bot.Map ? 1.1 : 0;

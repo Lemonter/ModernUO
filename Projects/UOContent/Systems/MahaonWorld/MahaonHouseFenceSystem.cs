@@ -13,7 +13,7 @@ namespace Server.Systems.MahaonWorld;
 ///     its actual walls instead of cutting through them.
 ///
 ///     Only one fence per house at a time — building a new radius removes the old one
-///     first. The registry below (ByHouse) is memory-only, same pattern as BotProfile/
+///     first. The registry below (ByHouse) is memory-only, same pattern as
 ///     GuildBank's in-memory caches elsewhere in Mahaon: it doesn't survive a restart by
 ///     itself, but every placed MahaonHouseFence segment remembers its own OwnerHouse and
 ///     Radius as real serialized fields, so EnsureLoaded can always rebuild the registry

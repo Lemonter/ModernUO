@@ -30,11 +30,11 @@ public sealed class LeadGroupGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var recruits = new List<BotMobile>();
+        var recruits = new List<PlayerMobile>();
 
-        foreach (var m in bot.Map.GetMobilesInRange<BotMobile>(bot.Location, RecruitRange))
+        foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, RecruitRange))
         {
-            if (m == bot || m.Brain is not { Registered: true, Group: null } other || !m.Alive ||
+            if (m == bot || m.GetBrain() is not { Registered: true, Group: null } other || !m.Alive ||
                 BotSocialRules.IsOutlaw(m) || BotCombatStyles.FightingSkill(m) < 30 ||
                 other.Goal is LeadGroupGoal || other.Combat.Opponent != null)
             {

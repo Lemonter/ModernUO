@@ -17,7 +17,7 @@ public sealed class PkGoal : BotGoal
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;
-        if (!bot.IsPk || bot.Hits < bot.HitsMax * 0.9 || BotCombatStyles.FightingSkill(bot) < 40)
+        if (bot is not BotMobile { IsPk: true } || bot.Hits < bot.HitsMax * 0.9 || BotCombatStyles.FightingSkill(bot) < 40)
         {
             return 0;
         }
@@ -131,6 +131,7 @@ public sealed class StalkAction : BotAction
         {
             if (m == bot || !m.Alive || m.Hidden || m.AccessLevel > AccessLevel.Player || m is BotMobile { IsPk: true } ||
                 BotSocialRules.IsFriend(bot, m) || BotSocialRules.IsGuarded(m.Map, m.Location) ||
+                Items.MahaonBotBeacon.IsNearAnyBeacon(m) ||
                 !bot.CanBeHarmful(m, false) || !bot.InLOS(m))
             {
                 continue;

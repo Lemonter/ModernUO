@@ -11,6 +11,8 @@ public sealed class SupplyGoal : BotGoal
 {
     public override string Name => "Закупка";
 
+    public override bool IsUpkeep => true;
+
 
     private static (ResourceKind kind, Type tool) MainTrade(BotBrain brain)
     {

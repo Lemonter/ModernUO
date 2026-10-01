@@ -83,5 +83,44 @@ public static class BotSpeech
         bot.Say(line.Contains("{0}") ? string.Format(line, target?.Name ?? "дружище") : line);
     }
 
+    /// <summary>Says a ready line, under the same cooldown as the templates.</summary>
+    public static bool SayText(Mobile bot, string text)
+    {
+        var now = Core.TickCount;
+        if (string.IsNullOrEmpty(text) || _lastSpoke.TryGetValue(bot, out var last) && now - last < CooldownMs)
+        {
+            return false;
+        }
+
+        _lastSpoke[bot] = now;
+        bot.Say(text);
+        return true;
+    }
+
+    // News older than this is stale; a bot talks about its morning, not last week.
+    private const long NewsFreshMs = 2 * 60 * 60_000;
+
+    /// <summary>
+    /// A line of conversation: now and then a rumour going round, or what the bot itself has
+    /// been up to, otherwise small talk. Rumours are how word of a raid or a dragon kill spreads.
+    /// </summary>
+    public static void Chat(Mobile bot, Mobile listener)
+    {
+        var roll = Utility.RandomDouble();
+
+        if (roll < 0.25 && MahaonBots.BotRumors.TryPick(out var rumor) && SayText(bot, rumor))
+        {
+            return;
+        }
+
+        if (roll < 0.5 && bot.GetBrain() is { LastNews: { } news } brain && Core.TickCount - brain.LastNewsTick < NewsFreshMs &&
+            SayText(bot, news))
+        {
+            return;
+        }
+
+        Say(bot, BotTopic.SmallTalk, listener);
+    }
+
     public static void Forget(Mobile bot) => _lastSpoke.Remove(bot);
 }

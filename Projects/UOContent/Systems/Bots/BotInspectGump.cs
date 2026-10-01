@@ -4,21 +4,21 @@ using Server.Network;
 
 namespace Server.Systems.Bots;
 
-/// <summary>What a v2 bot is thinking: needs, character, goal scores, plan. Refresh re-reads.</summary>
+/// <summary>What a bot is thinking: needs, character, goal scores, plan. Refresh re-reads.</summary>
 public class BotInspectGump : DynamicGump
 {
     private const int Width = 420;
     private const int LineHeight = 18;
 
-    private readonly BotMobile _bot;
+    private readonly PlayerMobile _bot;
 
     public override bool Singleton => true;
 
-    private BotInspectGump(BotMobile bot) : base(60, 60) => _bot = bot;
+    private BotInspectGump(PlayerMobile bot) : base(60, 60) => _bot = bot;
 
-    public static void DisplayTo(Mobile from, BotMobile bot)
+    public static void DisplayTo(Mobile from, PlayerMobile bot)
     {
-        if (from?.NetState == null || bot?.Brain == null)
+        if (from?.NetState == null || bot?.GetBrain() == null)
         {
             return;
         }
@@ -28,7 +28,7 @@ public class BotInspectGump : DynamicGump
 
     protected override void BuildLayout(ref DynamicGumpBuilder builder)
     {
-        var brain = _bot.Brain;
+        var brain = _bot.GetBrain();
         var lines = 16 + brain.LastScores.Count + brain.Plan.Count;
         var height = 40 + lines * LineHeight;
 
@@ -38,7 +38,7 @@ public class BotInspectGump : DynamicGump
 
         var y = 14;
 
-        builder.AddLabel(16, y, 0x35, $"{_bot.Name} — {(_bot.Alive ? "жив" : "призрак")}, {(brain.Registered ? "v2" : "не активен")}");
+        builder.AddLabel(16, y, 0x35, $"{_bot.Name} — {(_bot.Alive ? "жив" : "призрак")}, {(brain.Registered ? "активен" : "не активен")}");
         builder.AddButton(Width - 40, y, 0xFA5, 0xFA7, 1); // refresh
         y += LineHeight + 4;
 

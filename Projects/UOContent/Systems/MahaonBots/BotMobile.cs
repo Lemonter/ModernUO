@@ -17,7 +17,7 @@ public enum BotArchetype
 /// <summary>
 ///     A "fake player" for the Mahaon bot population: a real PlayerMobile (full skills,
 ///     stats, inventory, combat) but with no Account/NetState — driven entirely by
-///     <see cref="Server.Systems.MahaonBots.BotController" /> instead of a client.
+///     its <see cref="Server.Systems.Bots.BotBrain" /> instead of a client.
 /// </summary>
 [SerializationGenerator(1, false)]
 public partial class BotMobile : PlayerMobile, IPathDoorOpener
@@ -28,7 +28,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     [SerializableField(1)]
     private bool _isPk;
 
-    // The v2 mind (Systems/Bots). Null while the bot runs on the v1 controller.
+    // The mind (Systems/Bots). Null only until the bot is first registered.
     [SerializableField(2, setter: "internal")]
     [SaveFlag(nameof(ShouldSerializeBrain))]
     private Systems.Bots.BotBrain _brain;
@@ -44,12 +44,53 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     [AfterDeserialization]
     private void AfterDeserialization() => Systems.Bots.BotSystem.OnBotLoaded(this);
 
-    public bool OpensDoors => Systems.Bots.BotSystem.IsV2(this);
+    public bool OpensDoors => Systems.Bots.BotSystem.IsActive(this);
 
     // Bots keep the world awake around them the way a connected player does: away from the real
     // player there are otherwise no live monsters, spawners or AI for them to meet.
     public override bool ActivatesSectors => true;
 
+
+    /// <summary>
+    ///     Единственная надёжная точка для «бота больше нет»: через неё проходит любой
+    ///     путь удаления ([ClearBots, [remove, удаление маяка).
+    /// </summary>
+    public override void OnDelete()
+    {
+        Systems.Bots.BotSystem.Unregister(this);
+
+        // Tamed pets would stay in the world with a master that no longer exists.
+        if (AllFollowers is { Count: > 0 } followers)
+        {
+            foreach (var follower in new List<Mobile>(followers))
+            {
+                if (follower is BaseCreature { Controlled: true } pet && pet.ControlMaster == this)
+                {
+                    pet.Delete();
+                }
+            }
+        }
+
+        base.OnDelete();
+    }
+
+    /// <summary>A new crafter starts out knowing the weapon and armour patterns of its trade.</summary>
+    private static void GrantStartingRecipes(PlayerMobile bot)
+    {
+        foreach (var recipe in Engines.Craft.Recipe.Recipes.Values)
+        {
+            var type = recipe.CraftItem?.ItemType;
+            if (type != null && (typeof(BaseWeapon).IsAssignableFrom(type) || typeof(BaseArmor).IsAssignableFrom(type)) &&
+                !bot.HasRecipe(recipe))
+            {
+                bot.AcquireRecipe(recipe);
+            }
+        }
+    }
+
+    public static bool IsProfessionCategory(Mobile m, Systems.MahaonProfessions.ProfessionCategory category) =>
+        Systems.MahaonProfessions.ProfessionSystem.GetProfession(m) is { } profession &&
+        Systems.MahaonProfessions.ProfessionData.All[profession].Category == category;
 
     // Mahaon: real players' Resurrect() (PlayerMobile.cs) grants a DeathRobe every single
     // time they come back to life — fine for an actual person who dies occasionally, but
@@ -63,19 +104,6 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     // all — still calls the real PlayerMobile.Resurrect() first for everything else it
     // does (clearing poison, restoring Hits/Stam/Mana, closing the bank box, etc), just
     // immediately removes whatever robe that call just equipped.
-    /// <summary>
-    ///     Единственная надёжная точка для «бота больше нет». [ClearBots и [remove зовут
-    ///     Delete() напрямую, мимо UnregisterBot, поэтому питомец оставался в мире с
-    ///     хозяином, которого уже удалили. Здесь через это не проскочит ни один путь
-    ///     удаления.
-    /// </summary>
-    public override void OnDelete()
-    {
-        Systems.MahaonBots.BotController.UnregisterBot(this);
-        Systems.Bots.BotSystem.Unregister(this);
-        base.OnDelete();
-    }
-
     public override void Resurrect()
     {
         var wasAlive = Alive;
@@ -84,6 +112,12 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         if (Alive && !wasAlive && FindItemOnLayer(Layer.OuterTorso) is DeathRobe robe)
         {
             robe.Delete();
+        }
+
+        // Death clears the profession title.
+        if (Alive && !wasAlive)
+        {
+            ApplyNameTemplate(this);
         }
     }
 
@@ -174,6 +208,9 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         return list[Utility.Random(list.Count)];
     }
 
+    // Share of outlaws among new bots.
+    private const double PkChance = 0.12;
+
     [Constructible]
     public BotMobile()
     {
@@ -192,7 +229,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
             Hue = Race.Human.RandomSkinHue(),
             Player = true,
             _archetype = type,
-            _isPk = Utility.RandomDouble() < Systems.MahaonBots.BotTuning.PkChance
+            _isPk = Utility.RandomDouble() < PkChance
         };
 
         bot.Body = bot.Female ? 0x191 : 0x190;
@@ -251,8 +288,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         // Гильдию здесь больше не выбираем: этим занимается маяк (одна на всех своих
         // ботов). Случайная гильдия на каждого бота превращала точку возрождения в свалку
         // чужаков — см. BotGuilds.NameForBeacon.
-        if (bot.Guild == null && Systems.MahaonBots.BotController.TryGetProfile(bot, out var profile) &&
-            profile.OwnerBeacon is Items.MahaonBotBeacon { Deleted: false } beacon)
+        if (bot.Guild == null && bot.Brain?.OwnerBeacon is Items.MahaonBotBeacon { Deleted: false } beacon)
         {
             Systems.MahaonBots.BotGuilds.Join(beacon.GuildNameFor(bot), bot);
         }
@@ -279,67 +315,6 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         var profession = options[Utility.Random(options.Count)];
 
         Systems.MahaonProfessions.ProfessionSystem.SetProfession(bot, profession);
-    }
-
-    /// <summary>Re-equips fresh basic gear and tools after resurrection — same gear a
-    /// fresh bot of this archetype would start with.</summary>
-    public static void RegearAfterDeath(BotMobile bot)
-    {
-        // Смерть снимает Title вместе с прочим — возвращаем «Имя Профессия [Гильдия]».
-        ApplyNameTemplate(bot);
-
-        // Mahaon: ApplyArchetype below unconditionally EquipItems a whole fresh outfit —
-        // it doesn't check what's already worn, and EquipItem doesn't delete whatever it
-        // displaces (see the DeathRobe/TryEquipUpgrade leak — same root cause, but this
-        // one re-dresses the bot ENTIRELY on every single death, 5-10 pieces at once,
-        // which is almost certainly the bulk of the ~2 million leaked entities: exactly
-        // matches PlateGorget/Sandals/StuddedChest/etc counts from [CountEntities). Strip
-        // whatever's currently on a gear layer first so the old pieces get properly
-        // deleted instead of silently piling up in the bot's own backpack forever.
-        var gearLayers = new[]
-        {
-            Layer.OuterTorso, Layer.InnerTorso, Layer.MiddleTorso, Layer.Arms, Layer.Pants,
-            Layer.Neck, Layer.Helm, Layer.Shoes, Layer.Cloak, Layer.Gloves,
-            Layer.OneHanded, Layer.TwoHanded, Layer.Shirt
-        };
-
-        foreach (var layer in gearLayers)
-        {
-            bot.FindItemOnLayer(layer)?.Delete();
-        }
-
-        // Mahaon: ApplyArchetype also unconditionally drops a fresh Spellbook/
-        // MahaonReagentPouch/Bandage/Arrow stack into the backpack for the matching
-        // archetype — same leak, different location (backpack instead of a worn layer).
-        // Spellbook count alone was 1857 against 144 live bots in [CountEntities — this
-        // was the source. Clear the specific types ApplyArchetype is about to re-give
-        // before calling it, same reasoning as the gear-layer strip above. Bandage/Arrow
-        // are stackable and usually merge on drop, but clearing first keeps this
-        // unconditionally correct regardless of stacking behavior.
-        if (bot.Backpack != null)
-        {
-            foreach (var item in new List<Item>(bot.Backpack.Items))
-            {
-                if (item is Spellbook or MahaonReagentPouch or Bandage or Arrow)
-                {
-                    item.Delete();
-                }
-            }
-        }
-
-        ApplyArchetype(bot, bot.Archetype);
-
-        if (bot.Backpack?.FindItemByType<BaseInstrument>() == null)
-        {
-            GiveInstrumentIfBard(bot); // corpse got looted — replace it if this bot actually needs one
-        }
-
-        // Раньше здесь была проверка банка на предметы получше (bank.Items,
-        // TryEquipUpgrade) — банк для этого больше не используется вообще, см.
-        // BotGear.RecordBestGear/ApplyRememberedGearBonus. Подтягиваем свежую базовую
-        // броню/оружие до когда-то достигнутого уровня по запомненным числам, без единого
-        // предмета в контейнере.
-        Systems.MahaonBots.BotController.ApplyRememberedGearBonus(bot);
     }
 
     /// <summary>
@@ -420,8 +395,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     ///     требования по силе так же, как для живого игрока. Латный доспех требует 95 силы,
     ///     а воину раскатывается SetStr(80, 95) — то есть у большинства воинов кираса и
     ///     поножи просто не надевались. Результат EquipItem никто не смотрел, так что бот
-    ///     оставался с голым торсом, а сам предмет повисал в мире без владельца — та самая
-    ///     утечка сущностей, о которой говорит комментарий в RegearAfterDeath.
+    ///     оставался с голым торсом, а сам предмет повисал в мире без владельца.
     ///
     ///     Кожа требует около 20 силы, её осилит любой бот, поэтому запасной вариант
     ///     срабатывает всегда.
@@ -636,7 +610,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
                     bot.Backpack?.DropItem(tool);
                 }
 
-                Systems.MahaonBots.BotController.GrantStartingRecipes(bot);
+                GrantStartingRecipes(bot);
                 break;
 
             case BotArchetype.Trader:

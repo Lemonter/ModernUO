@@ -59,9 +59,24 @@ public static class BotRumors
         }
     }
 
-    /// <summary>Call once per bot per decision cycle while idle/traveling — a bot standing
-    /// near enough to another bot who's currently "telling" a rumor has a chance to catch
-    /// it and repeat it themselves shortly after.</summary>
+    /// <summary>A rumour still going round, for a bot to pass on in conversation
+    /// (BotSpeech.Chat).</summary>
+    public static bool TryPick(out string text)
+    {
+        Active.RemoveAll(r => r.ExpiresAt <= Core.Now);
+
+        if (Active.Count == 0)
+        {
+            text = null;
+            return false;
+        }
+
+        text = Active[Utility.Random(Active.Count)].Text;
+        return true;
+    }
+
+    /// <summary>Called for town vendors (VendorRumorTeller): with someone standing close by,
+    /// the vendor now and then repeats a rumour out loud.</summary>
     public static void TryHear(Mobile bot)
     {
         if (Active.Count == 0 || bot.Map == null || Utility.RandomDouble() > HearChance)

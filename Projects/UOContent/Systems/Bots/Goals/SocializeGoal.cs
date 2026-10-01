@@ -22,14 +22,14 @@ public sealed class SocializeGoal : BotGoal
         return [new GoToAction(partner, 2, "к собеседнику"), new TalkAction(partner)];
     }
 
-    private static Mobile FindPartner(BotMobile bot)
+    private static Mobile FindPartner(PlayerMobile bot)
     {
         Mobile best = null;
         var bestDist = double.MaxValue;
 
         foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, SearchRange))
         {
-            if (m == bot || !m.Alive || m.Hidden || m is BotMobile { Brain.Action: TalkAction })
+            if (m == bot || !m.Alive || m.Hidden || m.GetBrain()?.Action is TalkAction)
             {
                 continue;
             }

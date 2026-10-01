@@ -15,6 +15,9 @@ public sealed class CraftGoal : BotGoal
 
     public override string Name => $"Ремесло: {System?.MainSkill}";
 
+    public override string[] News =>
+        ["Наделал товара на продажу.", "Руки в мозолях от работы.", "Заказов бы побольше.", "Сделал вещь — сам бы носил."];
+
     private bool NeedsSmithy => System == DefBlacksmithy.CraftSystem;
 
     public override double Score(BotBrain brain)

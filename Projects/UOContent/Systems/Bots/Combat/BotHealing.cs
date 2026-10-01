@@ -120,6 +120,20 @@ public static class BotHealing
             return false;
         }
 
+        if (!StartAllyHeal(brain, patient))
+        {
+            return false;
+        }
+
+        // Help remembered both ways is what lets guilds drift into alliances.
+        MahaonBots.BotRelationships.OnHelped(patient, bot);
+        return true;
+    }
+
+    private static bool StartAllyHeal(BotBrain brain, Mobile patient)
+    {
+        var bot = brain.Bot;
+
         if (bot.Skills.Healing.Value >= 30 && bot.InRange(patient, 2) && BandageContext.GetContext(bot) == null &&
             bot.Backpack?.FindItemByType<Bandage>() is { } bandage && BandageContext.BeginHeal(bot, patient) != null)
         {
