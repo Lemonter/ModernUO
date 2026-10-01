@@ -22,9 +22,20 @@ public class PlayerVendorTargetAttribute : Attribute;
  * Next, uncomment the MigrateFrom function and change the `V3Content` type to match the serialization version
  * before it was bumped. Then run publish.cmd to generate the migration file.
  */
-[SerializationGenerator(3, false)]
+[SerializationGenerator(4, false)]
 public partial class PlayerVendor : Mobile
 {
+    private void MigrateFrom(V3Content content)
+    {
+        _shopName = content.ShopName;
+        _nextPayTime = content.NextPayTime;
+        _house = content.House;
+        _owner = content.Owner;
+        _bankAccount = content.BankAccount;
+        _holdGold = content.HoldGold;
+        _sellItems = content.SellItems;
+    }
+
     private Timer _payTimer;
 
     [InvalidateProperties]
@@ -32,7 +43,7 @@ public partial class PlayerVendor : Mobile
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private string _shopName;
 
-    [DeltaDateTime]
+    [AnchoredDateTime]
     [SerializableField(1, setter: "private")]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private DateTime _nextPayTime;
@@ -94,18 +105,13 @@ public partial class PlayerVendor : Mobile
 
     public PlayerVendorPlaceholder Placeholder { get; set; }
 
-    [SerializableProperty(2)]
-    public BaseHouse House
-    {
-        get => _house;
-        set
-        {
-            _house?.PlayerVendors.Remove(this);
-            value?.PlayerVendors.Add(this);
+    [SerializableField(2, fieldChanged: nameof(OnHouseChanged))]
+    private BaseHouse _house;
 
-            _house = value;
-            this.MarkDirty();
-        }
+    private void OnHouseChanged(BaseHouse oldValue, BaseHouse newValue)
+    {
+        oldValue?.PlayerVendors.Remove(this);
+        newValue?.PlayerVendors.Add(this);
     }
 
     public int ChargePerDay
@@ -182,7 +188,7 @@ public partial class PlayerVendor : Mobile
         for (var i = 0; i < count; i++)
         {
             var item = reader.ReadEntity<Item>();
-            var vi = new VendorItem();
+            var vi = new VendorItem(this);
             vi.Deserialize(reader);
             _sellItems[item] = vi;
         }
@@ -441,7 +447,7 @@ public partial class PlayerVendor : Mobile
     {
         RemoveVendorItem(item);
 
-        var vi = new VendorItem(item, price, description, created);
+        var vi = new VendorItem(this, item, price, description, created);
         ReplaceInSellItems(item, vi);
 
         item.InvalidateProperties();

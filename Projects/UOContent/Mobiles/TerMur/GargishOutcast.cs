@@ -111,7 +111,7 @@ public partial class GargishOutcast : BaseCreature
     public override Poison PoisonImmune => Poison.Deadly;
     public override bool AlwaysMurderer => true;
     public override bool ReacquireOnMovement => true;
-    public override bool AcquireOnApproach => true;
+    public override TimeSpan AcquireOnApproachDelay => TimeSpan.Zero;
     public override int AcquireOnApproachRange => 8;
 
     public override WeaponAbility GetWeaponAbility()

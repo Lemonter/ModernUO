@@ -109,7 +109,7 @@ public class ViceVsVirtueSystem
             return;
         }
 
-        var list = victim.DamageEntries.OrderByDescending(d => d.DamageGiven).ToList();
+        var list = victim.DamageEntries.ToArray().OrderByDescending(d => d.DamageGiven).ToList();
         var handled = new List<Mobile>();
         var statloss = false;
 

@@ -24,7 +24,7 @@ public partial class VvVPotionKeg : Item
     [InvalidateProperties]
     private PotionType _potionType;
 
-    [SerializableField(1)]
+    [SerializableField(1, fieldChanged: nameof(OnChargesChanged))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     [InvalidateProperties]
     private int _charges;
@@ -51,7 +51,6 @@ public partial class VvVPotionKeg : Item
         };
     }
 
-    [SerializableFieldChanged(1)]
     private void OnChargesChanged(int oldValue, int newValue)
     {
         if (newValue <= 0)

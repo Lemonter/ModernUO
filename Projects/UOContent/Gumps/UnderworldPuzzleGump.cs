@@ -197,7 +197,7 @@ public class UnderworldPuzzleGump : Gump
 
                 break;
             case 8:
-                _item.CurrentSolution = new UnderworldPuzzleSolution(_item.Solution.Index);
+                _item.CurrentSolution = new UnderworldPuzzleSolution(_item, _item.Solution.Index);
                 _item.Attempts = 0;
                 break;
             default:

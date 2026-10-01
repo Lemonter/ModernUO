@@ -28,14 +28,13 @@ public partial class NavreysPillar : Item
     [SerializableField(1)]
     private NavreysController _controller;
 
-    [SerializableField(2)]
+    [SerializableField(2, fieldChanged: nameof(OnStateChanged))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private NavreysPillarState _state;
 
     private Timer _timer;
     private int _ticks;
 
-    [SerializableFieldChanged(2)]
     private void OnStateChanged(NavreysPillarState oldValue, NavreysPillarState newValue)
     {
         _timer?.Stop();

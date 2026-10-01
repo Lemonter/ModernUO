@@ -29,10 +29,34 @@ namespace Server.Network;
 public partial class NetState
 {
     // Buffer sizes
-    private const int RecvBufferSize = 1024 * 64;    // 64KB recv buffers
+    internal const int RecvBufferSize = 1024 * 64;    // 64KB recv buffers
     private const int DefaultSendBufferSize = 1024 * 256;  // 256KB send buffers
     private const int MinSendBufferSize = 1024 * 64;       // Platform allocation granularity
+    private const int DefaultMaxSendBufferSize = 1024 * 1024 * 2;          // 2 MB
+    private const long DefaultSendBufferGrowthBudget = 1024L * 1024 * 256; // 256 MB
+    private const int DefaultMemoryCeilingPercent = 80;
+    private const int DefaultInitialBufferSlabs = 1;   // one slab of each base pool warm at boot
+    internal const int DefaultMaxBufferSlabs = 128;    // 32 connections per slab at MaxConnections
+
+    // Transport ceiling; larger values overflow its tier enumeration
+    private const int TransportMaxSendBufferSize = 1024 * 1024 * 256; // 256 MB
     private const int MaxConnections = 4096;         // Max concurrent connections
+
+    internal static int SendBufferSize { get; private set; }
+    internal static int MaxSendBufferSize { get; private set; }
+
+    // Pre-auth buffers are the smallest the platform can map; a platform whose floor is not below
+    // the base size (the Windows legacy mapping path) starts sockets on base
+    internal static int InitialRecvBufferSize { get; private set; }
+    internal static int InitialSendBufferSize { get; private set; }
+    private static long _sendBufferGrowthBudget;
+    private static int _memoryCeilingPercent;
+
+    // Refreshed by the maintenance sweep; internal for tests
+    internal static long _availableMemoryBytes;
+
+    private static Timer.DelayCallTimer _maintenanceTimer;
+    private static SendBufferSweep _lastSweep;
 
     private static readonly Queue<NetState> _disposed = [];
     private static readonly TimeSpan ConnectingSocketIdleLimit = TimeSpan.FromMilliseconds(5000); // 5 seconds
@@ -61,6 +85,9 @@ public partial class NetState
     /// </summary>
     public static IIORingGroup Ring => _socketManager?.Ring;
 
+    // Test hook
+    internal static RingSocketManager SocketManager => _socketManager;
+
     /// <summary>
     /// Waits for network I/O completions or until the specified timeout expires.
     /// Used by the game loop to sleep efficiently while remaining responsive to network events.
@@ -70,6 +97,24 @@ public partial class NetState
     {
         _socketManager?.WaitForCompletion(timeoutMs);
     }
+
+    /// <summary>
+    /// Wakes the game loop if it is blocked in <see cref="WaitForCompletion"/>. Safe from any
+    /// thread; a no-op before networking is configured or after teardown. The signal is sticky,
+    /// so a wake racing the loop's decision to sleep is not lost.
+    /// </summary>
+    public static void Wake()
+    {
+        _socketManager?.Ring?.Wake();
+    }
+
+    /// <summary>
+    /// True when no queued network work remains for the loop to drain. <see cref="Slice"/> defers
+    /// work in several places, so an empty completion queue alone is not enough.
+    /// </summary>
+    internal static bool IsIdle =>
+        _throttled.Count == 0 && _throttledPending.Count == 0 &&
+        _flushPending.Count == 0 && _pendingDisconnects.Count == 0 && _disposed.Count == 0;
 
     /// <summary>
     /// Gets the listening addresses that the server is bound to.
@@ -89,6 +134,9 @@ public partial class NetState
             return;
         }
 
+        // Seed from a real tick; a zero default suppresses the sweep when ticks start negative
+        _nextAliveCheck = Core.TickCount;
+
         // Initialize IP rate limiter
         _ipRateLimiter = new IPRateLimiter(10, 10000, 1000, 2.0, 3_600_000, Core.ClosingTokenSource.Token);
 
@@ -97,26 +145,220 @@ public partial class NetState
         // latency is roughly completion RTT / this value.
         var maxOutstandingSends = ServerConfiguration.GetOrUpdateSetting("network.maxOutstandingSends", 32);
 
-        // Initialize IORingGroup
+        // Per-connection send buffer: the lever for "send buffer exhausted" disconnects, and the
+        // per-connection memory ceiling.
+        SendBufferSize = GetSendBufferSize();
+        MaxSendBufferSize = GetPowerOfTwoSetting("network.sendBufferMaxSize", DefaultMaxSendBufferSize, SendBufferSize);
+        _sendBufferGrowthBudget = CoerceSendBufferGrowthBudget(
+            ServerConfiguration.GetOrUpdateSetting("network.sendBufferGrowthBudget", DefaultSendBufferGrowthBudget),
+            SendBufferSize,
+            MaxSendBufferSize
+        );
+        // 0 disables the ceiling
+        _memoryCeilingPercent = Math.Clamp(ServerConfiguration.GetOrUpdateSetting("network.memoryCeilingPercent", DefaultMemoryCeilingPercent), 0, 100);
+        _availableMemoryBytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+
+        // Divides MaxConnections into base-pool slabs; both pools still reach MaxConnections, so
+        // this sets slab granularity, not a connection or memory ceiling.
+        var maxBufferSlabs = CoerceMaxBufferSlabs(
+            ServerConfiguration.GetOrUpdateSetting("network.maxBufferSlabs", DefaultMaxBufferSlabs)
+        );
+
+        // Slabs of each base pool held from boot; the pools grow and trim from here
+        var initialBufferSlabs = CoerceInitialBufferSlabs(
+            ServerConfiguration.GetOrUpdateSetting("network.initialBufferSlabs", DefaultInitialBufferSlabs),
+            BasePoolSlabCount(maxBufferSlabs)
+        );
+
+        // Until the game server verifies credentials a connection holds the smallest buffers the
+        // platform can map; a flood can fill these pools but never reaches the base pools. This is a
+        // request: the manager raises it to the platform floor and turns the pool off if that leaves
+        // no room below the base size (the Windows legacy mapping path floors at 64 KiB, which can
+        // equal RecvBufferSize). The effective sizes are read back below once the manager knows them.
+        var initialBufferSize = IORingBuffer.MinimumSize;
+
+        // Both calls take the same slab count; the manager throws if the table is smaller. Sized by
+        // the request, not the effective size the manager may coerce down to - conservative, never small.
         var ring = IORingGroup.Create(
             queueSize: MaxConnections * 2,
             maxConnections: MaxConnections,
-            maxOutstandingSends: maxOutstandingSends
+            maxOutstandingSends: maxOutstandingSends,
+            maxRegisteredBuffers: RingSocketManager.RequiredRegisteredBuffers(
+                MaxConnections, SendBufferSize, MaxSendBufferSize, _sendBufferGrowthBudget, maxBufferSlabs,
+                initialBufferSize, initialBufferSize
+            )
         );
-
-        // Per-connection send buffer: the lever for "send buffer exhausted" disconnects, and the
-        // per-connection memory ceiling.
-        var sendBufferSize = GetSendBufferSize();
 
         // Create socket manager which handles buffer pools and socket lifecycle
         _socketManager = new RingSocketManager(
             ring,
             maxSockets: MaxConnections,
             recvBufferSize: RecvBufferSize,
-            sendBufferSize: sendBufferSize,
-            initialBufferSlabs: 8,
-            maxBufferSlabs: 32
+            sendBufferSize: SendBufferSize,
+            initialBufferSlabs: initialBufferSlabs,
+            maxBufferSlabs: maxBufferSlabs,
+            maxSendBufferSize: MaxSendBufferSize,
+            sendBufferGrowthBudget: _sendBufferGrowthBudget,
+            initialRecvBufferSize: initialBufferSize,
+            initialSendBufferSize: initialBufferSize
         );
+
+        InitialRecvBufferSize = _socketManager.InitialRecvBufferSize;
+        InitialSendBufferSize = _socketManager.InitialSendBufferSize;
+
+        if (InitialRecvBufferSize == 0 || InitialSendBufferSize == 0)
+        {
+            logger.Information(
+                "Pre-auth buffers off where the platform floor ({Minimum} bytes) leaves no room below the base size (recv {Recv}, send {Send})",
+                IORingBuffer.MinimumSize,
+                RecvBufferSize,
+                SendBufferSize
+            );
+        }
+
+        _maintenanceTimer = Timer.DelayCall(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1), MaintainSendBuffers);
+    }
+
+    internal static void MaintainSendBuffers()
+    {
+        if (_socketManager == null)
+        {
+            return;
+        }
+
+        // Container limits can change
+        _availableMemoryBytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+
+        var ceilingRefusals = _ceilingRefusals;
+        var capRefusals = _capRefusals;
+        _ceilingRefusals = 0;
+        _capRefusals = 0;
+
+        var stats = _socketManager.Maintain();
+        var changed = stats.TierCapacityBytes != _lastSweep.TierCapacityBytes ||
+                      stats.TierInUse != _lastSweep.TierInUse ||
+                      stats.TierRetainFloor != _lastSweep.TierRetainFloor ||
+                      stats.BaseCapacityBytes != _lastSweep.BaseCapacityBytes;
+        _lastSweep = new SendBufferSweep(
+            true,
+            Core.TickCount,
+            stats.TierCapacityBytes,
+            stats.TierInUse,
+            stats.TierRetainFloor,
+            stats.BuffersReleased,
+            stats.BaseCapacityBytes,
+            stats.BaseBuffersReleased,
+            stats.GrowthRefusals,
+            capRefusals,
+            ceilingRefusals
+        );
+
+        // Quiet unless something moved
+        if (changed || stats.BuffersReleased > 0 || stats.BaseBuffersReleased > 0 || stats.GrowthRefusals > 0 ||
+            capRefusals > 0 || ceilingRefusals > 0)
+        {
+            logger.Debug(
+                "Send buffer tiers: {Capacity} bytes of tier capacity, {InUse} buffers in use, floor {Floor} buffers, released {Released}, refused: budget {BudgetRefusals}, at max {CapRefusals}, ceiling {CeilingRefusals}, base {BaseCapacity} bytes, released {BaseReleased}",
+                stats.TierCapacityBytes,
+                stats.TierInUse,
+                stats.TierRetainFloor,
+                stats.BuffersReleased,
+                stats.GrowthRefusals,
+                capRefusals,
+                ceilingRefusals,
+                stats.BaseCapacityBytes,
+                stats.BaseBuffersReleased
+            );
+        }
+    }
+
+    /// <summary>
+    /// Read-only diagnostics snapshot; never rotates the maintenance window. Cold path: allocates.
+    /// </summary>
+    public static NetworkStats GetNetworkStats()
+    {
+        var manager = _socketManager;
+        var tiers = manager == null ? [] : new SendBufferTierUsage[manager.SendBufferTierCount];
+        for (var i = 0; i < tiers.Length; i++)
+        {
+            var tier = manager.GetSendBufferTierStats(i);
+            tiers[i] = new SendBufferTierUsage(tier.BufferSize, tier.Capacity, tier.InUse, tier.RetainFloor);
+        }
+
+        var authenticated = 0;
+        foreach (var ns in _instances)
+        {
+            if (ns.Account != null)
+            {
+                authenticated++;
+            }
+        }
+
+        return new NetworkStats(
+            manager?.ConnectedCount ?? 0,
+            manager?.MaxSockets ?? MaxConnections,
+            authenticated,
+            RecvBufferSize,
+            SendBufferSize,
+            MaxSendBufferSize,
+            InitialRecvBufferSize,
+            InitialSendBufferSize,
+            _sendBufferGrowthBudget,
+            _memoryCeilingPercent,
+            _availableMemoryBytes,
+            tiers,
+            _lastSweep,
+            _throttled.Count + _throttledPending.Count,
+            _flushPending.Count,
+            _pendingDisconnects.Count
+        );
+    }
+
+    /// <summary>
+    /// Slabs each base pool is divided into, after the transport applies its minimum slab size.
+    /// </summary>
+    internal static int BasePoolSlabCount(int maxBufferSlabs) =>
+        RingSocketManager.BasePoolSlabCount(MaxConnections, maxBufferSlabs);
+
+    /// <summary>
+    /// Clamps the base-pool slab divisor. Fewer than one slab is meaningless, and more slabs than
+    /// connections cannot make a slab any smaller.
+    /// </summary>
+    internal static int CoerceMaxBufferSlabs(int configured)
+    {
+        var slabs = Math.Clamp(configured, 1, MaxConnections);
+
+        if (slabs != configured)
+        {
+            logger.Warning(
+                "network.maxBufferSlabs {Configured} is outside 1..{Maximum}; using {Adjusted}",
+                configured,
+                MaxConnections,
+                slabs
+            );
+        }
+
+        return slabs;
+    }
+
+    /// <summary>
+    /// Clamps the slabs of each base pool held from boot; a pool never holds more slabs than it has.
+    /// </summary>
+    internal static int CoerceInitialBufferSlabs(int configured, int slabCount)
+    {
+        var slabs = Math.Clamp(configured, 1, slabCount);
+
+        if (slabs != configured)
+        {
+            logger.Warning(
+                "network.initialBufferSlabs {Configured} is outside 1..{Maximum}; using {Adjusted}",
+                configured,
+                slabCount,
+                slabs
+            );
+        }
+
+        return slabs;
     }
 
     /// <summary>
@@ -124,27 +366,87 @@ public partial class NetState
     /// allocation granularity. IORingBuffer requires this and would otherwise throw at socket
     /// creation rather than at startup.
     /// </summary>
-    private static int GetSendBufferSize()
+    private static int GetSendBufferSize() =>
+        GetPowerOfTwoSetting("network.sendBufferSize", DefaultSendBufferSize, MinSendBufferSize);
+
+    private static int GetPowerOfTwoSetting(string key, int defaultValue, int minimum) =>
+        CoercePowerOfTwoSetting(key, ServerConfiguration.GetOrUpdateSetting(key, defaultValue), minimum);
+
+    /// <summary>
+    /// Clamps to a power of two between <paramref name="minimum"/> and the transport ceiling.
+    /// </summary>
+    internal static int CoercePowerOfTwoSetting(string key, int configured, int minimum)
     {
-        var configured = ServerConfiguration.GetOrUpdateSetting("network.sendBufferSize", DefaultSendBufferSize);
-        var size = Math.Max(MinSendBufferSize, configured);
+        var size = configured;
+
+        if (size > TransportMaxSendBufferSize)
+        {
+            logger.Warning(
+                "{Key} {Configured} is above the transport maximum {Maximum} (capped); using {Adjusted}",
+                key,
+                configured,
+                TransportMaxSendBufferSize,
+                TransportMaxSendBufferSize
+            );
+
+            size = TransportMaxSendBufferSize;
+        }
+
+        if (size < minimum)
+        {
+            logger.Warning(
+                "{Key} {Configured} is below the minimum {Minimum} (raised); using {Adjusted}",
+                key,
+                configured,
+                minimum,
+                minimum
+            );
+
+            size = minimum;
+        }
 
         if (!BitOperations.IsPow2(size))
         {
-            size = (int)BitOperations.RoundUpToPowerOf2((uint)size);
-        }
+            // Rounding up cannot cross the ceiling, itself a power of two
+            var rounded = (int)BitOperations.RoundUpToPowerOf2((uint)size);
 
-        if (size != configured)
-        {
-            logger.Warning(
-                "network.sendBufferSize {Configured} is not a power of two of at least {Minimum}; using {Adjusted}",
-                configured,
-                MinSendBufferSize,
-                size
-            );
+            logger.Warning("{Key} {Configured} is not a power of two; using {Adjusted}", key, configured, rounded);
+            size = rounded;
         }
 
         return size;
+    }
+
+    /// <summary>
+    /// Negative disables growth; below one tier slab is raised to the minimum.
+    /// </summary>
+    internal static long CoerceSendBufferGrowthBudget(long configured, int sendBufferSize, int maxSendBufferSize)
+    {
+        if (configured < 0)
+        {
+            logger.Warning("network.sendBufferGrowthBudget {Configured} is negative; using 0 (growth disabled)", configured);
+            return 0;
+        }
+
+        if (configured == 0 || maxSendBufferSize <= sendBufferSize)
+        {
+            return configured;
+        }
+
+        // Tier buffers are allocated a slab at a time.
+        var minimumBudget = RingSocketManager.MinimumSendBufferGrowthBudget(sendBufferSize);
+        if (configured < minimumBudget)
+        {
+            logger.Warning(
+                "network.sendBufferGrowthBudget {Configured} is below one tier slab; using {Minimum}",
+                configured,
+                minimumBudget
+            );
+
+            return minimumBudget;
+        }
+
+        return configured;
     }
 
     /// <summary>
@@ -274,7 +576,7 @@ public partial class NetState
                     {
                         // Enqueue-only contribution; NOT added to the local firewall set (the limiter already
                         // gates it here and the OS bouncer drops it at the kernel).
-                        Bans.BanChannel.Report(remoteIP, Bans.BanConfiguration.Settings.AutoBanDuration, "rate-limit");
+                        Bans.BanChannel.Report(remoteIP, Bans.BanConfiguration.Settings.AutoBanDuration, Bans.BanReasons.RateLimit);
                     }
                 }
                 else if (ConnectionFilters.ShouldDeny(remoteIP, out var deniedBy))
@@ -362,6 +664,18 @@ public partial class NetState
             // Socket must have finished the entire authentication process or be forcibly disconnected
             if (!ns.SentFirstPacket || !ns.Seeded)
             {
+                // Only the totally silent ones are evidence. A connection that sent SOME data and ran out of
+                // time is far more likely a slow link, and banning those makes the player retry, trip the
+                // rate limiter, and compound it into an hours-long ban.
+                if (!ns._receivedData && Bans.BanConfiguration.Settings.ReportBadConnects)
+                {
+                    Bans.BanChannel.Report(
+                        ns.Address,
+                        Bans.BanConfiguration.Settings.BadConnectDuration,
+                        Bans.BanReasons.SilentConnect
+                    );
+                }
+
                 ns.Disconnect(null);
 
                 // Force immediate cleanup - these are unauthenticated connections
@@ -458,6 +772,7 @@ public partial class NetState
                         {
                             // Update activity check on successful send
                             nsSend.NextActivityCheck = curTicks + 30000;
+                            nsSend.TryShrinkSendBuffer(curTicks);
                         }
                         break;
                     }
@@ -509,6 +824,11 @@ public partial class NetState
                 // - Waits for in-flight I/O to complete
                 // - Ensures buffers aren't released while kernel is still using them
                 ns._socket.Disconnect();
+
+                if (ns._socket.DisconnectPending)
+                {
+                    ns.ArmDrainDeadline(curTicks);
+                }
             }
         }
 
@@ -536,6 +856,11 @@ public partial class NetState
         if (!ns._running)
         {
             return;
+        }
+
+        if (bytesReceived > 0)
+        {
+            ns._receivedData = true;
         }
 
         // Data is already committed to buffer by RingSocketManager
@@ -579,6 +904,7 @@ public partial class NetState
             foreach (var ns in Instances)
             {
                 ns.CheckAlive(curTicks);
+                ns.TryShrinkSendBuffer(curTicks);
             }
         }
         catch (Exception ex)

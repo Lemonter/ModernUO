@@ -23,6 +23,29 @@ description: >
 4. **Clean up timers and references in `OnDelete()`/`OnAfterDelete()`**
 5. **No LINQ** in game logic -- use loops and `PooledRefList<T>`
 6. **File placement** matters -- follow the directory conventions below
+7. **Creature speeds are delays in seconds, on two clocks** -- think
+   (`ActiveSpeed`/`PassiveSpeed`, seconds per AI decision) and move
+   (`ActiveMoveSpeed`/`PassiveMoveSpeed`, seconds per step; inherits think until
+   overridden). Prefer `npc-speeds.json` buckets (`SpeedClass`); `SetSpeed()` sets think
+   AND clears move overrides, `SetMoveSpeed()` sets move only. Herding and pacing to a
+   master (`FollowMoveSpeed`) cap the resolved pace without writing either clock. The client `Running` bit is
+   derived from the step pace (`BaseAI.ShouldRun`); movement APIs take no run argument --
+   see `dev-docs/content-patterns.md` § Creature Speeds. Reaction time to approaching
+   enemies is `AcquireOnApproachDelay` (TimeSpan gradient; `Zero` = paragon snap, 2s
+   default, `ReacquireDelay`-only = oblivious) -- see § Target Acquisition
+8. **`OnThink` overrides must be excess-call tolerant** -- it fires more often than the
+   think cadence (player commands prod it; speed-ups reschedule it). Gate consequential
+   work on a tick-count deadline (subtraction form) or make it idempotent; bare per-call
+   random rolls are cosmetics-only. `MonsterAbility` is under the same contract: the
+   trigger cooldown is the rate limit, `ChanceToTrigger` is per-sample jitter, and a
+   zero-cooldown `Think`/`CombatAction` ability triggers every sampled think -- see
+   `dev-docs/content-patterns.md` § OnThink: the excess-call contract
+9. **One master, read through views** -- `ControlMaster` (owner, only while `Controlled`),
+   `SummonMaster` (summoner, only while `Summoned`), `GetMaster()` (either: who answers for the
+   creature), `Master` (the stored reference, flags ignored; both setters assign it). Tame with
+   `SetControlMaster`, summon with `BaseCreature.Summon`. Don't repeat the view's flag:
+   `Controlled && ControlMaster == x` -> `ControlMaster == x`, but `!=` does not reduce -- see
+   `dev-docs/content-patterns.md` § Masters
 
 ## New Item Template
 

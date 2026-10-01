@@ -203,7 +203,7 @@ namespace Server.Mobiles
             VisibilityList = new List<Mobile>();
             PermaFlags = new List<Mobile>();
 
-            BOBFilter = new BOBFilter();
+            BOBFilter = new BOBFilter(this);
 
             m_GameTime = TimeSpan.Zero;
             m_GuildRank = RankDefinition.Lowest;
@@ -3233,7 +3233,7 @@ namespace Server.Mobiles
                 case 13: // just removed m_PaidInsurance list
                 case 12:
                     {
-                        BOBFilter = new BOBFilter();
+                        BOBFilter = new BOBFilter(this);
                         BOBFilter.Deserialize(reader);
                         goto case 11;
                     }
@@ -3356,7 +3356,7 @@ namespace Server.Mobiles
             }
 
             PermaFlags ??= new List<Mobile>();
-            BOBFilter ??= new BOBFilter();
+            BOBFilter ??= new BOBFilter(this);
 
             // Default to member if going from older version to new version (only time it should be null)
             m_GuildRank ??= RankDefinition.Member;
@@ -3792,7 +3792,7 @@ namespace Server.Mobiles
 
             foreach (var follower in allFollowers)
             {
-                if (follower is not BaseCreature pet || pet.ControlMaster == null)
+                if (follower is not BaseCreature { Controlled: true } pet || pet.ControlMaster == null)
                 {
                     continue;
                 }
@@ -3839,7 +3839,6 @@ namespace Server.Mobiles
                 pet.Internalize();
 
                 pet.SetControlMaster(null);
-                pet.SummonMaster = null;
 
                 pet.IsStabled = true;
                 pet.StabledBy = this;
@@ -3898,11 +3897,6 @@ namespace Server.Mobiles
                 if (Followers + pet.ControlSlots <= FollowersMax)
                 {
                     pet.SetControlMaster(this);
-
-                    if (pet.Summoned)
-                    {
-                        pet.SummonMaster = this;
-                    }
 
                     pet.ControlTarget = this;
                     pet.ControlOrder = OrderType.Follow;
@@ -4164,6 +4158,35 @@ namespace Server.Mobiles
                 }
 
                 Stabled = null;
+            }
+
+            if (_allFollowers?.Count > 0)
+            {
+                // Releasing or deleting a follower removes it from _allFollowers.
+                using var followers = PooledRefQueue<BaseCreature>.Create(_allFollowers.Count);
+
+                foreach (var follower in _allFollowers)
+                {
+                    // Escorts and hirelings notice a deleted master and walk off on their own.
+                    if (follower is BaseCreature bc and not (BaseEscortable or BaseHire))
+                    {
+                        followers.Enqueue(bc);
+                    }
+                }
+
+                while (followers.Count > 0)
+                {
+                    var bc = followers.Dequeue();
+                    if (bc.Summoned || bc.IsBonded || bc.IsDeadPet)
+                    {
+                        bc.Delete();
+                    }
+                    else
+                    {
+                        // An unbonded pet goes wild and despawns on the abandoned-pet timer.
+                        bc.ControlOrder = OrderType.Release;
+                    }
+                }
             }
         }
 

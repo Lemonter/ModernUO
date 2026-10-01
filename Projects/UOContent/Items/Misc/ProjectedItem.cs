@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
-using Server.Collections;
 using Server.Network;
 
 namespace Server.Items;
@@ -126,18 +125,12 @@ public partial class ProjectedItem : Item
 
     private static void OnTick()
     {
-        using var queue = PooledRefQueue<Item>.Create();
         foreach (var item in _active)
         {
             if (!item.SendEffect())
             {
-                queue.Enqueue(item);
+                _active.Remove(item);
             }
-        }
-
-        while (queue.Count > 0)
-        {
-            _active.Remove(queue.Dequeue() as ProjectedItem);
         }
 
         if (_active.Count == 0)

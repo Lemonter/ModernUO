@@ -1,3 +1,4 @@
+using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Systems.MahaonRaids;
@@ -62,12 +63,12 @@ namespace Server.Mobiles
         // (DisableVanillaGuards), это должно стать её честной заменой — реально
         // проактивно атаковать ПК и красных существ, кто бы это ни был.
         //
-        // AcquireOnApproach включает уже существующий в BaseCreature.OnMovement
+        // AcquireOnApproachDelay = Zero включает уже существующий в BaseCreature.OnMovement
         // механизм "заметил кого-то рядом — напал", не пишем свой OnMovement с нуля.
         // Но IsEnemy по умолчанию (см. BaseCreature.IsEnemy) считает врагом ЛЮБОГО
         // игрока, кроме особых исключений — это полностью переопределяем, а не
         // дополняем, иначе страж бросался бы вообще на всех подряд.
-        public override bool AcquireOnApproach => true;
+        public override TimeSpan AcquireOnApproachDelay => TimeSpan.Zero;
         public override int AcquireOnApproachRange => 10;
 
         public override bool IsEnemy(Mobile m) =>

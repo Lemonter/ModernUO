@@ -16,7 +16,7 @@ public static class MonsterHeadDropSystem
 {
     private const double DropChance = 0.08;
 
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         var killer = bc.LastKiller is BaseCreature masterCreature

@@ -20,7 +20,7 @@ public partial class CannonTurret : BaseAddon
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private Mobile _owner;
 
-    [SerializableField(1)]
+    [SerializableField(1, fieldChanged: nameof(OnShotsRemainingChanged))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _shotsRemaining;
 
@@ -54,7 +54,6 @@ public partial class CannonTurret : BaseAddon
         _nextShot = Core.Now;
     }
 
-    [SerializableFieldChanged(1)]
     private void OnShotsRemainingChanged(int oldValue, int newValue)
     {
         if (newValue <= 0)

@@ -26,6 +26,7 @@ using Server.Network;
 using Server.Prompts;
 using Server.Targeting;
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Server.Buffers;
@@ -41,7 +42,7 @@ public delegate void PromptCallback(Mobile from, string text);
 
 public delegate void PromptStateCallback<in T>(Mobile from, string text, T state);
 
-public class DamageEntry
+public class DamageEntry : IValueLinkListNode<DamageEntry>
 {
     public DamageEntry(Mobile damager) => Damager = damager;
 
@@ -56,6 +57,11 @@ public class DamageEntry
     public List<DamageEntry> Responsible { get; set; }
 
     public static TimeSpan ExpireDelay { get; set; } = TimeSpan.FromMinutes(2.0);
+
+    // Intrusive links for Mobile._damageEntries. Sub-entries in Responsible never join a list.
+    public DamageEntry Next { get; set; }
+    public DamageEntry Previous { get; set; }
+    public bool OnLinkList { get; set; }
 }
 
 [Flags]
@@ -376,7 +382,6 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         Aggressors = new List<AggressorInfo>();
         Aggressed = new List<AggressorInfo>();
         NextSkillTime = Core.TickCount;
-        DamageEntries = new List<DamageEntry>();
     }
 
     // Sectors
@@ -973,7 +978,23 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public static VisibleDamageType VisibleDamageType { get; set; }
 
-    public List<DamageEntry> DamageEntries { get; private set; }
+    private ValueLinkList<DamageEntry> _damageEntries;
+
+    /// <summary>
+    /// Damage entries ordered least recent (head) to most recent (tail). Expired entries are
+    /// pruned on access. Enumerate with <c>foreach</c> (ascending) or <c>.ByDescending()</c>.
+    /// Mutate only through <see cref="RegisterDamage"/> and <see cref="ClearDamageEntries"/>.
+    /// Calling a ValueLinkList mutator on this reference compiles, but operates on a defensive copy
+    /// while still unlinking the real nodes — it silently corrupts the list.
+    /// </summary>
+    public ref readonly ValueLinkList<DamageEntry> DamageEntries
+    {
+        get
+        {
+            PruneExpiredDamageEntries();
+            return ref _damageEntries;
+        }
+    }
 
     [CommandProperty(AccessLevel.GameMaster)]
     public Mobile LastKiller { get; set; }
@@ -1642,7 +1663,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public virtual bool KeepsItemsOnDeath => m_AccessLevel > AccessLevel.Player;
 
-    public bool HasTrade => m_NetState?.Trades.Count > 0;
+    public bool HasTrade => m_NetState?.Trades?.Count > 0;
 
     public bool NoMoveHS { get; set; }
 
@@ -2035,10 +2056,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
                     Aggressors[i].CanReportMurder = false;
                 }
 
-                if (DamageEntries.Count > 0)
-                {
-                    DamageEntries.Clear(); // reset damage entries on full HP
-                }
+                ClearDamageEntries(); // reset damage entries on full HP
             }
             else if (CanRegenHits)
             {
@@ -2307,7 +2325,22 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
     public int CompareTo(Mobile other) => other == null ? -1 : Serial.CompareTo(other.Serial);
 
     public virtual int HuedItemID => m_Female ? 0x2107 : 0x2106;
-    public ObjectPropertyList PropertyList => m_PropertyList ??= InitializePropertyList(new ObjectPropertyList(this));
+    public ObjectPropertyList PropertyList
+    {
+        get
+        {
+            if (m_PropertyList == null)
+            {
+                // Publish the list before building it so a nested InvalidateProperties can see the
+                // build in progress and defer instead of recursing into a second throwaway list.
+                var list = new ObjectPropertyList(this);
+                m_PropertyList = list;
+                InitializePropertyList(list);
+            }
+
+            return m_PropertyList;
+        }
+    }
 
     public virtual void GetProperties(IPropertyList list)
     {
@@ -2324,11 +2357,11 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public virtual void Serialize(IGenericWriter writer)
     {
-        writer.Write(37); // version
+        writer.Write(38); // version
 
-        writer.WriteDeltaTime(LastStrGain);
-        writer.WriteDeltaTime(LastIntGain);
-        writer.WriteDeltaTime(LastDexGain);
+        writer.WriteAnchoredTime(LastStrGain);
+        writer.WriteAnchoredTime(LastIntGain);
+        writer.WriteAnchoredTime(LastDexGain);
 
         byte hairflag = 0x00;
 
@@ -5268,8 +5301,15 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         item.Name = oldItem.Name;
         item.Weight = oldItem.Weight;
 
+        item.PlayerConstructed = oldItem.PlayerConstructed;
         item.Amount = oldAmount - amount;
-        item.Map = oldItem.Map;
+
+        // A parented remainder gets its map from AddItem (parent first, then map), keeping the
+        // split off the decay scheduler; a ground remainder is placed and enrolled here.
+        if (oldItem.Parent == null)
+        {
+            item.Map = oldItem.Map;
+        }
 
         oldItem.OnAfterDuped(item);
 
@@ -5758,24 +5798,54 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         }
     }
 
+    // Entries are kept in LastDamage order, so expired entries are always a head prefix.
+    private void PruneExpiredDamageEntries()
+    {
+#if DEBUG
+        for (var node = _damageEntries._first; node != null; node = node.Next)
+        {
+            Debug.Assert(
+                node.Next == null || node.Next.LastDamage >= node.LastDamage,
+                "Damage entries must be ordered by LastDamage ascending."
+            );
+        }
+#endif
+
+        var first = _damageEntries._first;
+
+        if (first?.HasExpired != true)
+        {
+            return;
+        }
+
+        var firstLive = first.Next;
+
+        while (firstLive?.HasExpired == true)
+        {
+            firstLive = firstLive.Next;
+        }
+
+        if (firstLive == null)
+        {
+            _damageEntries.RemoveAll();
+        }
+        else
+        {
+            _damageEntries.RemoveAllBefore(firstLive);
+        }
+    }
+
+    public void ClearDamageEntries() => _damageEntries.RemoveAll();
+
     public Mobile FindMostRecentDamager(bool allowSelf) => FindMostRecentDamageEntry(allowSelf)?.Damager;
 
     public DamageEntry FindMostRecentDamageEntry(bool allowSelf)
     {
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if (allowSelf || de.Damager != this)
+            if (allowSelf || de.Damager != this)
             {
                 return de;
             }
@@ -5788,21 +5858,11 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public DamageEntry FindLeastRecentDamageEntry(bool allowSelf)
     {
-        for (var i = 0; i < DamageEntries.Count; ++i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._first; de != null; de = de.Next)
         {
-            if (i < 0)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-                --i;
-            }
-            else if (allowSelf || de.Damager != this)
+            if (allowSelf || de.Damager != this)
             {
                 return de;
             }
@@ -5813,24 +5873,17 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public Mobile FindMostTotalDamager(bool allowSelf) => FindMostTotalDamageEntry(allowSelf)?.Damager;
 
+    // Walks most recent first with a strict comparison so the most recent entry wins ties,
+    // matching the previous reverse-indexed loop.
     public DamageEntry FindMostTotalDamageEntry(bool allowSelf)
     {
+        PruneExpiredDamageEntries();
+
         DamageEntry mostTotal = null;
 
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven > mostTotal.DamageGiven))
+            if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven > mostTotal.DamageGiven))
             {
                 mostTotal = de;
             }
@@ -5843,46 +5896,28 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public DamageEntry FindLeastTotalDamageEntry(bool allowSelf)
     {
-        DamageEntry mostTotal = null;
+        PruneExpiredDamageEntries();
 
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        DamageEntry leastTotal = null;
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
+            if ((allowSelf || de.Damager != this) && (leastTotal == null || de.DamageGiven < leastTotal.DamageGiven))
             {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven < mostTotal.DamageGiven))
-            {
-                mostTotal = de;
+                leastTotal = de;
             }
         }
 
-        return mostTotal;
+        return leastTotal;
     }
 
     public DamageEntry FindDamageEntryFor(Mobile m)
     {
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if (de.Damager == m)
+            if (de.Damager == m)
             {
                 return de;
             }
@@ -5900,8 +5935,13 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         de.DamageGiven += amount;
         de.LastDamage = Core.Now;
 
-        DamageEntries.Remove(de);
-        DamageEntries.Add(de);
+        // Move to the tail so the list stays in LastDamage order.
+        if (de.OnLinkList)
+        {
+            _damageEntries.Remove(de);
+        }
+
+        _damageEntries.AddLast(de);
 
         var master = from.GetDamageMaster(this);
 
@@ -6166,6 +6206,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         switch (version)
         {
+            case 38: // Stat-gain stamps moved from delta time to anchored time
             case 37: // Decomposed hair into inline item id/hue (dropped the VirtualHairInfo object)
             case 36: // Moved virtues to VirtueSystem
             case 35: // Moved short term murders to PlayerMurderSystem
@@ -6174,9 +6215,18 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
             case 32: // Removed StuckMenu
             case 31:
                 {
-                    LastStrGain = reader.ReadDeltaTime();
-                    LastIntGain = reader.ReadDeltaTime();
-                    LastDexGain = reader.ReadDeltaTime();
+                    if (version >= 38)
+                    {
+                        LastStrGain = reader.ReadAnchoredTime();
+                        LastIntGain = reader.ReadAnchoredTime();
+                        LastDexGain = reader.ReadAnchoredTime();
+                    }
+                    else
+                    {
+                        LastStrGain = reader.ReadDeltaTime();
+                        LastIntGain = reader.ReadDeltaTime();
+                        LastDexGain = reader.ReadDeltaTime();
+                    }
 
                     goto case 30;
                 }
@@ -6483,9 +6533,6 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
                     m_StrLock = (StatLockType)reader.ReadByte();
                     m_DexLock = (StatLockType)reader.ReadByte();
                     m_IntLock = (StatLockType)reader.ReadByte();
-
-                    _statMods = new List<StatMod>();
-                    _skillMods = new List<SkillMod>();
 
                     if (version < 32)
                     {
@@ -7264,8 +7311,18 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     private ObjectPropertyList InitializePropertyList(ObjectPropertyList list)
     {
-        GetProperties(list);
-        list.Terminate();
+        list.IsBuilding = true;
+
+        try
+        {
+            GetProperties(list);
+            list.Terminate();
+        }
+        finally
+        {
+            list.IsBuilding = false;
+        }
+
         return list;
     }
 
@@ -7280,6 +7337,26 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         if (!ObjectPropertyList.Enabled)
         {
             return;
+        }
+
+        // Always a bug in the property getter, and there is no correct recovery: refuse rather than
+        // hide it. RELEASE keeps a possibly stale tooltip, DEBUG throws.
+        // See dev-docs/property-lists.md "Never Invalidate From Inside GetProperties".
+        if (m_PropertyList?.IsBuilding == true)
+        {
+            logger.Error(
+                "{Entity} called InvalidateProperties() while its property list was being built. Remove the side effect from the property getter, or defer it with Timer.DelayCall.\n{StackTrace}",
+                this,
+                new StackTrace()
+            );
+
+#if DEBUG
+            throw new InvalidOperationException(
+                $"{this} invalidated its property list from inside GetProperties. Remove the side effect from the property getter."
+            );
+#else
+            return;
+#endif
         }
 
         if (m_Map != null && m_Map != Map.Internal && !World.Loading)
@@ -7789,13 +7866,10 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         m_FollowersMax = 5;
         Skills = new Skills(this);
         Items = new List<Item>();
-        _statMods = new List<StatMod>();
-        _skillMods = new List<SkillMod>();
         Map = Map.Internal;
         AutoPageNotify = true;
         Aggressors = new List<AggressorInfo>();
         Aggressed = new List<AggressorInfo>();
-        DamageEntries = new List<DamageEntry>();
 
         NextSkillTime = Core.TickCount;
     }
@@ -7826,6 +7900,12 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
             m_DeltaQueue.Enqueue(this);
         }
     }
+
+    /// <summary>
+    /// True when deltas remain queued after a <see cref="ProcessDeltaQueue"/> pass, which is
+    /// bounded by the count it saw on entry. The event loop consults this before sleeping.
+    /// </summary>
+    public static bool HasQueuedDeltas => m_DeltaQueue.Count > 0;
 
     public static void ProcessDeltaQueue()
     {

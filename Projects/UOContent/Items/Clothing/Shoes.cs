@@ -54,11 +54,10 @@ namespace Server.Items
     {
         [EncodedInt]
         [InvalidateProperties]
-        [SerializableField(0)]
+        [SerializableField(0, fieldChanged: nameof(OnCurArcaneChargesChanged))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _curArcaneCharges;
 
-        [SerializableFieldChanged(0)]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void OnCurArcaneChargesChanged(int oldValue, int newValue) => Update();
 
@@ -71,19 +70,15 @@ namespace Server.Items
 
         public override CraftResource DefaultResource => CraftResource.RegularLeather;
 
+        [SerializableField(1, fieldChanged: nameof(OnMaxArcaneChargesChanged))]
         [EncodedInt]
-        [SerializableProperty(1)]
-        [CommandProperty(AccessLevel.GameMaster)]
-        public int MaxArcaneCharges
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        [InvalidateProperties]
+        private int _maxArcaneCharges;
+
+        private void OnMaxArcaneChargesChanged(int oldValue, int newValue)
         {
-            get => _maxArcaneCharges;
-            set
-            {
-                _maxArcaneCharges = value;
-                InvalidateProperties();
-                Update();
-                this.MarkDirty();
-            }
+            Update();
         }
 
         [CommandProperty(AccessLevel.GameMaster)]

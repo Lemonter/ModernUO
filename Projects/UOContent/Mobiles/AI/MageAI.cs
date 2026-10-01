@@ -171,7 +171,7 @@ public class MageAI : BaseAI
     {
         if (!SmartAI)
         {
-            if (!MoveTo(m, false, Mobile.RangeFight))
+            if (!MoveTo(m, Mobile.RangeFight))
             {
                 OnFailedMove();
             }
@@ -185,14 +185,14 @@ public class MageAI : BaseAI
             {
                 RunFrom(m);
             }
-            else if (!Mobile.InRange(m, Math.Max(Mobile.RangeFight, 2)) && !MoveTo(m, false, 1))
+            else if (!Mobile.InRange(m, Math.Max(Mobile.RangeFight, 2)) && !MoveTo(m, 1))
             {
                 OnFailedMove();
             }
         }
         else if (!Mobile.InRange(m, Mobile.RangeFight))
         {
-            if (!MoveTo(m, false, 1))
+            if (!MoveTo(m, 1))
             {
                 OnFailedMove();
             }
@@ -687,7 +687,7 @@ public class MageAI : BaseAI
                 Mobile.Combatant = Mobile.FocusMob;
                 Mobile.FocusMob = null;
             }
-            else if (!Mobile.InRange(c, Mobile.RangePerception * 3))
+            else if (!Mobile.InRange(c, Mobile.ChaseLeashRange))
             {
                 Mobile.Combatant = null;
             }
@@ -701,6 +701,23 @@ public class MageAI : BaseAI
                 Action = ActionType.Guard;
                 return true;
             }
+        }
+
+        // Geometry (not hiding — CanSee passed above) is blocking the shot: close in until
+        // line of sight returns. Poisoned mages still fall through to cure.
+        if (!Mobile.Poisoned && Mobile.Spell?.IsCasting != true && !Mobile.InLOS(c))
+        {
+            DebugSay("I cannot see my target, moving to regain line of sight");
+
+            if (!MoveTo(c, 1))
+            {
+                OnFailedMove();
+            }
+
+            _lastTarget = c;
+            _lastTargetLoc = c.Location;
+
+            return true;
         }
 
         if (Mobile.TriggerAbility(MonsterAbilityTrigger.CombatAction, c))
@@ -1026,7 +1043,16 @@ public class MageAI : BaseAI
 
             if (toTarget != null)
             {
-                RunTo(toTarget);
+                // Without line of sight the stand-off is pointless — close in so the held
+                // target can be invoked.
+                if (!Mobile.InLOS(toTarget))
+                {
+                    MoveTo(toTarget, 1);
+                }
+                else
+                {
+                    RunTo(toTarget);
+                }
             }
         }
 

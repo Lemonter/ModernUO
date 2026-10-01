@@ -9,7 +9,7 @@ public static class BlueprintDropSystem
 {
     private const double DropChance = 0.04;
 
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         var killer = bc.LastKiller is BaseCreature masterCreature

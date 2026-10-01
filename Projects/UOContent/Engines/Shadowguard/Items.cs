@@ -509,11 +509,10 @@ public partial class ShadowguardCanal : Item, IAxe
 {
     public override int LabelNumber => 1156228; // Canal
 
-    [SerializableField(0)]
+    [SerializableField(0, fieldChanged: nameof(OnFlowChanged))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private Flow _flow;
 
-    [SerializableFieldChanged(0)]
     private void OnFlowChanged(Flow oldValue, Flow newValue) => InvalidateIdFromFlow();
 
     [Constructible]

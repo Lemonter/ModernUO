@@ -12,7 +12,7 @@ namespace Server.Systems.MahaonQoL;
 /// </summary>
 public static class MonsterLootDropSystem
 {
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         var corpse = bc.Corpse as Corpse;

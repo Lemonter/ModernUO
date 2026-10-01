@@ -39,8 +39,8 @@ public partial class UnderworldPuzzleItem : BaseDecayingItem
         Hue = 0x281;
         _attempts = 0;
 
-        _solution = new UnderworldPuzzleSolution();
-        _currentSolution = new UnderworldPuzzleSolution(_solution.Index);
+        _solution = new UnderworldPuzzleSolution(this);
+        _currentSolution = new UnderworldPuzzleSolution(this, _solution.Index);
     }
 
     public override void OnDoubleClick(Mobile from)
@@ -142,6 +142,9 @@ public partial class UnderworldPuzzleSolution
 {
     public const int Length = 4;
 
+    [DirtyTrackingEntity]
+    private UnderworldPuzzleItem _item;
+
     [SerializableField(0)]
     private PuzzlePiece[] _rows;
 
@@ -155,6 +158,12 @@ public partial class UnderworldPuzzleSolution
     public PuzzlePiece Second { get => _rows[1]; set => _rows[1] = value; }
     public PuzzlePiece Third { get => _rows[2]; set => _rows[2] = value; }
     public PuzzlePiece Fourth { get => _rows[3]; set => _rows[3] = value; }
+
+    // Declared first: the generator picks the first matching constructor, and a deserialized
+    // solution must know its item to mark it dirty.
+    public UnderworldPuzzleSolution(UnderworldPuzzleItem item) : this() => _item = item;
+
+    public UnderworldPuzzleSolution(UnderworldPuzzleItem item, int index) : this(index) => _item = item;
 
     public UnderworldPuzzleSolution()
     {

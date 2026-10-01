@@ -29,8 +29,9 @@ public partial class RegionSpawner
         MaxDelay = MaxDelay,
         Team = Team,
         WalkingRange = DtoWalkingRange,
-        Entries = Entries,
+        Entries = EntryList ?? [],
         SpawnLocationIsHome = SpawnLocationIsHome,
+        Group = Group,
         SpawnPositionMode = DtoSpawnPositionMode,
         MaxSpawnAttempts = DtoMaxSpawnAttempts,
         Region = SpawnRegion?.Name

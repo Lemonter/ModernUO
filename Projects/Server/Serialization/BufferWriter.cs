@@ -384,6 +384,7 @@ public class BufferWriter : IGenericWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    [Obsolete("Delta time rewrites its bytes on every save. Write anchored time instead (WriteAnchoredTime, or [AnchoredDateTime] on generated fields); bump the containing type's version, as the wire format changes. Existing delta payloads remain readable through ReadDeltaTime in old-version fallbacks.")]
     public void WriteDeltaTime(DateTime value)
     {
         if (value == DateTime.MinValue)
@@ -405,6 +406,21 @@ public class BufferWriter : IGenericWriter
 
         // Technically supports negative deltas for times in the past
         Write(value.Ticks - DateTime.UtcNow.Ticks);
+    }
+
+    /// <summary>
+    /// Writes the absolute value; <see cref="IGenericReader.ReadAnchoredTime" /> re-bases it
+    /// by the elapsed time since the save started, so downtime does not age it and an
+    /// unchanged value serializes to identical bytes.
+    /// </summary>
+    public void WriteAnchoredTime(DateTime value)
+    {
+        if (value.Kind == DateTimeKind.Local)
+        {
+            value = value.ToUniversalTime();
+        }
+
+        Write(value.Ticks);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

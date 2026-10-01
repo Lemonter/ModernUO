@@ -100,8 +100,6 @@ namespace Server.Mobiles
 
         public override FoodType FavoriteFood => FoodType.None;
 
-        public override bool CanBeDistracted => false;
-
         public override string DefaultName => "голем";
 
         public override bool DeleteOnRelease => true;
@@ -151,22 +149,17 @@ namespace Server.Mobiles
 
         public override void OnDamage(int amount, Mobile from, bool willKill)
         {
-            if (Controlled || Summoned)
+            if (GetMaster() is { Player: true } master && master.Map == Map && master.InRange(Location, 20))
             {
-                var master = ControlMaster ?? SummonMaster;
-
-                if (master?.Player == true && master.Map == Map && master.InRange(Location, 20))
+                if (master.Mana >= amount)
                 {
-                    if (master.Mana >= amount)
-                    {
-                        master.Mana -= amount;
-                    }
-                    else
-                    {
-                        amount -= master.Mana;
-                        master.Mana = 0;
-                        master.Damage(amount);
-                    }
+                    master.Mana -= amount;
+                }
+                else
+                {
+                    amount -= master.Mana;
+                    master.Mana = 0;
+                    master.Damage(amount);
                 }
             }
 

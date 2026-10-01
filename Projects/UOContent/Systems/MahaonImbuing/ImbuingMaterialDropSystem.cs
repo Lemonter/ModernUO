@@ -14,7 +14,7 @@ public static class ImbuingMaterialDropSystem
     private const double FragmentDropChance = 0.04;
     private const int FragmentMinFame = 6000; // примерно уровень боссов чемпионских спавнов и выше
 
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         var killer = bc.LastKiller is BaseCreature masterCreature

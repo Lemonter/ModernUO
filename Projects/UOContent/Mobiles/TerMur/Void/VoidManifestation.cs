@@ -75,7 +75,7 @@ public partial class VoidManifestation : BaseCreature
     public override Poison PoisonImmune => Poison.DeadlyParasitic;
     public override bool AlwaysMurderer => true;
     public override bool ReacquireOnMovement => true;
-    public override bool AcquireOnApproach => true;
+    public override TimeSpan AcquireOnApproachDelay => TimeSpan.Zero;
     public override int AcquireOnApproachRange => 8;
 
     public override WeaponAbility GetWeaponAbility()

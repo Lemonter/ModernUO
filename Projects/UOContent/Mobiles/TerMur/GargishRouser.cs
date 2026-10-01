@@ -1,4 +1,5 @@
-﻿using Server.Items;
+﻿using System;
+using Server.Items;
 using ModernUO.Serialization;
 
 namespace Server.Mobiles;
@@ -179,7 +180,7 @@ public partial class GargishRouser : BaseCreature
     }
 
     public override bool ReacquireOnMovement => true;
-    public override bool AcquireOnApproach => true;
+    public override TimeSpan AcquireOnApproachDelay => TimeSpan.Zero;
     public override int AcquireOnApproachRange => 8;
 
     public override WeaponAbility GetWeaponAbility()

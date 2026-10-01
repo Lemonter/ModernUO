@@ -46,6 +46,13 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
     // under the empirically confirmed ~510-char ceiling. For multi-line content use AddChunked().
     public const int MaxArgumentLength = 504;
 
+    // 0xD6 header: packet id, length, unknown, serial, unknown, hash. Properties start after it.
+    private const int HeaderLength = 15;
+
+    // Terminate writes the bare hash into 0xD6, SendOPLInfo writes Hash with bit 30 set, and the
+    // client recovers one from the other by masking off 0x40000000. The hash must stay below it.
+    private const int HashMask = 0x3FFFFFF;
+
     private int _hash;
     private int _stringNumbersIndex;
     private byte[] _buffer;
@@ -54,6 +61,12 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
     // For string interpolation
     private int _pos;
     private char[]? _arrayToReturnToPool;
+
+    /// <summary>
+    /// True while GetProperties is populating this list. Set by the owning entity so a nested
+    /// InvalidateProperties can be refused instead of Reset()ing a build already in flight.
+    /// </summary>
+    internal bool IsBuilding { get; set; }
 
     public ObjectPropertyList(IEntity? e)
     {
@@ -83,7 +96,7 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void Reset()
     {
-        _bufferPos = 15;
+        _bufferPos = HeaderLength;
         _hash = 0;
         _stringNumbersIndex = 0;
         Header = 0;
@@ -114,6 +127,11 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
             Resize(length);
         }
 
+        // xxHash3 over the finished property block. Order and repetition sensitive, unlike the
+        // XOR fold it replaces, which collided whenever properties were reordered or shared an
+        // argument.
+        _hash = (int)(HashUtility.ComputeHash64(_buffer.AsSpan(HeaderLength, _bufferPos - HeaderLength)) & HashMask);
+
         var writer = new SpanWriter(_buffer);
         writer.Seek(_bufferPos, SeekOrigin.Begin);
         writer.Write(0);
@@ -121,12 +139,6 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
         writer.Seek(11, SeekOrigin.Begin);
         writer.Write(_hash);
         writer.WritePacketLength();
-    }
-
-    private void AddHash(int val)
-    {
-        _hash ^= val & 0x3FFFFFF;
-        _hash ^= (val >> 26) & 0x3F;
     }
 
     public void Add(int number)
@@ -141,8 +153,6 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
             Header = number;
             HeaderArgs = "";
         }
-
-        AddHash(number);
 
         var length = _bufferPos + 6;
         while (length > _buffer.Length)
@@ -239,9 +249,6 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
             HeaderArgs = chars.ToString();
         }
 
-        AddHash(number);
-        AddHash(string.GetHashCode(chars, StringComparison.Ordinal));
-
         var strLength = chars.Length * 2;
         var length = _bufferPos + 6 + strLength;
         while (length > _buffer.Length)
@@ -289,9 +296,6 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
             HeaderArgs = chars.ToString();
         }
 
-        AddHash(number);
-        AddHash(string.GetHashCode(chars, StringComparison.Ordinal));
-
         var strLength = chars.Length * 2;
         var length = _bufferPos + 6 + strLength;
         while (length > _buffer.Length)
@@ -319,8 +323,23 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
     private static int GetDefaultLength(int literalLength, int formattedCount) =>
         Math.Max(256, literalLength + formattedCount * 11);
 
+    // Reset()/Dispose() return the scratch buffer to the pool. If either lands while a `$"..."`
+    // handler is still appending, re-rent rather than spanning a null array and throwing out of
+    // GetProperties. Mobile/Item hold the primary guard; this covers any other caller.
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void EnsureInterpolationBuffer()
+    {
+        if (_arrayToReturnToPool == null)
+        {
+            _arrayToReturnToPool = STArrayPool<char>.Shared.Rent(256);
+            _pos = 0;
+        }
+    }
+
     public void AppendLiteral(string value)
     {
+        EnsureInterpolationBuffer();
+
         if (value.Length == 1)
         {
             var chars = _arrayToReturnToPool.AsSpan();
@@ -354,6 +373,8 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void AppendFormatted<T>(T value)
     {
+        EnsureInterpolationBuffer();
+
         string? s;
         if (value is IFormattable)
         {
@@ -384,6 +405,8 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void AppendFormatted<T>(T value, string? format)
     {
+        EnsureInterpolationBuffer();
+
         // '#' marks an integer argument as a cliloc ("#<value>"). Integers only -- a float/double/decimal
         // '#' is the standard numeric format, not a cliloc marker.
         if (format == "#" && value is int or uint or long or ulong or short or ushort or byte or sbyte)
@@ -442,6 +465,8 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void AppendFormatted(ReadOnlySpan<char> value)
     {
+        EnsureInterpolationBuffer();
+
         if (value.TryCopyTo(_arrayToReturnToPool.AsSpan(_pos..)))
         {
             _pos += value.Length;
@@ -454,6 +479,8 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void AppendFormatted(ReadOnlySpan<char> value, int alignment = 0, string? format = null)
     {
+        EnsureInterpolationBuffer();
+
         var leftAlign = false;
         if (alignment < 0)
         {
@@ -488,6 +515,8 @@ public sealed class ObjectPropertyList : IPropertyList, IDisposable
 
     public void AppendFormatted(string? value)
     {
+        EnsureInterpolationBuffer();
+
         if (value?.TryCopyTo(_arrayToReturnToPool.AsSpan(_pos..)) == true)
         {
             _pos += value.Length;

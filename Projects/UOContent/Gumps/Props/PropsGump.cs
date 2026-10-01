@@ -224,11 +224,13 @@ namespace Server.Gumps
                         {
                             from.Target = new SetObjectTarget(prop, from, m_Object, type, this);
                         }
-                        else if (IsType(type, OfPoint3D))
+                        // A null interface-typed value (TargetLocation : IPoint2D) routes on the
+                        // declared type; a held entity was already caught above.
+                        else if (IsType(type, OfPoint3D) || type == OfIPoint3D)
                         {
                             from.SendGump(new SetPoint3DGump(prop, from, m_Object, this));
                         }
-                        else if (IsType(type, OfPoint2D))
+                        else if (IsType(type, OfPoint2D) || type == OfIPoint2D)
                         {
                             from.SendGump(new SetPoint2DGump(prop, from, m_Object, this));
                         }
@@ -304,6 +306,12 @@ namespace Server.Gumps
                         {
                             from.SendGump(new PropertiesGump(from, mobile, m_Stack, m_List, m_Page));
                             from.SendGump(new SkillsGump(from, mobile));
+                        }
+                        // Must stay ahead of [PropertyObject]: TextDefinition carries that
+                        // attribute, but Number and String are get-only so drilling in is a dead end.
+                        else if (IsType(type, OfText))
+                        {
+                            from.SendGump(new SetGump(prop, from, m_Object, this));
                         }
                         else if (HasAttribute(type, OfPropertyObject, true))
                         {

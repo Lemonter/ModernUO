@@ -41,6 +41,8 @@ public partial class ShadowWispFamiliar : BaseFamiliar
     public override string CorpseName => "труп теневого огонька";
     public override string DefaultName => "теневой огонёк";
 
+    public override bool AssistsMaster => false;
+
     public override void OnThink()
     {
         base.OnThink();
@@ -60,7 +62,7 @@ public partial class ShadowWispFamiliar : BaseFamiliar
 
     private void Flare()
     {
-        var caster = ControlMaster ?? SummonMaster;
+        var caster = GetMaster();
 
         if (caster == null)
         {

@@ -211,11 +211,11 @@ public class DespiseMeleeAI : MeleeAI
     // The anchor is usually the ControlMaster (a Mobile) anyway; the rare case where a
     // player anchored their possessed creature to an Item/location instead just falls back
     // to walking toward whatever Mobile was originally requested.
-    public override bool WalkMobileRange(Mobile p, int iSteps, bool bRun, int iWantDistMin, int iWantDistMax)
+    public override bool WalkMobileRange(Mobile p, int iSteps, int iWantDistMin, int iWantDistMax)
     {
         if (_creature.Orb == null || _creature.ControlMaster == null)
         {
-            return base.WalkMobileRange(p, iSteps, bRun, iWantDistMin, iWantDistMax);
+            return base.WalkMobileRange(p, iSteps, iWantDistMin, iWantDistMax);
         }
 
         var range = _creature.GetLeashLength();
@@ -231,11 +231,11 @@ public class DespiseMeleeAI : MeleeAI
                     return false;
                 }
 
-                return base.WalkMobileRange(anchorMobile, iSteps, bRun, range, range);
+                return base.WalkMobileRange(anchorMobile, iSteps, range, range);
             }
         }
 
-        return base.WalkMobileRange(p, iSteps, bRun, iWantDistMin, iWantDistMax);
+        return base.WalkMobileRange(p, iSteps, iWantDistMin, iWantDistMax);
     }
 
     public override void GetContextMenuEntries(Mobile from, ref PooledRefList<ContextMenuEntry> list)
@@ -448,11 +448,11 @@ public class DespiseMageAI : MageAI
     // The anchor is usually the ControlMaster (a Mobile) anyway; the rare case where a
     // player anchored their possessed creature to an Item/location instead just falls back
     // to walking toward whatever Mobile was originally requested.
-    public override bool WalkMobileRange(Mobile p, int iSteps, bool bRun, int iWantDistMin, int iWantDistMax)
+    public override bool WalkMobileRange(Mobile p, int iSteps, int iWantDistMin, int iWantDistMax)
     {
         if (_creature.Orb == null || _creature.ControlMaster == null)
         {
-            return base.WalkMobileRange(p, iSteps, bRun, iWantDistMin, iWantDistMax);
+            return base.WalkMobileRange(p, iSteps, iWantDistMin, iWantDistMax);
         }
 
         var range = _creature.GetLeashLength();
@@ -468,11 +468,11 @@ public class DespiseMageAI : MageAI
                     return false;
                 }
 
-                return base.WalkMobileRange(anchorMobile, iSteps, bRun, range, range);
+                return base.WalkMobileRange(anchorMobile, iSteps, range, range);
             }
         }
 
-        return base.WalkMobileRange(p, iSteps, bRun, iWantDistMin, iWantDistMax);
+        return base.WalkMobileRange(p, iSteps, iWantDistMin, iWantDistMax);
     }
 
     public override void GetContextMenuEntries(Mobile from, ref PooledRefList<ContextMenuEntry> list)

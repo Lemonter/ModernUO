@@ -36,16 +36,14 @@ public partial class ShardPoller : Item
         Movable = false;
     }
 
-    [SerializableProperty(0)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
-    public string Title
+    [SerializableField(0, allowFieldChange: nameof(AllowTitleChange))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
+    private string _title;
+
+    private bool AllowTitleChange(ref string value)
     {
-        get => _title;
-        set
-        {
-            _title = ShardPollPrompt.UrlToHref(value);
-            this.MarkDirty();
-        }
+        value = ShardPollPrompt.UrlToHref(value);
+        return true;
     }
 
     [CommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
@@ -54,31 +52,20 @@ public partial class ShardPoller : Item
             ? TimeSpan.Zero
             : Utility.Max(StartTime + Duration - Core.Now, TimeSpan.Zero);
 
-    [SerializableProperty(3)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
-    public bool Active
+    [SerializableField(3, fieldChanged: nameof(OnActiveChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
+    private bool _active;
+
+    private void OnActiveChanged(bool oldValue, bool newValue)
     {
-        get => _active;
-        set
+        if (_active)
         {
-            if (_active == value)
-            {
-                return;
-            }
-
-            _active = value;
-
-            if (_active)
-            {
-                StartTime = Core.Now;
-                _activePollers.Add(this);
-            }
-            else
-            {
-                _activePollers.Remove(this);
-            }
-
-            this.MarkDirty();
+            StartTime = Core.Now;
+            _activePollers.Add(this);
+        }
+        else
+        {
+            _activePollers.Remove(this);
         }
     }
 
@@ -200,7 +187,7 @@ public partial class ShardPoller : Item
 
         for (var i = 0; i < _options.Length; ++i)
         {
-            var option = _options[i] = new ShardPollOption();
+            var option = _options[i] = new ShardPollOption(this);
             option.Deserialize(reader);
         }
     }
@@ -225,15 +212,23 @@ public partial class ShardPoller : Item
 [SerializationGenerator(1, false)]
 public partial class ShardPollOption
 {
+    [DirtyTrackingEntity]
+    private ShardPoller _poller;
+
     private int _lineBreaks = -1;
 
     [SerializableField(1)]
     private IPAddress[] _voters;
 
-    public ShardPollOption() => _voters = [];
-
-    public ShardPollOption(string title)
+    public ShardPollOption(ShardPoller poller)
     {
+        _poller = poller;
+        _voters = [];
+    }
+
+    public ShardPollOption(ShardPoller poller, string title)
+    {
+        _poller = poller;
         _title = title;
         _voters = [];
     }
@@ -250,15 +245,12 @@ public partial class ShardPollOption
         }
     }
 
-    [SerializableProperty(0)]
-    public string Title
+    [SerializableField(0, fieldChanged: nameof(OnTitleChanged))]
+    private string _title;
+
+    private void OnTitleChanged(string oldValue, string newValue)
     {
-        get => _title;
-        set
-        {
-            _title = value;
-            _lineBreaks = -1;
-        }
+        _lineBreaks = -1;
     }
 
     public int Votes => Voters.Length;
@@ -616,7 +608,7 @@ public partial class ShardPollPrompt : Prompt
 
             if (_option == null)
             {
-                _poller.AddOption(new ShardPollOption(text));
+                _poller.AddOption(new ShardPollOption(_poller, text));
             }
             else
             {

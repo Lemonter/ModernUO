@@ -202,7 +202,7 @@ public sealed class MahaonSlayerTitles : GenericPersistence
         return lines;
     }
 
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         // Призванные и подневольные не в счёт: иначе «убийцу демонов» фармили бы, вызывая

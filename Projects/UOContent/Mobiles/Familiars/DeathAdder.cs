@@ -40,5 +40,7 @@ public partial class DeathAdder : BaseFamiliar
     public override string CorpseName => "труп смертельной гадюки";
     public override string DefaultName => "смертельная гадюка";
 
+    public override bool AssistsMaster => false;
+
     public override Poison HitPoison => Utility.RandomDouble() < 0.8 ? Poison.Greater : Poison.Deadly;
 }

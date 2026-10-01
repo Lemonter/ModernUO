@@ -1638,6 +1638,9 @@ namespace Server.Engines.Craft
 
                 if (item != null)
                 {
+                    // Stamped here, not in OnCraft: most craftables do not implement ICraftable.
+                    item.PlayerConstructed = true;
+
                     if (item is ICraftable craftable)
                     {
                         endquality = craftable.OnCraft(quality, makersMark, from, craftSystem, typeRes, tool, this, resHue);
@@ -1973,6 +1976,9 @@ namespace Server.Engines.Craft
 
                 if (item != null)
                 {
+                    // Stamped here, not in OnCraft: most craftables do not implement ICraftable.
+                    item.PlayerConstructed = true;
+
                     if (item is ICraftable craftable)
                     {
                         endquality = craftable.OnCraft(quality, makersMark, from, craftSystem, typeRes, tool, this, resHue);

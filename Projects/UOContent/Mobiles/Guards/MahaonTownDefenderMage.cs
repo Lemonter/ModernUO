@@ -1,3 +1,4 @@
+using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Systems.MahaonRaids;
@@ -51,7 +52,7 @@ public partial class MahaonTownDefenderMage : BaseCreature, IMahaonTownDefender
     // Та же логика обнаружения, что у обычного MahaonTownDefender — строго ПК и красные
     // существа, не любой игрок подряд (см. подробный комментарий в
     // MahaonTownDefender.cs про то, почему стандартный IsEnemy тут не годится как есть).
-    public override bool AcquireOnApproach => true;
+    public override TimeSpan AcquireOnApproachDelay => TimeSpan.Zero;
     public override int AcquireOnApproachRange => 10;
 
     public override bool IsEnemy(Mobile m) =>

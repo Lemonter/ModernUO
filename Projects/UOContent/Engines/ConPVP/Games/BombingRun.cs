@@ -716,10 +716,7 @@ public partial class BRBomb : Item
 
             m.Target = new BombTarget(this, m);
 
-            if (m_Helpers.Contains(m))
-            {
-                m_Helpers.Remove(m);
-            }
+            m_Helpers.Remove(m);
 
             if (m_Helpers.Count > 0)
             {
@@ -833,10 +830,9 @@ public partial class BRBomb : Item
 [SerializationGenerator(0, false)]
 public partial class BRGoal : BaseAddon
 {
-    [SerializableField(0)]
+    [SerializableField(0, fieldChanged: nameof(OnNorthChanged))]
     private bool _north;
 
-    [SerializableFieldChanged(0)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OnNorthChanged(bool oldValue, bool newValue) => Remake();
 

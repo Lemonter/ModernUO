@@ -204,7 +204,7 @@ public class RaidEventSystem : GenericPersistence
     ///     Hooked to BaseCreature.CreatureDeathEvent (see OnEvent attribute below). Grants
     ///     guard points and gold to the killer if the creature was a raid spawn.
     /// </summary>
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         if (bc is not IRaidSpawn raid)

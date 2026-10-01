@@ -18,7 +18,7 @@ public static class SoulStoneDropSystem
 {
     private const double DropChance = 0.05; // 1 in 20 eligible kills
 
-    [OnEvent(nameof(BaseCreature.CreatureDeathEvent))]
+    [OnEvent(nameof(CreatureEvents.CreatureDeathEvent))]
     public static void OnCreatureDeath(BaseCreature bc)
     {
         var killer = bc.LastKiller is BaseCreature masterCreature

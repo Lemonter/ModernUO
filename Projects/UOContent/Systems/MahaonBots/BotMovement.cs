@@ -245,7 +245,7 @@ public partial class BotController
         }
 
         // ---- Шаг ------------------------------------------------------------------------
-        profile.ActivePath.Follow(true, 0);
+        profile.ActivePath.Follow(0);
 
         if (!Arrived(bot, destination))
         {

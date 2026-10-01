@@ -74,43 +74,31 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
         Movable = false;
     }
 
-    [SerializableProperty(1)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public bool Open
+    [SerializableField(1, fieldChanged: nameof(OnOpenChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    private bool _open;
+
+    private void OnOpenChanged(bool oldValue, bool newValue)
     {
-        get => _open;
-        set
+        ItemID = _open ? _openedId : _closedId;
+        if (_open)
         {
-            if (_open != value)
-            {
-                _open = value;
-
-                ItemID = _open ? _openedId : _closedId;
-
-                if (_open)
-                {
-                    Location = new Point3D(X + _offset.X, Y + _offset.Y, Z + _offset.Z);
-                }
-                else
-                {
-                    Location = new Point3D(X - _offset.X, Y - _offset.Y, Z - _offset.Z);
-                }
-
-                Effects.PlaySound(this, _open ? OpenedSound : ClosedSound);
-
-                if (_open)
-                {
-                    _timer ??= new InternalTimer(this);
-                    _timer.Start();
-                }
-                else
-                {
-                    _timer.Stop();
-                    _timer = null;
-                }
-
-                this.MarkDirty();
-            }
+            Location = new Point3D(X + _offset.X, Y + _offset.Y, Z + _offset.Z);
+        }
+        else
+        {
+            Location = new Point3D(X - _offset.X, Y - _offset.Y, Z - _offset.Z);
+        }
+        Effects.PlaySound(this, _open ? OpenedSound : ClosedSound);
+        if (_open)
+        {
+            _timer ??= new InternalTimer(this);
+            _timer.Start();
+        }
+        else
+        {
+            _timer.Stop();
+            _timer = null;
         }
     }
 
@@ -496,8 +484,9 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
             }
             else
             {
-                _current = _current.Link;
-                valid = _current?.Deleted == false && _current != _door;
+                var next = _current.Link;
+                valid = next?.Deleted == false && !IsVisited(next);
+                _current = next;
             }
 
             if (!valid)
@@ -507,6 +496,27 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
             }
 
             return valid;
+        }
+
+        // Links are set pairwise by GMs, so a chain can loop back to a door other than the start
+        private readonly bool IsVisited(BaseDoor door)
+        {
+            var visited = _door;
+
+            while (true)
+            {
+                if (visited == door)
+                {
+                    return true;
+                }
+
+                if (visited == _current || visited == null)
+                {
+                    return false;
+                }
+
+                visited = visited.Link;
+            }
         }
 
         public BaseDoor Current
