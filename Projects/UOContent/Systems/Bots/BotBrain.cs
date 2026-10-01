@@ -99,6 +99,8 @@ public partial class BotBrain
     internal long DiedAt;
     internal GoToAction GhostWalk;
     internal bool GhostWalkStarted;
+    internal IEntity GhostTarget;
+    internal int GhostFailures;
 
     public BotCombatState Combat { get; } = new();
 

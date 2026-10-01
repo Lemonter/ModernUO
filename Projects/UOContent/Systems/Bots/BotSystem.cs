@@ -61,6 +61,7 @@ public static class BotSystem
     {
         WorldCatalog.Rebuild();
         HuntingAtlas.Rebuild();
+        ShrineAtlas.Rebuild();
         BotScheduler.Start();
         _initialized = true;
 
@@ -78,9 +79,10 @@ public static class BotSystem
         _loaded.Clear();
 
         logger.Information(
-            "Bots: engine {Engine}, {Cities} towns known, {Bots} bots on v2",
+            "Bots: engine {Engine}, {Cities} towns known, {Shrines} ankh spots, {Bots} bots on v2",
             Engine,
             WorldCatalog.Cities.Count,
+            ShrineAtlas.Count,
             _bots.Count
         );
     }
