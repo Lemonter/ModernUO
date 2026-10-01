@@ -29,6 +29,14 @@ public static class NavSystem
 
     private static string PathFor(int mapId) => Path.Combine(Core.BaseDirectory, "Data", "Pathfinding", $"{mapId}.nav");
 
+    private static volatile NavSnapshot _snapshot = NavSnapshot.Empty;
+
+    /// <summary>The frozen graphs and links route searches read; swapped whole on every change.</summary>
+    public static NavSnapshot Snapshot => _snapshot;
+
+    /// <summary>Rebuilds and publishes the snapshot. Loop only.</summary>
+    public static void PublishSnapshot() => _snapshot = NavSnapshot.Build(_graphs, _islands, NavLinks.All);
+
     public static NavMapGraph GetGraph(Map map) => map == null || map == Map.Internal ? null : _graphs[map.MapID];
 
     /// <summary>
@@ -143,12 +151,14 @@ public static class NavSystem
         graph.AttachSource(source ?? new StepCacheNavCellSource(map));
         _graphs[map.MapID] = graph;
         _islands[map.MapID] = ComputeIslands(graph);
+        PublishSnapshot();
     }
 
     public static void Uninstall(Map map)
     {
         _graphs[map.MapID] = null;
         _islands[map.MapID] = null;
+        PublishSnapshot();
     }
 
     private static int[] ComputeIslands(NavMapGraph graph)
@@ -245,6 +255,10 @@ public static class NavSystem
         );
         m.SendMessage(
             $"Legs: {legs} ({NavStats.LegsFailed} failed), avg {(legs == 0 ? 0 : NavStats.LegMsTotal / legs):F3} ms, max {NavStats.LegMsMax:F2} ms, total {NavStats.LegMsTotal:F0} ms."
+        );
+        var worker = NavStats.WorkerRoutes;
+        m.SendMessage(
+            $"Worker: {(NavRouteWorker.Enabled ? "on" : "off")}, {worker} routes, avg {(worker == 0 ? 0 : NavStats.WorkerMsTotal / worker):F3} ms off-loop, max {NavStats.WorkerMsMax:F2} ms, on-loop dispatch total {NavStats.DispatchMsTotal:F1} ms, pending {NavRouteWorker.Pending}."
         );
         m.SendMessage($"Cores: {Environment.ProcessorCount}. Stats reset.");
         NavStats.Reset();

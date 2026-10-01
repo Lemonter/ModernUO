@@ -15,6 +15,13 @@ public static class NavStats
     public static long RouteExpanded { get; private set; }
     public static long RoutesFailed { get; private set; }
 
+    // Searches run on the route worker: worker time is off the loop; only dispatch and the
+    // hand-back conversion are paid on it.
+    public static long WorkerRoutes { get; private set; }
+    public static double WorkerMsTotal { get; private set; }
+    public static double WorkerMsMax { get; private set; }
+    public static double DispatchMsTotal { get; private set; }
+
     public static long Legs { get; private set; }
     public static double LegMsTotal { get; private set; }
     public static double LegMsMax { get; private set; }
@@ -31,6 +38,25 @@ public static class NavStats
         if (ms > RouteMsMax)
         {
             RouteMsMax = ms;
+        }
+
+        if (!found)
+        {
+            RoutesFailed++;
+        }
+    }
+
+    internal static void RecordDispatch(double loopMs) => DispatchMsTotal += loopMs;
+
+    internal static void RecordWorkerRoute(double workerMs, double loopMs, int expanded, bool found)
+    {
+        WorkerRoutes++;
+        WorkerMsTotal += workerMs;
+        DispatchMsTotal += loopMs;
+        RouteExpanded += expanded;
+        if (workerMs > WorkerMsMax)
+        {
+            WorkerMsMax = workerMs;
         }
 
         if (!found)
@@ -61,6 +87,10 @@ public static class NavStats
         RouteMsMax = 0;
         RouteExpanded = 0;
         RoutesFailed = 0;
+        WorkerRoutes = 0;
+        WorkerMsTotal = 0;
+        WorkerMsMax = 0;
+        DispatchMsTotal = 0;
         Legs = 0;
         LegMsTotal = 0;
         LegMsMax = 0;

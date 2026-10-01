@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles;
 
@@ -52,10 +53,7 @@ public partial class EnragedEarthElemental : BaseCreature
         PackItem(new FertileDirt(Utility.RandomMinMax(1, 4)));
         PackItem(new MandrakeRoot());
 
-        PackItem(new IronOre(5)
-        {
-            ItemID = 0x19B7
-        });
+        PackItem(new MahaonOre(MahaonMetal.Iron, 5));
     }
 
     public override string CorpseName => "труп элементаля земли";

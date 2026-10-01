@@ -222,4 +222,50 @@ public class NavGraphTests : IDisposable
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public void FindAsync_DeliversTheSameRoute()
+    {
+        var source = new GridNavCellSource(128, 64)
+            .Fill(0, 0, 0, 128, 64, '.')
+            .Fill(0, 64, 0, 1, 60, '#');
+        Install(MapA, source);
+
+        var start = new Point3D(10, 5, 0);
+        var goal = new Point3D(118, 5, 0);
+        var sync = NavPathfinder.Find(MapA, start, MapA, goal);
+
+        NavRoute async = null;
+        var called = false;
+        NavPathfinder.FindAsync(MapA, start, MapA, goal, r => { async = r; called = true; });
+
+        // With the worker off (test host) the callback runs inline.
+        Assert.True(called);
+        Assert.Equal(sync.Waypoints, async.Waypoints);
+    }
+
+    [Fact]
+    public void Search_OnAnotherThread_MatchesTheLoop()
+    {
+        var source = new GridNavCellSource(128, 64)
+            .Fill(0, 0, 0, 128, 64, '.')
+            .Fill(0, 64, 0, 1, 60, '#');
+        var graph = Install(MapA, source);
+
+        var startNode = NavLinks.NodeKey(MapA.MapID, graph.Locate(10, 5, 0));
+        var goalNode = NavLinks.NodeKey(MapA.MapID, graph.Locate(118, 5, 0));
+        var goal = new Point3D(118, 5, 0);
+        var snapshot = NavSystem.Snapshot;
+
+        var loop = new NavSearch().Run(snapshot, startNode, goalNode, goal);
+
+        NavSearchResult offLoop = null;
+        var thread = new System.Threading.Thread(() => offLoop = new NavSearch().Run(snapshot, startNode, goalNode, goal));
+        thread.Start();
+        thread.Join();
+
+        Assert.NotNull(loop.Waypoints);
+        Assert.Equal(loop.Waypoints, offLoop.Waypoints);
+        Assert.Equal(loop.Cost, offLoop.Cost);
+    }
 }

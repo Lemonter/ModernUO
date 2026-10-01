@@ -13,7 +13,7 @@ public static class BotGoods
     public static int BaseUnitPrice(Item item) => item switch
     {
         MahaonIngot ingot => TierPrice(ingot.Metal),
-        MahaonOre ore     => TierPrice(ore.Metal) / 2,
+        MahaonOre ore     => TierPrice(ore.Metal) * 3 / 2,
         Board             => 6,
         Log               => 3,
         Fish              => 5,

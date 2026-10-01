@@ -1,6 +1,7 @@
 using ModernUO.Serialization;
 using Server.Engines.Plants;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -49,10 +50,10 @@ namespace Server.Mobiles
 
             var orepile = Utility.Random(4) switch
             {
-                0 => (Item)new DullCopperOre(),
-                1 => new ShadowIronOre(),
-                2 => new CopperOre(),
-                _ => new BronzeOre()
+                0 => (Item)new MahaonOre(MahaonMetal.Cobalt, 1),
+                1 => new MahaonOre(MahaonMetal.Shadow, 1),
+                2 => new MahaonOre(MahaonMetal.Cooper, 1),
+                _ => new MahaonOre(MahaonMetal.Bronze, 1)
             };
 
             orepile.Amount = Utility.RandomMinMax(1, 10);

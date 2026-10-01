@@ -19,7 +19,7 @@ public class BotEconomyTests
     }
 
     [Fact]
-    public void Goods_HigherTierIngotsAreWorthMore()
+    public void Goods_OreIsPricedBetweenOneAndTwoIngots()
     {
         var common = new MahaonIngot(MahaonMetal.Iron, 1);
         var ore = new MahaonOre(MahaonMetal.Iron, 1);
@@ -27,7 +27,9 @@ public class BotEconomyTests
         try
         {
             Assert.True(BotGoods.IsForSale(common));
-            Assert.True(BotGoods.BaseUnitPrice(common) > BotGoods.BaseUnitPrice(ore));
+            // An ore smelts into two ingots: worth more than one, less than the two it yields.
+            Assert.True(BotGoods.BaseUnitPrice(ore) > BotGoods.BaseUnitPrice(common));
+            Assert.True(BotGoods.BaseUnitPrice(ore) < 2 * BotGoods.BaseUnitPrice(common));
             Assert.False(BotGoods.IsForSale(new Gold(1)));
         }
         finally

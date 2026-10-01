@@ -9,26 +9,29 @@ public enum NavLinkKind : byte
     Teleporter
 }
 
-/// <summary>A non-walking edge: stepping on <see cref="Source"/> puts the walker at
-/// <see cref="Destination"/>, possibly on another map.</summary>
+/// <summary>
+/// A non-walking edge: stepping on <see cref="Source"/> puts the walker at
+/// <see cref="Destination"/>, possibly on another map. Immutable, and holds map ids rather than
+/// maps, so the route worker can read it off the loop.
+/// </summary>
 public sealed class NavLink
 {
-    public NavLink(NavLinkKind kind, Map sourceMap, Point3D source, int sourceRegion, Map destMap, Point3D dest, int destRegion)
+    public NavLink(NavLinkKind kind, int sourceMapId, Point3D source, int sourceRegion, int destMapId, Point3D dest, int destRegion)
     {
         Kind = kind;
-        SourceMap = sourceMap;
+        SourceMapId = sourceMapId;
         Source = source;
         SourceRegion = sourceRegion;
-        DestMap = destMap;
+        DestMapId = destMapId;
         Destination = dest;
         DestRegion = destRegion;
     }
 
     public NavLinkKind Kind { get; }
-    public Map SourceMap { get; }
+    public int SourceMapId { get; }
     public Point3D Source { get; }
     public int SourceRegion { get; }
-    public Map DestMap { get; }
+    public int DestMapId { get; }
     public Point3D Destination { get; }
     public int DestRegion { get; }
 
@@ -46,18 +49,14 @@ public static class NavLinks
 {
     private static readonly ILogger logger = LogFactory.GetLogger(typeof(NavLinks));
 
-    private static readonly Dictionary<long, List<NavLink>> _bySourceNode = new();
     private static readonly List<NavLink> _all = [];
 
     public static IReadOnlyList<NavLink> All => _all;
 
     public static long NodeKey(int mapId, int region) => ((long)mapId << 32) | (uint)region;
 
-    public static List<NavLink> GetFrom(long node) => _bySourceNode.GetValueOrDefault(node);
-
     public static void Rebuild()
     {
-        _bySourceNode.Clear();
         _all.Clear();
 
         var skipped = 0;
@@ -87,12 +86,14 @@ public static class NavLinks
                     continue;
                 }
 
-                if (!TryAdd(NavLinkKind.Teleporter, map, tele.Location, destMap, dest))
+                if (!AddCore(NavLinkKind.Teleporter, map, tele.Location, destMap, dest))
                 {
                     skipped++;
                 }
             }
         }
+
+        NavSystem.PublishSnapshot();
 
         logger.Information(
             "Nav links: {Count} teleporters linked, {Skipped} skipped (no walkable ground at an end)",
@@ -102,6 +103,17 @@ public static class NavLinks
     }
 
     public static bool TryAdd(NavLinkKind kind, Map sourceMap, Point3D source, Map destMap, Point3D dest)
+    {
+        if (!AddCore(kind, sourceMap, source, destMap, dest))
+        {
+            return false;
+        }
+
+        NavSystem.PublishSnapshot();
+        return true;
+    }
+
+    private static bool AddCore(NavLinkKind kind, Map sourceMap, Point3D source, Map destMap, Point3D dest)
     {
         var sourceGraph = NavSystem.GetGraph(sourceMap);
         var destGraph = NavSystem.GetGraph(destMap);
@@ -120,22 +132,13 @@ public static class NavLinks
             return false;
         }
 
-        var link = new NavLink(kind, sourceMap, source, sourceRegion, destMap, dest, destRegion);
-        var key = NodeKey(sourceMap.MapID, sourceRegion);
-
-        if (!_bySourceNode.TryGetValue(key, out var list))
-        {
-            _bySourceNode[key] = list = [];
-        }
-
-        list.Add(link);
-        _all.Add(link);
+        _all.Add(new NavLink(kind, sourceMap.MapID, source, sourceRegion, destMap.MapID, dest, destRegion));
         return true;
     }
 
     public static void Clear()
     {
-        _bySourceNode.Clear();
         _all.Clear();
+        NavSystem.PublishSnapshot();
     }
 }

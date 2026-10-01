@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -44,10 +45,7 @@ namespace Server.Mobiles
             VirtualArmor = 50;
 
             PackItem(new BlackPearl(3));
-            PackItem(new IronOre(3)
-            {
-                ItemID = 0x19B8
-            });
+            PackItem(new MahaonOre(MahaonMetal.Iron, 3));
         }
 
         public override string CorpseName => "труп снежного элементаля";

@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -38,10 +39,7 @@ namespace Server.Mobiles
 
             VirtualArmor = 50;
 
-            PackItem(new ShadowIronOre(25)
-            {
-                ItemID = 0x19B9
-            });
+            PackItem(new MahaonOre(MahaonMetal.Shadow, 25));
             PackItem(new IronIngot(10));
 
             if (Utility.RandomDouble() < 0.05)

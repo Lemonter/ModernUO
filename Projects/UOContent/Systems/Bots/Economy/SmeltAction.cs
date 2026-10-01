@@ -36,12 +36,6 @@ public sealed class SmeltAction : BotAction
             return BotActionResult.Done();
         }
 
-        // Too little to make an ingot: leave it for a later trip rather than loop on it.
-        if (ore.Amount < 2)
-        {
-            return BotActionResult.Done();
-        }
-
         bot.Direction = bot.GetDirectionTo(_forgeLocation);
         ore.OnDoubleClick(bot);
 

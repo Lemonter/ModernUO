@@ -42,17 +42,43 @@ public sealed class GoToAction : BotAction
     private Map TargetMap => _mobile?.Map ?? _map;
     private Point3D TargetPoint => _mobile?.Location ?? _point;
 
-    public override void Start(BotBrain brain) => Route(brain);
+    // A route is being searched (maybe on the route worker); ticks wait for it.
+    private bool _routing;
+    private bool _routeFailed;
+    private int _routeRequest;
+    private bool _stopped;
 
-    private bool Route(BotBrain brain)
+    public override void Start(BotBrain brain) => RequestRoute(brain);
+
+    private void RequestRoute(BotBrain brain)
     {
         var bot = brain.Bot;
         _aimedAt = TargetPoint;
+        _routing = true;
+        _routeFailed = false;
 
-        var route = NavPathfinder.Find(bot.Map, bot.Location, TargetMap, _aimedAt);
-        _follower = route == null ? null : new NavFollower(bot, route, _range);
-        return _follower != null;
+        var request = ++_routeRequest;
+        NavPathfinder.FindAsync(
+            bot.Map,
+            bot.Location,
+            TargetMap,
+            _aimedAt,
+            route =>
+            {
+                // A newer request, a stopped action or a gone bot makes this answer stale.
+                if (_stopped || request != _routeRequest || bot.Deleted)
+                {
+                    return;
+                }
+
+                _routing = false;
+                _follower = route == null ? null : new NavFollower(bot, route, _range);
+                _routeFailed = route == null;
+            }
+        );
     }
+
+    public override void Stop(BotBrain brain) => _stopped = true;
 
     public override BotActionResult Tick(BotBrain brain)
     {
@@ -68,12 +94,26 @@ public sealed class GoToAction : BotAction
             return BotActionResult.Done();
         }
 
+        if (_routing)
+        {
+            return BotActionResult.Running(200);
+        }
+
+        if (_routeFailed)
+        {
+            if (++_replans > MaxReplans)
+            {
+                return BotActionResult.Failed();
+            }
+
+            RequestRoute(brain);
+            return BotActionResult.Running(1000);
+        }
+
         if (_follower == null || _mobile != null && !Utility.InRange(_aimedAt, _mobile.Location, RetargetDistance))
         {
-            if (!Route(brain))
-            {
-                return ++_replans > MaxReplans ? BotActionResult.Failed() : BotActionResult.Running(1000);
-            }
+            RequestRoute(brain);
+            return BotActionResult.Running(200);
         }
 
         var run = bot.Map != TargetMap || !Utility.InRange(bot.Location, TargetPoint, RunDistance);
@@ -95,7 +135,13 @@ public sealed class GoToAction : BotAction
             default:
                 {
                     _follower = null;
-                    return ++_replans > MaxReplans ? BotActionResult.Failed() : BotActionResult.Running(500);
+                    if (++_replans > MaxReplans)
+                    {
+                        return BotActionResult.Failed();
+                    }
+
+                    RequestRoute(brain);
+                    return BotActionResult.Running(500);
                 }
         }
     }

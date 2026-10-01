@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -42,10 +43,7 @@ namespace Server.Mobiles
 
             VirtualArmor = 60;
 
-            PackItem(new GoldOre(oreAmount)
-            {
-                ItemID = 0x19B9
-            });
+            PackItem(new MahaonOre(MahaonMetal.Gold, oreAmount));
         }
 
         public override string CorpseName => "труп рудного элементаля";

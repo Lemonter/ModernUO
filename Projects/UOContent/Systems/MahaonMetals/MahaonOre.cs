@@ -76,6 +76,32 @@ public partial class MahaonOre : Item
         return itemId is 4017 or >= 6522 and <= 6569 or 11736;
     }
 
+    private const int MaxIngotStack = 60000;
+
+    // The large forge: its addon pieces (LargeForgeWest/East and their parts) or the large forge
+    // graphics drawn in the map statics. The small forge and the anvil-forge are the rest of
+    // IsForge.
+    private static bool IsLargeForge(object obj)
+    {
+        if (obj is Item item)
+        {
+            var type = item.GetType();
+            if ((type.DeclaringType ?? type).Name.StartsWith("LargeForge", System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        var itemId = obj switch
+        {
+            Item i              => i.ItemID,
+            StaticTarget target => target.ItemID,
+            _                   => 0
+        };
+
+        return itemId is >= 6522 and <= 6569;
+    }
+
     private class SmeltTarget : Target
     {
         private readonly MahaonOre _ore;
@@ -110,21 +136,12 @@ public partial class MahaonOre : Item
             var minSkill = System.Math.Max(0, info.MiningSkillRequired - 25.0);
             var maxSkill = info.MiningSkillRequired + 25.0;
 
-            if (!from.CheckTargetSkill(SkillName.Mining, targeted, minSkill, maxSkill))
-            {
-                from.SendLocalizedMessage(501990); // You burn the ore, and the metal is wasted.
-                _ore.Consume();
-                return;
-            }
+            // Smelting always succeeds at a fixed yield; the check only trains the skill.
+            from.CheckTargetSkill(SkillName.Mining, targeted, minSkill, maxSkill);
 
-            var toConsume = System.Math.Min(_ore.Amount, 30000);
-            var ingotAmount = toConsume / 2;
-
-            if (ingotAmount <= 0)
-            {
-                from.SendLocalizedMessage(501987); // Not enough ore in this pile to make an ingot.
-                return;
-            }
+            var ingotsPerOre = IsLargeForge(targeted) ? 3 : 2;
+            var toConsume = System.Math.Min(_ore.Amount, MaxIngotStack / ingotsPerOre);
+            var ingotAmount = toConsume * ingotsPerOre;
 
             _ore.Consume(toConsume);
 
