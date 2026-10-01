@@ -243,7 +243,7 @@ namespace Server.Mobiles
                                     // лишь сигнатурный перк.
                                     (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(this, Systems.MahaonProfessions.ProfessionCategory.Craft) ? 100 : 0);
 
-                return this is BotMobile ? baseMaxWeight * 10 : baseMaxWeight;
+                return baseMaxWeight;
             }
         }
 

@@ -40,7 +40,7 @@ public sealed class GatherGoal : BotGoal
         score -= brain.Fatigue * 0.6;
 
         // Goods already in the pack want selling before more are gathered.
-        if (BotGoods.ValueCarried(bot) > 1500)
+        if (BotGoods.ValueCarried(bot) > 1500 * BotGoods.TripCapacity(bot))
         {
             score *= 0.3;
         }

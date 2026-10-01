@@ -92,6 +92,7 @@ public partial class BotBrain
     internal bool Registered;
 
     internal long LastThinkTick;
+    internal long NextMountTick = Core.TickCount;
     private bool _hasThought;
 
     // Ghost state, see BotGhost.
@@ -215,6 +216,8 @@ public partial class BotBrain
         {
             return reflex;
         }
+
+        BotStable.Upkeep(this);
 
         if (now - _nextGoalReview >= 0 || Goal == null)
         {

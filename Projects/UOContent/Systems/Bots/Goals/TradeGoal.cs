@@ -24,7 +24,7 @@ public sealed class TradeGoal : BotGoal
         }
 
         // A greedy bot hauls more before bothering with the market.
-        var trip = 800 + BotBrain.Trait(brain.Greed) * 1200;
+        var trip = (800 + BotBrain.Trait(brain.Greed) * 1200) * BotGoods.TripCapacity(brain.Bot);
         return System.Math.Min(1.0, value / trip) * 0.85;
     }
 
@@ -37,9 +37,12 @@ public sealed class TradeGoal : BotGoal
             return null;
         }
 
-        var steps = new List<BotAction>();
+        var steps = new List<BotAction> { new UnloadPackAnimalAction() };
 
-        if (bot.Backpack?.FindItemByType<MahaonOre>() != null && WorldCatalog.TryGetForge(city, out var forge, out var forgeLocation))
+        var hasOre = bot.Backpack?.FindItemByType<MahaonOre>() != null ||
+                     BotStable.ReachablePack(bot, 12)?.FindItemByType<MahaonOre>() != null;
+
+        if (hasOre && WorldCatalog.TryGetForge(city, out var forge, out var forgeLocation))
         {
             steps.Add(new GoToAction(city.Map, forgeLocation, 2, "к печи"));
             steps.Add(new SmeltAction(forge, forgeLocation));
@@ -48,4 +51,17 @@ public sealed class TradeGoal : BotGoal
         steps.Add(new SellGoodsAction(city));
         return steps;
     }
+}
+
+/// <summary>Takes the goods off the pack animal into the bot's own pack, as much as it can carry,
+/// before the forge and the market. What doesn't fit waits for the next round.</summary>
+public sealed class UnloadPackAnimalAction : BotAction
+{
+    public override BotActionResult Tick(BotBrain brain)
+    {
+        BotStable.Unload(brain.Bot);
+        return BotActionResult.Done(500);
+    }
+
+    public override string Describe(BotBrain brain) => "Разгружает вьючное животное";
 }

@@ -33,6 +33,19 @@ public static class BotCrafting
 
     public static bool IsCrafter(Mobile bot, CraftSystem system) => bot.Skills[system.MainSkill].Value >= CrafterSkill;
 
+    public static bool IsAnyCrafter(Mobile bot)
+    {
+        foreach (var system in Systems)
+        {
+            if (system != null && IsCrafter(bot, system))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Whether this good is the bot's own craft material and should stay in the pack.</summary>
     public static bool KeepsForCraft(Mobile bot, Item item)
     {

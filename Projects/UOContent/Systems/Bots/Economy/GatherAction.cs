@@ -1,4 +1,5 @@
 using System;
+using Server.Mobiles;
 using Server.Items;
 using Server.Systems.MahaonMetals;
 using Server.Systems.MahaonMining;
@@ -61,7 +62,9 @@ public sealed class GatherAction : BotAction
         };
     }
 
-    private int Count(Mobile bot) => bot.Backpack?.GetAmount(ProductType(_kind)) ?? 0;
+    // The pack animal's load counts too: the bot hands goods over as it works.
+    private int Count(PlayerMobile bot) =>
+        (bot.Backpack?.GetAmount(ProductType(_kind)) ?? 0) + (BotStable.ReachablePack(bot, 12)?.GetAmount(ProductType(_kind)) ?? 0);
 
     public override void Start(BotBrain brain)
     {
@@ -74,6 +77,11 @@ public sealed class GatherAction : BotAction
         var bot = brain.Bot;
         var count = Count(bot);
         Gathered = Math.Max(0, count - _startCount);
+
+        if (IsOverloaded(bot))
+        {
+            BotStable.TryOffload(bot);
+        }
 
         if (Gathered >= _quota || Core.TickCount - _deadline >= 0 || IsOverloaded(bot))
         {

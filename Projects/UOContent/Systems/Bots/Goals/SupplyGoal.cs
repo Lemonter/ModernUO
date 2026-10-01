@@ -122,6 +122,11 @@ public sealed class SupplyGoal : BotGoal
             return true;
         }
 
+        if (BotStable.TryNeededFood(bot, out type, out amount))
+        {
+            return true;
+        }
+
         if (pack.GetAmount(typeof(BaseHealPotion)) < 2 && Banker.GetBalance(bot) + pack.GetAmount(typeof(Gold)) > 2000)
         {
             (type, amount) = (typeof(GreaterHealPotion), 4);

@@ -12,14 +12,22 @@ public static class BotGoods
 
     /// <summary>Something this bot made and doesn't wear or work with.</summary>
     public static bool IsProduct(Mobile bot, Item item) =>
-        item.PlayerConstructed && item.Parent == bot.Backpack && item is not BaseTool && item is not Container &&
+        item.PlayerConstructed && IsCarried(bot, item) && item is not BaseTool && item is not Container &&
         BotCrafting.ProductValue(item) > 0;
+
+    /// <summary>Loose in the bot's own pack or in its pack animal's — not in a bag, not worn.</summary>
+    public static bool IsCarried(Mobile bot, Item item) =>
+        item.Parent is Container c && (c == bot.Backpack ||
+                                       c.Parent is Mobiles.BaseCreature owner && BotStable.IsPackAnimal(owner) && owner.ControlMaster == bot);
+
+    /// <summary>How much more a bot hauls before a market trip when an animal carries for it.</summary>
+    public static double TripCapacity(Mobile bot) => bot is Mobiles.PlayerMobile pm && BotStable.PackAnimal(pm) != null ? 2.5 : 1.0;
 
     /// <summary>What a bot puts on the market: raw goods it doesn't need for its own craft, and
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
-        bot.GetBrain() is { } brain && brain.IsLoot(item) && item.Parent == bot.Backpack;
+        bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item);
 
     public static int BaseUnitPrice(Item item) => item switch
     {
@@ -47,7 +55,18 @@ public static class BotGoods
     /// <summary>Total base value of the goods in a pack — how much a trip to market is worth.</summary>
     public static long ValueCarried(Mobile bot)
     {
-        var pack = bot.Backpack;
+        var value = ValueIn(bot, bot.Backpack);
+
+        if (bot is Mobiles.PlayerMobile pm)
+        {
+            value += ValueIn(bot, BotStable.ReachablePack(pm, 12));
+        }
+
+        return value;
+    }
+
+    private static long ValueIn(Mobile bot, Container pack)
+    {
         if (pack == null)
         {
             return 0;

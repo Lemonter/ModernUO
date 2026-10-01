@@ -16,7 +16,7 @@ public static class BotPets
         foreach (var m in bot.AllFollowers)
         {
             if (m is BaseCreature { Deleted: false, Alive: true, Controlled: true } pet && pet.ControlMaster == bot &&
-                pet.ControlTarget != foe && pet.Map == bot.Map && pet.InRange(bot, 14))
+                !BotStable.IsWorkAnimal(pet) && pet.ControlTarget != foe && pet.Map == bot.Map && pet.InRange(bot, 14))
             {
                 pet.ControlTarget = foe;
                 pet.ControlOrder = OrderType.Attack;

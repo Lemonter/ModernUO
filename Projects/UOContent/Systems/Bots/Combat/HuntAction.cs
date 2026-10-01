@@ -66,6 +66,8 @@ public sealed class HuntAction : BotAction
             _step = null;
         }
 
+        BotStable.TryOffload(bot);
+
         if (_kills >= _quota || Core.TickCount - _deadline >= 0 || Mobile.BodyWeight + bot.TotalWeight >= bot.MaxWeight - 20)
         {
             return _kills > 0 ? BotActionResult.Done() : BotActionResult.Failed();

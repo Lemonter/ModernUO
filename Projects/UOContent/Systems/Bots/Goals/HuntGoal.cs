@@ -25,7 +25,7 @@ public sealed class HuntGoal : BotGoal
         score -= brain.Fatigue * 0.6;
 
         // Loot and goods in the pack want selling first.
-        if (BotGoods.ValueCarried(bot) > 1500)
+        if (BotGoods.ValueCarried(bot) > 1500 * BotGoods.TripCapacity(bot))
         {
             score *= 0.3;
         }
