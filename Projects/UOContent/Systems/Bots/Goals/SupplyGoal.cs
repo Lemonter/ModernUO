@@ -48,6 +48,16 @@ public sealed class SupplyGoal : BotGoal
         return null;
     }
 
+    private static readonly Type[] NecroReagents =
+    [
+        typeof(BatWing), typeof(GraveDust), typeof(DaemonBlood), typeof(NoxCrystal), typeof(PigIron)
+    ];
+
+    private static readonly Type[] MysticReagents =
+    [
+        typeof(Bone), typeof(DragonsBlood), typeof(DaemonBone), typeof(FertileDirt)
+    ];
+
     private static readonly Type[] Reagents =
     [
         typeof(BlackPearl), typeof(Bloodmoss), typeof(Garlic), typeof(Ginseng), typeof(MandrakeRoot),
@@ -86,7 +96,25 @@ public sealed class SupplyGoal : BotGoal
             }
         }
 
-        if (bot.Weapon is BaseRanged ranged && pack.GetAmount(ranged.AmmoType) < 50)
+        if (bot.Skills.Necromancy.Value >= 30 && TryShort(pack, NecroReagents, 15, out type))
+        {
+            amount = 40;
+            return true;
+        }
+
+        if (bot.Skills.Mysticism.Value >= 30 && TryShort(pack, MysticReagents, 15, out type))
+        {
+            amount = 40;
+            return true;
+        }
+
+        if (bot.Skills.Musicianship.Value >= 30 && pack.FindItemByType<BaseInstrument>() == null)
+        {
+            (type, amount) = (typeof(BaseInstrument), 1);
+            return true;
+        }
+
+        if (bot.Weapon is BaseRanged { AmmoType: not null } ranged && pack.GetAmount(ranged.AmmoType) < 50)
         {
             (type, amount) = (ranged.AmmoType, 150);
             return true;
@@ -98,6 +126,21 @@ public sealed class SupplyGoal : BotGoal
             return true;
         }
 
+        return false;
+    }
+
+    private static bool TryShort(Container pack, Type[] types, int min, out Type shortOf)
+    {
+        foreach (var t in types)
+        {
+            if (pack.GetAmount(t) < min)
+            {
+                shortOf = t;
+                return true;
+            }
+        }
+
+        shortOf = null;
         return false;
     }
 

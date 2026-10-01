@@ -20,6 +20,7 @@ public sealed class BotCombatState
         // Deadlines start from a real tick, never the 0 default (tick-counts.md).
         var now = Core.TickCount;
         NextPotionTick = now;
+        NextSongTick = now;
         FleeUntil = now;
     }
 
@@ -29,6 +30,7 @@ public sealed class BotCombatState
     public Mobile SpellTarget;
 
     public long NextPotionTick;
+    public long NextSongTick;
     public long FleeUntil;
     public bool Fleeing;
 
@@ -172,7 +174,14 @@ public static class BotCombat
             bot.Combatant = foe;
         }
 
+        BotPets.Attack(bot, foe);
+
         if (BotHealing.TryHeal(brain))
+        {
+            return FightTickMs;
+        }
+
+        if (BotBard.TryDiscord(brain, foe) || BotSchools.TryCast(brain, SchoolUse.Buff, foe))
         {
             return FightTickMs;
         }
@@ -189,7 +198,8 @@ public static class BotCombat
                         return BotMovement.StepDelay(bot, true);
                     }
 
-                    if (bot.Spell == null && bot.Target == null && distance <= 10 && bot.InLOS(foe) && TryAttackSpell(brain, foe))
+                    if (bot.Spell == null && bot.Target == null && distance <= 10 && bot.InLOS(foe) &&
+                        (bot.Skills.Magery.Value >= 30 && TryAttackSpell(brain, foe) || BotSchools.TryCast(brain, SchoolUse.Attack, foe)))
                     {
                         return FightTickMs;
                     }
@@ -208,7 +218,13 @@ public static class BotCombat
             default:
                 {
                     // The swing itself is the engine's combat timer; the bot only has to be there.
-                    return bot.InRange(foe, 1) ? FightTickMs : Approach(brain, foe, 1);
+                    if (bot.InRange(foe, 1))
+                    {
+                        BotSchools.TryArmSwing(bot);
+                        return FightTickMs;
+                    }
+
+                    return Approach(brain, foe, 1);
                 }
         }
     }
@@ -265,7 +281,10 @@ public static class BotCombat
         bot.Warmode = false;
         state.Opponent = null;
 
-        BotHealing.TryHeal(brain);
+        if (!BotHealing.TryHeal(brain))
+        {
+            BotBard.TryPeace(brain, threat);
+        }
 
         // Run toward town, where guards and healers are; failing a route, just away.
         if (state.Approach == null || state.ApproachTarget != null)
@@ -306,6 +325,7 @@ public static class BotCombat
         }
 
         state.Fleeing = false;
+        BotPets.Follow(bot);
 
         if (bot.Warmode && bot.Combatant == null)
         {

@@ -29,6 +29,8 @@ public sealed class BotCity
     internal Point3D ForgeLocation;
     internal object Forge; // a forge Item or a StaticTarget, as a smelt target takes it
 
+    internal Item Ankh;
+
     internal bool SmithySearched;
     internal Point3D? SmithyStand;
 
@@ -209,6 +211,34 @@ public static class WorldCatalog
                 }
             }
         }
+    }
+
+    /// <summary>The ankh nearest the town centre, for tithing.</summary>
+    public static Item GetAnkh(BotCity city)
+    {
+        if (city.Ankh is { Deleted: false })
+        {
+            return city.Ankh;
+        }
+
+        Item best = null;
+        var bestDist = double.MaxValue;
+
+        foreach (var item in city.Map.GetItemsInRange(city.Center, VendorSearchRange))
+        {
+            if (item is Items.AnkhWest or Items.AnkhNorth)
+            {
+                var dist = item.GetDistanceToSqrt(city.Center);
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    best = item;
+                }
+            }
+        }
+
+        city.Ankh = best;
+        return best;
     }
 
     private static bool IsAnvilId(int id) => id is 4015 or 4016 or 11733 or 11734;

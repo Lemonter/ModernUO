@@ -59,7 +59,13 @@ public static class BotHealing
             return false;
         }
 
-        if (bot.Poisoned && bot.Skills.Magery.Value >= 30 && TryCast(brain, new CureSpell(bot), bot))
+        if (bot.Poisoned && (bot.Skills.Magery.Value >= 30 && TryCast(brain, new CureSpell(bot), bot) ||
+                             BotSchools.TryCast(brain, SchoolUse.Cure, bot)))
+        {
+            return true;
+        }
+
+        if (hp < 0.6 && BotSchools.TryCast(brain, SchoolUse.Heal, bot))
         {
             return true;
         }

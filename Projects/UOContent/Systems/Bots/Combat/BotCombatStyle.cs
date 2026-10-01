@@ -15,11 +15,11 @@ public static class BotCombatStyles
 {
     public static BotCombatStyle Of(Mobile bot)
     {
-        var magery = bot.Skills.Magery.Value;
+        var casting = System.Math.Max(bot.Skills.Magery.Value, BotSchools.CasterSkill(bot));
         var weapon = bot.Weapon as BaseWeapon;
         var weaponSkill = weapon == null ? bot.Skills.Wrestling.Value : bot.Skills[weapon.Skill].Value;
 
-        if (magery >= 50 && magery > weaponSkill)
+        if (casting >= 50 && casting > weaponSkill)
         {
             return BotCombatStyle.Mage;
         }
@@ -32,8 +32,8 @@ public static class BotCombatStyles
     {
         var weapon = bot.Weapon as BaseWeapon;
         var weaponSkill = weapon == null ? bot.Skills.Wrestling.Value : bot.Skills[weapon.Skill].Value;
-        var magery = bot.Skills.Magery.Value;
-        return System.Math.Max(magery, (weaponSkill + bot.Skills.Tactics.Value) / 2);
+        var casting = System.Math.Max(bot.Skills.Magery.Value, BotSchools.CasterSkill(bot));
+        return System.Math.Max(casting, (weaponSkill + bot.Skills.Tactics.Value) / 2);
     }
 
     /// <summary>

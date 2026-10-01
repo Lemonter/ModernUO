@@ -23,6 +23,8 @@ public static class BotGoals
     public static readonly CraftGoal Bowcraft = new(3);
     public static readonly HuntGoal Hunt = new();
     public static readonly CorpseRunGoal CorpseRun = new();
+    public static readonly TameGoal Tame = new();
+    public static readonly TitheGoal Tithe = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe];
 }
