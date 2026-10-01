@@ -506,6 +506,27 @@ public sealed class StepCache
     }
 
     /// <summary>
+    /// The static chunk at (chunkX, chunkY) for a whole-map consumer such as the nav-graph bake:
+    /// the resident chunk if there is one, else the .swb record, else a fresh build. A chunk loaded
+    /// or built here is not made resident, so sweeping a map leaves the LRU untouched. Null off-map.
+    /// </summary>
+    internal StepChunk GetStaticChunk(Map map, int chunkX, int chunkY)
+    {
+        if (map == null || map == Map.Internal || chunkX < 0 || chunkY < 0 ||
+            chunkX << 4 >= map.Width || chunkY << 4 >= map.Height)
+        {
+            return null;
+        }
+
+        if (_chunks.TryGetValue(EncodeKey(map.MapID, chunkX, chunkY), out var chunk))
+        {
+            return chunk;
+        }
+
+        return TryLoadFromLazyReader(map, chunkX, chunkY) ?? BuildChunk(map, chunkX, chunkY);
+    }
+
+    /// <summary>
     /// The hot-path query: one lookup yields the cell's 8-direction mask, its 8 destination Zs,
     /// and the hit kind. Check <see cref="StepMask.IsHit"/> before trusting the payload — on any
     /// fallthrough it is all zeroes and the caller must resolve the cell through MovementImpl.
