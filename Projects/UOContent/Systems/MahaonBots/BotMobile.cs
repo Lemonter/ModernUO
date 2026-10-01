@@ -19,14 +19,37 @@ public enum BotArchetype
 ///     stats, inventory, combat) but with no Account/NetState — driven entirely by
 ///     <see cref="Server.Systems.MahaonBots.BotController" /> instead of a client.
 /// </summary>
-[SerializationGenerator(0, false)]
-public partial class BotMobile : PlayerMobile
+[SerializationGenerator(1, false)]
+public partial class BotMobile : PlayerMobile, IPathDoorOpener
 {
     [SerializableField(0)]
     private BotArchetype _archetype;
 
     [SerializableField(1)]
     private bool _isPk;
+
+    // The v2 mind (Systems/Bots). Null while the bot runs on the v1 controller.
+    [SerializableField(2, setter: "internal")]
+    [SaveFlag(nameof(ShouldSerializeBrain))]
+    private Systems.Bots.BotBrain _brain;
+
+    private bool ShouldSerializeBrain() => _brain != null;
+
+    private void MigrateFrom(V0Content content)
+    {
+        _archetype = content.Archetype;
+        _isPk = content.IsPk;
+    }
+
+    [AfterDeserialization]
+    private void AfterDeserialization() => Systems.Bots.BotSystem.OnBotLoaded(this);
+
+    public bool OpensDoors => Systems.Bots.BotSystem.IsV2(this);
+
+    // Bots keep the world awake around them the way a connected player does: away from the real
+    // player there are otherwise no live monsters, spawners or AI for them to meet.
+    public override bool ActivatesSectors => true;
+
 
     // Mahaon: real players' Resurrect() (PlayerMobile.cs) grants a DeathRobe every single
     // time they come back to life — fine for an actual person who dies occasionally, but
@@ -46,13 +69,10 @@ public partial class BotMobile : PlayerMobile
     ///     хозяином, которого уже удалили. Здесь через это не проскочит ни один путь
     ///     удаления.
     /// </summary>
-    // Bots keep the world awake around them the way a connected player does: away from the real
-    // player there are otherwise no live monsters, spawners or AI for them to meet.
-    public override bool ActivatesSectors => true;
-
     public override void OnDelete()
     {
         Systems.MahaonBots.BotController.UnregisterBot(this);
+        Systems.Bots.BotSystem.Unregister(this);
         base.OnDelete();
     }
 

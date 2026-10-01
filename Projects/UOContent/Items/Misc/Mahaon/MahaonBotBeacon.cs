@@ -310,7 +310,8 @@ public partial class MahaonBotBeacon : Item
 
         foreach (var bot in _ownedBots)
         {
-            if (bot is BotMobile botMobile && !bot.Deleted && !bot.Alive)
+            // v2 bots walk to a healer as ghosts on their own.
+            if (bot is BotMobile botMobile && !bot.Deleted && !bot.Alive && !Systems.Bots.BotSystem.IsV2(botMobile))
             {
                 Systems.MahaonBots.BotController.PerformResurrection(botMobile);
             }
@@ -389,8 +390,13 @@ public partial class MahaonBotBeacon : Item
         // without it every beacon-spawned bot had no city to fall back to, so getting
         // "stuck" while traveling or dying anywhere on the map always teleported/
         // resurrected it right back to this exact beacon tile instead of the nearer city.
-        Systems.MahaonBots.BotController.RegisterBot(bot, spot, Map, CityName);
+        Systems.Bots.BotSystem.RegisterNew(bot, spot, Map, CityName);
         Claim(bot);
+
+        if (bot.Brain != null)
+        {
+            bot.Brain.OwnerBeacon = this;
+        }
 
         // Гильдия у бота всегда есть: своя у маяка, если задана, иначе общая для всех
         // ботов ЭТОГО маяка. Раньше безгильдейный маяк отдавал ботов на волю случайного

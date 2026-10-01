@@ -149,10 +149,11 @@ public partial class BotController : GenericPersistence
         CleanupOrphanedBotPets();
 
         // Re-attach any bot Mobiles that survived a restart but aren't tracked yet
-        // (BotController's own bookkeeping doesn't persist — the Mobiles do).
+        // (BotController's own bookkeeping doesn't persist — the Mobiles do). Under the v2 engine
+        // Systems.Bots registers them instead.
         foreach (var m in World.Mobiles.Values)
         {
-            if (m is BotMobile bot && !Bots.ContainsKey(bot))
+            if (Systems.Bots.BotSystem.Engine == Systems.Bots.BotEngine.V1 && m is BotMobile bot && !Bots.ContainsKey(bot))
             {
                 _restored.TryGetValue(bot, out var saved);
 
@@ -328,6 +329,21 @@ public partial class BotController : GenericPersistence
 
         Bots[bot] = profile;
         Conveyor.Enqueue(bot);
+    }
+
+    /// <summary>The BotMobiles this controller currently drives (possessed players excluded).</summary>
+    public static List<BotMobile> RegisteredBotMobiles()
+    {
+        var list = new List<BotMobile>();
+        foreach (var bot in Bots.Keys)
+        {
+            if (bot is BotMobile botMobile)
+            {
+                list.Add(botMobile);
+            }
+        }
+
+        return list;
     }
 
     public static void UnregisterBot(PlayerMobile bot)
