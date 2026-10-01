@@ -53,7 +53,8 @@
 /.idea
 /.vs
 /.vscode
-/.claude
+/.claude/*
+!/.claude/skills/
 
 .DS_Store
 
