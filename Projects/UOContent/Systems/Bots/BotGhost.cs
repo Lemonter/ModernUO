@@ -21,6 +21,7 @@ public static class BotGhost
         {
             brain.IsGhost = true;
             brain.DiedAt = now;
+            brain.OwnCorpse = bot.Corpse as Items.Corpse;
             brain.GhostWalk = null;
             BotSpeech.Say(bot, BotTopic.Dead, chance: 0.5);
         }

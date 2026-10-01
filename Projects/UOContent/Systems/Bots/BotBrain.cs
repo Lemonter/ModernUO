@@ -100,6 +100,33 @@ public partial class BotBrain
     internal GoToAction GhostWalk;
     internal bool GhostWalkStarted;
 
+    public BotCombatState Combat { get; } = new();
+
+    // Loot taken from kills, sold on the next market round; corpses already searched.
+    private readonly HashSet<Serial> _loot = [];
+    private readonly HashSet<Serial> _lootedCorpses = [];
+
+    public void MarkLoot(Item item) => _loot.Add(item.Serial);
+
+    public bool IsLoot(Item item) => _loot.Contains(item.Serial);
+
+    public void ForgetLoot(Item item) => _loot.Remove(item.Serial);
+
+    public void MarkLooted(Items.Corpse corpse)
+    {
+        if (_lootedCorpses.Count > 256)
+        {
+            _lootedCorpses.Clear();
+        }
+
+        _lootedCorpses.Add(corpse.Serial);
+    }
+
+    public bool HasLooted(Items.Corpse corpse) => _lootedCorpses.Contains(corpse.Serial);
+
+    /// <summary>The bot's own corpse after a death, until its belongings are recovered.</summary>
+    internal Items.Corpse OwnCorpse;
+
     public BotGoal Goal { get; private set; }
 
     public BotAction Action { get; private set; }
@@ -146,6 +173,12 @@ public partial class BotBrain
 
         // Brought back by something other than the ghost walk (a player's spell, a GM).
         IsGhost = false;
+
+        var reflex = BotCombat.Think(this);
+        if (reflex >= 0)
+        {
+            return reflex;
+        }
 
         if (now - _nextGoalReview >= 0 || Goal == null)
         {

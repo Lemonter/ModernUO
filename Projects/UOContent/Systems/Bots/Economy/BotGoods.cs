@@ -18,7 +18,8 @@ public static class BotGoods
     /// <summary>What a bot puts on the market: raw goods it doesn't need for its own craft, and
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
-        IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item);
+        IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
+        bot is Mobiles.BotMobile { Brain: { } brain } && brain.IsLoot(item) && item.Parent == bot.Backpack;
 
     public static int BaseUnitPrice(Item item) => item switch
     {
@@ -29,6 +30,9 @@ public static class BotGoods
         Log               => 3,
         Fish              => 5,
         MahaonCoal        => 4,
+        BaseWeapon or BaseArmor or BaseJewel => 30,
+        BaseReagent       => 3,
+        SpellScroll       => 10,
         _                 => 0
     };
 

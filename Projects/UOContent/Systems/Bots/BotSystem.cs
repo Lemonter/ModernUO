@@ -60,6 +60,7 @@ public static class BotSystem
     public static void Initialize()
     {
         WorldCatalog.Rebuild();
+        HuntingAtlas.Rebuild();
         BotScheduler.Start();
         _initialized = true;
 
