@@ -286,8 +286,11 @@ public sealed class NavFollower
             return null;
         }
 
+        var t0 = System.Diagnostics.Stopwatch.GetTimestamp();
         var path = alg.Find(m, m.Map, m.Location, target);
-        return path?.Length > 0 ? path : null;
+        var found = path?.Length > 0;
+        NavStats.RecordLeg(NavStats.ElapsedMs(t0), found);
+        return found ? path : null;
     }
 
     /// <summary>Opens a closed door on the cell about to be entered. True when the tick went on

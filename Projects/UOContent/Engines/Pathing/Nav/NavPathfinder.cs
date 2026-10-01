@@ -34,6 +34,15 @@ public static class NavPathfinder
 
     public static NavRoute Find(Map startMap, Point3D start, Map goalMap, Point3D goal)
     {
+        var t0 = System.Diagnostics.Stopwatch.GetTimestamp();
+        var route = FindCore(startMap, start, goalMap, goal, out var expanded);
+        NavStats.RecordRoute(NavStats.ElapsedMs(t0), expanded, route != null);
+        return route;
+    }
+
+    private static NavRoute FindCore(Map startMap, Point3D start, Map goalMap, Point3D goal, out int expandedCount)
+    {
+        expandedCount = 0;
         var startGraph = NavSystem.GetGraph(startMap);
         var goalGraph = NavSystem.GetGraph(goalMap);
 
@@ -120,6 +129,8 @@ public static class NavPathfinder
                 }
             }
         }
+
+        expandedCount = expanded;
 
         if (!found)
         {

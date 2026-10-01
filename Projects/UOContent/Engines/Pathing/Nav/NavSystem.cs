@@ -43,6 +43,7 @@ public static class NavSystem
         CommandSystem.Register("NavLinks", AccessLevel.Administrator, OnNavLinks);
         CommandSystem.Register("NavRoute", AccessLevel.GameMaster, OnNavRoute);
         CommandSystem.Register("NavGo", AccessLevel.GameMaster, OnNavGo);
+        CommandSystem.Register("NavStats", AccessLevel.GameMaster, OnNavStats);
     }
 
     /// <summary>
@@ -229,6 +230,24 @@ public static class NavSystem
     {
         NavLinks.Rebuild();
         e.Mobile.SendMessage($"{NavLinks.All.Count} nav links.");
+    }
+
+    [Usage("NavStats")]
+    [Description("On-loop path planning cost since the last call: graph routes and local A* legs.")]
+    private static void OnNavStats(CommandEventArgs e)
+    {
+        var m = e.Mobile;
+        var routes = NavStats.Routes;
+        var legs = NavStats.Legs;
+
+        m.SendMessage(
+            $"Routes: {routes} ({NavStats.RoutesFailed} failed), avg {(routes == 0 ? 0 : NavStats.RouteMsTotal / routes):F3} ms, max {NavStats.RouteMsMax:F2} ms, total {NavStats.RouteMsTotal:F0} ms, avg expanded {(routes == 0 ? 0 : NavStats.RouteExpanded / routes)}."
+        );
+        m.SendMessage(
+            $"Legs: {legs} ({NavStats.LegsFailed} failed), avg {(legs == 0 ? 0 : NavStats.LegMsTotal / legs):F3} ms, max {NavStats.LegMsMax:F2} ms, total {NavStats.LegMsTotal:F0} ms."
+        );
+        m.SendMessage($"Cores: {Environment.ProcessorCount}. Stats reset.");
+        NavStats.Reset();
     }
 
     [Usage("NavRoute")]
