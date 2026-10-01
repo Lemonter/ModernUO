@@ -70,7 +70,19 @@ public class ReportMurdererGump : StaticGump<ReportMurdererGump>
 
         if (notInThievesGuild && killers?.Count > 0)
         {
-            new GumpTimer(m, killers).Start();
+            // A bot has no client to answer the report gump; it reports every killer, as most
+            // players do.
+            if (m is BotMobile { NetState: null })
+            {
+                foreach (var killer in killers)
+                {
+                    PlayerMurderSystem.ReportMurder(m, killer);
+                }
+            }
+            else
+            {
+                new GumpTimer(m, killers).Start();
+            }
         }
     }
 

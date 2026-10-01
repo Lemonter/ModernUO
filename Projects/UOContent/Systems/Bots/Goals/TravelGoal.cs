@@ -20,7 +20,7 @@ public sealed class TravelGoal : BotGoal
 
         foreach (var city in WorldCatalog.Cities)
         {
-            if (city.Map != bot.Map || city == current)
+            if (city.Map != bot.Map || city == current || BotSocialRules.IsOutlaw(bot) && BotSocialRules.IsGuarded(city.Region))
             {
                 continue;
             }

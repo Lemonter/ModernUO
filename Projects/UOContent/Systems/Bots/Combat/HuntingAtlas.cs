@@ -14,7 +14,11 @@ public sealed class HuntSpot
         Center = center;
         Range = range;
         Fame = fame;
+        InDungeon = Region.Find(center, map).IsPartOf<Regions.DungeonRegion>();
     }
+
+    /// <summary>Inside a dungeon: tougher, darker, and where groups go.</summary>
+    public bool InDungeon { get; }
 
     public Map Map { get; }
     public Point3D Center { get; }
@@ -135,7 +139,7 @@ public static class HuntingAtlas
 
     /// <summary>A spot near <paramref name="near"/> worth this bot's time: as tough as it can take,
     /// not trivially weak; a random pick among the closest few.</summary>
-    public static HuntSpot Pick(Map map, Point3D near, int range, int maxFame)
+    public static HuntSpot Pick(Map map, Point3D near, int range, int maxFame, bool preferDungeon = false)
     {
         var minFame = maxFame / 8;
         HuntSpot best = null;
@@ -157,6 +161,10 @@ public static class HuntingAtlas
             // Closer is better; tougher (closer to the bot's limit) is better; a little noise
             // keeps every bot from walking to the same spawner.
             var score = dist * (1.5 - (double)spot.Fame / maxFame) * (0.7 + Utility.RandomDouble() * 0.6);
+            if (preferDungeon && spot.InDungeon)
+            {
+                score *= 0.3;
+            }
             if (score < bestScore)
             {
                 bestScore = score;

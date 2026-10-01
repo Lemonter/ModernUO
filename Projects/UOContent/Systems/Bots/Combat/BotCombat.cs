@@ -122,7 +122,64 @@ public static class BotCombat
             }
         }
 
-        return best;
+        if (best != null)
+        {
+            if (best.Player)
+            {
+                brain.AddGrudge(best, 30 * 60_000);
+            }
+
+            return best;
+        }
+
+        return FindPlayerThreat(brain);
+    }
+
+    /// <summary>
+    /// Fights the bot picks among people, only while healthy and only where it is lawful: someone
+    /// attacking a friend nearby, a member of a guild at war with its own, or an outlaw it holds a
+    /// grudge against.
+    /// </summary>
+    private static Mobile FindPlayerThreat(BotBrain brain)
+    {
+        var bot = brain.Bot;
+        if (bot.Hits < bot.HitsMax * 0.6)
+        {
+            return null;
+        }
+
+        foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, ThreatRange - 2))
+        {
+            if (m == bot || !m.Alive || m.Hidden)
+            {
+                continue;
+            }
+
+            // A friend under attack: their attacker is fair game.
+            if (BotSocialRules.IsFriend(bot, m) && m.Combatant is { Alive: true } attacker &&
+                !BotSocialRules.IsFriend(bot, attacker) && IsValidFoe(bot, attacker))
+            {
+                return attacker;
+            }
+
+            if (!IsValidFoe(bot, m) || BotSocialRules.IsFriend(bot, m))
+            {
+                continue;
+            }
+
+            if (BotSocialRules.IsAtWar(bot, m) && bot.Hits > bot.HitsMax * 0.7)
+            {
+                return m;
+            }
+
+            if (brain.HoldsGrudge(m) && (m.Murderer || m.Criminal) && bot.Hits > bot.HitsMax * 0.7)
+            {
+                BotSpeech.Say(bot, BotTopic.Threat, m, 0.7);
+                return m;
+            }
+        }
+
+        return null;
     }
 
     private static bool IsValidFoe(Mobile bot, Mobile m) =>
@@ -145,7 +202,9 @@ public static class BotCombat
 
         // Out of its league: a creature far beyond what this bot hunts, it didn't pick.
         var outmatched = threat is BaseCreature creature && threat != state.Opponent &&
-                         creature.Fame > BotCombatStyles.MaxPreyFame(brain) * 2;
+                         creature.Fame > BotCombatStyles.MaxPreyFame(brain) * 2 ||
+                         threat.Player && BotCombatStyles.FightingSkill(threat) > BotCombatStyles.FightingSkill(bot) + 25 &&
+                         brain.Group == null;
 
         if (hp < threshold || outmatched)
         {
@@ -289,7 +348,7 @@ public static class BotCombat
         // Run toward town, where guards and healers are; failing a route, just away.
         if (state.Approach == null || state.ApproachTarget != null)
         {
-            var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+            var city = BotSocialRules.TownFor(bot);
             state.Approach?.Stop(brain);
             state.ApproachTarget = null;
             state.Approach = city == null ? null : new GoToAction(city.Map, city.Center, 6, "бежит в город");

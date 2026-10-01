@@ -26,7 +26,7 @@ public sealed class TitheGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+        var city = BotSocialRules.TownFor(bot);
         var ankh = city == null ? null : WorldCatalog.GetAnkh(city);
         if (ankh == null)
         {

@@ -39,7 +39,7 @@ public sealed class CraftGoal : BotGoal
 
         if (NeedsSmithy)
         {
-            var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+            var city = BotSocialRules.TownFor(bot);
             if (city == null || !WorldCatalog.TryGetSmithy(city, out var stand))
             {
                 return null;
@@ -109,7 +109,7 @@ public sealed class LearnGoal : BotGoal
 
         if ((bot.Backpack?.GetAmount(typeof(Items.Gold)) ?? 0) < price)
         {
-            var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+            var city = BotSocialRules.TownFor(bot);
             var banker = city == null ? null : WorldCatalog.GetBanker(city);
             if (banker == null)
             {

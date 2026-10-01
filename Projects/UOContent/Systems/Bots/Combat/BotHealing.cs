@@ -91,4 +91,57 @@ public static class BotHealing
         brain.Combat.SpellTarget = target;
         return true;
     }
+
+    /// <summary>Heals the most wounded group member within reach: bandage, Greater Heal or Close
+    /// Wounds, whichever the bot can do. True when something was started.</summary>
+    public static bool TryHealAlly(BotBrain brain, BotGroup group)
+    {
+        var bot = brain.Bot;
+        Mobile patient = null;
+        var worst = 0.6;
+
+        foreach (var m in group.Members)
+        {
+            if (m == bot || !m.Alive || m.Map != bot.Map || !bot.InRange(m, 10))
+            {
+                continue;
+            }
+
+            var hp = (double)m.Hits / m.HitsMax;
+            if (hp < worst || m.Poisoned && worst > 0.59)
+            {
+                worst = hp;
+                patient = m;
+            }
+        }
+
+        if (patient == null)
+        {
+            return false;
+        }
+
+        if (bot.Skills.Healing.Value >= 30 && bot.InRange(patient, 2) && BandageContext.GetContext(bot) == null &&
+            bot.Backpack?.FindItemByType<Bandage>() is { } bandage && BandageContext.BeginHeal(bot, patient) != null)
+        {
+            bandage.Consume();
+            return true;
+        }
+
+        if (bot.Spell != null || bot.Target != null)
+        {
+            return false;
+        }
+
+        if (patient.Poisoned && bot.Skills.Magery.Value >= 30 && TryCast(brain, new CureSpell(bot), patient))
+        {
+            return true;
+        }
+
+        if (bot.Skills.Magery.Value >= 50 && TryCast(brain, new GreaterHealSpell(bot), patient))
+        {
+            return true;
+        }
+
+        return bot.Skills.Chivalry.Value >= 30 && TryCast(brain, new Spells.Chivalry.CloseWoundsSpell(bot), patient);
+    }
 }

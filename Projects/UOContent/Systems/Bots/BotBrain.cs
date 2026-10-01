@@ -102,6 +102,32 @@ public partial class BotBrain
 
     public BotCombatState Combat { get; } = new();
 
+    // Who wronged this bot, until when it remembers. Bounded; a restart forgives.
+    private readonly Dictionary<Mobile, long> _grudges = new();
+
+    public void AddGrudge(Mobile m, long forMs)
+    {
+        if (m == null || m == _bot)
+        {
+            return;
+        }
+
+        if (_grudges.Count > 32)
+        {
+            _grudges.Clear();
+        }
+
+        _grudges[m] = Core.TickCount + forMs;
+    }
+
+    public bool HoldsGrudge(Mobile m) =>
+        _grudges.TryGetValue(m, out var until) && Core.TickCount - until < 0;
+
+    public int GrudgeCount => _grudges.Count;
+
+    /// <summary>The hunting group this bot belongs to, if any. Transient.</summary>
+    public BotGroup Group { get; internal set; }
+
     // Loot taken from kills, sold on the next market round; corpses already searched.
     private readonly HashSet<Serial> _loot = [];
     private readonly HashSet<Serial> _lootedCorpses = [];

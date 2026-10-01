@@ -25,7 +25,7 @@ public sealed class BankGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+        var city = BotSocialRules.TownFor(bot);
         var banker = city == null ? null : WorldCatalog.GetBanker(city);
 
         if (banker == null)

@@ -13,7 +13,11 @@ public enum BotTopic
     Arrived,
     Banking,
     Dead,
-    Resurrected
+    Resurrected,
+    GroupForming,
+    GroupDone,
+    Threat,
+    Victory
 }
 
 /// <summary>
@@ -48,7 +52,11 @@ public static class BotSpeech
         [BotTopic.Arrived] = ["Наконец-то добрался.", "Ну вот я и здесь.", "Фух, дошёл."],
         [BotTopic.Banking] = ["Надо в банк заглянуть.", "Отнесу-ка золото в банк."],
         [BotTopic.Dead] = ["Ооооо...", "ОоОоОо!"],
-        [BotTopic.Resurrected] = ["Спасибо, лекарь!", "Снова в строю.", "Жизнь прекрасна."]
+        [BotTopic.Resurrected] = ["Спасибо, лекарь!", "Снова в строю.", "Жизнь прекрасна."],
+        [BotTopic.GroupForming] = ["Кто со мной в подземелье?", "Собираю отряд, пошли!", "Айда на охоту, вместе веселее.", "За мной, народ!"],
+        [BotTopic.GroupDone] = ["Хорошо поохотились.", "Расходимся, спасибо всем.", "Неплохой улов, бывайте."],
+        [BotTopic.Threat] = ["Ну держись!", "Сейчас получишь!", "Ты пожалеешь!", "Умри!", "Твоя смерть пришла."],
+        [BotTopic.Victory] = ["Так тебе и надо.", "Следующий!", "Легко.", "Хе-хе."]
     };
 
     public static void Say(Mobile bot, BotTopic topic, Mobile target = null, double chance = 1.0)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Server.Items;
+using Server.Mobiles;
 
 namespace Server.Systems.Bots;
 
@@ -17,9 +18,14 @@ public sealed class LootCorpseAction : BotAction
 
     public LootCorpseAction(Corpse corpse) => _corpse = corpse;
 
+    /// <summary>
+    /// Its own corpse, any kill it may loot without a crime, and — for a player killer — the
+    /// corpses of its victims, crime or not.
+    /// </summary>
     public static bool MayLoot(Mobile bot, Corpse corpse) =>
         corpse is { Deleted: false } && corpse.Map == bot.Map &&
-        (corpse.Owner == bot || corpse.Owner is not { Player: true } && !corpse.IsCriminalAction(bot));
+        (corpse.Owner == bot || !corpse.IsCriminalAction(bot) && corpse.Owner is not { Player: true } ||
+         bot is BotMobile { IsPk: true } && corpse.Owner is { Player: true } && corpse.CanLoot(bot, null));
 
     public override BotActionResult Tick(BotBrain brain)
     {

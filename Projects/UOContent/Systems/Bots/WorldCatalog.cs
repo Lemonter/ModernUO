@@ -74,14 +74,14 @@ public static class WorldCatalog
         }
     }
 
-    public static BotCity FindNearest(Map map, Point3D p)
+    public static BotCity FindNearest(Map map, Point3D p, bool allowGuarded = true)
     {
         BotCity best = null;
         var bestDist = int.MaxValue;
 
         foreach (var city in _cities)
         {
-            if (city.Map != map)
+            if (city.Map != map || !allowGuarded && BotSocialRules.IsGuarded(city.Region))
             {
                 continue;
             }

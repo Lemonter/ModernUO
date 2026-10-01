@@ -25,6 +25,9 @@ public static class BotGoals
     public static readonly CorpseRunGoal CorpseRun = new();
     public static readonly TameGoal Tame = new();
     public static readonly TitheGoal Tithe = new();
+    public static readonly LeadGroupGoal LeadGroup = new();
+    public static readonly FollowGroupGoal FollowGroup = new();
+    public static readonly PkGoal Pk = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk];
 }

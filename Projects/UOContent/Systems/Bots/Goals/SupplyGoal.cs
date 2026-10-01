@@ -157,7 +157,7 @@ public sealed class SupplyGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+        var city = BotSocialRules.TownFor(bot);
         if (city == null)
         {
             return null;

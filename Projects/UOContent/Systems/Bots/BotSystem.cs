@@ -140,6 +140,7 @@ public static class BotSystem
 
         if (bot.Brain != null)
         {
+            bot.Brain.Group?.Remove(bot);
             bot.Brain.ClearPlan();
             bot.Brain.Registered = false;
         }

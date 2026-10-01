@@ -22,11 +22,17 @@ public static class BotGhost
             brain.IsGhost = true;
             brain.DiedAt = now;
             brain.OwnCorpse = bot.Corpse as Items.Corpse;
+
+            // The killer is remembered for a good while.
+            if (bot.LastKiller is { } killer)
+            {
+                brain.AddGrudge(killer is Mobiles.BaseCreature { ControlMaster: { } master } ? master : killer, 2 * 60 * 60_000);
+            }
             brain.GhostWalk = null;
             BotSpeech.Say(bot, BotTopic.Dead, chance: 0.5);
         }
 
-        var city = WorldCatalog.FindNearest(bot.Map, bot.Location);
+        var city = BotSocialRules.TownFor(bot);
         var healer = city == null ? null : WorldCatalog.GetHealer(city);
 
         if (healer == null)

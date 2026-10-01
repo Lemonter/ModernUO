@@ -16,16 +16,19 @@ public sealed class HuntAction : BotAction
 
     private readonly HuntSpot _spot;
     private readonly int _quota;
+    private readonly int _maxFame;
 
     private long _deadline;
     private int _kills;
     private Mobile _prey;
     private BotAction _step;
 
-    public HuntAction(HuntSpot spot, int quota)
+    /// <param name="maxFame">The toughest prey to pick; 0 means the bot's own limit.</param>
+    public HuntAction(HuntSpot spot, int quota, int maxFame = 0)
     {
         _spot = spot;
         _quota = quota;
+        _maxFame = maxFame;
     }
 
     public override void Start(BotBrain brain) => _deadline = Core.TickCount + MaxDurationMs;
@@ -64,7 +67,7 @@ public sealed class HuntAction : BotAction
             return BotActionResult.Running(250);
         }
 
-        if (FindPrey(brain) is { } prey)
+        if (FindPrey(brain, _maxFame) is { } prey)
         {
             _prey = prey;
             BotCombat.Engage(brain, prey);
@@ -95,10 +98,10 @@ public sealed class HuntAction : BotAction
         return null;
     }
 
-    private static Mobile FindPrey(BotBrain brain)
+    private static Mobile FindPrey(BotBrain brain, int maxFameOverride)
     {
         var bot = brain.Bot;
-        var maxFame = BotCombatStyles.MaxPreyFame(brain);
+        var maxFame = maxFameOverride > 0 ? maxFameOverride : BotCombatStyles.MaxPreyFame(brain);
         Mobile best = null;
         var bestDist = double.MaxValue;
 
