@@ -8149,6 +8149,14 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
     }
 
     /// <summary>
+    ///     Overridable. True for a client-less mobile that keeps the world awake around it the way a
+    ///     connected player does — creature AI, spawners and other sector-driven systems run within
+    ///     <see cref="Map.SectorActiveRange"/> of it. Sectors count such mobiles on enter and leave,
+    ///     so the value must not change while the mobile is on a map.
+    /// </summary>
+    public virtual bool ActivatesSectors => false;
+
+    /// <summary>
     ///     Overridable. Virtual event invoked when the sector this Mobile is in gets <see cref="Map.Sector.Activate">activated</see>.
     /// </summary>
     public virtual void OnSectorActivate()

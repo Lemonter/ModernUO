@@ -46,6 +46,10 @@ public partial class BotMobile : PlayerMobile
     ///     хозяином, которого уже удалили. Здесь через это не проскочит ни один путь
     ///     удаления.
     /// </summary>
+    // Bots keep the world awake around them the way a connected player does: away from the real
+    // player there are otherwise no live monsters, spawners or AI for them to meet.
+    public override bool ActivatesSectors => true;
+
     public override void OnDelete()
     {
         Systems.MahaonBots.BotController.UnregisterBot(this);

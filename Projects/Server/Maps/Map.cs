@@ -654,7 +654,7 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
             for (var y = sect.Y - range; y <= sect.Y + range; ++y)
             {
                 var check = GetRealSector(x, y);
-                if (check != _invalidSector && check.Clients.Count > 0)
+                if (check != _invalidSector && (check.Clients.Count > 0 || check.ActivatorCount > 0))
                 {
                     return true;
                 }
@@ -798,8 +798,23 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
 
         if (oldSector != newSector)
         {
+            // The new sector holds activation across the hand-off, so the sectors both ranges
+            // cover never see a moment with nobody nearby and aren't put to sleep and woken again
+            // on every crossing. (A mobile is a node of one sector list at a time, so it can't
+            // simply enter before it leaves.)
+            var holds = m.NetState != null || m.ActivatesSectors;
+            if (holds)
+            {
+                newSector.HoldActivation();
+            }
+
             oldSector.OnLeave(m);
             newSector.OnEnter(m);
+
+            if (holds)
+            {
+                newSector.ReleaseActivation();
+            }
         }
     }
 
@@ -1865,6 +1880,7 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
         private static readonly List<BaseMulti> m_DefaultMultiList = new();
         private bool m_Active;
         private ValueLinkList<NetState> _clients;
+        private int _activators;
         private ValueLinkList<Item> _items;
         private ValueLinkList<Mobile> _mobiles;
         private List<BaseMulti> _multis;
@@ -1896,6 +1912,14 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
         internal ref readonly ValueLinkList<Item> Items => ref _items;
 
         internal ref readonly ValueLinkList<NetState> Clients => ref _clients;
+
+        /// <summary>Mobiles here with <see cref="Mobile.ActivatesSectors"/> set.</summary>
+        public int ActivatorCount => _activators;
+
+        internal void HoldActivation() => _activators++;
+
+        // The mobile that was held for has entered by now and keeps the sector counted itself.
+        internal void ReleaseActivation() => _activators--;
 
         public bool Active => m_Active && Owner != Internal;
 
@@ -1949,6 +1973,11 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
 
                 Owner.ActivateSectors(X, Y);
             }
+
+            if (mob.ActivatesSectors && _activators++ == 0)
+            {
+                Owner.ActivateSectors(X, Y);
+            }
         }
 
         public void OnLeave(Mobile mob)
@@ -1959,6 +1988,11 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
             {
                 _clients.Remove(mob.NetState);
 
+                Owner.DeactivateSectors(X, Y);
+            }
+
+            if (mob.ActivatesSectors && _activators > 0 && --_activators == 0)
+            {
                 Owner.DeactivateSectors(X, Y);
             }
         }
