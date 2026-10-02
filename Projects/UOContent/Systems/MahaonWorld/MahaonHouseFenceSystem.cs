@@ -156,13 +156,25 @@ public static class MahaonHouseFenceSystem
             return $"Не хватает золота в банке — ограда на {radius} тайлов стоит {cost}.";
         }
 
+        if (!Construct(house, radius))
+        {
+            return "Не удалось построить ограду — вокруг дома не нашлось места.";
+        }
+
+        return $"Ограда построена на расстоянии {radius} тайлов от дома, с калиткой у входа. Списано {cost} золота.";
+    }
+
+    /// <summary>Puts up the fence without charging: <see cref="Build"/> after payment, and a
+    /// rebuilt house getting back the fence its owner already paid for.</summary>
+    internal static bool Construct(BaseHouse house, int radius)
+    {
         Remove(house); // one fence at a time — clear whatever was there first (already paid for is already paid for)
 
         var (territoryTiles, ringPlacements) = ComputeContour(house, radius);
 
         if (ringPlacements.Count == 0)
         {
-            return "Не удалось построить ограду — вокруг дома не нашлось места.";
+            return false;
         }
 
         var gateSpot = PickGateSpot(house, ringPlacements);
@@ -191,23 +203,37 @@ public static class MahaonHouseFenceSystem
         }
 
         ByHouse[house] = new Territory { Radius = radius, Map = house.Map, Tiles = territoryTiles };
-
-        return $"Ограда построена на расстоянии {radius} тайлов от дома, с калиткой у входа. Списано {cost} золота.";
+        return true;
     }
 
-    /// <summary>Removes every fence piece (and the gate) belonging to this house, wherever
-    /// they are — doesn't rely on the in-memory registry alone, so this also cleans up
-    /// correctly for a house whose fence was built in a previous server session.</summary>
+    // Widest fence ring plus a tile: a fence piece is never further than this from the house.
+    private static readonly int FenceReach = AllowedRadii[^1] + 2;
+
+    /// <summary>Removes every fence piece (and the gate) belonging to this house — found around
+    /// the house itself, so this also cleans up a fence built in a previous server session.
+    /// Called when the house is deleted (demolished, decayed, rebuilt), so no fence outlives it.</summary>
     public static void Remove(BaseHouse house)
     {
-        if (house == null)
+        if (house?.Map == null || house.Map == Map.Internal)
         {
+            if (house != null)
+            {
+                ByHouse.Remove(house);
+            }
+
             return;
         }
 
         var toDelete = new List<Item>();
+        var mcl = house.Components;
+        var bounds = new Rectangle2D(
+            house.X + mcl.Min.X - FenceReach,
+            house.Y + mcl.Min.Y - FenceReach,
+            mcl.Width + FenceReach * 2,
+            mcl.Height + FenceReach * 2
+        );
 
-        foreach (var item in World.Items.Values)
+        foreach (var item in house.Map.GetItemsInBounds(bounds))
         {
             if (item is MahaonHouseFence fence && fence.OwnerHouse == house
                 || item is MahaonHouseFenceGate gate && gate.OwnerHouse == house)

@@ -46,4 +46,15 @@ public partial class MahaonHouseFence : Item
         MahaonFenceKind.WallY => 0x001A + (int)ThinStoneWallTypes.EastWall,
         _                     => 0x001A + (int)ThinStoneWallTypes.CornerPost
     };
+
+    // A house deleted before fences went with their house left its fence standing; it is
+    // cleared on the next load.
+    [AfterDeserialization]
+    private void AfterDeserialization()
+    {
+        if (OwnerHouse?.Deleted != false)
+        {
+            Timer.DelayCall(Delete);
+        }
+    }
 }

@@ -32,4 +32,15 @@ public partial class MahaonHouseFenceGate : BaseDoor
         Name = "Калитка усадьбы";
         OwnerHouse = ownerHouse;
     }
+
+    // A house deleted before fences went with their house left its fence standing; it is
+    // cleared on the next load.
+    [AfterDeserialization]
+    private void AfterDeserialization()
+    {
+        if (OwnerHouse?.Deleted != false)
+        {
+            Timer.DelayCall(Delete);
+        }
+    }
 }

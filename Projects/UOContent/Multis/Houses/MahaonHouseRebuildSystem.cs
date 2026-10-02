@@ -57,7 +57,10 @@ public static class MahaonHouseRebuildSystem
         var bans = oldHouse.Bans;
         var isPublic = oldHouse.Public;
 
-        MahaonHouseFenceSystem.Remove(oldHouse); // old fence was shaped for the old footprint
+        // The fence was shaped for the old footprint; the new house gets one at the same
+        // distance, already paid for.
+        var fenceRadius = MahaonHouseFenceSystem.GetFenceRadius(oldHouse);
+        MahaonHouseFenceSystem.Remove(oldHouse);
 
         oldHouse.RemoveKeys(from);
         oldHouse.Delete(); // everything inside — locked down or not — goes with it
@@ -81,6 +84,11 @@ public static class MahaonHouseRebuildSystem
         }
 
         newHouse.Public = isPublic;
+
+        if (fenceRadius > 0)
+        {
+            MahaonHouseFenceSystem.Construct(newHouse, fenceRadius);
+        }
 
         return $"Дом перестроен. Списано {cost} золота.";
     }

@@ -3350,6 +3350,9 @@ namespace Server.Multis
         {
             RestoreRelocatedEntities();
 
+            // The fence goes with the house, whatever deleted it.
+            Systems.MahaonWorld.MahaonHouseFenceSystem.Remove(this);
+
             // Invalidate spawn position cache for affected sectors before deletion
             if (Map != null && Map != Map.Internal)
             {
