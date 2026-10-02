@@ -62,7 +62,8 @@ public static class BountyHunterSystem
 
         _currentTarget = null;
 
-        foreach (var mobile in World.Mobiles.Values)
+        // Only bots can be bounty targets, so the bot roster is the whole search.
+        foreach (var mobile in Bots.BotSystem.Bots)
         {
             if (mobile is BotMobile { IsPk: true, Deleted: false } bot && bot.Alive)
             {

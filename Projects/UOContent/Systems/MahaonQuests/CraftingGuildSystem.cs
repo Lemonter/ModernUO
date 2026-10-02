@@ -1,5 +1,6 @@
 using System;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Systems.MahaonQuests;
 
@@ -15,11 +16,17 @@ public static class CraftingGuildSystem
     private static readonly TimeSpan RerollInterval = TimeSpan.FromMinutes(30);
     private const int GoldPerUnit = 8;
 
-    private readonly record struct OrderKind(string RuName, Func<Item> Factory, Type ItemType);
+    // Counts narrows the type further: the shard's ingots are one class with the metal as a field.
+    private readonly record struct OrderKind(string RuName, Func<Item> Factory, Type ItemType, Func<Item, bool> Counts = null);
 
     private static readonly OrderKind[] OrderPool =
     {
-        new("железные слитки", () => new IronIngot(), typeof(IronIngot)),
+        new(
+            "железные слитки",
+            () => new MahaonIngot(),
+            typeof(MahaonIngot),
+            item => item is MahaonIngot { Metal: MahaonMetal.Iron }
+        ),
         new("доски", () => new Board(), typeof(Board)),
         new("выделанную кожу", () => new Leather(), typeof(Leather)),
         new("бинты", () => new Bandage(), typeof(Bandage)),
@@ -44,7 +51,7 @@ public static class CraftingGuildSystem
         Timer.DelayCall(RerollInterval, RerollInterval, RollOrder);
     }
 
-    private static void RollOrder()
+    internal static void RollOrder()
     {
         _currentKind = OrderPool[Utility.Random(OrderPool.Length)];
         _currentAmount = Utility.RandomMinMax(20, 60);
@@ -53,6 +60,44 @@ public static class CraftingGuildSystem
 
     public static string CurrentOrderText() =>
         $"Гильдии ремесленников нужны {_currentKind.RuName}: {_currentAmount} шт. Плата: {GoldPerUnit} золота за штуку.";
+
+    /// <summary>How much of what the current order wants this container holds.</summary>
+    public static int CountIn(Container pack)
+    {
+        if (_currentKind.ItemType == null)
+        {
+            return 0;
+        }
+
+        var total = 0;
+        foreach (var item in pack.FindItemsByType(_currentKind.ItemType))
+        {
+            if (_currentKind.Counts?.Invoke(item) != false)
+            {
+                total += item.Amount;
+            }
+        }
+
+        return total;
+    }
+
+    private static void Take(Container pack, int amount)
+    {
+        foreach (var item in pack.EnumerateItemsByType<Item>())
+        {
+            if (amount <= 0)
+            {
+                break;
+            }
+
+            if (_currentKind.ItemType.IsInstanceOfType(item) && _currentKind.Counts?.Invoke(item) != false)
+            {
+                var take = Math.Min(amount, item.Amount);
+                item.Consume(take);
+                amount -= take;
+            }
+        }
+    }
 
     /// <summary>Called from MahaonCraftingOrderBoard.OnDoubleClick — tries to consume
     /// enough of the current material from the player's backpack, pays if successful.</summary>
@@ -66,7 +111,7 @@ public static class CraftingGuildSystem
             return;
         }
 
-        var have = backpack.GetAmount(_currentKind.ItemType);
+        var have = CountIn(backpack);
 
         if (have < _currentAmount)
         {
@@ -77,7 +122,7 @@ public static class CraftingGuildSystem
             return;
         }
 
-        backpack.ConsumeTotal(_currentKind.ItemType, _currentAmount);
+        Take(backpack, _currentAmount);
 
         var reward = _currentAmount * GoldPerUnit;
         backpack.DropItem(new Gold(reward));

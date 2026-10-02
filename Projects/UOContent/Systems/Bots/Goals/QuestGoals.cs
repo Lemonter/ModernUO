@@ -24,7 +24,7 @@ public sealed class GuildOrderGoal : BotGoal
     private const int LookStack = 20;
 
     // What the bot would deliver: goods it gathers or crafts for sale, never its own consumables.
-    private static readonly Type[] Deliverable = [typeof(Board), typeof(Leather), typeof(IronIngot), typeof(Arrow)];
+    private static readonly Type[] Deliverable = [typeof(Board), typeof(Leather), typeof(MahaonIngot), typeof(Arrow)];
 
     public override string Name => "Заказ гильдии";
 
@@ -50,7 +50,7 @@ public sealed class GuildOrderGoal : BotGoal
         if (brain.SeenOrderStamp == CraftingGuildSystem.OrderStamp)
         {
             var type = CraftingGuildSystem.CurrentItemType;
-            return Delivers(bot, type) && pack.GetAmount(type) >= CraftingGuildSystem.CurrentAmount
+            return Delivers(bot, type) && CraftingGuildSystem.CountIn(pack) >= CraftingGuildSystem.CurrentAmount
                 ? 0.6 + BotBrain.Trait(brain.Greed) * 0.3
                 : 0;
         }

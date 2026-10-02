@@ -57,6 +57,32 @@ public class BotQuestTests
     }
 
     [Fact]
+    public void IronOrder_CountsOnlyTheShardsIronIngots()
+    {
+        var pack = new Backpack();
+        try
+        {
+            pack.DropItem(new MahaonIngot(Server.Systems.MahaonMetals.MahaonMetal.Iron, 30));
+            var other = new MahaonIngot(Server.Systems.MahaonMetals.MahaonMetal.Iron, 5);
+            other.Metal = Server.Systems.MahaonMetals.MahaonMetal.Cobalt;
+            pack.DropItem(other);
+            pack.DropItem(new IronIngot(40));
+
+            for (var i = 0; i < 500 && CraftingGuildSystem.CurrentItemType != typeof(MahaonIngot); i++)
+            {
+                CraftingGuildSystem.RollOrder();
+            }
+
+            Assert.Equal(typeof(MahaonIngot), CraftingGuildSystem.CurrentItemType);
+            Assert.Equal(30, CraftingGuildSystem.CountIn(pack));
+        }
+        finally
+        {
+            pack.Delete();
+        }
+    }
+
+    [Fact]
     public void Fighter_LearnsTheBountyFromTheBoard_AndHuntsTheOutlaw()
     {
         var hunter = NewBot(new Point3D(2500, 1860, 0), 90);
@@ -65,6 +91,7 @@ public class BotQuestTests
         try
         {
             outlaw.IsPk = true;
+            BotSystem.Register(outlaw, outlaw.Location, outlaw.Map, null);
             board.MoveToWorld(new Point3D(2501, 1860, 0), Map.Felucca);
 
             Assert.Same(outlaw, BountyHunterSystem.CurrentTarget);
