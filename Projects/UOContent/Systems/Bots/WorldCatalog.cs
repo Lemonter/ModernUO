@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Server.Engines.Craft;
+using Server.Items;
 using Server.Engines.Pathing.Nav;
 using Server.Mobiles;
 using Server.Regions;
@@ -30,6 +31,10 @@ public sealed class BotCity
     internal object Forge; // a forge Item or a StaticTarget, as a smelt target takes it
 
     internal Item Ankh;
+
+    internal bool TextileSearched;
+    internal Item Wheel;
+    internal Item Loom;
 
     internal bool SmithySearched;
     internal Point3D? SmithyStand;
@@ -211,6 +216,41 @@ public static class WorldCatalog
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// A spinning wheel and a loom in town, both usable items (the ones drawn into the map are
+    /// scenery). Few towns have a wheel at all; found once per town and remembered.
+    /// </summary>
+    public static bool TryGetTextileShop(BotCity city, out Item wheel, out Item loom)
+    {
+        if (city.Wheel is { Deleted: true } || city.Loom is { Deleted: true })
+        {
+            city.TextileSearched = false;
+        }
+
+        if (!city.TextileSearched)
+        {
+            city.TextileSearched = true;
+            city.Wheel = null;
+            city.Loom = null;
+
+            foreach (var item in city.Map.GetItemsInRange(city.Center, VendorSearchRange))
+            {
+                if (item is ISpinningWheel && city.Wheel == null)
+                {
+                    city.Wheel = item;
+                }
+                else if (item is ILoom && city.Loom == null)
+                {
+                    city.Loom = item;
+                }
+            }
+        }
+
+        wheel = city.Wheel;
+        loom = city.Loom;
+        return wheel != null && loom != null;
     }
 
     /// <summary>The ankh nearest the town centre, for tithing.</summary>

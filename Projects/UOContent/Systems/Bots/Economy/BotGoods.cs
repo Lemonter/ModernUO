@@ -10,6 +10,32 @@ public static class BotGoods
 {
     public static bool IsRawGood(Item item) => item is MahaonIngot or MahaonOre or Log or Board or Fish or MahaonCoal;
 
+    /// <summary>What fields and orchards yield.</summary>
+    public static bool IsFarmGood(Item item) =>
+        item is Cotton or Flax or SpoolOfThread or BoltOfCloth or WheatSheaf or Apple or Peach or Pear or Grapes or Cabbage or Carrot or EarOfCorn or
+            Lettuce or Onion or Pumpkin or Turnip or Watermelon or HoneydewMelon or Cantaloupe or Squash or YellowGourd or
+            GreenGourd;
+
+    // Food the bot keeps for its animals rather than selling.
+    private const int AnimalFoodReserve = 25;
+
+    private static bool KeepsAsFood(Mobile bot, Item item) =>
+        bot is Mobiles.PlayerMobile pm && pm.AllFollowers is { Count: > 0 } followers && item.Parent is Container pack &&
+        IsEatenBy(followers, item) && pack.GetAmount(item.GetType()) <= AnimalFoodReserve;
+
+    private static bool IsEatenBy(System.Collections.Generic.HashSet<Mobile> followers, Item item)
+    {
+        foreach (var m in followers)
+        {
+            if (m is Mobiles.BaseCreature pet && pet.ControlMaster != null && pet.CheckFoodPreference(item))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Something this bot made and doesn't wear or work with.</summary>
     public static bool IsProduct(Mobile bot, Item item) =>
         item.PlayerConstructed && IsCarried(bot, item) && item is not BaseTool && item is not Container &&
@@ -27,6 +53,7 @@ public static class BotGoods
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
+        IsFarmGood(item) && IsCarried(bot, item) && !KeepsAsFood(bot, item) && !WeaveGoal.KeepsForWeaving(bot, item) ||
         bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item);
 
     public static int BaseUnitPrice(Item item) => item switch
@@ -38,6 +65,11 @@ public static class BotGoods
         Log               => 3,
         Fish              => 5,
         MahaonCoal        => 4,
+        Cotton or Flax    => 40,
+        SpoolOfThread     => 8,
+        BoltOfCloth       => 45,
+        WheatSheaf        => 2,
+        Food              => 2,
         BaseWeapon or BaseArmor or BaseJewel => 30,
         BaseReagent       => 3,
         SpellScroll       => 10,

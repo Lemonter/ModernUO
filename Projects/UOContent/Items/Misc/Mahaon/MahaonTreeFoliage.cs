@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Systems.MahaonSeasons;
 using Server.Systems.MahaonWorld;
@@ -13,11 +14,19 @@ public partial class MahaonTreeFoliage : Item
     [SerializableField(1)]
     private int _fruitRemaining;
 
+    private static readonly HashSet<MahaonTreeFoliage> _all = [];
+
+    /// <summary>Every tree crown in the world — bots look here for fruit to pick.</summary>
+    public static IReadOnlyCollection<MahaonTreeFoliage> All => _all;
+
+    public bool BearsFruit => MahaonTreeSpeciesTable.Get(_species).BearsFruit;
+
     [Constructible]
     public MahaonTreeFoliage(MahaonTreeSpecies species = MahaonTreeSpecies.Apple) : base(0x0000)
     {
         Movable = false;
         _species = species;
+        _all.Add(this);
 
         SeasonSystem.OnSeasonChanged += OnSeasonChanged;
         RefreshGraphic(resetFruit: true);
@@ -26,12 +35,14 @@ public partial class MahaonTreeFoliage : Item
     [AfterDeserialization]
     private void AfterDeserialization()
     {
+        _all.Add(this);
         SeasonSystem.OnSeasonChanged += OnSeasonChanged;
     }
 
     public override void OnDelete()
     {
         SeasonSystem.OnSeasonChanged -= OnSeasonChanged;
+        _all.Remove(this);
         base.OnDelete();
     }
 

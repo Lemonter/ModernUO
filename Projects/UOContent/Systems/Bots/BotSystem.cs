@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Server.Commands;
 using Server.Engines.Pathing.Nav;
@@ -59,6 +60,10 @@ public static class BotSystem
         WorldCatalog.Rebuild();
         HuntingAtlas.Rebuild();
         ShrineAtlas.Rebuild();
+        FarmAtlas.Rebuild();
+
+        // Field seeding and crop rotation add and retire tiles over time.
+        Timer.StartTimer(TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10), FarmAtlas.Rebuild);
         BotScheduler.Start();
         _initialized = true;
 
