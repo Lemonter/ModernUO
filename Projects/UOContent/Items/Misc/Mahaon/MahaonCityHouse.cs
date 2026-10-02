@@ -452,6 +452,13 @@ public partial class MahaonCityHouse : Item
                     continue; // a different floor's furniture stacked at the same X/Y
                 }
 
+                // The floor itself stays: a flat walkable surface is what is stood on, not furniture.
+                var data = TileData.ItemTable[tile.ID & TileData.MaxItemValue];
+                if (data.Surface && !data.Impassable && data.Height <= 1)
+                {
+                    continue;
+                }
+
                 var loc = new Point3D(marked.X, marked.Y, tile.Z);
 
                 var id = Systems.MahaonWorld.StaticOverrideManager.AddOverride(
