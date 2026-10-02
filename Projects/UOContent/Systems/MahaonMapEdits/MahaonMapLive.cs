@@ -175,6 +175,10 @@ public static class MahaonMapLive
 
             map.Tiles.SetLandBlock(bx, by, tiles);
         }
+
+        // Walkability is cached per chunk and in the bots' nav graph; both would keep the old
+        // terrain: creatures walking into a demolished wall's ghost, bots never using a new bridge.
+        Engines.Pathing.Nav.NavSystem.InvalidateArea(map, bx << 3, by << 3, 8, 8);
     }
 
     /// <summary>Плоский список в форму, которую ждёт TileMatrix: [x][y][тайлы].</summary>

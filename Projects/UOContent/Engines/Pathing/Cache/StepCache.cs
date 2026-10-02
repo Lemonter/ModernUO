@@ -31,6 +31,10 @@ public sealed class StepCache
     // in O(1). Appended on insert, swap-and-popped on eviction.
     private readonly List<long> _keysList = [];
 
+    // Chunks whose terrain changed after their .swb was baked (live map edits): the file's copy is
+    // stale, so they are always built from the tile matrix.
+    private readonly HashSet<long> _staleInFile = [];
+
     // Promotion gate. A chunk's first miss returns Fallthrough_NotBuilt and the caller takes the
     // slow path; only once misses reach MissPromotionThreshold within MissPromotionWindowMs does
     // the chunk get built and served. This keeps one-off traffic — a pet trailing a player across
@@ -663,7 +667,50 @@ public sealed class StepCache
     /// file was opened, and the chunks are static-only.
     /// </summary>
     private StepChunk TryLoadFromLazyReader(Map map, int chunkX, int chunkY) =>
-        _lazyReaders.TryGetValue(map.MapID, out var reader) ? reader.TryReadChunk(chunkX, chunkY) : null;
+        !_staleInFile.Contains(EncodeKey(map.MapID, chunkX, chunkY)) && _lazyReaders.TryGetValue(map.MapID, out var reader)
+            ? reader.TryReadChunk(chunkX, chunkY)
+            : null;
+
+    /// <summary>
+    /// Forgets the chunks covering an area whose statics or land changed at runtime, so the next
+    /// query rebuilds them from the tile matrix. A one-tile margin catches the neighbouring
+    /// chunks' border cells, whose step masks look into the changed tiles.
+    /// </summary>
+    public void InvalidateArea(Map map, int x, int y, int width, int height)
+    {
+        if (map == null || map == Map.Internal)
+        {
+            return;
+        }
+
+        var maxChunkX = (map.Width - 1) >> 4;
+        var maxChunkY = (map.Height - 1) >> 4;
+        var x0 = Math.Max(0, (x - 1) >> 4);
+        var y0 = Math.Max(0, (y - 1) >> 4);
+        var x1 = Math.Min(maxChunkX, (x + width) >> 4);
+        var y1 = Math.Min(maxChunkY, (y + height) >> 4);
+
+        for (var cy = y0; cy <= y1; cy++)
+        {
+            for (var cx = x0; cx <= x1; cx++)
+            {
+                var key = EncodeKey(map.MapID, cx, cy);
+                _staleInFile.Add(key);
+
+                if (_chunks.Remove(key))
+                {
+                    var idx = _keysList.IndexOf(key);
+                    var last = _keysList.Count - 1;
+                    if (idx != last)
+                    {
+                        _keysList[idx] = _keysList[last];
+                    }
+
+                    _keysList.RemoveAt(last);
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Records a miss and answers whether the chunk has now earned a build. True means build and

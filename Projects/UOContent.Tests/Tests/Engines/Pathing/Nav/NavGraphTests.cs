@@ -268,4 +268,35 @@ public class NavGraphTests : IDisposable
         Assert.Equal(loop.Waypoints, offLoop.Waypoints);
         Assert.Equal(loop.Cost, offLoop.Cost);
     }
+
+    [Fact]
+    public void Patch_AfterTerrainChange_MatchesAFreshBuild()
+    {
+        // A full wall; then a gap is dug through it, as a map edit would.
+        var source = new GridNavCellSource(96, 64)
+            .Fill(0, 0, 0, 96, 64, '.')
+            .Fill(0, 40, 0, 1, 64, '#');
+        var old = Install(MapA, source);
+        Assert.Null(NavPathfinder.Find(MapA, new Point3D(5, 5, 0), MapA, new Point3D(90, 5, 0)));
+
+        source.Fill(0, 40, 20, 1, 3, '.');
+
+        // The clusters NavSystem.InvalidateArea marks for that change: the 3x3 tiles' cover plus margin.
+        var cols = old.ClusterCols;
+        int[] changed = [1 * cols + 2, 1 * cols + 3, 0 * cols + 2, 0 * cols + 3];
+        var patched = NavGraphBuilder.Patch(old, source, changed);
+        var fresh = NavGraphBuilder.Build(MapA.MapID, source);
+
+        Assert.Equal(fresh.ClusterRegionStart, patched.ClusterRegionStart);
+        Assert.Equal(fresh.RegionX, patched.RegionX);
+        Assert.Equal(fresh.RegionY, patched.RegionY);
+        Assert.Equal(fresh.EdgeStart, patched.EdgeStart);
+        Assert.Equal(fresh.EdgeTarget, patched.EdgeTarget);
+        Assert.Equal(fresh.EdgeCost, patched.EdgeCost);
+        Assert.Equal(fresh.PortalFromX, patched.PortalFromX);
+        Assert.Equal(fresh.PortalToY, patched.PortalToY);
+
+        NavSystem.Install(MapA, patched, source);
+        Assert.NotNull(NavPathfinder.Find(MapA, new Point3D(5, 5, 0), MapA, new Point3D(90, 5, 0)));
+    }
 }

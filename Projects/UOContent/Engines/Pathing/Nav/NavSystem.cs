@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using Server.Commands;
@@ -82,6 +83,87 @@ public static class NavSystem
         }
 
         NavLinks.Rebuild();
+
+        // Map edits applied at world load: a graph read from its file predates them.
+        _initialized = true;
+        ApplyPatches();
+    }
+
+    // Clusters whose terrain changed since their graph was built, per map, waiting for the next
+    // patch. Edits come in bursts (a dig, a demolition), so patches are batched.
+    private static readonly Dictionary<int, HashSet<int>> _changedClusters = new();
+    private static readonly TimeSpan PatchDelay = TimeSpan.FromSeconds(5);
+    private static bool _initialized;
+    private static bool _patchScheduled;
+
+    /// <summary>
+    /// The statics or land of an area changed at runtime (map edits): the step cache forgets it at
+    /// once, and the nav graph is patched around it shortly after. Safe to call before startup is
+    /// done — the patch then waits for the graphs.
+    /// </summary>
+    public static void InvalidateArea(Map map, int x, int y, int width, int height)
+    {
+        if (map == null || map == Map.Internal)
+        {
+            return;
+        }
+
+        StepCache.Instance.InvalidateArea(map, x, y, width, height);
+
+        if (!_changedClusters.TryGetValue(map.MapID, out var clusters))
+        {
+            _changedClusters[map.MapID] = clusters = [];
+        }
+
+        // Same one-tile margin as the step cache: border cells of the neighbours changed too.
+        var cols = (map.Width + NavClusterCells.Size - 1) >> NavClusterCells.Shift;
+        var rows = (map.Height + NavClusterCells.Size - 1) >> NavClusterCells.Shift;
+        var x0 = Math.Max(0, (x - 1) >> NavClusterCells.Shift);
+        var y0 = Math.Max(0, (y - 1) >> NavClusterCells.Shift);
+        var x1 = Math.Min(cols - 1, (x + width) >> NavClusterCells.Shift);
+        var y1 = Math.Min(rows - 1, (y + height) >> NavClusterCells.Shift);
+
+        for (var cy = y0; cy <= y1; cy++)
+        {
+            for (var cx = x0; cx <= x1; cx++)
+            {
+                clusters.Add(cy * cols + cx);
+            }
+        }
+
+        if (_initialized && !_patchScheduled)
+        {
+            _patchScheduled = true;
+            Timer.StartTimer(PatchDelay, ApplyPatches);
+        }
+    }
+
+    private static void ApplyPatches()
+    {
+        _patchScheduled = false;
+
+        foreach (var (mapId, clusters) in _changedClusters)
+        {
+            var map = Map.Maps[mapId];
+            var old = _graphs[mapId];
+            if (map == null || old == null || clusters.Count == 0)
+            {
+                continue;
+            }
+
+            var watch = Stopwatch.StartNew();
+            var graph = NavGraphBuilder.Patch(old, new StepCacheNavCellSource(map), clusters);
+            Install(map, graph);
+
+            logger.Information(
+                "Nav graph for map {MapId} patched around {Clusters} changed clusters in {Elapsed:F1} ms",
+                mapId,
+                clusters.Count,
+                watch.Elapsed.TotalMilliseconds
+            );
+        }
+
+        _changedClusters.Clear();
     }
 
     public static bool TryLoad(Map map)

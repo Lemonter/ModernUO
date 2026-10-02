@@ -60,8 +60,12 @@ public static class NavGraphBuilder
         var sumY = new List<long>();
         var counts = new List<int>();
 
+        var row = 0;
+        NavClusterCells lookup(int ncx, int ncy) => window[1 + ncy - row][ncx];
+
         for (var cy = 0; cy < rows; cy++)
         {
+            row = cy;
             for (var cx = 0; cx < cols; cx++)
             {
                 var clusterIndex = cy * cols + cx;
@@ -70,7 +74,7 @@ public static class NavGraphBuilder
                 clusterRegionStart[clusterIndex] = firstRegion;
 
                 AddRegions(cells, cx, cy, regionX, regionY, regionZ, sumX, sumY, counts);
-                CollectEdges(window, cells, cx, cy, cols, rows, groups);
+                CollectEdges(lookup, cells, cx, cy, cols, rows, groups);
                 EmitEdges(groups, firstRegion, edges);
             }
 
@@ -98,6 +102,123 @@ public static class NavGraphBuilder
         clusterRegionStart[cols * rows] = regionX.Count;
 
         return Finish(mapId, width, height, clusterRegionStart, regionX, regionY, regionZ, edges);
+    }
+
+    /// <summary>
+    /// A graph with some clusters re-read from the source and everything else carried over from
+    /// <paramref name="old"/>: the regions of the changed clusters, and the edges out of them and
+    /// out of their neighbours (an edge into a changed cluster names one of its regions). Labelling
+    /// is deterministic, so an unchanged cluster relabelled here gets the same component numbers
+    /// the old graph used.
+    /// </summary>
+    public static NavMapGraph Patch(NavMapGraph old, INavCellSource source, IReadOnlyCollection<int> changedClusters)
+    {
+        var cols = old.ClusterCols;
+        var rows = old.ClusterRows;
+
+        var changed = new HashSet<int>(changedClusters);
+        var edgesRedone = new HashSet<int>();
+        foreach (var index in changed)
+        {
+            var cx = index % cols;
+            var cy = index / cols;
+            for (var oy = -1; oy <= 1; oy++)
+            {
+                for (var ox = -1; ox <= 1; ox++)
+                {
+                    if ((uint)(cx + ox) < cols && (uint)(cy + oy) < rows)
+                    {
+                        edgesRedone.Add((cy + oy) * cols + cx + ox);
+                    }
+                }
+            }
+        }
+
+        var labelled = new Dictionary<int, NavClusterCells>();
+        NavClusterCells lookup(int ncx, int ncy)
+        {
+            var index = ncy * cols + ncx;
+            if (!labelled.TryGetValue(index, out var cells))
+            {
+                cells = new NavClusterCells();
+                source.FillCluster(ncx, ncy, cells);
+                cells.Label();
+                labelled[index] = cells;
+            }
+
+            return cells;
+        }
+
+        var clusterRegionStart = new int[cols * rows + 1];
+        var regionX = new List<ushort>(old.RegionCount);
+        var regionY = new List<ushort>(old.RegionCount);
+        var regionZ = new List<sbyte>(old.RegionCount);
+        var edges = new List<TempEdge>(old.EdgeCount);
+        var groups = new Dictionary<(int srcComp, int dstCluster, int dstComp), List<Candidate>>();
+        var sumX = new List<long>();
+        var sumY = new List<long>();
+        var counts = new List<int>();
+
+        for (var cy = 0; cy < rows; cy++)
+        {
+            for (var cx = 0; cx < cols; cx++)
+            {
+                var index = cy * cols + cx;
+                var firstRegion = regionX.Count;
+                clusterRegionStart[index] = firstRegion;
+
+                var oldFirst = old.ClusterRegionStart[index];
+                var oldEnd = old.ClusterRegionStart[index + 1];
+
+                if (changed.Contains(index))
+                {
+                    AddRegions(lookup(cx, cy), cx, cy, regionX, regionY, regionZ, sumX, sumY, counts);
+                }
+                else
+                {
+                    for (var r = oldFirst; r < oldEnd; r++)
+                    {
+                        regionX.Add(old.RegionX[r]);
+                        regionY.Add(old.RegionY[r]);
+                        regionZ.Add(old.RegionZ[r]);
+                    }
+                }
+
+                if (edgesRedone.Contains(index))
+                {
+                    CollectEdges(lookup, lookup(cx, cy), cx, cy, cols, rows, groups);
+                    EmitEdges(groups, firstRegion, edges);
+                    continue;
+                }
+
+                for (var r = oldFirst; r < oldEnd; r++)
+                {
+                    for (int e = old.EdgeStart[r], end = old.EdgeStart[r + 1]; e < end; e++)
+                    {
+                        var target = old.EdgeTarget[e];
+                        var targetCluster = old.GetCluster(target);
+                        edges.Add(
+                            new TempEdge
+                            {
+                                SrcRegion = firstRegion + r - oldFirst,
+                                DstCluster = targetCluster,
+                                DstComponent = (ushort)(target - old.ClusterRegionStart[targetCluster]),
+                                FromX = old.PortalFromX[e],
+                                FromY = old.PortalFromY[e],
+                                FromZ = old.PortalFromZ[e],
+                                ToX = old.PortalToX[e],
+                                ToY = old.PortalToY[e],
+                                ToZ = old.PortalToZ[e]
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        clusterRegionStart[cols * rows] = regionX.Count;
+
+        return Finish(old.MapId, old.Width, old.Height, clusterRegionStart, regionX, regionY, regionZ, edges);
     }
 
     private static void FillRow(INavCellSource source, NavClusterCells[] row, int cy, int cols)
@@ -179,7 +300,7 @@ public static class NavGraphBuilder
     }
 
     private static void CollectEdges(
-        NavClusterCells[][] window, NavClusterCells cells, int cx, int cy, int cols, int rows,
+        Func<int, int, NavClusterCells> lookup, NavClusterCells cells, int cx, int cy, int cols, int rows,
         Dictionary<(int, int, int), List<Candidate>> groups
     )
     {
@@ -215,7 +336,7 @@ public static class NavGraphBuilder
                     continue;
                 }
 
-                var target = window[1 + oy][ncx];
+                var target = lookup(ncx, ncy);
                 var targetCell = ((ny & 15) << 4) | (nx & 15);
                 var destZ = cells.GetDestZ(node, d);
                 var targetNode = target.FindNode(targetCell, destZ);
