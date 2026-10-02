@@ -26,6 +26,11 @@ public sealed class RestGoal : BotGoal
             return [new GoToAction(map, BotHousing.Inside(house), 1, "домой"), rest];
         }
 
+        if (BotCityHomes.CityHome(brain.Bot) is { AreaMap: { } cityMap } apartment && cityMap == brain.Bot.Map)
+        {
+            return [new GoToAction(cityMap, BotCityHomes.Inside(apartment), 1, "домой"), rest];
+        }
+
         return [rest];
     }
 }

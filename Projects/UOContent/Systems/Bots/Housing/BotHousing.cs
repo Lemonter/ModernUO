@@ -347,6 +347,17 @@ public static class BotHousing
     /// anything else is pulled down rather than left to stand empty for weeks.</summary>
     public static void OnOwnerDeleted(BotMobile bot)
     {
+        // A city apartment simply goes back on sale.
+        if (BotCityHomes.CityHome(bot) is { } apartment)
+        {
+            apartment.ReleaseAll();
+            apartment.ReturnAddons(null);
+            apartment.Owner = null;
+            apartment.Friends.Clear();
+            apartment.Bans.Clear();
+            BotCityHomes.FindSign(apartment)?.RefreshName();
+        }
+
         foreach (var house in BaseHouse.GetHouses(bot))
         {
             if (house.Deleted)

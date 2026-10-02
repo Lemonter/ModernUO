@@ -48,6 +48,11 @@ public sealed class CraftGoal : BotGoal
             {
                 steps.Add(new GoToAction(homeMap, homeStand, 0, "в домашнюю кузницу"));
             }
+            else if (BotCityHomes.CityHome(bot) is { AreaMap: { } cityMap } apartment && cityMap == bot.Map &&
+                     BotCityHomes.TryGetSmithy(apartment, out var cityStand))
+            {
+                steps.Add(new GoToAction(cityMap, cityStand, 0, "в домашнюю кузницу"));
+            }
             else
             {
                 var city = BotSocialRules.TownFor(bot);

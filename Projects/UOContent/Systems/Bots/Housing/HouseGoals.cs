@@ -246,7 +246,21 @@ public sealed class FurnishGoal : BotGoal
             return [new GoToAction(house.Map, house.BanLocation, 3, "к дому"), new BuildFenceAction(house, FenceRadius)];
         }
 
-        var city = WorldCatalog.FindNearest(house.Map, house.Location);
+        var steps = PlanCommission(bot, WorldCatalog.FindNearest(house.Map, house.Location), fitting);
+        if (steps == null)
+        {
+            return null;
+        }
+
+        steps.Add(new GoToAction(house.Map, BotHousing.Inside(house), 1, "домой"));
+        steps.Add(new FitAction(house, fitting));
+        return steps;
+    }
+
+    /// <summary>The walk to the town carpenter, money fetched from the bank if needed, and the
+    /// order itself — the piece then waits in the bot's pack.</summary>
+    internal static List<BotAction> PlanCommission(Mobile bot, BotCity city, HouseFitting fitting)
+    {
         Carpenter carpenter = null;
         if (city != null)
         {
@@ -283,8 +297,6 @@ public sealed class FurnishGoal : BotGoal
 
         steps.Add(new GoToAction(carpenter, 2, $"к плотнику {carpenter.Name}"));
         steps.Add(new CommissionAction(carpenter, fitting));
-        steps.Add(new GoToAction(house.Map, BotHousing.Inside(house), 1, "домой"));
-        steps.Add(new FitAction(house, fitting));
         return steps;
     }
 }

@@ -40,6 +40,12 @@ public sealed class WeaveGoal : BotGoal
             return WorldCatalog.FindNearest(homeMap, house.Location);
         }
 
+        if (BotCityHomes.CityHome(bot) is { AreaMap: { } cityMap } apartment && cityMap == bot.Map &&
+            BotCityHomes.TryGetTextiles(apartment, out wheel, out loom))
+        {
+            return WorldCatalog.FindNearest(cityMap, apartment.Tiles[0]);
+        }
+
         wheel = null;
         loom = null;
         BotCity best = null;
