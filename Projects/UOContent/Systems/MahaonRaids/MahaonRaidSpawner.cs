@@ -122,7 +122,13 @@ public partial class MahaonRaidSpawner : Item
             Effects.SendLocationEffect(fireLoc, targetMap, 0x3E23, 16, 10);
         }
 
-        return (raiders.Count, marker != null ? marker.CityName : "точки спауна");
+        var cityLabel = marker != null ? marker.CityName : "точки спауна";
+        if (raiders.Count > 0)
+        {
+            Systems.MahaonRaids.RaidAlarm.Raise(targetMap, targetLoc, cityLabel);
+        }
+
+        return (raiders.Count, cityLabel);
     }
 
     private MahaonRaidMarker FindNearestMarker()

@@ -168,6 +168,7 @@ public class RaidEventSystem : GenericPersistence
             creature.Home = spawnLoc;
         }
 
+        RaidAlarm.Raise(map, loc, cityName);
         BroadcastRaidAlert(raid.Name, cityName);
     }
 

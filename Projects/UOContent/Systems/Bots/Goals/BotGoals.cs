@@ -40,6 +40,8 @@ public static class BotGoals
     public static readonly FurnishGoal Furnish = new();
     public static readonly BuyCityHomeGoal BuyCityHome = new();
     public static readonly FurnishCityHomeGoal FurnishCityHome = new();
+    public static readonly DefendTownGoal DefendTown = new();
+    public static readonly ShelterGoal Shelter = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter];
 }
