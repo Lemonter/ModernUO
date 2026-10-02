@@ -14,9 +14,11 @@ public sealed class BankGoal : BotGoal
         var gold = brain.Bot.Backpack?.GetAmount(typeof(Gold)) ?? 0;
         var excess = gold - DepositGoldAction.PocketMoney(brain);
 
+        // Unsold lots back from the auction want fetching before the box fills.
+        var waiting = BotBank.WaitingGoods(brain.Bot);
         if (excess <= 0)
         {
-            return 0;
+            return waiting > 0 ? System.Math.Min(0.8, 0.3 + waiting * 0.02) : 0;
         }
 
         // Cautious bots don't like walking around with a fat purse.

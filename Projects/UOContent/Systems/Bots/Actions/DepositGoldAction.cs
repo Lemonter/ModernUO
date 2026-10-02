@@ -3,7 +3,8 @@ using Server.Mobiles;
 
 namespace Server.Systems.Bots;
 
-/// <summary>Puts all but some pocket money in the bank, standing at a banker.</summary>
+/// <summary>Puts all but some pocket money in the bank, standing at a banker, and tidies the box:
+/// goods that came back from the auction come out, loose gold becomes cheques.</summary>
 public sealed class DepositGoldAction : BotAction
 {
     private const int BankerRange = 12;
@@ -24,6 +25,9 @@ public sealed class DepositGoldAction : BotAction
         {
             return BotActionResult.Failed();
         }
+
+        BotBank.TakeOut(bot);
+        BotBank.Consolidate(bot);
 
         var amount = pack.GetAmount(typeof(Gold)) - PocketMoney(brain);
         if (amount <= 0)
