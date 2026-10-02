@@ -13,19 +13,23 @@ public sealed class BuyFromVendorAction : BotAction
     private readonly BaseVendor _vendor;
     private readonly Type _type;
     private readonly int _amount;
+    private readonly Func<GenericBuyInfo, bool> _match;
 
-    public BuyFromVendorAction(BaseVendor vendor, Type type, int amount)
+    /// <param name="match">Picks one entry among several of the same type — the seed entries
+    /// differ only by the crop they are constructed with.</param>
+    public BuyFromVendorAction(BaseVendor vendor, Type type, int amount, Func<GenericBuyInfo, bool> match = null)
     {
         _vendor = vendor;
         _type = type;
         _amount = amount;
+        _match = match;
     }
 
-    public static GenericBuyInfo FindStock(BaseVendor vendor, Type type)
+    public static GenericBuyInfo FindStock(BaseVendor vendor, Type type, Func<GenericBuyInfo, bool> match = null)
     {
         foreach (var info in vendor.GetBuyInfo())
         {
-            if (info is GenericBuyInfo gbi && gbi.Amount > 0 && type.IsAssignableFrom(gbi.Type))
+            if (info is GenericBuyInfo gbi && gbi.Amount > 0 && type.IsAssignableFrom(gbi.Type) && match?.Invoke(gbi) != false)
             {
                 return gbi;
             }
@@ -43,7 +47,7 @@ public sealed class BuyFromVendorAction : BotAction
             return BotActionResult.Failed();
         }
 
-        var stock = FindStock(_vendor, _type);
+        var stock = FindStock(_vendor, _type, _match);
         if (stock?.GetDisplayEntity() is not { } display)
         {
             return BotActionResult.Failed();

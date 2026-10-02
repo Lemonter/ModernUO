@@ -9,6 +9,7 @@ public sealed class FieldPatch
 {
     public Map Map;
     public Point3D Center;
+    public Rectangle2D Bounds;
     public readonly List<MahaonCropTile> Tiles = [];
 
     public int RipeCount()
@@ -70,11 +71,18 @@ public static class FarmAtlas
         foreach (var patch in _patches)
         {
             long sx = 0, sy = 0;
+            int minX = int.MaxValue, minY = int.MaxValue, maxX = 0, maxY = 0;
             foreach (var tile in patch.Tiles)
             {
                 sx += tile.X;
                 sy += tile.Y;
+                minX = System.Math.Min(minX, tile.X);
+                minY = System.Math.Min(minY, tile.Y);
+                maxX = System.Math.Max(maxX, tile.X);
+                maxY = System.Math.Max(maxY, tile.Y);
             }
+
+            patch.Bounds = new Rectangle2D(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
             var first = patch.Tiles[0];
             patch.Center = new Point3D((int)(sx / patch.Tiles.Count), (int)(sy / patch.Tiles.Count), first.Z);
@@ -107,6 +115,78 @@ public static class FarmAtlas
         }
 
         return best;
+    }
+
+    /// <summary>The field patch nearest a point, ripe or not.</summary>
+    public static FieldPatch NearestField(Map map, Point3D from, int maxRange)
+    {
+        FieldPatch best = null;
+        var bestDist = (double)maxRange;
+
+        foreach (var patch in _patches)
+        {
+            if (patch.Map == map && patch.Center.GetDistanceToSqrt(from) is var dist && dist < bestDist)
+            {
+                bestDist = dist;
+                best = patch;
+            }
+        }
+
+        return best;
+    }
+
+    // How far past a patch's crops to look for bare farmland.
+    private const int FarmlandMargin = 6;
+
+    /// <summary>
+    /// Farmland around a patch that nobody has sown: furrowed ground (the land the map draws as
+    /// a field) with no crop tile and nothing standing on it. Sowing is kept to this land, so the
+    /// fields can't spread over meadows and roads and the number of plots stays the map's own.
+    /// </summary>
+    public static List<Point3D> FreeFarmland(FieldPatch patch, int max)
+    {
+        var result = new List<Point3D>();
+        var map = patch.Map;
+        var b = patch.Bounds;
+
+        for (var y = b.Start.Y - FarmlandMargin; y < b.End.Y + FarmlandMargin && result.Count < max; y++)
+        {
+            for (var x = b.Start.X - FarmlandMargin; x < b.End.X + FarmlandMargin && result.Count < max; x++)
+            {
+                if (x < 0 || y < 0 || x >= map.Width || y >= map.Height)
+                {
+                    continue;
+                }
+
+                var land = map.Tiles.GetLandTile(x, y);
+                if (!Systems.MahaonFarming.MahaonFieldPlots.IsPlotGround(land.ID) || IsTaken(map, x, y))
+                {
+                    continue;
+                }
+
+                var z = map.GetAverageZ(x, y);
+                if (MahaonTilledEarth.Find(new Point3D(x, y, z), map) != null || map.CanFit(x, y, z, 16))
+                {
+                    result.Add(new Point3D(x, y, z));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private static bool IsTaken(Map map, int x, int y)
+    {
+        foreach (var item in map.GetItemsAt(new Point2D(x, y)))
+        {
+            // A crop tile counts even when it is invisible (winter, already picked).
+            if (item is MahaonCropTile or MahaonPlantedSapling or MahaonTree || item.Visible && item is not MahaonTilledEarth)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static bool HasFruit(MahaonTreeFoliage tree) =>
