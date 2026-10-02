@@ -17,6 +17,7 @@ public sealed class HuntAction : BotAction
     private readonly HuntSpot _spot;
     private readonly int _quota;
     private readonly int _maxFame;
+    private readonly string _preyType;
 
     private const int NotableFame = 15_000;
 
@@ -26,11 +27,13 @@ public sealed class HuntAction : BotAction
     private BotAction _step;
 
     /// <param name="maxFame">The toughest prey to pick; 0 means the bot's own limit.</param>
-    public HuntAction(HuntSpot spot, int quota, int maxFame = 0)
+    /// <param name="preyType">Only this kind of prey (by type name), for a quest; null hunts anything.</param>
+    public HuntAction(HuntSpot spot, int quota, int maxFame = 0, string preyType = null)
     {
         _spot = spot;
         _quota = quota;
         _maxFame = maxFame;
+        _preyType = preyType;
     }
 
     public override void Start(BotBrain brain) => _deadline = Core.TickCount + MaxDurationMs;
@@ -80,7 +83,7 @@ public sealed class HuntAction : BotAction
             return BotActionResult.Running(250);
         }
 
-        if (FindPrey(brain, _maxFame) is { } prey)
+        if (FindPrey(brain, _maxFame, _preyType) is { } prey)
         {
             _prey = prey;
             BotCombat.Engage(brain, prey);
@@ -111,7 +114,7 @@ public sealed class HuntAction : BotAction
         return null;
     }
 
-    private static Mobile FindPrey(BotBrain brain, int maxFameOverride)
+    private static Mobile FindPrey(BotBrain brain, int maxFameOverride, string preyType)
     {
         var bot = brain.Bot;
         var maxFame = maxFameOverride > 0 ? maxFameOverride : BotCombatStyles.MaxPreyFame(brain);
@@ -120,7 +123,7 @@ public sealed class HuntAction : BotAction
 
         foreach (var c in bot.Map.GetMobilesInRange<BaseCreature>(bot.Location, SightRange))
         {
-            if (!c.Alive || c.Fame > maxFame || !HuntingAtlas.IsFairPrey(c) || !bot.CanBeHarmful(c, false) || !bot.InLOS(c))
+            if (!c.Alive || c.Fame > maxFame || preyType != null && c.GetType().Name != preyType || !HuntingAtlas.IsFairPrey(c) || !bot.CanBeHarmful(c, false) || !bot.InLOS(c))
             {
                 continue;
             }

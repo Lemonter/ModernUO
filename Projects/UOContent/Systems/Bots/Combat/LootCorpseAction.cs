@@ -48,7 +48,7 @@ public sealed class LootCorpseAction : BotAction
 
         foreach (var item in _corpse.Items)
         {
-            if (own || item is Gold || IsWorthTaking(item))
+            if (own || item is Gold || IsWorthTaking(item) || BotQuests.WantsTrophy(bot, item))
             {
                 take.Add(item);
             }
@@ -63,7 +63,8 @@ public sealed class LootCorpseAction : BotAction
 
             _corpse.OnItemLifted(bot, item);
 
-            if (!own && item is not Gold)
+            // Trophies go to the quest giver, not the market.
+            if (!own && item is not Gold and not MahaonAnimalHead)
             {
                 brain.MarkLoot(item);
             }

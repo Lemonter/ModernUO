@@ -39,8 +39,9 @@ public sealed class BotCity
     internal bool SmithySearched;
     internal Point3D? SmithyStand;
 
-    // Placed items a town may have (quest boards), by type, with when they were last looked for.
-    internal readonly Dictionary<System.Type, (Item item, long searchedAt)> Placed = new();
+    // What a GM may have placed in a town (quest boards and quest givers), by type, with when it
+    // was last looked for.
+    internal readonly Dictionary<System.Type, (IEntity entity, long searchedAt)> Placed = new();
 
     internal long VendorsRefreshedAt;
     internal bool VendorsSearched;
@@ -263,11 +264,9 @@ public static class WorldCatalog
     /// or null when the town has none.</summary>
     public static T GetPlaced<T>(BotCity city) where T : Item
     {
-        var now = Core.TickCount;
-        if (city.Placed.TryGetValue(typeof(T), out var known) &&
-            (known.item is { Deleted: false } || known.item == null && now - known.searchedAt < PlacedRecheckMs))
+        if (TryRecall(city, typeof(T), out var known))
         {
-            return known.item as T;
+            return known as T;
         }
 
         T best = null;
@@ -282,8 +281,52 @@ public static class WorldCatalog
             }
         }
 
-        city.Placed[typeof(T)] = (best, now);
+        city.Placed[typeof(T)] = (best, Core.TickCount);
         return best;
+    }
+
+    /// <summary>The placed townsperson of this type nearest the town centre (a quest giver), or
+    /// null when the town has none.</summary>
+    public static T GetPlacedMobile<T>(BotCity city) where T : Mobile
+    {
+        if (TryRecall(city, typeof(T), out var known))
+        {
+            return known as T;
+        }
+
+        T best = null;
+        var bestDist = double.MaxValue;
+        foreach (var m in city.Map.GetMobilesInRange<T>(city.Center, VendorSearchRange))
+        {
+            var dist = m.GetDistanceToSqrt(city.Center);
+            if (m.Alive && dist < bestDist)
+            {
+                bestDist = dist;
+                best = m;
+            }
+        }
+
+        city.Placed[typeof(T)] = (best, Core.TickCount);
+        return best;
+    }
+
+    // A remembered find is good while it stands; a town found without one is looked over again
+    // only every few minutes.
+    private static bool TryRecall(BotCity city, System.Type type, out IEntity entity)
+    {
+        entity = null;
+        if (!city.Placed.TryGetValue(type, out var known))
+        {
+            return false;
+        }
+
+        if (known.entity is { Deleted: false } live && (live is not Mobile m || m.Alive))
+        {
+            entity = live;
+            return true;
+        }
+
+        return known.entity == null && Core.TickCount - known.searchedAt < PlacedRecheckMs;
     }
 
     /// <summary>The ankh nearest the town centre, for tithing.</summary>

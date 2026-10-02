@@ -55,6 +55,8 @@ public static class RangerQuestSystem
 
     private static readonly Dictionary<Mobile, ActiveQuest> PlayerQuests = new();
 
+    public static ActiveQuest QuestOf(Mobile player) => PlayerQuests.GetValueOrDefault(player);
+
     /// <summary>Double-click handler entry point — see the forest-ranger NPC's OnDoubleClick.
     /// Also the turn-in point: checks the player's backpack for matching MahaonAnimalHead
     /// trophies and consumes as many as still needed every time they talk to Питэр, so

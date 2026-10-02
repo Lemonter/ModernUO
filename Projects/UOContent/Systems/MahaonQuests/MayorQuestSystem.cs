@@ -41,6 +41,8 @@ public static class MayorQuestSystem
 
     private static readonly Dictionary<Mobile, ActiveQuest> PlayerQuests = new();
 
+    public static ActiveQuest QuestOf(Mobile player) => PlayerQuests.GetValueOrDefault(player);
+
     /// <summary>Double-click handler entry point — see MahaonMayor.OnDoubleClick.</summary>
     public static void Talk(Mobile player, Mobile mayor)
     {

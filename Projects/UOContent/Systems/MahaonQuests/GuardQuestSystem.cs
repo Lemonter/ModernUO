@@ -47,6 +47,8 @@ public static class GuardQuestSystem
 
     private static readonly Dictionary<Mobile, ActiveQuest> PlayerQuests = new();
 
+    public static ActiveQuest QuestOf(Mobile player) => PlayerQuests.GetValueOrDefault(player);
+
     // Mahaon: gump-visible status (MahaonGuardSergeantGump) — the quest-complete/in-progress
     // feedback previously only existed as a one-off chat line at the moment a kill finished
     // it (OnCreatureKilled below); re-opening the gump later showed nothing about it.

@@ -8,8 +8,9 @@ namespace Server.Systems.Bots;
 
 public sealed class HuntSpot
 {
-    public HuntSpot(Map map, Point3D center, int range, int fame)
+    public HuntSpot(Map map, Point3D center, int range, int fame, HashSet<string> prey = null)
     {
+        Prey = prey ?? [];
         Map = map;
         Center = center;
         Range = range;
@@ -26,6 +27,9 @@ public sealed class HuntSpot
 
     /// <summary>The toughest creature that spawns here, by fame.</summary>
     public int Fame { get; }
+
+    /// <summary>Type names of the prey spawned here, for a quest that wants one kind.</summary>
+    public HashSet<string> Prey { get; }
 }
 
 /// <summary>
@@ -58,39 +62,65 @@ public static class HuntingAtlas
             foreach (var spawner in map.GetItemsInBounds<BaseSpawner>(bounds))
             {
                 var fame = -1;
+                var prey = new HashSet<string>();
                 foreach (var entry in spawner.Entries)
                 {
-                    fame = Math.Max(fame, FameOf(entry.SpawnedName));
+                    fame = Math.Max(fame, FameOf(entry.SpawnedName, prey));
                 }
 
-                Add(map, spawner.Location, spawner.WalkingRange, fame);
+                Add(map, spawner.Location, spawner.WalkingRange, fame, prey);
             }
 
             foreach (var spawner in map.GetItemsInBounds<XmlSpawner>(bounds))
             {
                 var fame = -1;
+                var prey = new HashSet<string>();
                 foreach (var obj in spawner.SpawnObjects)
                 {
-                    fame = Math.Max(fame, FameOf(obj.TypeName));
+                    fame = Math.Max(fame, FameOf(obj.TypeName, prey));
                 }
 
-                Add(map, spawner.Location, spawner.HomeRange, fame);
+                Add(map, spawner.Location, spawner.HomeRange, fame, prey);
             }
         }
 
         logger.Information("Hunting atlas: {Spots} hunting spots from spawners", _spots.Count);
     }
 
-    private static void Add(Map map, Point3D location, int range, int fame)
+    private static void Add(Map map, Point3D location, int range, int fame, HashSet<string> prey)
     {
         if (fame >= 0)
         {
-            _spots.Add(new HuntSpot(map, location, Math.Clamp(range, 4, 30), fame));
+            _spots.Add(new HuntSpot(map, location, Math.Clamp(range, 4, 30), fame, prey));
         }
     }
 
+    /// <summary>The nearest spot that spawns this kind of prey, or null.</summary>
+    public static HuntSpot PickFor(Map map, Point3D near, int range, string preyType)
+    {
+        HuntSpot best = null;
+        var bestDist = double.MaxValue;
+
+        foreach (var spot in _spots)
+        {
+            if (spot.Map != map || !spot.Prey.Contains(preyType))
+            {
+                continue;
+            }
+
+            var dist = spot.Center.GetDistanceToSqrt(near);
+            if (dist <= range && dist < bestDist)
+            {
+                bestDist = dist;
+                best = spot;
+            }
+        }
+
+        return best;
+    }
+
     /// <summary>Fame of a spawnable type name if it is fair prey, else -1.</summary>
-    private static int FameOf(string typeName)
+    private static int FameOf(string typeName, HashSet<string> prey)
     {
         if (string.IsNullOrEmpty(typeName))
         {
@@ -108,6 +138,11 @@ public static class HuntingAtlas
 
         if (_fameByType.TryGetValue(type, out var cached))
         {
+            if (cached >= 0)
+            {
+                prey.Add(type.Name);
+            }
+
             return cached;
         }
 
@@ -126,6 +161,11 @@ public static class HuntingAtlas
         }
 
         _fameByType[type] = fame;
+        if (fame >= 0)
+        {
+            prey.Add(type.Name);
+        }
+
         return fame;
     }
 

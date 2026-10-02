@@ -272,6 +272,7 @@ public static class BotConversation
         DefendTownGoal       => "Город защищаю, набег же!",
         BountyHuntGoal       => "За головой преступника иду, награда хорошая.",
         GuildOrderGoal       => "Заказ в гильдию ремесленников несу.",
+        KillQuestGoal q      => $"{q.Name} выполняю.",
         ShelterGoal          => "Прячусь, набег же! И тебе советую.",
         PkGoal               => "Не твоё дело.",
         CraftGoal            => "Ремеслом занят, заказов полно.",
