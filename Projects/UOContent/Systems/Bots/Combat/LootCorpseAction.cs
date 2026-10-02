@@ -82,7 +82,8 @@ public sealed class LootCorpseAction : BotAction
     /// reagents, scrolls, hides.</summary>
     private static bool IsWorthTaking(Item item) =>
         item.Movable && item.LootType != LootType.Blessed &&
-        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll or BaseHides || Gems.Contains(item.GetType()));
+        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll or BaseHides || BotCrafting.IsRawMeat(item) ||
+         Gems.Contains(item.GetType()));
 
     /// <summary>Something to skin with: the blade in hand, or a knife in the pack.</summary>
     private static Item Blade(Mobile bot) =>

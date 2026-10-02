@@ -52,7 +52,8 @@ public static class BotGoods
     /// <summary>What a bot puts on the market: raw goods it doesn't need for its own craft, and
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
-        IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
+        IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) ||
+        IsProduct(bot, item) && !BotCrafting.KeepsForOwnUse(bot, item) ||
         IsFarmGood(item) && IsCarried(bot, item) && !KeepsAsFood(bot, item) && !WeaveGoal.KeepsForWeaving(bot, item) &&
         !BotCrafting.KeepsForCraft(bot, item) ||
         bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item);

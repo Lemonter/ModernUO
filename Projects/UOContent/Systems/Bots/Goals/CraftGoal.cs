@@ -1,3 +1,4 @@
+using Server.Mobiles;
 using System.Collections.Generic;
 using Server.Engines.Craft;
 
@@ -26,13 +27,33 @@ public sealed class CraftGoal : BotGoal
         var system = System;
 
         if (system == null || !BotCrafting.IsCrafter(bot, system) || BotCrafting.FindTool(bot, system) == null ||
-            !BotCrafting.TryPick(bot, system, out _))
+            !CanCraftSomething(bot, system))
         {
             return 0;
         }
 
         var skill = bot.Skills[system.MainSkill].Value / 100.0;
         return 0.2 + skill * 0.4 + BotBrain.Trait(brain.Diligence) * 0.3 - brain.Fatigue * 0.5;
+    }
+
+    // Grilling is only possible by a fire, so away from one the cook just checks it has meat;
+    // the exact dish is picked at the fire.
+    private static bool CanCraftSomething(PlayerMobile bot, CraftSystem system)
+    {
+        if (system != DefCooking.CraftSystem)
+        {
+            return BotCrafting.TryPick(bot, system, out _);
+        }
+
+        foreach (var item in bot.Backpack.Items)
+        {
+            if (BotCrafting.IsRawMeat(item))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public override List<BotAction> Plan(BotBrain brain)
@@ -68,6 +89,24 @@ public sealed class CraftGoal : BotGoal
         if (System == DefTailoring.CraftSystem)
         {
             steps.Add(new CutMaterialsAction());
+        }
+
+        // A cook needs a fire: the forge at home, else the town's.
+        if (System == DefCooking.CraftSystem)
+        {
+            if (BotHousing.HomeOf(bot) is { Map: { } homeMap } home && homeMap == bot.Map &&
+                BotHousing.TryGetSmithy(home, out var homeFire))
+            {
+                steps.Add(new GoToAction(homeMap, homeFire, 0, "к очагу"));
+            }
+            else if (BotSocialRules.TownFor(bot) is { } town && WorldCatalog.TryGetForge(town, out _, out var fire))
+            {
+                steps.Add(new GoToAction(town.Map, fire, 1, "к огню"));
+            }
+            else
+            {
+                return null;
+            }
         }
 
         steps.Add(new CraftAction(System, 5 + brain.Diligence / 10));

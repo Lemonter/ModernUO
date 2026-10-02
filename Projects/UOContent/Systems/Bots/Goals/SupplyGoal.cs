@@ -92,7 +92,7 @@ public sealed class SupplyGoal : BotGoal
             return true;
         }
 
-        if (bot.Skills.Magery.Value >= 30)
+        if (bot.Skills.Magery.Value >= 30 || BotCrafting.IsAlchemist(bot))
         {
             foreach (var reagent in Reagents)
             {
@@ -130,6 +130,20 @@ public sealed class SupplyGoal : BotGoal
 
         if (BotStable.TryNeededFood(bot, out type, out amount))
         {
+            return true;
+        }
+
+        if (BotCrafting.IsAlchemist(bot) && pack.GetAmount(typeof(Bottle)) < 20)
+        {
+            (type, amount) = (typeof(Bottle), 50);
+            return true;
+        }
+
+        // A cook short of meat buys ribs from the butcher; the rest comes from its hunting.
+        if (BotCrafting.IsCook(bot) && pack.GetAmount(typeof(RawRibs)) + pack.GetAmount(typeof(RawBird)) +
+            pack.GetAmount(typeof(RawFishSteak)) < 10)
+        {
+            (type, amount) = (typeof(RawRibs), 20);
             return true;
         }
 

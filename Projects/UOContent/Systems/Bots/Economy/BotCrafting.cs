@@ -20,8 +20,22 @@ public static class BotCrafting
     public static CraftSystem[] Systems =>
     [
         DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem,
-        DefTailoring.CraftSystem
+        DefTailoring.CraftSystem, DefAlchemy.CraftSystem, DefCooking.CraftSystem
     ];
+
+    public static bool IsAlchemist(Mobile bot) => DefAlchemy.CraftSystem is { } system && IsCrafter(bot, system);
+
+    public static bool IsCook(Mobile bot) => DefCooking.CraftSystem is { } system && IsCrafter(bot, system);
+
+    /// <summary>Raw meat and fish a cook puts on the fire.</summary>
+    public static bool IsRawMeat(Item item) => item is RawRibs or RawBird or RawLambLeg or RawChickenLeg or RawFishSteak;
+
+    // Potions a bot holds on to for its own fights, per kind.
+    private const int OwnPotions = 5;
+
+    /// <summary>Heal and cure potions the bot keeps for itself rather than selling.</summary>
+    public static bool KeepsForOwnUse(Mobile bot, Item item) =>
+        item is BaseHealPotion or BaseCurePotion && bot.Backpack.GetAmount(item.GetType()) <= OwnPotions;
 
     public static bool IsTailor(Mobile bot) => DefTailoring.CraftSystem is { } system && IsCrafter(bot, system);
 
@@ -58,6 +72,16 @@ public static class BotCrafting
         if (IsTailoringMaterial(item))
         {
             return IsTailor(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
+        if (item is BaseReagent or Bottle)
+        {
+            return IsAlchemist(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
+        if (IsRawMeat(item))
+        {
+            return IsCook(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
         }
 
         var metal = item is MahaonIngot;
@@ -127,6 +151,16 @@ public static class BotCrafting
             return typeof(SewingKit);
         }
 
+        if (system == DefAlchemy.CraftSystem)
+        {
+            return typeof(MortarPestle);
+        }
+
+        if (system == DefCooking.CraftSystem)
+        {
+            return typeof(Skillet);
+        }
+
         return typeof(FletcherTools);
     }
 
@@ -146,7 +180,8 @@ public static class BotCrafting
 
         foreach (var craftItem in system.CraftItems)
         {
-            if (craftItem.RequiredExpansion != Expansion.None || craftItem.Resources.Count == 0 ||
+            // Ovens are for players' houses; bots cook over a forge's fire.
+            if (craftItem.RequiredExpansion != Expansion.None || craftItem.Resources.Count == 0 || craftItem.NeedOven ||
                 craftItem.Recipe != null && !bot.HasRecipe(craftItem.Recipe))
             {
                 continue;
