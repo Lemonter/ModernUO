@@ -29,6 +29,15 @@ public static class CraftingGuildSystem
     private static OrderKind _currentKind;
     private static int _currentAmount;
 
+    /// <summary>Changes with every new order, so whoever read the board knows when it is stale.</summary>
+    public static int OrderStamp { get; private set; }
+
+    public static Type CurrentItemType => _currentKind.ItemType;
+
+    public static int CurrentAmount => _currentAmount;
+
+    public static int RewardPerUnit => GoldPerUnit;
+
     public static void Initialize()
     {
         RollOrder();
@@ -39,6 +48,7 @@ public static class CraftingGuildSystem
     {
         _currentKind = OrderPool[Utility.Random(OrderPool.Length)];
         _currentAmount = Utility.RandomMinMax(20, 60);
+        OrderStamp++;
     }
 
     public static string CurrentOrderText() =>

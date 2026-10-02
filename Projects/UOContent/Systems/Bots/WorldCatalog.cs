@@ -39,6 +39,9 @@ public sealed class BotCity
     internal bool SmithySearched;
     internal Point3D? SmithyStand;
 
+    // Placed items a town may have (quest boards), by type, with when they were last looked for.
+    internal readonly Dictionary<System.Type, (Item item, long searchedAt)> Placed = new();
+
     internal long VendorsRefreshedAt;
     internal bool VendorsSearched;
     internal readonly List<BaseVendor> Vendors = [];
@@ -251,6 +254,36 @@ public static class WorldCatalog
         wheel = city.Wheel;
         loom = city.Loom;
         return wheel != null && loom != null;
+    }
+
+    // A town without a board is looked over again only this often.
+    private const long PlacedRecheckMs = 10 * 60_000;
+
+    /// <summary>The placed item of this type nearest the town centre (a GM-placed quest board),
+    /// or null when the town has none.</summary>
+    public static T GetPlaced<T>(BotCity city) where T : Item
+    {
+        var now = Core.TickCount;
+        if (city.Placed.TryGetValue(typeof(T), out var known) &&
+            (known.item is { Deleted: false } || known.item == null && now - known.searchedAt < PlacedRecheckMs))
+        {
+            return known.item as T;
+        }
+
+        T best = null;
+        var bestDist = double.MaxValue;
+        foreach (var item in city.Map.GetItemsInRange<T>(city.Center, VendorSearchRange))
+        {
+            var dist = item.GetDistanceToSqrt(city.Center);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = item;
+            }
+        }
+
+        city.Placed[typeof(T)] = (best, now);
+        return best;
     }
 
     /// <summary>The ankh nearest the town centre, for tithing.</summary>

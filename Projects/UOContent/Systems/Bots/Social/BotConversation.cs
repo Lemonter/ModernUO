@@ -270,6 +270,8 @@ public static class BotConversation
     public static string Doing(BotGoal goal) => goal switch
     {
         DefendTownGoal       => "Город защищаю, набег же!",
+        BountyHuntGoal       => "За головой преступника иду, награда хорошая.",
+        GuildOrderGoal       => "Заказ в гильдию ремесленников несу.",
         ShelterGoal          => "Прячусь, набег же! И тебе советую.",
         PkGoal               => "Не твоё дело.",
         CraftGoal            => "Ремеслом занят, заказов полно.",

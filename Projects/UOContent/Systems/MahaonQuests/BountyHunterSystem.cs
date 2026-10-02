@@ -33,6 +33,17 @@ public static class BountyHunterSystem
         Timer.DelayCall(RerollInterval, RerollInterval, EnsureValidTarget);
     }
 
+    public static BotMobile CurrentTarget
+    {
+        get
+        {
+            EnsureValidTarget();
+            return _currentTarget;
+        }
+    }
+
+    public static int CurrentReward => _currentReward;
+
     public static string CurrentBountyText()
     {
         EnsureValidTarget();
