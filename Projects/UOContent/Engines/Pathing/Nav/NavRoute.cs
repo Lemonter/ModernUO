@@ -12,7 +12,11 @@ public enum NavWaypointKind : byte
     Teleport,
 
     /// <summary>The destination.</summary>
-    Goal
+    Goal,
+
+    /// <summary>A public moongate. Used from within a tile of it, it sends the walker to the next
+    /// waypoint's map and location.</summary>
+    Moongate
 }
 
 public readonly record struct NavWaypoint(Map Map, Point3D Location, NavWaypointKind Kind);

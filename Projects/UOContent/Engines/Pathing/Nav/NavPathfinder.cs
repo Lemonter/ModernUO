@@ -22,6 +22,10 @@ public static class NavPathfinder
         }
     }
 
+    /// <summary>The link restrictions that apply to <paramref name="m"/> right now.</summary>
+    public static NavAccess AccessOf(Mobile m) =>
+        (m.Criminal ? NavAccess.Criminal : NavAccess.None) | (m.Player && m.Murderer ? NavAccess.Murderer : NavAccess.None);
+
     private enum Resolve
     {
         Failed,
@@ -56,7 +60,7 @@ public static class NavPathfinder
         new([new NavWaypoint(goalMap, goal, NavWaypointKind.Goal)], NavMath.Octile(start.X, start.Y, goal.X, goal.Y), 0);
 
     /// <summary>Finds a route inline on the calling (loop) thread.</summary>
-    public static NavRoute Find(Map startMap, Point3D start, Map goalMap, Point3D goal)
+    public static NavRoute Find(Map startMap, Point3D start, Map goalMap, Point3D goal, NavAccess access = NavAccess.None)
     {
         var t0 = Stopwatch.GetTimestamp();
 
@@ -74,7 +78,7 @@ public static class NavPathfinder
                 }
         }
 
-        var raw = _loopSearch.Run(NavSystem.Snapshot, startNode, goalNode, goal);
+        var raw = _loopSearch.Run(NavSystem.Snapshot, startNode, goalNode, goal, access);
         var route = ToRoute(raw);
         NavStats.RecordRoute(NavStats.ElapsedMs(t0), raw?.Expanded ?? 0, route != null);
         return route;
@@ -85,7 +89,9 @@ public static class NavPathfinder
     /// worker, or right away when no search is needed or the worker is off or full. Null means no
     /// route. The caller must re-validate in the callback: time may have passed.
     /// </summary>
-    public static void FindAsync(Map startMap, Point3D start, Map goalMap, Point3D goal, Action<NavRoute> onDone)
+    public static void FindAsync(
+        Map startMap, Point3D start, Map goalMap, Point3D goal, Action<NavRoute> onDone, NavAccess access = NavAccess.None
+    )
     {
         var t0 = Stopwatch.GetTimestamp();
         var resolved = TryResolve(startMap, start, goalMap, goal, out var startNode, out var goalNode);
@@ -97,13 +103,13 @@ public static class NavPathfinder
             return;
         }
 
-        if (NavRouteWorker.TryEnqueue(NavSystem.Snapshot, startNode, goalNode, goal, onDone))
+        if (NavRouteWorker.TryEnqueue(NavSystem.Snapshot, startNode, goalNode, goal, access, onDone))
         {
             NavStats.RecordDispatch(NavStats.ElapsedMs(t0));
             return;
         }
 
-        var raw = _loopSearch.Run(NavSystem.Snapshot, startNode, goalNode, goal);
+        var raw = _loopSearch.Run(NavSystem.Snapshot, startNode, goalNode, goal, access);
         var route = ToRoute(raw);
         NavStats.RecordRoute(NavStats.ElapsedMs(t0), raw?.Expanded ?? 0, route != null);
         onDone(route);

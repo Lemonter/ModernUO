@@ -35,6 +35,7 @@ public static class NavRouteWorker
         public long StartNode;
         public long GoalNode;
         public Point3D Goal;
+        public NavAccess Access;
         public Action<NavRoute> OnDone;
     }
 
@@ -63,7 +64,9 @@ public static class NavRouteWorker
         }
     }
 
-    internal static bool TryEnqueue(NavSnapshot snapshot, long startNode, long goalNode, Point3D goal, Action<NavRoute> onDone)
+    internal static bool TryEnqueue(
+        NavSnapshot snapshot, long startNode, long goalNode, Point3D goal, NavAccess access, Action<NavRoute> onDone
+    )
     {
         if (!Enabled || Volatile.Read(ref _pending) >= MaxPending)
         {
@@ -71,7 +74,7 @@ public static class NavRouteWorker
         }
 
         Interlocked.Increment(ref _pending);
-        _queue.Enqueue(new Job { Snapshot = snapshot, StartNode = startNode, GoalNode = goalNode, Goal = goal, OnDone = onDone });
+        _queue.Enqueue(new Job { Snapshot = snapshot, StartNode = startNode, GoalNode = goalNode, Goal = goal, Access = access, OnDone = onDone });
         _work.Set();
         return true;
     }
@@ -107,7 +110,7 @@ public static class NavRouteWorker
             try
             {
                 _search.MaxExpansions = MaxExpansions;
-                result = _search.Run(job.Snapshot, job.StartNode, job.GoalNode, job.Goal);
+                result = _search.Run(job.Snapshot, job.StartNode, job.GoalNode, job.Goal, job.Access);
             }
             catch (Exception e)
             {

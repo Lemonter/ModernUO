@@ -40,6 +40,8 @@ public sealed class NavFollower
     // A teleporter with a delay keeps the walker standing on it for a while.
     private const int MaxTeleportWaitTicks = 40;
 
+    private static bool IsJump(NavWaypointKind kind) => kind is NavWaypointKind.Teleport or NavWaypointKind.Moongate;
+
     private readonly Mobile _mobile;
     private readonly int _arriveRange;
 
@@ -134,7 +136,7 @@ public sealed class NavFollower
         {
             for (var j = _index; j < waypoints.Count; j++)
             {
-                if (waypoints[j].Kind == NavWaypointKind.Teleport)
+                if (IsJump(waypoints[j].Kind))
                 {
                     _index = j + 1;
                     break;
@@ -146,9 +148,8 @@ public sealed class NavFollower
             return NavStepResult.Moved;
         }
 
-        // Stepped onto a teleporter tile on purpose: wait for it to fire.
-        if (_legTarget >= 0 && _legTarget < waypoints.Count && waypoints[_legTarget].Kind == NavWaypointKind.Teleport &&
-            m.Location == waypoints[_legTarget].Location)
+        // Reached a teleporter tile or a moongate on purpose: wait for it to fire, or use it.
+        if (_legTarget >= 0 && _legTarget < waypoints.Count && ReachedJump(m, waypoints[_legTarget]))
         {
             _index = _legTarget;
             _leg = null;
@@ -167,13 +168,31 @@ public sealed class NavFollower
         waiting = false;
         var waypoints = Route.Waypoints;
 
-        if (_index >= waypoints.Count || waypoints[_index].Kind != NavWaypointKind.Teleport)
+        if (_index >= waypoints.Count || !IsJump(waypoints[_index].Kind))
         {
             return true;
         }
 
         var tele = waypoints[_index];
         var m = _mobile;
+
+        // A moongate is used, not stepped on: within a tile of it, pick the destination the
+        // route goes on from. A refusal (combat, a criminal flag) is waited out like a delay.
+        if (tele.Kind == NavWaypointKind.Moongate && m.Map == tele.Map && Utility.InRange(m.Location, tele.Location, 1) &&
+            _index + 1 < waypoints.Count)
+        {
+            var after = waypoints[_index + 1];
+            if (FindMoongate(tele) is { } gate && PublicMoongate.TryTravel(m, gate, after.Map, after.Location))
+            {
+                _index++;
+                _teleportWait = 0;
+                _leg = null;
+                return true;
+            }
+
+            waiting = true;
+            return ++_teleportWait < MaxTeleportWaitTicks;
+        }
 
         if (m.Map == tele.Map && m.Location == tele.Location)
         {
@@ -207,7 +226,7 @@ public sealed class NavFollower
         // A finished leg means its target was reached.
         if (_leg != null && _legPos >= _leg.Length && _legTarget >= _index)
         {
-            if (waypoints[_legTarget].Kind != NavWaypointKind.Teleport)
+            if (!IsJump(waypoints[_legTarget].Kind))
             {
                 _index = _legTarget + 1;
             }
@@ -218,7 +237,7 @@ public sealed class NavFollower
         for (var j = _index; j < waypoints.Count && j < _index + 8; j++)
         {
             var wp = waypoints[j];
-            if (wp.Kind == NavWaypointKind.Teleport)
+            if (IsJump(wp.Kind))
             {
                 break;
             }
@@ -248,7 +267,7 @@ public sealed class NavFollower
 
             furthest = j;
 
-            if (wp.Kind == NavWaypointKind.Teleport)
+            if (IsJump(wp.Kind))
             {
                 break; // the tile is the leg's end; what lies beyond is somewhere else
             }
@@ -276,6 +295,24 @@ public sealed class NavFollower
         _leg = null;
         _legTarget = -1;
         return false;
+    }
+
+    private static bool ReachedJump(Mobile m, NavWaypoint wp) =>
+        wp.Kind switch
+        {
+            NavWaypointKind.Teleport => m.Location == wp.Location,
+            NavWaypointKind.Moongate => m.Map == wp.Map && Utility.InRange(m.Location, wp.Location, 1),
+            _                        => false
+        };
+
+    private static PublicMoongate FindMoongate(NavWaypoint wp)
+    {
+        foreach (var gate in wp.Map.GetItemsAt<PublicMoongate>(wp.Location))
+        {
+            return gate;
+        }
+
+        return null;
     }
 
     private static Direction[] FindLeg(Mobile m, Point3D target)

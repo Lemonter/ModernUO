@@ -6,7 +6,23 @@ namespace Server.Engines.Pathing.Nav;
 
 public enum NavLinkKind : byte
 {
-    Teleporter
+    Teleporter,
+
+    /// <summary>A public moongate into the moongate hub.</summary>
+    MoongateEnter,
+
+    /// <summary>Out of the moongate hub to one of the gates' destinations.</summary>
+    MoongateExit
+}
+
+/// <summary>What keeps a walker off a link: the moongates refuse criminals, and send murderers
+/// only to Felucca.</summary>
+[System.Flags]
+public enum NavAccess : byte
+{
+    None = 0,
+    Criminal = 1,
+    Murderer = 2
 }
 
 /// <summary>
@@ -16,9 +32,13 @@ public enum NavLinkKind : byte
 /// </summary>
 public sealed class NavLink
 {
-    public NavLink(NavLinkKind kind, int sourceMapId, Point3D source, int sourceRegion, int destMapId, Point3D dest, int destRegion)
+    public NavLink(
+        NavLinkKind kind, int sourceMapId, Point3D source, int sourceRegion, int destMapId, Point3D dest, int destRegion,
+        NavAccess forbidden = NavAccess.None
+    )
     {
         Kind = kind;
+        Forbidden = forbidden;
         SourceMapId = sourceMapId;
         Source = source;
         SourceRegion = sourceRegion;
@@ -35,9 +55,14 @@ public sealed class NavLink
     public Point3D Destination { get; }
     public int DestRegion { get; }
 
+    /// <summary>Walkers with any of these flags can't take the link.</summary>
+    public NavAccess Forbidden { get; }
+
+    public bool Allows(NavAccess access) => (Forbidden & access) == 0;
+
     /// <summary>Tenths of a tile. A teleport is instant; a token cost keeps routes from
-    /// bouncing through teleporters for no reason.</summary>
-    public int Cost => 20;
+    /// bouncing through teleporters for no reason. A moongate trip is two links, half each.</summary>
+    public int Cost => Kind == NavLinkKind.Teleporter ? 20 : 10;
 }
 
 /// <summary>
@@ -54,6 +79,15 @@ public static class NavLinks
     public static IReadOnlyList<NavLink> All => _all;
 
     public static long NodeKey(int mapId, int region) => ((long)mapId << 32) | (uint)region;
+
+    /// <summary>
+    /// The public moongates as one virtual node: every gate leads into it and it leads out to every
+    /// destination, so N gates and M destinations cost N + M links rather than N × M. No real map
+    /// uses this id.
+    /// </summary>
+    public const int HubMapId = 0xFE;
+
+    public static readonly long MoongateHub = NodeKey(HubMapId, 0);
 
     public static void Rebuild()
     {
@@ -93,13 +127,97 @@ public static class NavLinks
             }
         }
 
+        var teleporters = _all.Count;
+        var gates = AddMoongates(PublicMoongate.AllDestinations());
+
         NavSystem.PublishSnapshot();
 
         logger.Information(
-            "Nav links: {Count} teleporters linked, {Skipped} skipped (no walkable ground at an end)",
-            _all.Count,
-            skipped
+            "Nav links: {Count} teleporters linked, {Skipped} skipped (no walkable ground at an end), {Gates} moongates",
+            teleporters,
+            skipped,
+            gates
         );
+    }
+
+    internal static int AddMoongates(IEnumerable<(Map Map, Point3D Location)> destinations)
+    {
+        var gates = 0;
+
+        foreach (var map in Map.AllMaps)
+        {
+            if (map == null || map == Map.Internal || NavSystem.GetGraph(map) is not { } graph)
+            {
+                continue;
+            }
+
+            foreach (var gate in map.GetItemsInBounds<PublicMoongate>(new Rectangle2D(0, 0, map.Width, map.Height)))
+            {
+                if (gate.Parent != null)
+                {
+                    continue;
+                }
+
+                // The gate is used from beside it; the tile next to it is what has to be walkable.
+                var region = graph.Locate(gate.X, gate.Y, gate.Z, 2);
+                if (region < 0)
+                {
+                    continue;
+                }
+
+                _all.Add(
+                    new NavLink(NavLinkKind.MoongateEnter, map.MapID, gate.Location, region, HubMapId, Point3D.Zero, 0, NavAccess.Criminal)
+                );
+                gates++;
+            }
+        }
+
+        if (gates == 0)
+        {
+            return 0;
+        }
+
+        foreach (var (destMap, dest) in destinations)
+        {
+            if (NavSystem.GetGraph(destMap) is not { } graph)
+            {
+                continue;
+            }
+
+            var region = graph.Locate(dest.X, dest.Y, dest.Z, 2);
+            if (region >= 0)
+            {
+                var forbidden = destMap == Map.Felucca ? NavAccess.None : NavAccess.Murderer;
+                _all.Add(new NavLink(NavLinkKind.MoongateExit, HubMapId, Point3D.Zero, 0, destMap.MapID, dest, region, forbidden));
+            }
+        }
+
+        return gates;
+    }
+
+    /// <summary>Whether the public moongates can take a walker with <paramref name="access"/> from
+    /// one map to another.</summary>
+    public static bool GatesConnect(int fromMapId, int toMapId, NavAccess access)
+    {
+        bool enter = false, exit = false;
+
+        foreach (var link in _all)
+        {
+            if (!link.Allows(access))
+            {
+                continue;
+            }
+
+            enter |= link.Kind == NavLinkKind.MoongateEnter && link.SourceMapId == fromMapId;
+            exit |= link.Kind == NavLinkKind.MoongateExit && link.DestMapId == toMapId;
+
+            if (enter && exit)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static bool TryAdd(NavLinkKind kind, Map sourceMap, Point3D source, Map destMap, Point3D dest)

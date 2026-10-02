@@ -2,8 +2,9 @@ using System.Collections.Generic;
 
 namespace Server.Systems.Bots;
 
-/// <summary>Moves to another town on the same facet. The bot's home moves with it: wherever it
-/// ends up is where it lives now, until the road calls again.</summary>
+/// <summary>Moves to another town — usually on the same facet, now and then through the public
+/// moongates to another one. The bot's home moves with it: wherever it ends up is where it lives
+/// now, until the road calls again.</summary>
 public sealed class TravelGoal : BotGoal
 {
     public override string Name => "Путешествие";
@@ -16,13 +17,24 @@ public sealed class TravelGoal : BotGoal
     {
         var bot = brain.Bot;
         var current = WorldCatalog.FindNearest(bot.Map, bot.Location);
+        var access = Engines.Pathing.Nav.NavPathfinder.AccessOf(bot);
+
+        // A wanderer sometimes takes the moongate to another world altogether.
+        var otherFacet = Utility.RandomDouble() < 0.1 + BotBrain.Trait(brain.Wanderlust) * 0.3;
 
         BotCity destination = null;
         var candidates = 0;
 
         foreach (var city in WorldCatalog.Cities)
         {
-            if (city.Map != bot.Map || city == current || BotSocialRules.IsOutlaw(bot) && BotSocialRules.IsGuarded(city.Region))
+            if (city == current || BotSocialRules.IsOutlaw(bot) && BotSocialRules.IsGuarded(city.Region))
+            {
+                continue;
+            }
+
+            if (otherFacet
+                    ? city.Map == bot.Map || !Engines.Pathing.Nav.NavLinks.GatesConnect(bot.Map.MapID, city.Map.MapID, access)
+                    : city.Map != bot.Map)
             {
                 continue;
             }

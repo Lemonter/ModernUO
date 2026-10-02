@@ -299,4 +299,37 @@ public class NavGraphTests : IDisposable
         NavSystem.Install(MapA, patched, source);
         Assert.NotNull(NavPathfinder.Find(MapA, new Point3D(5, 5, 0), MapA, new Point3D(90, 5, 0)));
     }
+
+    [Fact]
+    public void Moongate_CrossesMaps_ButNotForMurderersOffFelucca()
+    {
+        Install(MapA, new GridNavCellSource(32, 32).Fill(0, 0, 0, 32, 32, '.'));
+        Install(MapB, new GridNavCellSource(32, 32).Fill(0, 0, 0, 32, 32, '.'));
+
+        var gate = new Server.Items.PublicMoongate();
+        try
+        {
+            gate.MoveToWorld(new Point3D(10, 10, 0), MapA);
+            NavLinks.Clear();
+            Assert.Equal(1, NavLinks.AddMoongates([(MapB, new Point3D(20, 20, 0))]));
+            NavSystem.PublishSnapshot();
+
+            var route = NavPathfinder.Find(MapA, new Point3D(2, 2, 0), MapB, new Point3D(25, 25, 0));
+            Assert.NotNull(route);
+            var gateIndex = route.Waypoints.FindIndex(w => w.Kind == NavWaypointKind.Moongate);
+            Assert.True(gateIndex >= 0);
+            Assert.Equal(new Point3D(10, 10, 0), route.Waypoints[gateIndex].Location);
+            Assert.Equal(MapB, route.Waypoints[gateIndex + 1].Map);
+            Assert.Equal(new Point3D(20, 20, 0), route.Waypoints[gateIndex + 1].Location);
+
+            // Map B isn't Felucca: the gate won't send a murderer there.
+            Assert.Null(NavPathfinder.Find(MapA, new Point3D(2, 2, 0), MapB, new Point3D(25, 25, 0), NavAccess.Murderer));
+            Assert.Null(NavPathfinder.Find(MapA, new Point3D(2, 2, 0), MapB, new Point3D(25, 25, 0), NavAccess.Criminal));
+            Assert.True(NavLinks.GatesConnect(MapA.MapID, MapB.MapID, NavAccess.None));
+        }
+        finally
+        {
+            gate.Delete();
+        }
+    }
 }

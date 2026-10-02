@@ -49,7 +49,7 @@ public sealed class NavSearch
     private static int MapIdOf(long node) => (int)(node >> 32);
     private static int RegionOf(long node) => (int)(node & 0xFFFFFFFF);
 
-    public NavSearchResult Run(NavSnapshot snap, long startNode, long goalNode, Point3D goal)
+    public NavSearchResult Run(NavSnapshot snap, long startNode, long goalNode, Point3D goal, NavAccess access = NavAccess.None)
     {
         var goalMapId = MapIdOf(goalNode);
         var startGraph = snap.Graphs[MapIdOf(startNode)];
@@ -102,17 +102,27 @@ public sealed class NavSearch
             var graph = snap.Graphs[mapId];
             var g = _g[node];
 
-            for (int e = graph.EdgeStart[region], end = graph.EdgeStart[region + 1]; e < end; e++)
+            // The moongate hub has no ground of its own, only links out.
+            if (graph != null)
             {
-                Relax(snap, NavLinks.NodeKey(mapId, graph.EdgeTarget[e]), g + graph.EdgeCost[e], new Via { Prev = node, Edge = e }, goalMapId, goal);
+                for (int e = graph.EdgeStart[region], end = graph.EdgeStart[region + 1]; e < end; e++)
+                {
+                    Relax(snap, NavLinks.NodeKey(mapId, graph.EdgeTarget[e]), g + graph.EdgeCost[e], new Via { Prev = node, Edge = e }, goalMapId, goal);
+                }
             }
 
             if (snap.LinksFrom.TryGetValue(node, out var links))
             {
                 foreach (var link in links)
                 {
+                    if (!link.Allows(access))
+                    {
+                        continue;
+                    }
+
                     // Getting from the region centre to the teleporter tile, then the jump.
-                    var cost = NavMath.Octile(graph.RegionX[region], graph.RegionY[region], link.Source.X, link.Source.Y) + link.Cost;
+                    var cost = (graph == null ? 0 : NavMath.Octile(graph.RegionX[region], graph.RegionY[region], link.Source.X, link.Source.Y)) +
+                               link.Cost;
                     Relax(snap, NavLinks.NodeKey(link.DestMapId, link.DestRegion), g + cost, new Via { Prev = node, Edge = -1, Link = link }, goalMapId, goal);
                 }
             }
@@ -139,6 +149,11 @@ public sealed class NavSearch
     {
         var mapId = MapIdOf(node);
         var graph = snap.Graphs[mapId];
+        if (graph == null)
+        {
+            return 0; // the moongate hub
+        }
+
         var region = RegionOf(node);
         int x = graph.RegionX[region];
         int y = graph.RegionY[region];
@@ -258,7 +273,16 @@ public sealed class NavSearch
 
             if (via.Link != null)
             {
-                waypoints.Add(new NavRawWaypoint(via.Link.SourceMapId, via.Link.Source, NavWaypointKind.Teleport));
+                var link = via.Link;
+                waypoints.Add(
+                    link.Kind switch
+                    {
+                        NavLinkKind.MoongateEnter => new NavRawWaypoint(link.SourceMapId, link.Source, NavWaypointKind.Moongate),
+                        // Where the gate puts the walker: the waypoint the moongate one sends it to.
+                        NavLinkKind.MoongateExit => new NavRawWaypoint(link.DestMapId, link.Destination, NavWaypointKind.Portal),
+                        _                        => new NavRawWaypoint(link.SourceMapId, link.Source, NavWaypointKind.Teleport)
+                    }
+                );
             }
             else
             {

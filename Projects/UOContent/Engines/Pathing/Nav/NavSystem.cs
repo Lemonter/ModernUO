@@ -364,7 +364,7 @@ public static class NavSystem
 
                 var goal = new Point3D(p);
                 var watch = Stopwatch.StartNew();
-                var route = NavPathfinder.Find(from.Map, from.Location, from.Map, goal);
+                var route = NavPathfinder.Find(from.Map, from.Location, from.Map, goal, NavPathfinder.AccessOf(from));
                 watch.Stop();
 
                 if (route == null)
@@ -477,7 +477,7 @@ public static class NavSystem
 
         private bool Replan()
         {
-            var route = NavPathfinder.Find(_walker.Map, _walker.Location, _goalMap, _goal);
+            var route = NavPathfinder.Find(_walker.Map, _walker.Location, _goalMap, _goal, NavPathfinder.AccessOf(_walker));
             if (route == null)
             {
                 return false;

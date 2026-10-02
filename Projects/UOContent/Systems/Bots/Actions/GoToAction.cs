@@ -74,7 +74,8 @@ public sealed class GoToAction : BotAction
                 _routing = false;
                 _follower = route == null ? null : new NavFollower(bot, route, _range);
                 _routeFailed = route == null;
-            }
+            },
+            NavPathfinder.AccessOf(bot)
         );
     }
 
