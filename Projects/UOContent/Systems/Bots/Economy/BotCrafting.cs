@@ -16,11 +16,12 @@ public readonly record struct BotCraftChoice(CraftItem Item, Type ResourceType, 
 public static class BotCrafting
 {
     /// <summary>Crafts whose inputs bots produce or buy: metal for the smith and the tinker, wood
-    /// for the carpenter and the bowyer, cloth and leather for the tailor.</summary>
+    /// for the carpenter and the bowyer, cloth and leather for the tailor, reagents and blank scrolls
+    /// for the alchemist and the scribe.</summary>
     public static CraftSystem[] Systems =>
     [
         DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem,
-        DefTailoring.CraftSystem, DefAlchemy.CraftSystem, DefCooking.CraftSystem
+        DefTailoring.CraftSystem, DefAlchemy.CraftSystem, DefCooking.CraftSystem, DefInscription.CraftSystem
     ];
 
     public static bool IsAlchemist(Mobile bot) => DefAlchemy.CraftSystem is { } system && IsCrafter(bot, system);
@@ -74,9 +75,24 @@ public static class BotCrafting
             return IsTailor(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
         }
 
-        if (item is BaseReagent or Bottle)
+        if (item is BaseReagent)
+        {
+            return (IsAlchemist(bot) || BotScribe.IsScribe(bot)) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
+        if (item is Bottle)
         {
             return IsAlchemist(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
+        if (item is BlankScroll)
+        {
+            return BotScribe.IsScribe(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
+        if (BotScribe.WantsForBook(bot, item))
+        {
+            return true;
         }
 
         if (IsRawMeat(item))
@@ -161,6 +177,11 @@ public static class BotCrafting
             return typeof(Skillet);
         }
 
+        if (system == DefInscription.CraftSystem)
+        {
+            return typeof(ScribesPen);
+        }
+
         return typeof(FletcherTools);
     }
 
@@ -229,6 +250,13 @@ public static class BotCrafting
         {
             // The metal row is read from the context, so it must be selected before checking.
             context.LastResourceIndex = subResIndex;
+        }
+
+        // Inscription writes only spells in the scribe's book and spends mana on each scroll.
+        if (craftItem.Mana > bot.Mana ||
+            typeof(SpellScroll).IsAssignableFrom(craftItem.ItemType) && !BotScribe.KnowsSpell(bot, craftItem.ItemType))
+        {
+            return false;
         }
 
         var chance = craftItem.GetSuccessChance(bot, typeRes, system, false, out var allSkills);

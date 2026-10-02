@@ -92,7 +92,14 @@ public sealed class SupplyGoal : BotGoal
             return true;
         }
 
-        if (bot.Skills.Magery.Value >= 30 || BotCrafting.IsAlchemist(bot))
+        // A scribe writes only what its own book holds.
+        if (BotScribe.IsScribe(bot) && Spellbook.FindRegular(bot) == null)
+        {
+            (type, amount) = (typeof(Spellbook), 1);
+            return true;
+        }
+
+        if (bot.Skills.Magery.Value >= 30 || BotCrafting.IsAlchemist(bot) || BotScribe.IsScribe(bot))
         {
             foreach (var reagent in Reagents)
             {
@@ -137,6 +144,21 @@ public sealed class SupplyGoal : BotGoal
         {
             (type, amount) = (typeof(Bottle), 50);
             return true;
+        }
+
+        if (BotScribe.IsScribe(bot))
+        {
+            if (pack.GetAmount(typeof(BlankScroll)) < 20)
+            {
+                (type, amount) = (typeof(BlankScroll), 50);
+                return true;
+            }
+
+            if (BotScribe.NextScrollToLearn(bot) is { } scroll)
+            {
+                (type, amount) = (scroll, 1);
+                return true;
+            }
         }
 
         // A cook short of meat buys ribs from the butcher; the rest comes from its hunting.
@@ -240,6 +262,12 @@ public sealed class SupplyGoal : BotGoal
 
         steps.Add(new GoToAction(seller, 2, $"к торговцу {seller.Name}"));
         steps.Add(new BuyFromVendorAction(seller, toolType, amount));
+
+        if (typeof(SpellScroll).IsAssignableFrom(toolType))
+        {
+            steps.Add(new FillSpellbookAction());
+        }
+
         return steps;
     }
 }
