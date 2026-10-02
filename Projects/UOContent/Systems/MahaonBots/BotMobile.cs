@@ -58,6 +58,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     public override void OnDelete()
     {
         Systems.Bots.BotSystem.Unregister(this);
+        Systems.Bots.BotHousing.OnOwnerDeleted(this);
 
         // Tamed pets would stay in the world with a master that no longer exists.
         if (AllFollowers is { Count: > 0 } followers)

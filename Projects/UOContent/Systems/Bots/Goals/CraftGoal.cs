@@ -42,13 +42,22 @@ public sealed class CraftGoal : BotGoal
 
         if (NeedsSmithy)
         {
-            var city = BotSocialRules.TownFor(bot);
-            if (city == null || !WorldCatalog.TryGetSmithy(city, out var stand))
+            // A smithy at home beats walking to town.
+            if (BotHousing.HomeOf(bot) is { Map: { } homeMap } house && homeMap == bot.Map &&
+                BotHousing.TryGetSmithy(house, out var homeStand))
             {
-                return null;
+                steps.Add(new GoToAction(homeMap, homeStand, 0, "в домашнюю кузницу"));
             }
+            else
+            {
+                var city = BotSocialRules.TownFor(bot);
+                if (city == null || !WorldCatalog.TryGetSmithy(city, out var stand))
+                {
+                    return null;
+                }
 
-            steps.Add(new GoToAction(city.Map, stand, 0, "в кузницу"));
+                steps.Add(new GoToAction(city.Map, stand, 0, "в кузницу"));
+            }
         }
 
         steps.Add(new CraftAction(System, 5 + brain.Diligence / 10));

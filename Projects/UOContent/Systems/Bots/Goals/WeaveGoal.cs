@@ -33,6 +33,13 @@ public sealed class WeaveGoal : BotGoal
 
     internal static BotCity NearestTextileTown(Mobile bot, out Item wheel, out Item loom)
     {
+        // A wheel and a loom at home come first; the town then only stands for where they are.
+        if (BotHousing.HomeOf(bot) is { Map: { } homeMap } house && homeMap == bot.Map &&
+            BotHousing.TryGetTextiles(house, out wheel, out loom))
+        {
+            return WorldCatalog.FindNearest(homeMap, house.Location);
+        }
+
         wheel = null;
         loom = null;
         BotCity best = null;

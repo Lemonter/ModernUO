@@ -60,7 +60,17 @@ public sealed class SowGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var plots = FarmAtlas.FindPlot(bot.Map, brain.Home, MinDistance, MaxDistance, PlotsPerTrip);
+        // A fenced yard yields more: sow inside the fence first.
+        var plots = BotHousing.HomeOf(bot) is { } house && house.Map == bot.Map &&
+                    Systems.MahaonWorld.MahaonHouseFenceSystem.HasFence(house)
+            ? FarmAtlas.FindPlot(bot.Map, house.BanLocation, 1, 4, PlotsPerTrip)
+            : [];
+
+        if (plots.Count == 0)
+        {
+            plots = FarmAtlas.FindPlot(bot.Map, brain.Home, MinDistance, MaxDistance, PlotsPerTrip);
+        }
+
         if (plots.Count == 0)
         {
             return null;
