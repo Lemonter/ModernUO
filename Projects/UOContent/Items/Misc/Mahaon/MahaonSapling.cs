@@ -68,7 +68,7 @@ public class SaplingPlantTarget : Target
 
         var planted = new MahaonPlantedSapling(_sapling.Species);
         planted.MoveToWorld(loc, map);
-        _sapling.Delete();
+        _sapling.Consume();
 
         from.SendMessage(0x59, "Ты сажаешь саженец. Через пару сезонов из него вырастет настоящее дерево.");
     }

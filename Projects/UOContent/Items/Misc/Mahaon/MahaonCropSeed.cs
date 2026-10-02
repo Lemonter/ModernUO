@@ -84,7 +84,7 @@ public class CropSeedPlantTarget : Target
 
         var tile = new MahaonCropTile(_seed.CropType);
         tile.MoveToWorld(loc, map);
-        _seed.Delete();
+        _seed.Consume(); // one seed per plot, not the whole stack
 
         from.SendMessage(
             0x59,

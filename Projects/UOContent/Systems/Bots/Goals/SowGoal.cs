@@ -8,24 +8,24 @@ using Server.Targeting;
 namespace Server.Systems.Bots;
 
 /// <summary>
-/// Sowing in spring and summer: the bare farmland beside a field, ploughed first when the bot owns
-/// a plough (that doubles the autumn harvest), seeded from what the last harvest gave or from the
-/// farmer's stock. Now and then a diligent bot plants a fruit tree at the field's edge. Everything
-/// goes through the plough's, seeds' and sapling's own target cursors.
+/// Sowing in spring and summer: a small field on open ground near home — never in a town or a
+/// house — ploughed first when the bot owns a plough (that doubles the autumn harvest), seeded
+/// from what the last harvest gave or from the farmer's stock. A diligent bot now and then plants
+/// a fruit tree beside it. Everything goes through the plough's, seeds' and sapling's own target
+/// cursors.
 /// </summary>
 public sealed class SowGoal : BotGoal
 {
-    private const int SearchRange = 150;
     private const int PlotsPerTrip = 8;
     private const int SeedsToBuy = 8;
 
+    // Far enough from home to be outside the town, near enough to walk.
+    private const int MinDistance = 20;
+    private const int MaxDistance = 90;
+
     // A plough pays for itself only to someone who works the land often.
     private const int PloughDiligence = 60;
-
-    // Orchards grow slowly and stay put: a tree only where few stand yet.
     private const int TreeDiligence = 70;
-    private const int MaxTreesNearby = 4;
-    private const int TreeCrowding = 12;
 
     public override string Name => "Посев";
 
@@ -36,7 +36,7 @@ public sealed class SowGoal : BotGoal
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;
-        if (!Season || BotSocialRules.IsOutlaw(bot))
+        if (!Season || BotSocialRules.IsOutlaw(bot) || brain.HomeMap != bot.Map)
         {
             return 0;
         }
@@ -47,14 +47,8 @@ public sealed class SowGoal : BotGoal
             return 0;
         }
 
-        if (FarmAtlas.NearestField(bot.Map, bot.Location, SearchRange) is not { } patch ||
-            FarmAtlas.FreeFarmland(patch, 1).Count == 0)
-        {
-            return 0;
-        }
-
         // Seeds already in the pack ask to be sown; otherwise it is the diligent who bother.
-        var score = (hasSeeds ? 0.35 : 0.1) + BotBrain.Trait(brain.Diligence) * 0.35 - brain.Fatigue * 0.5;
+        var score = (hasSeeds ? 0.35 : 0.05) + BotBrain.Trait(brain.Diligence) * 0.35 - brain.Fatigue * 0.5;
         if (BotCombatStyles.FightingSkill(bot) < 40)
         {
             score += 0.1;
@@ -66,12 +60,7 @@ public sealed class SowGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        if (FarmAtlas.NearestField(bot.Map, bot.Location, SearchRange) is not { } patch)
-        {
-            return null;
-        }
-
-        var plots = FarmAtlas.FreeFarmland(patch, PlotsPerTrip);
+        var plots = FarmAtlas.FindPlot(bot.Map, brain.Home, MinDistance, MaxDistance, PlotsPerTrip);
         if (plots.Count == 0)
         {
             return null;
@@ -102,15 +91,26 @@ public sealed class SowGoal : BotGoal
             steps.AddRange(plough);
         }
 
-        steps.Add(new GoToAction(patch.Map, plots[0], 2, "на поле"));
-        steps.Add(new SowAction(plots));
+        var treeSpot = brain.Diligence >= TreeDiligence && BotShopping.Funds(bot) >= 1000 && Utility.RandomDouble() < 0.3
+            ? FarmAtlas.FindTreeSpot(bot.Map, plots[0])
+            : null;
 
-        if (brain.Diligence >= TreeDiligence && BotShopping.Funds(bot) >= 1000 && TreeSpot(patch) is { } spot &&
+        if (treeSpot != null &&
             BotShopping.PlanPurchase(bot, city, typeof(MahaonSapling), 1, info => info.Args is [MahaonTreeSpecies s] && IsFruit(s)) is { } sapling)
         {
-            // Bought after the sowing would mean a second walk to town; buy it on the way out.
-            steps.InsertRange(0, sapling);
-            steps.Add(new GoToAction(patch.Map, spot, 2, "сажать дерево"));
+            steps.AddRange(sapling);
+        }
+        else
+        {
+            treeSpot = null;
+        }
+
+        steps.Add(new GoToAction(bot.Map, plots[0], 2, "на поле"));
+        steps.Add(new SowAction(plots));
+
+        if (treeSpot is { } spot)
+        {
+            steps.Add(new GoToAction(bot.Map, spot, 2, "сажать дерево"));
             steps.Add(new PlantTreeAction(spot));
         }
 
@@ -124,39 +124,6 @@ public sealed class SowGoal : BotGoal
         Utility.RandomDouble() < 0.3 + BotBrain.Trait(brain.Greed) * 0.5
             ? Utility.RandomBool() ? MahaonCropType.Cotton : MahaonCropType.Flax
             : Utility.RandomList(MahaonCropType.Wheat, MahaonCropType.Carrot, MahaonCropType.Cabbage, MahaonCropType.Pumpkin, MahaonCropType.Corn);
-
-    /// <summary>A free spot just outside the field for a tree, unless the area has trees enough.</summary>
-    private static Point3D? TreeSpot(FieldPatch patch)
-    {
-        var map = patch.Map;
-        var trees = 0;
-        foreach (var item in map.GetItemsInRange(patch.Center, TreeCrowding))
-        {
-            if (item is MahaonTreeFoliage or MahaonPlantedSapling && ++trees >= MaxTreesNearby)
-            {
-                return null;
-            }
-        }
-
-        var b = patch.Bounds;
-        for (var attempt = 0; attempt < 12; attempt++)
-        {
-            var x = Utility.RandomBool() ? b.Start.X - 2 : b.End.X + 1;
-            var y = Utility.RandomMinMax(b.Start.Y, b.End.Y);
-            if (Utility.RandomBool())
-            {
-                (x, y) = (Utility.RandomMinMax(b.Start.X, b.End.X), Utility.RandomBool() ? b.Start.Y - 2 : b.End.Y + 1);
-            }
-
-            var z = map.GetAverageZ(x, y);
-            if (map.CanFit(x, y, z, 16) && !Systems.MahaonFarming.MahaonFieldPlots.IsPlotGround(map.Tiles.GetLandTile(x, y).ID))
-            {
-                return new Point3D(x, y, z);
-            }
-        }
-
-        return null;
-    }
 }
 
 /// <summary>Works down a list of plots: plough if it can, then sow one seed in each.</summary>
@@ -214,25 +181,13 @@ public sealed class SowAction : BotAction
             }
         }
 
-        // One seed, not the stack: the seed's planting deletes the item it was used from.
-        var single = seeds.Amount > 1 ? new MahaonCropSeed(seeds.CropType) : seeds;
-        if (single != seeds)
-        {
-            seeds.Consume(1);
-            bot.Backpack.DropItem(single);
-        }
-
-        single.OnDoubleClick(bot);
+        var before = seeds.Amount;
+        seeds.OnDoubleClick(bot);
         bot.Target?.Invoke(bot, new LandTarget(plot, bot.Map));
 
-        if (single.Deleted)
+        if (seeds.Deleted || seeds.Amount < before)
         {
             _sown++;
-        }
-        else
-        {
-            // Refused (no room after all): the seed goes back on the stack.
-            bot.Backpack.TryDropItem(bot, single, false);
         }
 
         _next++;

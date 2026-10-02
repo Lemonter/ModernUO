@@ -50,4 +50,17 @@ public class BotSowTests
             }
         }
     }
+
+    [Fact]
+    public void FindPlot_LaysOutRowsOnOpenGround()
+    {
+        var plot = FarmAtlas.FindPlot(Map.Felucca, new Point3D(2300, 1900, 0), 20, 40, 8);
+
+        Assert.Equal(8, plot.Count);
+        foreach (var p in plot)
+        {
+            Assert.True(FarmAtlas.IsSowable(Map.Felucca, p.X, p.Y, out _));
+            Assert.True(p.GetDistanceToSqrt(new Point3D(2300, 1900, 0)) >= 15);
+        }
+    }
 }

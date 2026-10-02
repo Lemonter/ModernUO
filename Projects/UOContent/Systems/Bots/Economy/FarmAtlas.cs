@@ -117,62 +117,78 @@ public static class FarmAtlas
         return best;
     }
 
-    /// <summary>The field patch nearest a point, ripe or not.</summary>
-    public static FieldPatch NearestField(Map map, Point3D from, int maxRange)
+    /// <summary>
+    /// Whether a bot may sow or plant here: open ground outside towns and houses, not water or
+    /// rock, with nothing standing on it — or ground already ploughed for sowing.
+    /// </summary>
+    public static bool IsSowable(Map map, int x, int y, out int z)
     {
-        FieldPatch best = null;
-        var bestDist = (double)maxRange;
-
-        foreach (var patch in _patches)
+        z = 0;
+        if (x < 0 || y < 0 || x >= map.Width || y >= map.Height)
         {
-            if (patch.Map == map && patch.Center.GetDistanceToSqrt(from) is var dist && dist < bestDist)
-            {
-                bestDist = dist;
-                best = patch;
-            }
+            return false;
         }
 
-        return best;
+        var land = map.Tiles.GetLandTile(x, y);
+        var flags = TileData.LandTable[land.ID & TileData.MaxLandValue].Flags;
+        if ((flags & (TileFlag.Impassable | TileFlag.Wet)) != 0)
+        {
+            return false;
+        }
+
+        z = map.GetAverageZ(x, y);
+        var p = new Point3D(x, y, z);
+        var region = Region.Find(p, map);
+        if (region.IsPartOf<Regions.TownRegion>() || region.IsPartOf<Regions.HouseRegion>() ||
+            region.IsPartOf<Regions.DungeonRegion>() || Multis.BaseHouse.FindHouseAt(p, map, 16) != null)
+        {
+            return false;
+        }
+
+        if (IsTaken(map, x, y))
+        {
+            return false;
+        }
+
+        return MahaonTilledEarth.Find(p, map) != null || map.CanFit(x, y, z, 16);
     }
 
-    // How far past a patch's crops to look for bare farmland.
-    private const int FarmlandMargin = 6;
-
     /// <summary>
-    /// Farmland around a patch that nobody has sown: furrowed ground (the land the map draws as
-    /// a field) with no crop tile and nothing standing on it. Sowing is kept to this land, so the
-    /// fields can't spread over meadows and roads and the number of plots stays the map's own.
+    /// A small field for a bot to sow: up to <paramref name="count"/> sowable tiles side by side,
+    /// somewhere between <paramref name="minDist"/> and <paramref name="maxDist"/> tiles from
+    /// <paramref name="around"/>. Empty when no open ground turns up.
     /// </summary>
-    public static List<Point3D> FreeFarmland(FieldPatch patch, int max)
+    public static List<Point3D> FindPlot(Map map, Point3D around, int minDist, int maxDist, int count)
     {
-        var result = new List<Point3D>();
-        var map = patch.Map;
-        var b = patch.Bounds;
+        var plot = new List<Point3D>();
 
-        for (var y = b.Start.Y - FarmlandMargin; y < b.End.Y + FarmlandMargin && result.Count < max; y++)
+        for (var attempt = 0; attempt < 40 && plot.Count == 0; attempt++)
         {
-            for (var x = b.Start.X - FarmlandMargin; x < b.End.X + FarmlandMargin && result.Count < max; x++)
+            var angle = Utility.RandomDouble() * System.Math.PI * 2;
+            var dist = Utility.RandomMinMax(minDist, maxDist);
+            var cx = around.X + (int)(System.Math.Cos(angle) * dist);
+            var cy = around.Y + (int)(System.Math.Sin(angle) * dist);
+
+            // Rows of four, as a field is laid out.
+            for (var dy = 0; dy < 3 && plot.Count < count; dy++)
             {
-                if (x < 0 || y < 0 || x >= map.Width || y >= map.Height)
+                for (var dx = 0; dx < 4 && plot.Count < count; dx++)
                 {
-                    continue;
+                    if (IsSowable(map, cx + dx, cy + dy, out var z))
+                    {
+                        plot.Add(new Point3D(cx + dx, cy + dy, z));
+                    }
                 }
+            }
 
-                var land = map.Tiles.GetLandTile(x, y);
-                if (!Systems.MahaonFarming.MahaonFieldPlots.IsPlotGround(land.ID) || IsTaken(map, x, y))
-                {
-                    continue;
-                }
-
-                var z = map.GetAverageZ(x, y);
-                if (MahaonTilledEarth.Find(new Point3D(x, y, z), map) != null || map.CanFit(x, y, z, 16))
-                {
-                    result.Add(new Point3D(x, y, z));
-                }
+            // A scrap of ground between rocks is no field.
+            if (plot.Count < count / 2)
+            {
+                plot.Clear();
             }
         }
 
-        return result;
+        return plot;
     }
 
     private static bool IsTaken(Map map, int x, int y)
@@ -187,6 +203,39 @@ public static class FarmAtlas
         }
 
         return false;
+    }
+
+    /// <summary>A spot near <paramref name="near"/> for a tree, with nothing else growing or
+    /// standing within two tiles, so trees don't wall off paths.</summary>
+    public static Point3D? FindTreeSpot(Map map, Point3D near)
+    {
+        for (var attempt = 0; attempt < 16; attempt++)
+        {
+            var x = near.X + Utility.RandomMinMax(-6, 6);
+            var y = near.Y + Utility.RandomMinMax(-6, 6);
+
+            if (!IsSowable(map, x, y, out var z))
+            {
+                continue;
+            }
+
+            var crowded = false;
+            foreach (var item in map.GetItemsInRange(new Point3D(x, y, z), 2))
+            {
+                if (item is MahaonTreeFoliage or MahaonTree or MahaonPlantedSapling or MahaonCropTile || item.Visible && !item.Movable)
+                {
+                    crowded = true;
+                    break;
+                }
+            }
+
+            if (!crowded)
+            {
+                return new Point3D(x, y, z);
+            }
+        }
+
+        return null;
     }
 
     public static bool HasFruit(MahaonTreeFoliage tree) =>
