@@ -66,6 +66,9 @@ public sealed class BotRelationships : GenericPersistence
         BotReputation.OnHelped(other);
     }
 
+    /// <summary>Сказанное боту: вежливость понемногу сближает, грубость отталкивает.</summary>
+    public static void OnSpokenTo(Mobile bot, Mobile other, double delta) => Adjust(bot, other, delta);
+
     private static void Adjust(Mobile bot, Mobile other, double delta)
     {
         if (bot == null || other == null || bot == other)

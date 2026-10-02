@@ -50,6 +50,14 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     // player there are otherwise no live monsters, spawners or AI for them to meet.
     public override bool ActivatesSectors => true;
 
+    public override bool HandlesOnSpeech(Mobile from) => Systems.Bots.BotConversation.Listens(this, from);
+
+    public override void OnSpeech(SpeechEventArgs e)
+    {
+        base.OnSpeech(e);
+        Systems.Bots.BotConversation.Hear(this, e);
+    }
+
 
     /// <summary>
     ///     Единственная надёжная точка для «бота больше нет»: через неё проходит любой

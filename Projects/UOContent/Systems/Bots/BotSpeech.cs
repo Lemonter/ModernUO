@@ -97,6 +97,14 @@ public static class BotSpeech
         return true;
     }
 
+    /// <summary>An answer to a player is never swallowed by the cooldown; it only restarts it so
+    /// idle chatter does not talk over it.</summary>
+    public static void Reply(Mobile bot, string text)
+    {
+        _lastSpoke[bot] = Core.TickCount;
+        bot.Say(text);
+    }
+
     // News older than this is stale; a bot talks about its morning, not last week.
     private const long NewsFreshMs = 2 * 60 * 60_000;
 
