@@ -95,6 +95,23 @@
         "Server.Item",
         "SerializableInterfaceMigrationRule"
       ]
+    },
+    {
+      "name": "Basement",
+      "type": "System.Collections.Generic.List\u003CServer.Item\u003E",
+      "rule": "ListMigrationRule",
+      "ruleArguments": [
+        "Server.Item",
+        "SerializableInterfaceMigrationRule"
+      ]
+    },
+    {
+      "name": "HasBasement",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
     }
   ]
 }

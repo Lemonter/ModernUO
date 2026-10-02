@@ -125,4 +125,52 @@ public class CityHouseTests
             buyer.Delete();
         }
     }
+
+    [Fact]
+    public void Basement_IsDugUnderTheHouse_AndTheHatchLetsOnlyTheHouseholdDown()
+    {
+        var house = NewHouse(3400, 3100);
+        var owner = NewPlayer(new Point3D(3401, 3101, 0));
+        var stranger = NewPlayer(new Point3D(3402, 3101, 0));
+
+        try
+        {
+            owner.BankBox.DropItem(new Gold(house.SalePrice + house.BasementPrice));
+            MahaonCityHouseSystem.TryBuy(owner, house, null);
+            MahaonCityHouseSystem.TryBuyBasement(owner, house);
+
+            Assert.True(house.HasBasement);
+            Assert.Equal(24, house.Tiles.Count);
+            Assert.Same(house, MahaonCityHouseSystem.Find(new Point3D(3401, 3101, -MahaonCityHouse.BasementDepth), Map.Felucca));
+
+            MahaonBasementHatch down = null;
+            foreach (var item in house.Basement)
+            {
+                if (item is MahaonBasementHatch { Z: 0 } hatch)
+                {
+                    down = hatch;
+                }
+            }
+
+            Assert.NotNull(down);
+
+            stranger.MoveToWorld(down.Location, Map.Felucca);
+            down.OnDoubleClick(stranger);
+            Assert.Equal(0, stranger.Z);
+
+            owner.MoveToWorld(down.Location, Map.Felucca);
+            down.OnDoubleClick(owner);
+            Assert.Equal(-MahaonCityHouse.BasementDepth, owner.Z);
+
+            var parts = new List<Item>(house.Basement);
+            house.Delete();
+            Assert.All(parts, p => Assert.True(p.Deleted));
+        }
+        finally
+        {
+            house.Delete();
+            owner.Delete();
+            stranger.Delete();
+        }
+    }
 }

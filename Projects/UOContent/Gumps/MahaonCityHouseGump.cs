@@ -23,7 +23,7 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
         var friendCount = _house.Friends.Count;
         var banCount = _house.Bans.Count;
 
-        var height = 290 + friendCount * 22 + banCount * 22;
+        var height = 320 + friendCount * 22 + banCount * 22;
 
         builder.AddPage();
         builder.AddBackground(0, 0, 360, height, 5054);
@@ -76,6 +76,13 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
         builder.AddHtml(55, y + 2, 250, 20, "Освободить вещь (цель)");
         y += 30;
 
+        if (!_house.HasBasement)
+        {
+            builder.AddButton(20, y, 4005, 4007, 7);
+            builder.AddHtml(55, y + 2, 290, 20, $"Выкопать подвал ({_house.BasementPrice} золота)");
+            y += 30;
+        }
+
         builder.AddButton(20, y, 4017, 4019, 3);
         builder.AddHtml(55, y + 2, 290, 20, $"Продать дом городу ({_house.SalePrice / 2} золота)");
     }
@@ -105,6 +112,10 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
 
             case 3 when isOwnerOrGm:
                 from.SendMessage(0x59, Systems.MahaonWorld.MahaonCityHouseSystem.SellBack(_house, _sign));
+                break;
+
+            case 7 when isOwnerOrGm:
+                from.SendMessage(0x59, Systems.MahaonWorld.MahaonCityHouseSystem.TryBuyBasement(from, _house));
                 break;
 
             case 4 or 5 or 6 when isOwnerOrGm:

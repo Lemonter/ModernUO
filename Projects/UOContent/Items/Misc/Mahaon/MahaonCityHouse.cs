@@ -56,6 +56,13 @@ public partial class MahaonCityHouse : Item
     [SerializableField(10)]
     private List<Item> _addons = [];
 
+    // The cellar bought under the house: its floor, walls and the two hatches.
+    [SerializableField(11)]
+    private List<Item> _basement = [];
+
+    [SerializableField(12)]
+    private bool _hasBasement;
+
     private void MigrateFrom(V0Content content)
     {
         _areaMap = content.AreaMap;
@@ -68,6 +75,7 @@ public partial class MahaonCityHouse : Item
         _lockdowns = [];
         _secures = [];
         _addons = [];
+        _basement = [];
     }
 
     private Systems.MahaonWorld.MahaonCityHouseRegion _region;
@@ -76,6 +84,184 @@ public partial class MahaonCityHouse : Item
 
     /// <summary>What the house costs to buy.</summary>
     public int SalePrice => _price > 0 ? _price : Tiles.Count * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile;
+
+    // ---- Basement --------------------------------------------------------------------------
+
+    /// <summary>How far below the ground floor the cellar lies.</summary>
+    public const int BasementDepth = 50;
+
+    private const int LowestZ = -120;
+    private const int BasementFloorId = 0x0515; // cobblestones, as the town roads are laid
+
+    /// <summary>The ground floor: the tiles at the house's lowest level.</summary>
+    public List<Point3D> GroundTiles()
+    {
+        var minZ = int.MaxValue;
+        foreach (var t in Tiles)
+        {
+            minZ = System.Math.Min(minZ, t.Z);
+        }
+
+        var ground = new List<Point3D>();
+        foreach (var t in Tiles)
+        {
+            if (t.Z - minZ <= ZTolerance)
+            {
+                ground.Add(t);
+            }
+        }
+
+        return ground;
+    }
+
+    /// <summary>A cellar costs half what the ground floor above it does.</summary>
+    public int BasementPrice => GroundTiles().Count * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile / 2;
+
+    /// <summary>
+    /// Digs the cellar: a floor under the whole ground floor <see cref="BasementDepth"/> Z down,
+    /// walls round it, a hatch in the ground floor and a ladder back up. The cellar's tiles join
+    /// the house, so its region, lockdowns and furniture work down there too.
+    /// </summary>
+    public bool BuildBasement()
+    {
+        if (HasBasement || AreaMap == null)
+        {
+            return false;
+        }
+
+        var ground = GroundTiles();
+        if (ground.Count == 0)
+        {
+            return false;
+        }
+
+        var groundZ = ground[0].Z;
+        var z = System.Math.Max(LowestZ, groundZ - BasementDepth);
+        var columns = new HashSet<Point2D>();
+        var cellar = new List<Point3D>();
+
+        foreach (var t in ground)
+        {
+            columns.Add(new Point2D(t.X, t.Y));
+            var floor = new Static(BasementFloorId);
+            floor.MoveToWorld(new Point3D(t.X, t.Y, z), AreaMap);
+            Basement.Add(floor);
+            cellar.Add(new Point3D(t.X, t.Y, z));
+        }
+
+        // Walls on the cells around the floor that nothing else stands in.
+        foreach (var c in columns)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                for (var dy = -1; dy <= 1; dy++)
+                {
+                    var n = new Point2D(c.X + dx, c.Y + dy);
+                    if (columns.Contains(n) || HasItemAt(n, z))
+                    {
+                        continue;
+                    }
+
+                    var wall = new Static(WallFor(columns, n));
+                    wall.MoveToWorld(new Point3D(n.X, n.Y, z), AreaMap);
+                    Basement.Add(wall);
+                }
+            }
+        }
+
+        // The hatch on a free ground-floor cell away from the walls, the ladder below it.
+        var spot = ground[ground.Count / 2];
+        foreach (var t in ground)
+        {
+            if (AreaMap.CanFit(t, 16, false, false) && CountColumns(columns, t) == 9)
+            {
+                spot = t;
+                break;
+            }
+        }
+
+        var down = new MahaonBasementHatch(this, new Point3D(spot.X, spot.Y, z), "люк в подвал");
+        down.MoveToWorld(spot, AreaMap);
+        var up = new MahaonBasementHatch(this, spot, "лестница наверх");
+        up.MoveToWorld(new Point3D(spot.X, spot.Y, z), AreaMap);
+        Basement.Add(down);
+        Basement.Add(up);
+
+        HasBasement = true;
+        AddTiles(cellar);
+        return true;
+    }
+
+    private bool HasItemAt(Point2D p, int z)
+    {
+        foreach (var item in AreaMap.GetItemsAt(p))
+        {
+            if ((item.Z - z).Abs() < 16)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static int CountColumns(HashSet<Point2D> columns, Point3D t)
+    {
+        var count = 0;
+        for (var dx = -1; dx <= 1; dx++)
+        {
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                if (columns.Contains(new Point2D(t.X + dx, t.Y + dy)))
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    // The thin stone wall pieces the yard fences use: a run along the floor's edge, a post where
+    // two runs meet.
+    private static int WallFor(HashSet<Point2D> floor, Point2D p)
+    {
+        var northSouth = floor.Contains(new Point2D(p.X, p.Y - 1)) || floor.Contains(new Point2D(p.X, p.Y + 1));
+        var eastWest = floor.Contains(new Point2D(p.X - 1, p.Y)) || floor.Contains(new Point2D(p.X + 1, p.Y));
+
+        var type = northSouth && !eastWest ? ThinStoneWallTypes.SouthWall :
+            eastWest && !northSouth ? ThinStoneWallTypes.EastWall : ThinStoneWallTypes.CornerPost;
+        return 0x001A + (int)type;
+    }
+
+    private void DeleteBasement()
+    {
+        foreach (var item in Basement)
+        {
+            item?.Delete();
+        }
+
+        Basement.Clear();
+    }
+
+    /// <summary>Takes over a neighbour's cellar when the two houses become one.</summary>
+    public void AdoptBasement(MahaonCityHouse from)
+    {
+        foreach (var item in from.Basement)
+        {
+            if (item is MahaonBasementHatch hatch)
+            {
+                hatch.House = this;
+            }
+
+            Basement.Add(item);
+        }
+
+        from.Basement.Clear();
+        HasBasement |= from.HasBasement;
+        from.HasBasement = false;
+        this.MarkDirty();
+    }
 
     /// <summary>Rebuilds the house's region from its tiles — on load, and whenever the tiles change.</summary>
     public void UpdateRegion()
@@ -416,6 +602,7 @@ public partial class MahaonCityHouse : Item
     {
         ReleaseAll();
         ReturnAddons(Owner);
+        DeleteBasement();
         RemoveFurnitureHiding();
         _region?.Unregister();
         _region = null;

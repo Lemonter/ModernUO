@@ -329,6 +329,7 @@ public static class MahaonCityHouseSystem
         var price = into.SalePrice + joined.SalePrice;
         var tiles = new List<Point3D>(joined.Tiles);
 
+        into.AdoptBasement(joined);
         DeleteSigns(joined);
         joined.Delete();
 
@@ -348,5 +349,37 @@ public static class MahaonCityHouseSystem
                 }
             }
         }
+    }
+
+    /// <summary>Digs a cellar under the owner's house for half the ground floor's price.</summary>
+    public static string TryBuyBasement(Mobile buyer, MahaonCityHouse house)
+    {
+        if (!house.IsOwner(buyer))
+        {
+            return "Подвал может заказать только хозяин дома.";
+        }
+
+        if (house.HasBasement)
+        {
+            return "Подвал у этого дома уже есть.";
+        }
+
+        var price = house.BasementPrice;
+        if (buyer.AccessLevel == AccessLevel.Player && !Banker.Withdraw(buyer, price))
+        {
+            return $"Не хватает золота в банке — подвал стоит {price}.";
+        }
+
+        if (!house.BuildBasement())
+        {
+            if (buyer.AccessLevel == AccessLevel.Player)
+            {
+                Banker.Deposit(buyer, price);
+            }
+
+            return "Подвал здесь не выкопать — деньги вернулись в банк.";
+        }
+
+        return $"Подвал выкопан: люк в полу первого этажа. Списано {price} золота.";
     }
 }

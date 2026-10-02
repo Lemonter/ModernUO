@@ -15,7 +15,8 @@ namespace Server.Systems.MahaonWorld;
 /// marking. Every town door opens onto a room: the floor reached from it, under a roof or on laid
 /// floor, without crossing a wall or another door, is one apartment — provided it closes off (it
 /// doesn't spill out into the street) and nobody works there: a room with a vendor or a spawner,
-/// or a house's own, is left alone. Ground floors only.
+/// or a house's own, is left alone. Upper floors up the stairs and balconies behind upstairs doors
+/// are part of the same home.
 ///
 ///   [GenCityHouses — runs it over every town; safe to run again, rooms already marked are skipped.
 ///
@@ -26,7 +27,7 @@ public static class MahaonCityHouseGenerator
     private static readonly ILogger logger = LogFactory.GetLogger(typeof(MahaonCityHouseGenerator));
 
     private const int MinTiles = 6;
-    private const int MaxTiles = 300;
+    private const int MaxTiles = 400;
     private const int RoofSearch = 40;
 
     private const string AutoSetting = "cityHouses.autoGenerate";
@@ -121,30 +122,43 @@ public static class MahaonCityHouseGenerator
         return false;
     }
 
-    /// <summary>The room behind a door, or null when the floor spills outside, is too small or
-    /// too big to be a room.</summary>
+    // A step between surfaces: floors match, stairs climb a few Z per tile.
+    private const int MaxClimb = 7;
+
+    // Doors this high above the ground are inside the building — to a balcony, between upstairs
+    // rooms — and are walked through; doors on the ground floor bound the home.
+    private const int UpperFloorDoor = 10;
+
+    /// <summary>
+    /// The home behind a door, every floor of it, or null when it spills into the street or is
+    /// too small or too big. Walks from surface to surface like a walker: across the floor, up
+    /// and down the stairs, through upstairs doors onto a balcony — never through a wall or a
+    /// ground-floor door. Furniture is walked over: the floor runs on under it.
+    /// </summary>
     private static List<Point3D> Flood(Map map, Point2D seed, BaseDoor door)
     {
-        if (!IsIndoors(map, seed.X, seed.Y, out _))
+        var start = ClosestSurface(map, seed.X, seed.Y, door.Z);
+        if (start == null || IsStreet(map, seed.X, seed.Y, start.Value))
         {
             return null;
         }
 
         var room = new List<Point3D>();
-        var seen = new HashSet<Point2D> { seed, new(door.X, door.Y) };
-        var queue = new Queue<Point2D>();
-        queue.Enqueue(seed);
+        var first = new Point3D(seed.X, seed.Y, start.Value);
+        var seen = new HashSet<Point3D> { first };
+        var queue = new Queue<Point3D>();
+        queue.Enqueue(first);
 
         while (queue.Count > 0)
         {
             var p = queue.Dequeue();
 
-            if (!IsIndoors(map, p.X, p.Y, out var floorZ))
+            if (IsStreet(map, p.X, p.Y, p.Z))
             {
-                return null; // reached the street: not a closed room
+                return null; // reached the street: not a closed home
             }
 
-            room.Add(new Point3D(p.X, p.Y, floorZ));
+            room.Add(p);
             if (room.Count > MaxTiles)
             {
                 return null;
@@ -154,9 +168,18 @@ public static class MahaonCityHouseGenerator
             Span<Point2D> next = [new(p.X + 1, p.Y), new(p.X - 1, p.Y), new(p.X, p.Y + 1), new(p.X, p.Y - 1)];
             foreach (var n in next)
             {
-                if (seen.Add(n) && !IsWall(map, n.X, n.Y, floorZ) && !HasDoor(map, n))
+                if (n.X == door.X && n.Y == door.Y || IsWall(map, n.X, n.Y, p.Z) || IsBoundingDoor(map, n))
                 {
-                    queue.Enqueue(n);
+                    continue;
+                }
+
+                if (ClosestSurface(map, n.X, n.Y, p.Z) is { } z && (z - p.Z).Abs() <= MaxClimb)
+                {
+                    var node = new Point3D(n.X, n.Y, z);
+                    if (seen.Add(node))
+                    {
+                        queue.Enqueue(node);
+                    }
                 }
             }
         }
@@ -164,31 +187,76 @@ public static class MahaonCityHouseGenerator
         return room.Count >= MinTiles ? room : null;
     }
 
-    /// <summary>Under a roof or on laid floor: inside a building. The floor height is the top of the
-    /// floor tile, or the ground's.</summary>
-    private static bool IsIndoors(Map map, int x, int y, out int floorZ)
+    /// <summary>The standing height in a column nearest <paramref name="z"/>: the ground, or the
+    /// top of a floor or stair tile.</summary>
+    private static int? ClosestSurface(Map map, int x, int y, int z)
     {
         var land = map.Tiles.GetLandTile(x, y);
-        floorZ = land.Z;
-        var floor = false;
-        var roof = false;
+        var landFlags = TileData.LandTable[land.ID & TileData.MaxLandValue].Flags;
+
+        int? best = null;
+        if ((landFlags & (TileFlag.Impassable | TileFlag.Wet)) == 0)
+        {
+            best = land.Z;
+        }
+
+        foreach (var tile in map.Tiles.GetStaticTiles(x, y))
+        {
+            var data = TileData.ItemTable[tile.ID & TileData.MaxItemValue];
+            if (!data.Surface || data.Impassable || data.Wet)
+            {
+                continue;
+            }
+
+            var top = tile.Z + data.CalcHeight;
+            if (best == null || (top - z).Abs() < (best.Value - z).Abs())
+            {
+                best = top;
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>The open street: ground level, no roof over it and no floor laid on it. A
+    /// balcony or a roof terrace is open too, but up off the ground, and belongs to the house.</summary>
+    private static bool IsStreet(Map map, int x, int y, int z)
+    {
+        var land = map.Tiles.GetLandTile(x, y);
+        if (z - land.Z > 5)
+        {
+            return false;
+        }
 
         foreach (var tile in map.Tiles.GetStaticTiles(x, y))
         {
             var data = TileData.ItemTable[tile.ID & TileData.MaxItemValue];
 
-            if (data.Roof && tile.Z > land.Z && tile.Z - land.Z <= RoofSearch)
+            if (data.Roof && tile.Z > z && tile.Z - z <= RoofSearch)
             {
-                roof = true;
+                return false;
             }
-            else if (data.Surface && !data.Impassable && data.Height <= 1 && tile.Z >= land.Z - 1 && tile.Z - land.Z <= 5)
+
+            if (data.Surface && !data.Impassable && data.Height <= 1 && (tile.Z + data.CalcHeight - z).Abs() <= 2)
             {
-                floor = true;
-                floorZ = tile.Z + data.CalcHeight;
+                return false;
             }
         }
 
-        return floor || roof;
+        return true;
+    }
+
+    private static bool IsBoundingDoor(Map map, Point2D p)
+    {
+        foreach (var door in map.GetItemsAt<BaseDoor>(p))
+        {
+            if (door.Z - map.Tiles.GetLandTile(p.X, p.Y).Z < UpperFloorDoor)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsWall(Map map, int x, int y, int floorZ)
@@ -200,16 +268,6 @@ public static class MahaonCityHouseGenerator
             {
                 return true;
             }
-        }
-
-        return false;
-    }
-
-    private static bool HasDoor(Map map, Point2D p)
-    {
-        foreach (var _ in map.GetItemsAt<BaseDoor>(p))
-        {
-            return true;
         }
 
         return false;
