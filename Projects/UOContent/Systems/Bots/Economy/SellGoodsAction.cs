@@ -46,7 +46,10 @@ public sealed class SellGoodsAction : BotAction
             return BotActionResult.Done();
         }
 
-        if (_visits < MaxVendorVisits && NextBuyer(bot) is { } vendor)
+        // Room freed by the last sale is filled from the pack animal, so one round empties it.
+        BotStable.Unload(bot);
+
+        if (_visits < MaxVisits(bot) && NextBuyer(bot) is { } vendor)
         {
             _visits++;
             _step = new Sequence(new GoToAction(vendor, 2, $"к торговцу {vendor.Name}"), new SellToVendorAction(vendor));
@@ -67,6 +70,8 @@ public sealed class SellGoodsAction : BotAction
         _step.Start(brain);
         return BotActionResult.Running(250);
     }
+
+    private static int MaxVisits(PlayerMobile bot) => BotStable.PackAnimal(bot) != null ? MaxVendorVisits * 2 : MaxVendorVisits;
 
     private BaseVendor NextBuyer(Mobile bot)
     {

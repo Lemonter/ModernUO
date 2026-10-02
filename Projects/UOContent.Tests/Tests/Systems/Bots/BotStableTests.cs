@@ -81,6 +81,31 @@ public class BotStableTests
     }
 
     [Fact]
+    public void Unload_TakesOnlyWhatFits_SplittingTheStack()
+    {
+        var bot = NewBot(new Point3D(1915, 1800, 0));
+        var llama = NewLlama(bot);
+        try
+        {
+            var total = (int)(bot.MaxWeight * 3 / 0.5);
+            llama.Backpack.DropItem(new MahaonOre(MahaonMetal.Iron, total));
+
+            Assert.True(BotStable.Unload(bot) > 0);
+
+            var carried = bot.Backpack.GetAmount(typeof(MahaonOre));
+            Assert.True(carried > 0);
+            Assert.Equal(total, carried + llama.Backpack.GetAmount(typeof(MahaonOre)));
+            Assert.True(Mobile.BodyWeight + bot.TotalWeight <= bot.MaxWeight);
+            Assert.True(Mobile.BodyWeight + bot.TotalWeight > bot.MaxWeight - 12);
+        }
+        finally
+        {
+            bot.Delete();
+            llama.Delete();
+        }
+    }
+
+    [Fact]
     public void StableGoal_HorseFirst_ThenPackAnimalForHaulers()
     {
         var bot = NewBot(new Point3D(1920, 1800, 0));

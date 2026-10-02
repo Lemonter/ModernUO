@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Server.Items;
 using Server.Mobiles;
 
@@ -143,29 +144,64 @@ public static class BotStable
         return moved;
     }
 
-    /// <summary>Brings the goods back off the pack animal, as much as the bot can carry: a vendor
-    /// buys only from the seller's own pack.</summary>
-    public static void Unload(PlayerMobile bot)
+    /// <summary>
+    /// Brings goods back off the pack animal, as much as the bot can carry: a vendor buys only from
+    /// the seller's own pack. The bot works out what fits — the most valuable goods for their
+    /// weight first, splitting a stack when only part of it fits. Returns how many items moved.
+    /// </summary>
+    public static int Unload(PlayerMobile bot)
     {
         if (ReachablePack(bot, 3) is not { } pack || bot.Backpack is not { } own)
         {
-            return;
+            return 0;
         }
 
-        for (var i = pack.Items.Count - 1; i >= 0; i--)
+        var goods = new List<Item>();
+        foreach (var item in pack.Items)
         {
-            var item = pack.Items[i];
-            if (Mobile.BodyWeight + bot.TotalWeight + item.TotalWeight > bot.MaxWeight - 10)
+            if (BotGoods.IsForSale(bot, item))
+            {
+                goods.Add(item);
+            }
+        }
+
+        goods.Sort((a, b) => ValueDensity(b).CompareTo(ValueDensity(a)));
+
+        var moved = 0;
+        foreach (var item in goods)
+        {
+            var room = bot.MaxWeight - 10 - Mobile.BodyWeight - bot.TotalWeight;
+            var unit = item.Weight;
+            if (room <= 0)
+            {
+                break;
+            }
+
+            // TotalWeight is only what an item contains; its own weight is the pile.
+            if (unit <= 0 || item.PileWeight + item.TotalWeight <= room)
+            {
+                own.DropItem(item);
+                moved++;
+                continue;
+            }
+
+            var fit = (int)(room / unit);
+            if (!item.Stackable || fit <= 0)
             {
                 continue;
             }
 
-            if (BotGoods.IsForSale(bot, item))
-            {
-                own.DropItem(item);
-            }
+            // The remainder stays on the animal as its own stack; the part that fits comes over.
+            Mobile.LiftItemDupe(item, fit);
+            own.DropItem(item);
+            moved++;
         }
+
+        return moved;
     }
+
+    private static double ValueDensity(Item item) =>
+        item.Weight > 0 ? BotGoods.BaseUnitPrice(item) / item.Weight : double.MaxValue;
 
     private static void Feed(PlayerMobile bot, BaseCreature pet)
     {
