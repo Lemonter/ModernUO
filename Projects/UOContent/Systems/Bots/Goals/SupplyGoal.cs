@@ -47,6 +47,12 @@ public sealed class SupplyGoal : BotGoal
             }
         }
 
+        // A tailor cuts its bolts and hides before sewing.
+        if (BotCrafting.IsTailor(brain.Bot) && brain.Bot.Backpack?.FindItemByType<Scissors>() == null)
+        {
+            return typeof(Scissors);
+        }
+
         return null;
     }
 
@@ -124,6 +130,14 @@ public sealed class SupplyGoal : BotGoal
 
         if (BotStable.TryNeededFood(bot, out type, out amount))
         {
+            return true;
+        }
+
+        // A tailor with nothing to sew buys cloth; leather comes from its own hunting.
+        if (BotCrafting.IsTailor(bot) && pack.GetAmount(typeof(Cloth)) + pack.GetAmount(typeof(BoltOfCloth)) * 50 +
+            pack.GetAmount(typeof(BaseLeather)) < 30)
+        {
+            (type, amount) = (typeof(Cloth), 60);
             return true;
         }
 

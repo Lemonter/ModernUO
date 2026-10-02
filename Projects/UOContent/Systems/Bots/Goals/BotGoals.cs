@@ -21,6 +21,7 @@ public static class BotGoals
     public static readonly CraftGoal Tinkering = new(1);
     public static readonly CraftGoal Carpentry = new(2);
     public static readonly CraftGoal Bowcraft = new(3);
+    public static readonly CraftGoal Tailoring = new(4);
     public static readonly HuntGoal Hunt = new();
     public static readonly CorpseRunGoal CorpseRun = new();
     public static readonly TameGoal Tame = new();
@@ -36,5 +37,5 @@ public static class BotGoals
     public static readonly BuildHouseGoal BuildHouse = new();
     public static readonly FurnishGoal Furnish = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish];
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish];
 }

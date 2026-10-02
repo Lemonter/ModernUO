@@ -1,3 +1,4 @@
+using Server.Items;
 using Server.Engines.Craft;
 
 namespace Server.Systems.Bots;
@@ -55,4 +56,37 @@ public sealed class CraftAction : BotAction
     }
 
     public override string Describe(BotBrain brain) => $"Ремесло ({_system.MainSkill}): {_made}/{_batch}";
+}
+
+/// <summary>Cuts a tailor's bolts of cloth and hides with scissors, through their own
+/// scissoring: bolts into cloth, hides into leather.</summary>
+public sealed class CutMaterialsAction : BotAction
+{
+    public override BotActionResult Tick(BotBrain brain)
+    {
+        var bot = brain.Bot;
+        var pack = bot.Backpack;
+        if (pack?.FindItemByType<Scissors>() is not { } scissors)
+        {
+            return BotActionResult.Done();
+        }
+
+        var uncut = new System.Collections.Generic.List<Item>();
+        foreach (var item in pack.Items)
+        {
+            if (item is BoltOfCloth or BaseHides or UncutCloth)
+            {
+                uncut.Add(item);
+            }
+        }
+
+        foreach (var item in uncut)
+        {
+            ((IScissorable)item).Scissor(bot, scissors);
+        }
+
+        return BotActionResult.Done(uncut.Count > 0 ? 1500 : 0);
+    }
+
+    public override string Describe(BotBrain brain) => "Режет ткань и шкуры";
 }

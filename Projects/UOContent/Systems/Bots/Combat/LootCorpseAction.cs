@@ -40,6 +40,12 @@ public sealed class LootCorpseAction : BotAction
         var own = _corpse.Owner == bot;
         var take = new List<Item>();
 
+        // Skin the kill first, as a hunter with a blade does: the hides fall into the corpse.
+        if (!own && !_corpse.Carved && _corpse.Owner is BaseCreature { Hides: > 0 } && Blade(bot) is { } blade)
+        {
+            _corpse.Carve(bot, blade);
+        }
+
         foreach (var item in _corpse.Items)
         {
             if (own || item is Gold || IsWorthTaking(item))
@@ -73,10 +79,14 @@ public sealed class LootCorpseAction : BotAction
     }
 
     /// <summary>Anything with resale value that isn't trash: arms, armour, jewellery, gems,
-    /// reagents, scrolls.</summary>
+    /// reagents, scrolls, hides.</summary>
     private static bool IsWorthTaking(Item item) =>
         item.Movable && item.LootType != LootType.Blessed &&
-        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll || Gems.Contains(item.GetType()));
+        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll or BaseHides || Gems.Contains(item.GetType()));
+
+    /// <summary>Something to skin with: the blade in hand, or a knife in the pack.</summary>
+    private static Item Blade(Mobile bot) =>
+        bot.Weapon is BaseSword or BaseKnife or BaseAxe ? (Item)bot.Weapon : bot.Backpack?.FindItemByType<BaseKnife>();
 
     private static readonly HashSet<System.Type> Gems =
     [

@@ -53,7 +53,8 @@ public static class BotGoods
     /// what it crafted.</summary>
     public static bool IsForSale(Mobile bot, Item item) =>
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) || IsProduct(bot, item) ||
-        IsFarmGood(item) && IsCarried(bot, item) && !KeepsAsFood(bot, item) && !WeaveGoal.KeepsForWeaving(bot, item) ||
+        IsFarmGood(item) && IsCarried(bot, item) && !KeepsAsFood(bot, item) && !WeaveGoal.KeepsForWeaving(bot, item) &&
+        !BotCrafting.KeepsForCraft(bot, item) ||
         bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item);
 
     public static int BaseUnitPrice(Item item) => item switch
@@ -67,6 +68,9 @@ public static class BotGoods
         MahaonCoal        => 4,
         Cotton or Flax    => 40,
         SpoolOfThread     => 8,
+        BaseHides         => 2,
+        BaseLeather       => 3,
+        Cloth or UncutCloth => 1,
         BoltOfCloth       => 45,
         WheatSheaf        => 2,
         Food              => 2,

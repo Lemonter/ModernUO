@@ -15,12 +15,18 @@ public readonly record struct BotCraftChoice(CraftItem Item, Type ResourceType, 
 /// </summary>
 public static class BotCrafting
 {
-    /// <summary>Crafts whose inputs bots produce themselves: metal for the smith and the tinker,
-    /// wood for the carpenter and the bowyer.</summary>
+    /// <summary>Crafts whose inputs bots produce or buy: metal for the smith and the tinker, wood
+    /// for the carpenter and the bowyer, cloth and leather for the tailor.</summary>
     public static CraftSystem[] Systems =>
     [
-        DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem
+        DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem,
+        DefTailoring.CraftSystem
     ];
+
+    public static bool IsTailor(Mobile bot) => DefTailoring.CraftSystem is { } system && IsCrafter(bot, system);
+
+    /// <summary>A tailor's material, cut or still to be cut.</summary>
+    public static bool IsTailoringMaterial(Item item) => item is Cloth or UncutCloth or BoltOfCloth or BaseLeather or BaseHides;
 
     // Below this a bot doesn't think of itself as a crafter of that kind.
     public const double CrafterSkill = 20.0;
@@ -49,6 +55,11 @@ public static class BotCrafting
     /// <summary>Whether this good is the bot's own craft material and should stay in the pack.</summary>
     public static bool KeepsForCraft(Mobile bot, Item item)
     {
+        if (IsTailoringMaterial(item))
+        {
+            return IsTailor(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
         var metal = item is MahaonIngot;
         var wood = item is Log or Board;
 
@@ -109,6 +120,11 @@ public static class BotCrafting
         if (system == DefCarpentry.CraftSystem)
         {
             return typeof(Saw);
+        }
+
+        if (system == DefTailoring.CraftSystem)
+        {
+            return typeof(SewingKit);
         }
 
         return typeof(FletcherTools);
@@ -291,5 +307,6 @@ public static class BotCrafting
     private static int ResourceUnitPrice(Type type) =>
         typeof(IronIngot).IsAssignableFrom(type) || type == typeof(MahaonIngot) ? 10 :
         typeof(Board).IsAssignableFrom(type) ? 6 :
-        typeof(Log).IsAssignableFrom(type) ? 3 : 2;
+        typeof(Log).IsAssignableFrom(type) ? 3 :
+        typeof(BaseLeather).IsAssignableFrom(type) ? 3 : 2;
 }

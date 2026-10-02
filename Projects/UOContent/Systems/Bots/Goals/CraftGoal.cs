@@ -60,6 +60,11 @@ public sealed class CraftGoal : BotGoal
             }
         }
 
+        if (System == DefTailoring.CraftSystem)
+        {
+            steps.Add(new CutMaterialsAction());
+        }
+
         steps.Add(new CraftAction(System, 5 + brain.Diligence / 10));
         return steps;
     }
