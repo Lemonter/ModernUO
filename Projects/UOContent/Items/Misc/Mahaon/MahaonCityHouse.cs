@@ -11,7 +11,7 @@ namespace Server.Items;
 ///     placeable Multi; these buildings are permanent map architecture, not something a
 ///     player's house deed could ever place).
 /// </summary>
-[SerializationGenerator(0, false)]
+[SerializationGenerator(1, false)]
 public partial class MahaonCityHouse : Item
 {
     // How close a player's actual Z needs to be to a marked tile's Z to count as "standing
@@ -40,6 +40,53 @@ public partial class MahaonCityHouse : Item
 
     [SerializableField(6)]
     private List<uint> _furnitureOverrideIds;
+
+    // Purchase price; 0 means priced by floor area (MahaonCityHouseSystem.PricePerTile).
+    [SerializableField(7)]
+    private int _price;
+
+    // Items fixed in place, and containers locked for the household.
+    [SerializableField(8)]
+    private List<Item> _lockdowns = [];
+
+    [SerializableField(9)]
+    private List<Item> _secures = [];
+
+    private void MigrateFrom(V0Content content)
+    {
+        _areaMap = content.AreaMap;
+        _tiles = content.Tiles ?? [];
+        _label = content.Label;
+        _owner = content.Owner;
+        _friends = content.Friends ?? [];
+        _bans = content.Bans ?? [];
+        _furnitureOverrideIds = content.FurnitureOverrideIds ?? [];
+        _lockdowns = [];
+        _secures = [];
+    }
+
+    private Systems.MahaonWorld.MahaonCityHouseRegion _region;
+
+    public Systems.MahaonWorld.MahaonCityHouseRegion Region => _region;
+
+    /// <summary>What the house costs to buy.</summary>
+    public int SalePrice => _price > 0 ? _price : Tiles.Count * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile;
+
+    /// <summary>Rebuilds the house's region from its tiles — on load, and whenever the tiles change.</summary>
+    public void UpdateRegion()
+    {
+        _region?.Unregister();
+        _region = null;
+
+        if (AreaMap != null && Tiles.Count > 0 && !Deleted)
+        {
+            _region = new Systems.MahaonWorld.MahaonCityHouseRegion(this);
+            _region.Register();
+        }
+    }
+
+    [AfterDeserialization]
+    private void AfterDeserialization() => Timer.DelayCall(UpdateRegion);
 
     [Constructible]
     public MahaonCityHouse(Map map, List<Point3D> tiles, string label) : base(0x1F14)
@@ -94,6 +141,133 @@ public partial class MahaonCityHouse : Item
         return false;
     }
 
+    /// <summary>A marked tile in this column within <paramref name="zRange"/> of <paramref name="z"/>.</summary>
+    public bool HasTileNear(int x, int y, int z, int zRange)
+    {
+        foreach (var tile in Tiles)
+        {
+            if (tile.X == x && tile.Y == y && (tile.Z - z).Abs() <= zRange)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>How many items the house may hold fixed: three per tile of floor.</summary>
+    public int MaxLockdowns => Tiles.Count * 3;
+
+    public int LockdownCount
+    {
+        get
+        {
+            Lockdowns.RemoveAll(i => i?.Deleted != false);
+            Secures.RemoveAll(i => i?.Deleted != false);
+            return Lockdowns.Count + Secures.Count;
+        }
+    }
+
+    public bool IsLockedDown(Item item) => Lockdowns.Contains(item) || Secures.Contains(item);
+
+    /// <summary>Fixes an item on the floor in place, or locks a container for the household.
+    /// Returns a message either way.</summary>
+    public string LockDown(Mobile m, Item item, bool secure)
+    {
+        if (!IsOwner(m))
+        {
+            return "Закреплять вещи может только хозяин.";
+        }
+
+        if (item.Parent != null || !Contains(item.Location, item.Map))
+        {
+            return "Вещь должна лежать на полу внутри дома.";
+        }
+
+        if (!item.Movable || IsLockedDown(item))
+        {
+            return "Это уже закреплено.";
+        }
+
+        if (secure && item is not Container)
+        {
+            return "Под замок можно поставить только сундук или ящик.";
+        }
+
+        if (LockdownCount >= MaxLockdowns)
+        {
+            return $"В доме уже закреплено всё, что можно: {MaxLockdowns}.";
+        }
+
+        item.Movable = false;
+
+        if (secure)
+        {
+            item.IsSecure = true;
+            Secures.Add(item);
+        }
+        else
+        {
+            item.IsLockedDown = true;
+            Lockdowns.Add(item);
+        }
+
+        this.MarkDirty();
+        return secure ? "Сундук под замком: открыть его смогут хозяин и друзья." : "Вещь закреплена.";
+    }
+
+    public string Release(Mobile m, Item item)
+    {
+        if (!IsOwner(m))
+        {
+            return "Освобождать вещи может только хозяин.";
+        }
+
+        if (!IsLockedDown(item))
+        {
+            return "Это не закреплено.";
+        }
+
+        ReleaseItem(item);
+        return "Вещь освобождена.";
+    }
+
+    private void ReleaseItem(Item item)
+    {
+        Lockdowns.Remove(item);
+        Secures.Remove(item);
+        item.IsLockedDown = false;
+        item.IsSecure = false;
+        item.Movable = true;
+        this.MarkDirty();
+    }
+
+    /// <summary>Lets go of everything fixed in the house — when it changes hands or is given up.</summary>
+    public void ReleaseAll()
+    {
+        foreach (var item in new List<Item>(Lockdowns))
+        {
+            if (item?.Deleted == false)
+            {
+                ReleaseItem(item);
+            }
+        }
+
+        foreach (var item in new List<Item>(Secures))
+        {
+            if (item?.Deleted == false)
+            {
+                ReleaseItem(item);
+            }
+        }
+
+        Lockdowns.Clear();
+        Secures.Clear();
+    }
+
+    /// <summary>Whether <paramref name="m"/> may open or use a fixed item of the house.</summary>
+    public bool CanAccess(Mobile m, Item item) => !IsLockedDown(item) || IsFriend(m);
+
     public bool IsOwner(Mobile m) => m != null && (m == Owner || m.AccessLevel >= AccessLevel.GameMaster);
 
     public bool IsFriend(Mobile m) => m != null && (IsOwner(m) || Friends.Contains(m));
@@ -102,7 +276,11 @@ public partial class MahaonCityHouse : Item
 
     public override void OnDelete()
     {
+        ReleaseAll();
         RemoveFurnitureHiding();
+        _region?.Unregister();
+        _region = null;
+        Systems.MahaonWorld.MahaonCityHouseSystem.Unregister(this);
         base.OnDelete();
     }
 

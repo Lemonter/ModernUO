@@ -21,7 +21,7 @@ public partial class MahaonCityHouseSign : Item
     public void RefreshName()
     {
         Name = House?.Owner == null
-            ? $"{House?.Label} (свободно — кликни, чтобы заявить права)"
+            ? $"{House?.Label} (продаётся: {House?.SalePrice} золота)"
             : $"{House?.Label} — дом {House.Owner.Name}";
     }
 
@@ -69,11 +69,11 @@ public class MahaonCityHouseClaimGump : StaticGump<MahaonCityHouseClaimGump>
         builder.AddBackground(0, 0, 320, 150, 5054);
         builder.AddAlphaRegion(10, 10, 300, 130);
 
-        builder.AddHtml(20, 15, 280, 20, $"«{_house.Label}» — дом свободен");
-        builder.AddHtml(20, 42, 280, 40, "Заявить права на этот дом? Ты станешь владельцем и сможешь управлять доступом друзей.");
+        builder.AddHtml(20, 15, 280, 20, $"«{_house.Label}» — дом продаётся");
+        builder.AddHtml(20, 42, 280, 40, $"Площадь {_house.Tiles.Count} плиток, цена {_house.SalePrice} золота (из банка). Один городской дом на аккаунт.");
 
         builder.AddButton(20, 95, 4005, 4007, 1);
-        builder.AddHtml(55, 97, 200, 20, "Заявить права");
+        builder.AddHtml(55, 97, 200, 20, "Купить");
 
         builder.AddButton(20, 120, 4017, 4019, 0);
         builder.AddHtml(55, 122, 200, 20, "Отмена");
@@ -88,11 +88,9 @@ public class MahaonCityHouseClaimGump : StaticGump<MahaonCityHouseClaimGump>
             return;
         }
 
-        if (info.ButtonID == 1 && _house.Owner == null)
+        if (info.ButtonID == 1)
         {
-            _house.Owner = from;
-            _sign.RefreshName();
-            from.SendMessage(0x59, $"Теперь ты владелец дома «{_house.Label}».");
+            from.SendMessage(0x59, Systems.MahaonWorld.MahaonCityHouseSystem.TryBuy(from, _house, _sign));
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "version": 0,
+  "type": "Server.Items.MahaonCityHouseSign",
+  "properties": [
+    {
+      "name": "House",
+      "type": "Server.Items.MahaonCityHouse",
+      "rule": "SerializableInterfaceMigrationRule"
+    }
+  ]
+}

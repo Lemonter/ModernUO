@@ -23,7 +23,7 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
         var friendCount = _house.Friends.Count;
         var banCount = _house.Bans.Count;
 
-        var height = 200 + friendCount * 22 + banCount * 22;
+        var height = 290 + friendCount * 22 + banCount * 22;
 
         builder.AddPage();
         builder.AddBackground(0, 0, 360, height, 5054);
@@ -61,8 +61,23 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
         builder.AddHtml(55, y + 2, 250, 20, "Забанить игрока (цель)");
         y += 34;
 
+        builder.AddHtml(20, y, 320, 20, $"Закреплено: {_house.LockdownCount} из {_house.MaxLockdowns}");
+        y += 22;
+
+        builder.AddButton(20, y, 4005, 4007, 4);
+        builder.AddHtml(55, y + 2, 250, 20, "Закрепить вещь (цель)");
+        y += 24;
+
+        builder.AddButton(20, y, 4005, 4007, 5);
+        builder.AddHtml(55, y + 2, 250, 20, "Сундук под замок (цель)");
+        y += 24;
+
+        builder.AddButton(20, y, 4005, 4007, 6);
+        builder.AddHtml(55, y + 2, 250, 20, "Освободить вещь (цель)");
+        y += 30;
+
         builder.AddButton(20, y, 4017, 4019, 3);
-        builder.AddHtml(55, y + 2, 250, 20, "Отказаться от дома");
+        builder.AddHtml(55, y + 2, 290, 20, $"Продать дом городу ({_house.SalePrice / 2} золота)");
     }
 
     public override void OnResponse(NetState sender, in RelayInfo info)
@@ -89,10 +104,12 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
                 break;
 
             case 3 when isOwnerOrGm:
-                _house.Owner = null;
-                _house.Friends.Clear();
-                _sign.RefreshName();
-                from.SendMessage(0x59, $"Ты больше не владелец «{_house.Label}».");
+                from.SendMessage(0x59, Systems.MahaonWorld.MahaonCityHouseSystem.SellBack(_house, _sign));
+                break;
+
+            case 4 or 5 or 6 when isOwnerOrGm:
+                from.SendMessage(info.ButtonID == 6 ? "Укажи закреплённую вещь." : "Укажи вещь на полу дома.");
+                from.Target = new LockdownTarget(_house, this, info.ButtonID);
                 break;
 
             default:
@@ -177,6 +194,39 @@ public class MahaonCityHouseGump : StaticGump<MahaonCityHouseGump>
                 from.SendMessage(0x59, $"{target.Name} забанен.");
             }
 
+            // Out the door, onto the street by the sign.
+            if (_house.Contains(target.Location, target.Map) && _gump._sign is { Deleted: false } sign)
+            {
+                target.MoveToWorld(sign.Location, sign.Map);
+            }
+
+            from.SendGump(new MahaonCityHouseGump(_house, _gump._sign));
+        }
+    }
+
+    private class LockdownTarget : Target
+    {
+        private readonly MahaonCityHouse _house;
+        private readonly MahaonCityHouseGump _gump;
+        private readonly int _mode;
+
+        public LockdownTarget(MahaonCityHouse house, MahaonCityHouseGump gump, int mode) : base(12, false, TargetFlags.None)
+        {
+            _house = house;
+            _gump = gump;
+            _mode = mode;
+        }
+
+        protected override void OnTarget(Mobile from, object targeted)
+        {
+            if (targeted is not Item item)
+            {
+                from.SendMessage(0x22, "Нужно указать вещь.");
+                return;
+            }
+
+            var message = _mode == 6 ? _house.Release(from, item) : _house.LockDown(from, item, _mode == 5);
+            from.SendMessage(0x59, message);
             from.SendGump(new MahaonCityHouseGump(_house, _gump._sign));
         }
     }

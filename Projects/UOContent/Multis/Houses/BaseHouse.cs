@@ -1398,7 +1398,10 @@ namespace Server.Multis
 
             if (house == null)
             {
-                return true;
+                // A city apartment's fixed containers open for its household only.
+                return item.Parent != null ||
+                       Systems.MahaonWorld.MahaonCityHouseSystem.Find(item.Location, item.Map) is not { } city ||
+                       city.CanAccess(m, item);
             }
 
             var res = house.CheckSecureAccess(m, item);

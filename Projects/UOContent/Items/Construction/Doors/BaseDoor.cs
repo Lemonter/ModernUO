@@ -323,6 +323,13 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
 
     public virtual void Use(Mobile from)
     {
+        // A city apartment's door keeps strangers out once someone owns it.
+        if (!_open && Systems.MahaonWorld.MahaonCityHouseSystem.DoorBlocks(this, from))
+        {
+            from.LocalOverheadMessage(MessageType.Regular, 0x3B2, 502503); // That is locked.
+            return;
+        }
+
         if (Locked && !_open && UseLocks())
         {
             if (from.AccessLevel >= AccessLevel.GameMaster)
