@@ -90,4 +90,39 @@ public class CityHouseTests
             door.Delete();
         }
     }
+
+    [Fact]
+    public void AdjoiningPurchase_Merges_AndTilesCanBeTakenOff()
+    {
+        var house = NewHouse(3200, 3100);
+        var neighbour = NewHouse(3204, 3100);
+        var buyer = NewPlayer(new Point3D(3199, 3100, 0));
+
+        try
+        {
+            buyer.BankBox.DropItem(new Gold(house.SalePrice + neighbour.SalePrice));
+            MahaonCityHouseSystem.TryBuy(buyer, house, null);
+            MahaonCityHouseSystem.TryBuy(buyer, neighbour, null);
+
+            Assert.True(neighbour.Deleted);
+            Assert.Equal(24, house.Tiles.Count);
+            Assert.Same(house, MahaonCityHouseSystem.Find(new Point3D(3206, 3101, 0), Map.Felucca));
+
+            var chest = new WoodenChest();
+            chest.MoveToWorld(new Point3D(3206, 3101, 0), Map.Felucca);
+            house.LockDown(buyer, chest, false);
+            Assert.False(chest.Movable);
+
+            house.RemoveTiles([new Point3D(3206, 3101, 0)]);
+            Assert.True(chest.Movable);
+            Assert.Null(MahaonCityHouseSystem.Find(new Point3D(3206, 3101, 0), Map.Felucca));
+            chest.Delete();
+        }
+        finally
+        {
+            house.Delete();
+            neighbour.Delete();
+            buyer.Delete();
+        }
+    }
 }

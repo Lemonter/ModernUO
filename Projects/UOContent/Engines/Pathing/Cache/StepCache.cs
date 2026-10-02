@@ -546,7 +546,9 @@ public sealed class StepCache
         // Multis are dynamic, so they are never baked into a chunk. Cells they touch go to the
         // multi-aware path instead. The check is gated on Sector.HasMultis, so the multi-free
         // majority of the map pays one sector lookup for it.
-        if (MultiInfluence(map, x, y))
+        // City apartments make their furniture walkable at movement time; the baked chunk still
+        // sees it as solid, so those cells go to MovementImpl too.
+        if (MultiInfluence(map, x, y) || Systems.MahaonWorld.MahaonCityHouseSystem.IsInsideAnyHouse(map, x, y))
         {
             _fallthroughMulti++;
             return Fallthrough(CacheHitKind.Fallthrough_Multi);

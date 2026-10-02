@@ -110,7 +110,15 @@ namespace Server.Items
                     if (res == AddonFitResult.Valid)
                     {
                         m_Deed.Delete();
-                        house.Addons.Add(addon);
+
+                        if (house != null)
+                        {
+                            house.Addons.Add(addon);
+                        }
+                        else
+                        {
+                            Systems.MahaonWorld.MahaonCityHouseSystem.Find(new Point3D(p), map)?.Addons.Add(addon);
+                        }
                     }
                     else
                     {

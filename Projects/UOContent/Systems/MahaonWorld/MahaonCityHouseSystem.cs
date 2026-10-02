@@ -258,15 +258,23 @@ public static class MahaonCityHouseSystem
             return "Этот дом уже кому-то принадлежит.";
         }
 
-        if (buyer.AccessLevel == AccessLevel.Player && OwnedBy(buyer) != null)
+        // A second home is sold only as an extension of the first: the neighbour on the same floor.
+        var own = OwnedBy(buyer);
+        if (buyer.AccessLevel == AccessLevel.Player && own != null && !own.Adjoins(house))
         {
-            return "У тебя уже есть городской дом — второй не продадут.";
+            return "У тебя уже есть городской дом — второй продадут, только если он примыкает к твоему.";
         }
 
         var price = house.SalePrice;
         if (buyer.AccessLevel == AccessLevel.Player && !Banker.Withdraw(buyer, price))
         {
             return $"Не хватает золота в банке — дом стоит {price}.";
+        }
+
+        if (own != null && own.Adjoins(house))
+        {
+            Merge(own, house);
+            return $"Соседний дом присоединён к «{own.Label}». Списано {price} золота.";
         }
 
         house.Owner = buyer;
@@ -286,6 +294,7 @@ public static class MahaonCityHouseSystem
 
         var refund = house.SalePrice / 2;
         house.ReleaseAll();
+        house.ReturnAddons(owner);
         house.Owner = null;
         house.Friends.Clear();
         house.Bans.Clear();
@@ -297,5 +306,47 @@ public static class MahaonCityHouseSystem
         }
 
         return $"Дом «{house.Label}» продан городу, {refund} золота в банке.";
+    }
+
+    /// <summary>Whether furniture may go on this cell: inside one city house, owned by the placer,
+    /// and the same house as the rest of the piece.</summary>
+    public static bool CanPlaceAddon(Mobile from, Point3D p, Map map, ref MahaonCityHouse house)
+    {
+        var here = Find(p, map);
+        if (here == null || from != null && !here.IsOwner(from) || house != null && house != here)
+        {
+            return false;
+        }
+
+        house = here;
+        return true;
+    }
+
+    /// <summary>Joins a free neighbour into an owned house: one home, one sign, the joined floor's
+    /// price added to the house's own.</summary>
+    public static void Merge(MahaonCityHouse into, MahaonCityHouse joined)
+    {
+        var price = into.SalePrice + joined.SalePrice;
+        var tiles = new List<Point3D>(joined.Tiles);
+
+        DeleteSigns(joined);
+        joined.Delete();
+
+        into.AddTiles(tiles);
+        into.Price = price;
+    }
+
+    private static void DeleteSigns(MahaonCityHouse house)
+    {
+        foreach (var tile in house.Tiles)
+        {
+            foreach (var item in house.AreaMap.GetItemsInRange<MahaonCityHouseSign>(tile, 8))
+            {
+                if (item.House == house)
+                {
+                    item.Delete();
+                }
+            }
+        }
     }
 }

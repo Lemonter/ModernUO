@@ -84,6 +84,22 @@ namespace Server.Items
         public virtual void OnChop(Mobile from)
         {
             var house = BaseHouse.FindHouseAt(this);
+            var cityHouse = house == null ? Systems.MahaonWorld.MahaonCityHouseSystem.Find(Location, Map) : null;
+
+            if (cityHouse?.IsOwner(from) == true && cityHouse.Addons.Contains(this))
+            {
+                Effects.PlaySound(GetWorldLocation(), Map, 0x3B3);
+                from.SendLocalizedMessage(500461); // You destroy the item.
+                cityHouse.Addons.Remove(this);
+                var cityDeed = Deed;
+                Delete();
+                if (cityDeed != null)
+                {
+                    from.AddToBackpack(cityDeed);
+                }
+
+                return;
+            }
 
             if (house?.IsOwner(from) == true && house.Addons.Contains(this))
             {
@@ -144,6 +160,8 @@ namespace Server.Items
                 return AddonFitResult.Blocked;
             }
 
+            MahaonCityHouse cityHouse = null;
+
             foreach (var c in Components)
             {
                 var p3D = new Point3D(p.X + c.Offset.X, p.Y + c.Offset.Y, p.Z + c.Offset.Z);
@@ -153,7 +171,9 @@ namespace Server.Items
                     return AddonFitResult.Blocked;
                 }
 
-                if (!CheckHouse(from, p3D, map, c.ItemData.Height, out house))
+                // A city apartment its placer owns takes furniture as a house does.
+                if (!CheckHouse(from, p3D, map, c.ItemData.Height, out house) &&
+                    !Systems.MahaonWorld.MahaonCityHouseSystem.CanPlaceAddon(from, p3D, map, ref cityHouse))
                 {
                     return AddonFitResult.NotInHouse;
                 }
@@ -169,7 +189,7 @@ namespace Server.Items
                 }
             }
 
-            var doors = house.Doors;
+            var doors = house?.Doors ?? [];
 
             for (var i = 0; i < doors.Count; ++i)
             {

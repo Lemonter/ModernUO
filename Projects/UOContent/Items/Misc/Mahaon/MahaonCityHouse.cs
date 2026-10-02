@@ -52,6 +52,10 @@ public partial class MahaonCityHouse : Item
     [SerializableField(9)]
     private List<Item> _secures = [];
 
+    // Furniture placed from deeds: forges, looms, beds.
+    [SerializableField(10)]
+    private List<Item> _addons = [];
+
     private void MigrateFrom(V0Content content)
     {
         _areaMap = content.AreaMap;
@@ -63,6 +67,7 @@ public partial class MahaonCityHouse : Item
         _furnitureOverrideIds = content.FurnitureOverrideIds ?? [];
         _lockdowns = [];
         _secures = [];
+        _addons = [];
     }
 
     private Systems.MahaonWorld.MahaonCityHouseRegion _region;
@@ -265,6 +270,139 @@ public partial class MahaonCityHouse : Item
         Secures.Clear();
     }
 
+    /// <summary>Turns the house's furniture back into deeds for <paramref name="to"/>'s bank box —
+    /// the house is changing hands, and the furniture is its old owner's.</summary>
+    public void ReturnAddons(Mobile to)
+    {
+        foreach (var item in new List<Item>(Addons))
+        {
+            if (item is BaseAddon { Deleted: false } addon)
+            {
+                var deed = addon.Deed;
+                addon.Delete();
+
+                if (deed != null)
+                {
+                    if (to?.BankBox is { } bank)
+                    {
+                        bank.DropItem(deed);
+                    }
+                    else
+                    {
+                        deed.Delete();
+                    }
+                }
+            }
+        }
+
+        Addons.Clear();
+        this.MarkDirty();
+    }
+
+    /// <summary>Whether any tile of <paramref name="other"/> touches one of this house's tiles on
+    /// the same floor — neighbours that can become one home.</summary>
+    public bool Adjoins(MahaonCityHouse other)
+    {
+        if (other.AreaMap != AreaMap)
+        {
+            return false;
+        }
+
+        foreach (var a in Tiles)
+        {
+            foreach (var b in other.Tiles)
+            {
+                if ((a.X - b.X).Abs() <= 1 && (a.Y - b.Y).Abs() <= 1 && (a.Z - b.Z).Abs() <= ZTolerance)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Adds floor tiles to the house; returns how many were new.</summary>
+    public int AddTiles(IEnumerable<Point3D> tiles)
+    {
+        var added = 0;
+        foreach (var t in tiles)
+        {
+            if (!Tiles.Contains(t))
+            {
+                Tiles.Add(t);
+                added++;
+            }
+        }
+
+        if (added > 0)
+        {
+            this.MarkDirty();
+            ApplyFurnitureHiding();
+            Systems.MahaonWorld.MahaonCityHouseSystem.Reindex(this);
+        }
+
+        return added;
+    }
+
+    /// <summary>Takes floor tiles off the house. Whatever was fixed on them is let go and the
+    /// furniture standing there goes back to the owner as deeds.</summary>
+    public int RemoveTiles(IEnumerable<Point3D> tiles)
+    {
+        var removed = new List<Point3D>();
+        foreach (var t in tiles)
+        {
+            if (Tiles.Remove(t))
+            {
+                removed.Add(t);
+            }
+        }
+
+        if (removed.Count == 0)
+        {
+            return 0;
+        }
+
+        foreach (var item in new List<Item>(Lockdowns))
+        {
+            if (item?.Deleted == false && !Contains(item.Location, item.Map))
+            {
+                ReleaseItem(item);
+            }
+        }
+
+        foreach (var item in new List<Item>(Secures))
+        {
+            if (item?.Deleted == false && !Contains(item.Location, item.Map))
+            {
+                ReleaseItem(item);
+            }
+        }
+
+        foreach (var item in new List<Item>(Addons))
+        {
+            if (item is BaseAddon { Deleted: false } addon && !Contains(addon.Location, addon.Map))
+            {
+                Addons.Remove(addon);
+                var deed = addon.Deed;
+                addon.Delete();
+                if (deed != null && Owner?.BankBox is { } bank)
+                {
+                    bank.DropItem(deed);
+                }
+                else
+                {
+                    deed?.Delete();
+                }
+            }
+        }
+
+        this.MarkDirty();
+        ApplyFurnitureHiding();
+        Systems.MahaonWorld.MahaonCityHouseSystem.Reindex(this);
+        return removed.Count;
+    }
+
     /// <summary>Whether <paramref name="m"/> may open or use a fixed item of the house.</summary>
     public bool CanAccess(Mobile m, Item item) => !IsLockedDown(item) || IsFriend(m);
 
@@ -277,6 +415,7 @@ public partial class MahaonCityHouse : Item
     public override void OnDelete()
     {
         ReleaseAll();
+        ReturnAddons(Owner);
         RemoveFurnitureHiding();
         _region?.Unregister();
         _region = null;
