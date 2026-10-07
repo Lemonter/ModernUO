@@ -37,7 +37,7 @@ public static class BotCityGuard
     {
         foreach (var city in CityControlSystem.Cities.Keys)
         {
-            if (CityControlSystem.GetController(city) == guild && CityControlSystem.MagesIn(city) < CityControlSystem.MaxMages)
+            if (CityControlSystem.GetController(city) == guild && CityControlSystem.GetMageSlots(city) < CityControlSystem.MaxMages)
             {
                 return city;
             }
@@ -103,7 +103,7 @@ public sealed class CityGuardCommandAction : BotAction
     public override BotActionResult Tick(BotBrain brain)
     {
         var bot = brain.Bot;
-        var before = (CityControlSystem.GetGuardLevel(_city), CityControlSystem.MagesIn(_city));
+        var before = (CityControlSystem.GetGuardLevel(_city), CityControlSystem.GetMageSlots(_city));
         // The city stone's buttons.
         if (bot.Guild is Guild guild)
         {
@@ -117,7 +117,7 @@ public sealed class CityGuardCommandAction : BotAction
             }
         }
 
-        if ((CityControlSystem.GetGuardLevel(_city), CityControlSystem.MagesIn(_city)) == before)
+        if ((CityControlSystem.GetGuardLevel(_city), CityControlSystem.GetMageSlots(_city)) == before)
         {
             return BotActionResult.Failed();
         }

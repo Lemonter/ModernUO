@@ -245,10 +245,13 @@ public static class GuildBank
         return total;
     }
 
-    /// <summary>Puts a stack of gold or ingots into the guild bank, merging ingots of the same metal.</summary>
+    /// <summary>What the guild bank takes: gold, ingots, and the potions and scrolls its city guard uses.</summary>
+    public static bool Accepts(Item item) => item is Gold or MahaonIngot or BasePotion or SpellScroll;
+
+    /// <summary>Puts a pile into the guild bank, merging it with a like pile already there.</summary>
     public static bool Deposit(string guildName, Item item)
     {
-        if (item is not (Gold or MahaonIngot) || GetOrCreate(guildName) is not { } bank)
+        if (!Accepts(item) || GetOrCreate(guildName) is not { } bank)
         {
             return false;
         }
@@ -261,19 +264,50 @@ public static class GuildBank
             return true;
         }
 
-        var ingot = (MahaonIngot)item;
-        foreach (var pile in bank.FindItemsByType<MahaonIngot>(false))
+        foreach (var pile in bank.Items)
         {
-            if (pile.Metal == ingot.Metal && pile.Amount + ingot.Amount <= MaxGoldPile)
+            if (pile != item && pile.StackWith(null, item, false))
             {
-                pile.Amount += ingot.Amount;
-                ingot.Delete();
                 return true;
             }
         }
 
-        bank.DropItem(ingot);
+        bank.DropItem(item);
         return true;
+    }
+
+    /// <summary>How many of this kind of item the guild bank holds.</summary>
+    public static int Count(string guildName, System.Type type) =>
+        string.IsNullOrEmpty(guildName) ? 0 : GetOrCreate(guildName).GetAmount(type, false);
+
+    /// <summary>Takes up to this many of a kind of item out of the guild bank, as one pile.</summary>
+    public static Item Take(string guildName, System.Type type, int amount)
+    {
+        if (string.IsNullOrEmpty(guildName) || amount <= 0)
+        {
+            return null;
+        }
+
+        foreach (var pile in GetOrCreate(guildName).Items)
+        {
+            if (pile.GetType() != type)
+            {
+                continue;
+            }
+
+            if (pile.Amount <= amount)
+            {
+                pile.Internalize();
+                return pile;
+            }
+
+            pile.Amount -= amount;
+            var part = pile.GetType().CreateEntityInstance<Item>();
+            part.Amount = amount;
+            return part;
+        }
+
+        return null;
     }
 
     /// <summary>

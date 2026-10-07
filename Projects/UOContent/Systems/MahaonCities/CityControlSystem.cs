@@ -33,7 +33,7 @@ public class CityControlSystem : GenericPersistence
         ["Ocllo"] = (new Point3D(3667, 2625, 0), Map.Felucca)
     };
 
-    private const int GuardsPerCity = 6;
+    public const int GuardsPerCity = 6;
 
     // How far a guard is allowed to wander from its post while patrolling — the stock
     // WalkRandomWithHome AI (Mobiles/AI/BaseAI/WalkRandomLogic.cs) already walks a mobile
@@ -44,6 +44,11 @@ public class CityControlSystem : GenericPersistence
     private static readonly Dictionary<string, Guild> Control = new();
     private static readonly Dictionary<string, int> TaxRate = new();
     private static readonly Dictionary<string, int> GuardLevel = new();
+
+    // Battle mages the holding guild has hired; the dead are replaced from the guild bank.
+    private static readonly Dictionary<string, int> MageSlots = new();
+
+    public static int GetMageSlots(string city) => MageSlots.GetValueOrDefault(city, 0);
 
     /// <summary>One step of a city's guard: the metal its gear is forged of, the ingots of that
     /// metal and the gold the step costs the holding guild.</summary>
@@ -79,6 +84,20 @@ public class CityControlSystem : GenericPersistence
 
     /// <summary>What hiring one more battle mage costs at the city's guard level.</summary>
     public static int MageCost(string city) => 20_000 + GetGuardLevel(city) * 5_000;
+
+    public static int SwordGuardsIn(string city)
+    {
+        var count = 0;
+        foreach (var guard in CityGuard.Of(city))
+        {
+            if (guard is not CityMageGuard && guard.Alive && !guard.Deleted)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
 
     public static int MagesIn(string city)
     {
@@ -117,24 +136,14 @@ public class CityControlSystem : GenericPersistence
     /// <summary>Hires a battle mage for a city, paid from the holding guild's bank.</summary>
     public static bool HireMage(string city, Guild guild)
     {
-        if (GetController(city) != guild || MagesIn(city) >= MaxMages || !Cities.TryGetValue(city, out var info) ||
+        if (GetController(city) != guild || GetMageSlots(city) >= MaxMages ||
             !MahaonBots.GuildBank.TrySpend(guild.Name, MageCost(city), Systems.MahaonMetals.MahaonMetal.Iron, 0))
         {
             return false;
         }
 
-        var radians = Utility.RandomDouble() * 2 * System.Math.PI;
-        var radius = Utility.RandomMinMax(6, 14);
-        var loc = FindGuardSpot(
-            info.spawn.X + (int)(System.Math.Cos(radians) * radius),
-            info.spawn.Y + (int)(System.Math.Sin(radians) * radius),
-            info.map
-        );
-
-        var mage = new CityMageGuard(city, guild);
-        mage.MoveToWorld(loc, info.map);
-        mage.StationAt(loc, GuardPatrolRadius);
-        mage.ApplyLevel(GetGuardLevel(city));
+        MageSlots[city] = GetMageSlots(city) + 1;
+        SpawnGuard(city, guild, true);
         return true;
     }
 
@@ -295,6 +304,7 @@ public class CityControlSystem : GenericPersistence
 
         // The guard is the city's, trained and armed by whoever held it: a new holder starts over.
         GuardLevel.Remove(city);
+        MageSlots.Remove(city);
         SpawnGuards(city, guild);
         Server.Systems.MahaonAi.MahaonForumBridge.OnCityCaptured(city, guild);
 
@@ -306,46 +316,72 @@ public class CityControlSystem : GenericPersistence
 
     private static void SpawnGuards(string city, Guild guild)
     {
-        if (!Cities.TryGetValue(city, out var info))
+        for (var i = 0; i < GuardRoster(city); i++)
         {
-            return;
+            SpawnGuard(city, guild, false);
+        }
+    }
+
+    /// <summary>How many sword guards the city keeps: one per hand-marked post, or a ring of six.</summary>
+    public static int GuardRoster(string city)
+    {
+        var marked = CityMarkers.GetMarkersByPrefix(city, "guard").Count;
+        return marked > 0 ? marked : GuardsPerCity;
+    }
+
+    /// <summary>
+    /// Posts one guard: a sword guard at a hand-marked post nobody holds (else somewhere in the
+    /// ring around the centre), a mage nearer the centre. Trained to the city's level.
+    /// </summary>
+    public static CityGuard SpawnGuard(string city, Guild guild, bool mage)
+    {
+        if (!Cities.TryGetValue(city, out var info) || info.map == null)
+        {
+            return null;
         }
 
-        var markedSpots = CityMarkers.GetMarkersByPrefix(city, "guard");
+        Point3D? post = null;
+        var map = info.map;
 
-        if (markedSpots.Count > 0)
+        if (!mage)
         {
-            foreach (var (loc, map) in markedSpots)
+            foreach (var (loc, markMap) in CityMarkers.GetMarkersByPrefix(city, "guard"))
             {
-                var guard = new CityGuard(city, guild);
-                guard.MoveToWorld(loc, map);
-                guard.StationAt(loc, GuardPatrolRadius);
-            }
+                var taken = false;
+                foreach (var guard in CityGuard.Of(city))
+                {
+                    if (guard is not CityMageGuard && guard.Alive && guard.Post == loc)
+                    {
+                        taken = true;
+                        break;
+                    }
+                }
 
-            return;
+                if (!taken)
+                {
+                    post = loc;
+                    map = markMap;
+                    break;
+                }
+            }
         }
 
-        // No hand-marked posts for this city yet — fall back to a guessed ring around the
-        // center point. Mark real spots with [MarkCitySpot <city> guard1 (guard2, ...) and
-        // this branch stops being used for that city.
-        var angleStep = 360.0 / GuardsPerCity;
-
-        for (var i = 0; i < GuardsPerCity; i++)
+        if (post == null)
         {
-            var angle = i * angleStep + Utility.RandomMinMax(-10, 10);
-            var radius = Utility.RandomMinMax(12, 22);
-            var radians = angle * System.Math.PI / 180.0;
-
-            var loc = FindGuardSpot(
+            var radians = Utility.RandomDouble() * 2 * System.Math.PI;
+            var radius = mage ? Utility.RandomMinMax(6, 14) : Utility.RandomMinMax(12, 22);
+            post = FindGuardSpot(
                 info.spawn.X + (int)(System.Math.Cos(radians) * radius),
                 info.spawn.Y + (int)(System.Math.Sin(radians) * radius),
                 info.map
             );
-
-            var guard = new CityGuard(city, guild);
-            guard.MoveToWorld(loc, info.map);
-            guard.StationAt(loc, GuardPatrolRadius);
         }
+
+        CityGuard spawned = mage ? new CityMageGuard(city, guild) : new CityGuard(city, guild);
+        spawned.MoveToWorld(post.Value, map);
+        spawned.StationAt(post.Value, GuardPatrolRadius);
+        spawned.ApplyLevel(GetGuardLevel(city));
+        return spawned;
     }
 
     private static Point3D FindGuardSpot(int x, int y, Map map)
@@ -488,7 +524,7 @@ public class CityControlSystem : GenericPersistence
 
     public override void Serialize(IGenericWriter writer)
     {
-        writer.WriteEncodedInt(1); // version
+        writer.WriteEncodedInt(2); // version
         writer.WriteEncodedInt(Control.Count);
 
         foreach (var (city, guild) in Control)
@@ -497,6 +533,7 @@ public class CityControlSystem : GenericPersistence
             writer.Write(guild);
             writer.WriteEncodedInt(TaxRate.GetValueOrDefault(city, 0));
             writer.WriteEncodedInt(GuardLevel.GetValueOrDefault(city, 0));
+            writer.WriteEncodedInt(MageSlots.GetValueOrDefault(city, 0));
         }
     }
 
@@ -511,12 +548,14 @@ public class CityControlSystem : GenericPersistence
             var guild = reader.ReadEntity<Guild>();
             var tax = reader.ReadEncodedInt();
             var level = version >= 1 ? reader.ReadEncodedInt() : 0;
+            var mages = version >= 2 ? reader.ReadEncodedInt() : 0;
 
             if (guild != null)
             {
                 Control[city] = guild;
                 TaxRate[city] = tax;
                 GuardLevel[city] = level;
+                MageSlots[city] = mages;
             }
         }
     }

@@ -153,6 +153,32 @@ public partial class CityGuard : BaseCreature
         }
     }
 
+    // A guard carries a few potions its guild keeps stocked (see CityGuardUpkeep) and drinks
+    // them as a player would: a cure when poisoned, a heal when badly hurt.
+    private void DrinkIfHurt()
+    {
+        if (Backpack is not { } pack || Core.TickCount - _nextDrink < 0)
+        {
+            return;
+        }
+
+        BasePotion potion = null;
+        if (Poisoned)
+        {
+            potion = pack.FindItemByType<BaseCurePotion>();
+        }
+        else if (Hits < HitsMax / 2)
+        {
+            potion = pack.FindItemByType<BaseHealPotion>();
+        }
+
+        if (potion != null)
+        {
+            potion.OnDoubleClick(this);
+            _nextDrink = Core.TickCount + DrinkDelayMs;
+        }
+    }
+
     public override bool AlwaysMurderer => false;
 
     public override bool IsEnemy(Mobile m) =>
@@ -195,9 +221,15 @@ public partial class CityGuard : BaseCreature
         return m.Murderer || m.Criminal;
     }
 
+    // Potions a guard drinks are paced like a player's, not one per think.
+    private const long DrinkDelayMs = 10_000;
+    private long _nextDrink;
+
     public override void OnThink()
     {
         base.OnThink();
+
+        DrinkIfHurt();
 
         // Only bother scanning for trouble on an occasional think tick, not every single
         // one — cheap and still looks natural. Wandering/patrolling itself is handled

@@ -131,6 +131,15 @@ public class AuctionHouseSystem : GenericPersistence
             listing.Item.MoveToWorld(buyer.Location, buyer.Map);
         }
 
+        PaySeller(listing);
+
+        return AuctionBuyResult.Success;
+    }
+
+    // The seller's share after the house's cut and the city's tax, to the bank; the tax to the
+    // city's holder.
+    private static void PaySeller(AuctionListing listing)
+    {
         var cutPercent = AuctionHouseCutPercent;
 
         if (listing.Seller is PlayerMobile sellerCheckPm)
@@ -162,8 +171,46 @@ public class AuctionHouseSystem : GenericPersistence
         }
 
         Systems.MahaonBots.BotHotMarkets.OnNotableSale(listing.City, listing.Item.GetType().Name, listing.Price);
+    }
 
-        return AuctionBuyResult.Success;
+    /// <summary>The cheapest listing, per unit, among those the predicate takes.</summary>
+    public static AuctionListing Cheapest(Predicate<Item> match)
+    {
+        AuctionListing best = null;
+        var bestUnit = double.MaxValue;
+        foreach (var listing in Listings.Values)
+        {
+            if (listing.Item?.Deleted == false && listing.Price is > 0 and <= int.MaxValue && match(listing.Item))
+            {
+                var unit = (double)listing.Price / Math.Max(1, listing.Item.Amount);
+                if (unit < bestUnit)
+                {
+                    bestUnit = unit;
+                    best = listing;
+                }
+            }
+        }
+
+        return best;
+    }
+
+    /// <summary>
+    /// Buys a listing for a guild: the guild bank pays, and the goods go into it. How a guild
+    /// keeps its city guard stocked.
+    /// </summary>
+    public static bool TryBuyForGuild(string guildName, AuctionListing listing)
+    {
+        if (listing == null || !Listings.ContainsKey(listing.Id) || listing.Price is <= 0 or > int.MaxValue ||
+            listing.Seller?.Guild?.Name == guildName ||
+            !Systems.MahaonBots.GuildBank.TrySpend(guildName, listing.Price, Systems.MahaonMetals.MahaonMetal.Iron, 0))
+        {
+            return false;
+        }
+
+        Listings.Remove(listing.Id);
+        Systems.MahaonBots.GuildBank.Deposit(guildName, listing.Item);
+        PaySeller(listing);
+        return true;
     }
 
     public static bool TryCancel(PlayerMobile seller, int listingId)

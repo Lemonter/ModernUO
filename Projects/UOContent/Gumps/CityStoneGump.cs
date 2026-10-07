@@ -50,7 +50,7 @@ public class CityStoneGump : DynamicGump
         var city = _stone.City;
         var holder = CityControlSystem.GetController(city);
         var rules = CityControlSystem.Rules(from, city);
-        var height = rules ? 360 : 200;
+        var height = rules ? 410 : 200;
 
         builder.AddPage();
         builder.AddBackground(0, 0, Width, height, 5054);
@@ -65,19 +65,19 @@ public class CityStoneGump : DynamicGump
         {
             builder.AddHtml(20, 45, Width - 40, 20, $"Город держит гильдия {holder.Name}. Налог {CityControlSystem.GetTaxRate(city)}%.");
             builder.AddHtml(
-                20, 67, Width - 40, 20,
-                $"Стража: ступень {CityControlSystem.GetGuardLevel(city)}, боевых магов {CityControlSystem.MagesIn(city)}."
+                20, 67, Width - 40, 40,
+                $"Стража: ступень {CityControlSystem.GetGuardLevel(city)}, боевых магов {CityControlSystem.MagesIn(city)} из {CityControlSystem.GetMageSlots(city)}, стражников {CityControlSystem.SwordGuardsIn(city)} из {CityControlSystem.GuardRoster(city)}."
             );
         }
 
         if (_stone.Contested)
         {
-            builder.AddHtml(20, 92, Width - 40, 40, $"Город оспаривает гильдия {_stone.Contender.Name}!");
+            builder.AddHtml(20, 112, Width - 40, 30, $"Город оспаривает гильдия {_stone.Contender.Name}!");
         }
         else if (from.Guild is Guild guild && guild.Leader == from && holder != guild)
         {
-            builder.AddButton(20, 100, 4005, 4007, 1);
-            builder.AddHtml(55, 100, Width - 75, 40, "Заявить права на город — продержаться у камня десять минут");
+            builder.AddButton(20, 112, 4005, 4007, 1);
+            builder.AddHtml(55, 112, Width - 75, 30, "Заявить права на город — продержаться у камня десять минут");
         }
 
         if (rules)
@@ -113,7 +113,7 @@ public class CityStoneGump : DynamicGump
             builder.AddHtml(20, 200, Width - 40, 20, "Стража на высшей ступени.");
         }
 
-        if (CityControlSystem.MagesIn(city) < CityControlSystem.MaxMages)
+        if (CityControlSystem.GetMageSlots(city) < CityControlSystem.MaxMages)
         {
             builder.AddButton(20, 245, 4005, 4007, 5);
             builder.AddHtml(55, 245, Width - 75, 20, $"Нанять боевого мага: {CityControlSystem.MageCost(city)} золота");
@@ -123,8 +123,15 @@ public class CityStoneGump : DynamicGump
             builder.AddHtml(20, 245, Width - 40, 20, $"Боевых магов полный набор: {CityControlSystem.MaxMages}.");
         }
 
-        builder.AddButton(20, 275, 4005, 4007, 6);
-        builder.AddHtml(55, 275, Width - 75, 20, "Казна гильдии");
+        var level = CityControlSystem.GetGuardLevel(city);
+        var (replaceGold, replaceIngots) = CityGuardUpkeep.ReplaceCost(level);
+        builder.AddHtml(
+            20, 275, Width - 40, 40,
+            $"Жалованье: {CityGuardUpkeep.WagePerHour(level)} золота в час на стражника. Замена павшего: {replaceGold} золота и {replaceIngots} слитков."
+        );
+
+        builder.AddButton(20, 320, 4005, 4007, 6);
+        builder.AddHtml(55, 320, Width - 75, 20, "Казна гильдии");
     }
 
     public override void OnResponse(NetState sender, in RelayInfo info)
