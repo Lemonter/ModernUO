@@ -13,12 +13,19 @@ namespace Server.Systems.MahaonScrolls;
 ///     поднимать уже некуда. Чем дальше игрок в своей профессии, тем чаще ему выпадала
 ///     именно эта бумага.
 ///
-///     Здесь навык выбирается только среди тех, у кого потолок НИЖЕ значения свитка. Если
-///     таких не осталось совсем (всё выкачано до предела), отдаём случайный, как раньше:
-///     лучше бесполезный свиток, чем отсутствие награды.
+///     Здесь навык выбирается только среди тех, у кого потолок НИЖЕ значения свитка, и
+///     среди них — сначала упёршиеся в потолок, затем те, которыми получатель занимается.
+///     Если поднимать нечего совсем (всё выкачано до предела), отдаём случайный, как
+///     раньше: лучше бесполезный свиток, чем отсутствие награды.
 /// </summary>
 public static class MahaonScrollPicker
 {
+    // В пределах стольких очков от потолка навык считается упёршимся в него.
+    private const double CappedMargin = 5.0;
+
+    // Навык, которым получатель занимается всерьёз.
+    private const double TrainedSkill = 30.0;
+
     /// <summary>
     ///     Свиток силы, полезный именно этому игроку.
     /// </summary>
@@ -28,7 +35,12 @@ public static class MahaonScrollPicker
     /// чемпионов, чтобы ремесленные свитки шли только с заказов.</param>
     public static PowerScroll CreatePowerScrollFor(Mobile m, int value, bool noCraft = false)
     {
-        var candidates = new List<SkillName>();
+        // Из тех, что свиток поднимет, сначала навыки, упёршиеся в свой потолок, затем те,
+        // которыми получатель вообще занимается, и лишь потом любые: свиток на навык с
+        // нулём очков — та же бумага, что и на выкачанный.
+        var capped = new List<SkillName>();
+        var trained = new List<SkillName>();
+        var any = new List<SkillName>();
 
         if (m?.Skills != null)
         {
@@ -41,12 +53,25 @@ public static class MahaonScrollPicker
 
                 var owned = m.Skills[skill];
 
-                if (owned != null && owned.Cap < value)
+                if (owned == null || owned.Cap >= value)
                 {
-                    candidates.Add(skill);
+                    continue;
+                }
+
+                any.Add(skill);
+
+                if (owned.Value >= owned.Cap - CappedMargin)
+                {
+                    capped.Add(skill);
+                }
+                else if (owned.Value >= TrainedSkill)
+                {
+                    trained.Add(skill);
                 }
             }
         }
+
+        var candidates = capped.Count > 0 ? capped : trained.Count > 0 ? trained : any;
 
         if (candidates.Count > 0)
         {

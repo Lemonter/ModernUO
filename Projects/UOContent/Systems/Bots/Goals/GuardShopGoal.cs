@@ -9,11 +9,17 @@ public partial class BotBrain
 {
     // After a purchase at the guard shop, the bot doesn't go back before this tick.
     internal long NextGuardShopTick;
+
+    // Which mastery scroll would help, worked out from the whole skill tree, so remembered a while.
+    internal int WantedMasteryScroll;
+    internal long MasteryCheckedTick = long.MinValue / 2;
 }
 
 /// <summary>
 /// Sergeant Guido's reward shop, as a bot uses it. A bot whose skill has run into its cap buys a
-/// power scroll, one whose stats have run into theirs a stat scroll, when it can spare the gold.
+/// power scroll, one whose stats have run into theirs a stat scroll, one whose mastery has a
+/// mastery scroll, when it can spare the gold. Mastery primers it leaves: they teach the SA
+/// mastery abilities, which bots don't use.
 /// The shop rolls the power scroll's skill among those it would raise, so the scroll may not be for
 /// the skill the bot hoped for: a scroll for a skill it trains it reads, any other it sells.
 /// </summary>
@@ -48,6 +54,37 @@ public static class BotScrolls
         return 0;
     }
 
+    private const long MasteryRecheckMs = 10 * 60_000;
+
+    /// <summary>The mastery scroll value that would lift a mastery the bot has run into the cap
+    /// of, or 0.</summary>
+    public static int WantedMasteryScroll(BotBrain brain)
+    {
+        var now = Core.TickCount;
+        if (now - brain.MasteryCheckedTick < MasteryRecheckMs)
+        {
+            return brain.WantedMasteryScroll;
+        }
+
+        brain.MasteryCheckedTick = now;
+        brain.WantedMasteryScroll = 0;
+
+        foreach (var value in PowerValues)
+        {
+            if (MahaonMasteryScroll.FindCandidates(brain.Bot, value, out var capped).Count > 0 && capped)
+            {
+                brain.WantedMasteryScroll = value;
+                break;
+            }
+        }
+
+        return brain.WantedMasteryScroll;
+    }
+
+    /// <summary>A mastery scroll the bot can read on a mastery that has hit its cap.</summary>
+    public static bool Reads(Mobile bot, MahaonMasteryScroll scroll) =>
+        MahaonMasteryScroll.FindCandidates(bot, scroll.Value, out var capped).Count > 0 && capped;
+
     /// <summary>Whether the bot's stats have reached their cap and a stat scroll would help.</summary>
     public static bool WantsStatScroll(Mobile bot) => bot.RawStatTotal >= bot.StatCap && bot.StatCap < MahaonStatScroll.MaxStatCap;
 
@@ -63,6 +100,14 @@ public static class BotScrolls
         }
 
         foreach (var scroll in pack.FindItemsByType<PowerScroll>())
+        {
+            if (Reads(bot, scroll))
+            {
+                return true;
+            }
+        }
+
+        foreach (var scroll in pack.FindItemsByType<MahaonMasteryScroll>())
         {
             if (Reads(bot, scroll))
             {
@@ -95,6 +140,10 @@ public sealed class GuardShopGoal : BotGoal
         else if (BotScrolls.WantsStatScroll(bot))
         {
             index = GuardRewardShop.IndexOf(GuardShopKind.StatScroll, 5);
+        }
+        else if (BotScrolls.WantedMasteryScroll(brain) is > 0 and var mastery)
+        {
+            index = GuardRewardShop.IndexOf(GuardShopKind.MasteryScroll, mastery);
         }
 
         return index < 0 ? (-1, 0) : (index, GuardRewardShop.PriceOf(bot, index));
@@ -197,6 +246,19 @@ public sealed class ReadScrollsAction : BotAction
             {
                 // The confirmation gump's OK button reads the scroll.
                 scroll.Use(bot);
+            }
+            else if (!brain.IsLoot(scroll))
+            {
+                brain.MarkLoot(scroll);
+            }
+        }
+
+        foreach (var scroll in pack.EnumerateItemsByType<MahaonMasteryScroll>())
+        {
+            if (BotScrolls.Reads(bot, scroll))
+            {
+                scroll.OnDoubleClick(bot);
+                brain.MasteryCheckedTick = long.MinValue / 2;
             }
             else if (!brain.IsLoot(scroll))
             {

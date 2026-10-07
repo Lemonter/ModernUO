@@ -81,9 +81,17 @@ public partial class MahaonMasteryScroll : Item
     ///     и с потолком ниже значения свитка. Подкатегории с IsUsableSkillList — это
     ///     обычные списки навыков в дереве, а не мастерки, их пропускаем.
     /// </summary>
-    private static List<string> FindCandidates(Mobile from, double value)
+    public static List<string> FindCandidates(Mobile from, double value) => FindCandidates(from, value, out _);
+
+    // В пределах стольких очков от потолка мастерка считается упёршейся в него.
+    private const double CappedMargin = 5.0;
+
+    /// <param name="capped">Все найденные упёрлись в свой потолок — им свиток нужнее всего,
+    /// поэтому при наличии таких возвращаются только они.</param>
+    public static List<string> FindCandidates(Mobile from, double value, out bool capped)
     {
         var result = new List<string>();
+        var pressing = new List<string>();
 
         foreach (var category in MahaonSkillTree.GetTreeSnapshot(from))
         {
@@ -107,14 +115,20 @@ public partial class MahaonMasteryScroll : Item
 
                 foreach (var entry in sub.Entries)
                 {
-                    if (entry.Value > 0 && MahaonMasteryCapSystem.GetCap(from, entry.Name) < value)
+                    var cap = MahaonMasteryCapSystem.GetCap(from, entry.Name);
+                    if (entry.Value > 0 && cap < value)
                     {
                         result.Add(entry.Name);
+                        if (entry.Value >= cap - CappedMargin)
+                        {
+                            pressing.Add(entry.Name);
+                        }
                     }
                 }
             }
         }
 
-        return result;
+        capped = pressing.Count > 0;
+        return capped ? pressing : result;
     }
 }

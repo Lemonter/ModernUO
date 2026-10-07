@@ -85,6 +85,10 @@ public static class BotGoods
         PowerScroll { Value: <= 110 } => 10000,
         PowerScroll { Value: <= 115 } => 20000,
         PowerScroll       => 40000,
+        MahaonMasteryScroll { Value: <= 105 } => 8000,
+        MahaonMasteryScroll { Value: <= 110 } => 20000,
+        MahaonMasteryScroll { Value: <= 115 } => 40000,
+        MahaonMasteryScroll => 80000,
         TreasureMap { Completed: false } map => 150 * System.Math.Max(1, map.Level),
         _                 => 0
     };

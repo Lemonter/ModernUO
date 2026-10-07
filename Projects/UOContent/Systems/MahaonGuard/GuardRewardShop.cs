@@ -26,7 +26,8 @@ public enum GuardShopKind
 {
     Other,
     PowerScroll,
-    StatScroll
+    StatScroll,
+    MasteryScroll
 }
 
 public static class GuardRewardShop
@@ -141,24 +142,28 @@ public static class GuardRewardShop
         {
             Price = 10000, ItemID = ScrollItemId, Hue = MasteryScrollHue,
             Description = "Свиток мастерства<br>потолок мастерки → 105",
+            Kind = GuardShopKind.MasteryScroll, Value = 105,
             Factory = _ => new MahaonMasteryScroll(105.0)
         },
         new Entry
         {
             Price = 24000, ItemID = ScrollItemId, Hue = MasteryScrollHue,
             Description = "Свиток мастерства<br>потолок мастерки → 110",
+            Kind = GuardShopKind.MasteryScroll, Value = 110,
             Factory = _ => new MahaonMasteryScroll(110.0)
         },
         new Entry
         {
             Price = 50000, ItemID = ScrollItemId, Hue = MasteryScrollHue,
             Description = "Свиток мастерства<br>потолок мастерки → 115",
+            Kind = GuardShopKind.MasteryScroll, Value = 115,
             Factory = _ => new MahaonMasteryScroll(115.0)
         },
         new Entry
         {
             Price = 100000, ItemID = ScrollItemId, Hue = MasteryScrollHue,
             Description = "Свиток мастерства<br>потолок мастерки → 120",
+            Kind = GuardShopKind.MasteryScroll, Value = 120,
             Factory = _ => new MahaonMasteryScroll(120.0)
         },
         new Entry

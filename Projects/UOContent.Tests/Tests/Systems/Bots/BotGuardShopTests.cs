@@ -28,7 +28,8 @@ public class BotGuardShopTests
             bot.Backpack.DropItem(new Gold(30000));
             Assert.Equal(BotActionStatus.Done, new GuardShopBuyAction(guido, 0).Tick(bot.Brain).Status);
             Assert.True(bot.Backpack.GetAmount(typeof(Gold)) < 30000);
-            Assert.NotNull(bot.Backpack.FindItemByType<PowerScroll>());
+            // The shop now writes the scroll for the skill the buyer has run into the cap of.
+            Assert.Equal(SkillName.Swords, bot.Backpack.FindItemByType<PowerScroll>()?.Skill);
 
             // Its own skill's scroll it reads; a scroll for a skill it doesn't train it sells.
             foreach (var bought in bot.Backpack.EnumerateItemsByType<PowerScroll>())
@@ -57,6 +58,31 @@ public class BotGuardShopTests
             bot.Backpack.DropItem(new MahaonStatScroll(5));
             new ReadScrollsAction().Tick(bot.Brain);
             Assert.Equal(cap + 5, bot.StatCap);
+
+            // A mastery at its cap: the bot wants, and reads, a mastery scroll.
+            Server.Systems.MahaonProfessions.ProfessionSystem.SetProfession(
+                bot,
+                Server.Systems.MahaonProfessions.MahaonProfession.Grandmaster
+            );
+            var values = (System.Collections.Generic.Dictionary<Mobile, double>)typeof(
+                    Server.Systems.MahaonCombat.InscriptionSpecializationSystem
+                ).GetField("Value", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .GetValue(null);
+            values![bot] = 100.0;
+
+            Assert.Equal(105, BotScrolls.WantedMasteryScroll(bot.Brain));
+            var mastery = new MahaonMasteryScroll(105.0);
+            bot.Backpack.DropItem(mastery);
+            new ReadScrollsAction().Tick(bot.Brain);
+            Assert.True(mastery.Deleted);
+            Assert.Equal(
+                105.0,
+                Server.Systems.MahaonCombat.MahaonMasteryCapSystem.GetCap(
+                    bot,
+                    Server.Systems.MahaonCombat.InscriptionSpecializationSystem.RuSpecializationName
+                )
+            );
+            values.Remove(bot);
         }
         finally
         {
