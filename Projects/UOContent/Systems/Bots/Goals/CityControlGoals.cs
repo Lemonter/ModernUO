@@ -17,16 +17,11 @@ public partial class BotBrain
 
 /// <summary>
 /// What bots know of the cities guilds fight over (<see cref="CityControlSystem"/>): who holds a
-/// city, how many of its guards still stand and whether one is in a fight. Read with a spatial
-/// query around the city centre, remembered for a few seconds so a crowd of bots asking costs one
-/// scan.
+/// city, how many of its guards still stand and whether one is in a fight. Read from the city's
+/// guard roster, remembered for a few seconds so a crowd of bots asking costs one pass.
 /// </summary>
 public static class BotCityControl
 {
-    // Guard posts sit up to ~22 tiles from the centre and patrol 20 further; the same reach the
-    // website snapshot counts guards in.
-    public const int GuardScanRadius = 48;
-
     private const long StateTtlMs = 5000;
 
     private static readonly Dictionary<string, (int guards, Mobile attacker, long at)> _state = new();
@@ -58,20 +53,17 @@ public static class BotCityControl
         var guards = 0;
         Mobile attacker = null;
 
-        if (CityControlSystem.Cities.TryGetValue(city, out var info) && info.map != null && info.map != Map.Internal)
+        foreach (var guard in CityGuard.Of(city))
         {
-            foreach (var guard in info.map.GetMobilesInRange<CityGuard>(info.spawn, GuardScanRadius))
+            if (guard.Deleted || !guard.Alive)
             {
-                if (guard.Deleted || !guard.Alive || guard.City != city)
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                guards++;
-                if (attacker == null && guard.Combatant is Mobile { Alive: true } foe and not CityGuard)
-                {
-                    attacker = foe;
-                }
+            guards++;
+            if (attacker == null && guard.Combatant is Mobile { Alive: true } foe and not CityGuard)
+            {
+                attacker = foe;
             }
         }
 
@@ -407,10 +399,9 @@ public sealed class CityFightAction : BotAction
 
     private Mobile FindAnyGuard()
     {
-        var (center, map) = BotCityControl.CenterOf(_city);
-        foreach (var guard in map.GetMobilesInRange<CityGuard>(center, BotCityControl.GuardScanRadius))
+        foreach (var guard in CityGuard.Of(_city))
         {
-            if (guard.Alive && !guard.Deleted && guard.City == _city)
+            if (guard.Alive && !guard.Deleted)
             {
                 return guard;
             }

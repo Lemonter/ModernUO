@@ -1,4 +1,6 @@
-﻿using ModernUO.Serialization;
+﻿using System;
+using System.Collections.Generic;
+using ModernUO.Serialization;
 using Server.Guilds;
 using Server.Items;
 using Server.Systems.MahaonCities;
@@ -8,7 +10,8 @@ namespace Server.Mobiles;
 [SerializationGenerator(0, false)]
 public partial class CityGuard : BaseCreature
 {
-    [SerializableField(0)]
+    // The city keys the guard registry, so it is set once.
+    [SerializableField(0, setter: "private")]
     private string _city;
 
     [SerializableField(1)]
@@ -16,10 +19,46 @@ public partial class CityGuard : BaseCreature
 
     private const int GuardScanRange = 15;
 
+    // Every city's living guards, wherever their posts are: a hand-marked post can be anywhere.
+    private static readonly Dictionary<string, HashSet<CityGuard>> _byCity = new();
+
+    /// <summary>The guards stationed in a city.</summary>
+    public static IReadOnlyCollection<CityGuard> Of(string city) =>
+        city != null && _byCity.TryGetValue(city, out var guards) ? guards : Array.Empty<CityGuard>();
+
+    private void Register()
+    {
+        if (_city == null)
+        {
+            return;
+        }
+
+        if (!_byCity.TryGetValue(_city, out var guards))
+        {
+            _byCity[_city] = guards = [];
+        }
+
+        guards.Add(this);
+    }
+
+    [AfterDeserialization]
+    private void AfterDeserialization() => Register();
+
+    public override void OnDelete()
+    {
+        if (_city != null && _byCity.TryGetValue(_city, out var guards))
+        {
+            guards.Remove(this);
+        }
+
+        base.OnDelete();
+    }
+
     public CityGuard(string city, Guild controllingGuild) : base(AIType.AI_Melee, FightMode.Aggressor)
     {
         _city = city;
         _controllingGuild = controllingGuild;
+        Register();
 
         Name = $"{controllingGuild.Name} стражник";
         Body = 0x190;

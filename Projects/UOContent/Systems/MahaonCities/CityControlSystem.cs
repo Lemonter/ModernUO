@@ -98,24 +98,26 @@ public class CityControlSystem : GenericPersistence
 
     /// <summary>
     ///     Whether a city's guards should treat this mobile as hostile: a member of a guild
-    ///     at war with the controlling guild.
+    ///     at war with the controlling guild, by a war declared through the guild gump or set
+    ///     between bot guilds.
     /// </summary>
     public static bool IsHostileToCity(string city, Mobile m)
     {
         var controller = GetController(city);
-        if (controller == null || m is not PlayerMobile pm || pm.Guild is not Guild g)
+        if (controller == null || m is not PlayerMobile pm || pm.Guild is not Guild g || g == controller)
         {
             return false;
         }
 
-        return g != controller && controller.Enemies.Contains(g);
+        return controller.Enemies.Contains(g) || g.Enemies.Contains(controller) ||
+               MahaonBots.BotGuilds.GetRelation(controller.Name, g.Name) == MahaonBots.BotGuildRelation.War;
     }
 
     private static bool IsCityVulnerable(string city)
     {
-        foreach (var m in World.Mobiles.Values)
+        foreach (var guard in CityGuard.Of(city))
         {
-            if (m is CityGuard { Deleted: false } guard && guard.City == city && guard.Alive)
+            if (!guard.Deleted && guard.Alive)
             {
                 return false;
             }
@@ -206,22 +208,7 @@ public class CityControlSystem : GenericPersistence
 
     private static void DespawnGuards(string city)
     {
-        List<CityGuard> toRemove = null;
-
-        foreach (var m in World.Mobiles.Values)
-        {
-            if (m is CityGuard guard && guard.City == city && !guard.Deleted)
-            {
-                (toRemove ??= new List<CityGuard>()).Add(guard);
-            }
-        }
-
-        if (toRemove == null)
-        {
-            return;
-        }
-
-        foreach (var guard in toRemove)
+        foreach (var guard in new List<CityGuard>(CityGuard.Of(city)))
         {
             guard.Delete();
         }

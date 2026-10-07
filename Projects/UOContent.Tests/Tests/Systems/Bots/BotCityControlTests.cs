@@ -28,14 +28,7 @@ public class BotCityControlTests
 
     private static void Cleanup(List<Mobile> mobiles, string city)
     {
-        var (center, map) = CityControlSystem.Cities[city];
-        var guards = new List<CityGuard>();
-        foreach (var guard in map.GetMobilesInRange<CityGuard>(center, BotCityControl.GuardScanRadius))
-        {
-            guards.Add(guard);
-        }
-
-        foreach (var guard in guards)
+        foreach (var guard in new List<CityGuard>(CityGuard.Of(city)))
         {
             guard.Delete();
         }
@@ -88,15 +81,17 @@ public class BotCityControlTests
             Assert.True(BotGoals.SiegeCity.Score(besieger.Brain) > 0.3);
 
             // A guard in a fight calls the holders.
-            var guard = map.GetMobilesInRange<CityGuard>(center, BotCityControl.GuardScanRadius);
             CityGuard first = null;
-            foreach (var g in guard)
+            foreach (var g in CityGuard.Of(city))
             {
                 first = g;
                 break;
             }
 
             Assert.NotNull(first);
+            Assert.Equal(6, CityGuard.Of(city).Count);
+            Assert.True(CityControlSystem.IsHostileToCity(city, besieger)); // a bot-guild war counts too
+            Assert.False(CityControlSystem.IsHostileToCity(city, holders[1]));
             Assert.Equal(0, BotGoals.DefendCity.Score(((BotMobile)holders[2]).Brain));
             first.Combatant = besieger;
             BotCityControl.Invalidate(city);
