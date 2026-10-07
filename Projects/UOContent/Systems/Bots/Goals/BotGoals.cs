@@ -52,5 +52,9 @@ public static class BotGoals
     public static readonly KillQuestGoal RangerQuest = new(QuestGiverKind.Ranger);
     public static readonly KillQuestGoal CourtMageQuest = new(QuestGiverKind.CourtMage);
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest];
+    public static readonly ClaimCityGoal ClaimCity = new();
+    public static readonly SiegeCityGoal SiegeCity = new();
+    public static readonly DefendCityGoal DefendCity = new();
+
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest, ClaimCity, SiegeCity, DefendCity];
 }
