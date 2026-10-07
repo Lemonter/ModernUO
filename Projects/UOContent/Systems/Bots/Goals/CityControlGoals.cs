@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Server.Commands;
 using Server.Guilds;
 using Server.Mobiles;
 using Server.Systems.MahaonBots;
@@ -118,14 +117,11 @@ public static class BotCityControl
 
     public static (Point3D center, Map map) CenterOf(string city) => CityControlSystem.Cities[city];
 
-    // City names are typed as one quoted argument: "Skara Brae" has a space.
-    public static bool Command(Mobile bot, string command, string city, string arg = null) =>
-        CommandSystem.Handle(bot, arg == null ? $"{CommandSystem.Prefix}{command} \"{city}\"" : $"{CommandSystem.Prefix}{command} \"{city}\" {arg}");
 }
 
 /// <summary>
 /// A bot guild's leader lays claim to a city at its banner: an unheld city, or one held by a guild
-/// it is at war with. Through the same command a player's guild leader uses, standing by the banner;
+/// it is at war with. Through the city stone, as a player's guild leader does, standing by it;
 /// then it holds the banner with its guild for the ten minutes the claim takes.
 /// </summary>
 public sealed class ClaimCityGoal : BotGoal
@@ -176,7 +172,7 @@ public sealed class ClaimCityGoal : BotGoal
 
         return
         [
-            new GoToAction(point.Map, point.Location, 2, $"к знамени {city}"),
+            new GoToAction(point.Map, point.Location, 2, $"к камню {city}"),
             new ClaimCityAction(city),
             new BannerFightAction(city, false)
         ];
@@ -199,7 +195,10 @@ public sealed class ClaimCityAction : BotAction
             return BotActionResult.Failed();
         }
 
-        BotCityControl.Command(bot, "ClaimCity", _city);
+        if (Items.MahaonCityClaimPoint.Of(_city) is { } stone)
+        {
+            CityControlSystem.TryClaim(bot, stone);
+        }
 
         if (Items.MahaonCityClaimPoint.Of(_city) is not { Contested: true } point || point.Contender != guild)
         {
@@ -208,7 +207,7 @@ public sealed class ClaimCityAction : BotAction
             return BotActionResult.Failed();
         }
 
-        BotSpeech.SayText(bot, $"Этот город будет нашим! Гильдия {guild.Name}, к знамени!");
+        BotSpeech.SayText(bot, $"Этот город будет нашим! Гильдия {guild.Name}, к камню!");
         return BotActionResult.Done(1000);
     }
 
@@ -224,9 +223,9 @@ public sealed class SiegeCityGoal : BotGoal
     private const int SearchRange = 400;
     private const int MinFightingSkill = 40;
 
-    public override string Name => "Удержание знамени";
+    public override string Name => "Удержание камня";
 
-    public override string[] News => ["Держали знамя до последнего!", "Стража лезла со всех сторон, но мы выстояли."];
+    public override string[] News => ["Держали камень до последнего!", "Стража лезла со всех сторон, но мы выстояли."];
 
     private static string Target(PlayerMobile bot)
     {
@@ -252,8 +251,8 @@ public sealed class SiegeCityGoal : BotGoal
             return null;
         }
 
-        BotSpeech.SayText(brain.Bot, $"Держим знамя в {city}!");
-        return [new GoToAction(point.Map, point.Location, 4, $"к знамени {city}"), new BannerFightAction(city, false)];
+        BotSpeech.SayText(brain.Bot, $"Держим камень в {city}!");
+        return [new GoToAction(point.Map, point.Location, 4, $"к камню {city}"), new BannerFightAction(city, false)];
     }
 }
 
@@ -308,8 +307,8 @@ public sealed class DefendCityGoal : BotGoal
 
         if (banner && Items.MahaonCityClaimPoint.Of(city) is { } point)
         {
-            BotSpeech.SayText(brain.Bot, $"Наш {city} оспаривают! Все к знамени!");
-            return [new GoToAction(point.Map, point.Location, 6, $"к знамени {city}"), new BannerFightAction(city, true)];
+            BotSpeech.SayText(brain.Bot, $"Наш {city} оспаривают! Все к камню!");
+            return [new GoToAction(point.Map, point.Location, 6, $"к камню {city}"), new BannerFightAction(city, true)];
         }
 
         var (center, map) = BotCityControl.CenterOf(city);
@@ -372,7 +371,7 @@ public sealed class BannerFightAction : BotAction
 
         if (!bot.InRange(point.Location, Items.MahaonCityClaimPoint.HoldRange - 4))
         {
-            _step = new GoToAction(point.Map, point.Location, 3, "к знамени");
+            _step = new GoToAction(point.Map, point.Location, 3, "к камню");
             _step.Start(brain);
             return BotActionResult.Running(250);
         }
@@ -435,13 +434,13 @@ public sealed class BannerFightAction : BotAction
         }
 
         BotCityControl.Invalidate(_city);
-        BotCityControl.Command(bot, "SetCityTax", _city, (brain.Greed * 30 / 100).ToString());
+        CityControlSystem.SetTax(_city, bot, brain.Greed * CityControlSystem.MaxTax / 100);
         BotSpeech.SayText(bot, $"Отныне {_city} под защитой гильдии {guild.Name}!");
     }
 
     public override void Stop(BotBrain brain) => _step?.Stop(brain);
 
-    public override string Describe(BotBrain brain) => _defending ? $"Защищает знамя {_city}" : $"Держит знамя {_city}";
+    public override string Describe(BotBrain brain) => _defending ? $"Защищает камень {_city}" : $"Держит камень {_city}";
 }
 
 /// <summary>Fights whoever attacks the city's guards, until no one does.</summary>

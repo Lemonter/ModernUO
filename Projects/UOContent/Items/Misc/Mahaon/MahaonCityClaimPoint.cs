@@ -8,10 +8,11 @@ using Server.Systems.MahaonCities;
 namespace Server.Items;
 
 /// <summary>
-/// The banner a city is claimed at, placed by a GM. A guild leader standing by it claims the city
-/// with [ClaimCity; the city's guards and the holding guild then come to the banner, and if the
-/// claimants still stand by it after ten minutes the city changes hands. Should every claimant by
-/// the banner be killed or leave, the claim fails.
+/// A city's stone, placed by a GM: a guild leader standing by it claims the city, and the leader of
+/// the holding guild runs the city from it (see <see cref="Gumps.CityStoneGump"/>). Once claimed,
+/// the city's guards and the holding guild come to the stone, and if the claimants still stand by
+/// it after ten minutes the city changes hands. Should every claimant be killed or leave, the claim
+/// fails.
 /// </summary>
 [SerializationGenerator(0)]
 public partial class MahaonCityClaimPoint : Item
@@ -42,13 +43,15 @@ public partial class MahaonCityClaimPoint : Item
     private Timer _watchTimer;
 
     [Constructible]
-    public MahaonCityClaimPoint(string city = null) : base(0x15AE)
+    public MahaonCityClaimPoint(string city = null) : base(0xEDD)
     {
         Movable = false;
         _city = city;
-        Name = "знамя города";
+        Name = "городской камень";
         Register();
     }
+
+    public override void OnDoubleClick(Mobile from) => Gumps.CityStoneGump.DisplayTo(from, this);
 
     /// <summary>The banner of a city, if a GM placed one.</summary>
     public static MahaonCityClaimPoint Of(string city) =>
@@ -130,11 +133,11 @@ public partial class MahaonCityClaimPoint : Item
 
         if (CityControlSystem.GetController(_city) is { } holder)
         {
-            World.Broadcast(0x22, false, $"Гильдия {guild.Name} оспаривает {_city} у гильдии {holder.Name}! Защитники, к знамени!");
+            World.Broadcast(0x22, false, $"Гильдия {guild.Name} оспаривает {_city} у гильдии {holder.Name}! Защитники, к камню!");
         }
         else
         {
-            World.Broadcast(0x22, false, $"Гильдия {guild.Name} заявила права на {_city}! Десять минут у знамени — и город её.");
+            World.Broadcast(0x22, false, $"Гильдия {guild.Name} заявила права на {_city}! Десять минут у камня — и город её.");
         }
 
         Systems.MahaonBots.BotRumors.Spread($"Гильдия {guild.Name} пытается взять {_city}.");

@@ -38,7 +38,7 @@ public class BotCityControlTests
     [Fact]
     public void Claim_IsHeldAtTheBannerForTenMinutes_ThenGuardsAndHoldersDefendIt()
     {
-        if (!CommandSystem.Entries.ContainsKey("ClaimCity"))
+        if (!CommandSystem.Entries.ContainsKey("SetCityCenter"))
         {
             CityControlSystem.Configure();
         }

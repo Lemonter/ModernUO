@@ -27,7 +27,7 @@ public class CityGuardUpgradeTests
     [Fact]
     public void Members_FundTheGuard_LeaderRaisesItAndHiresMages_NewHolderStartsOver()
     {
-        if (!CommandSystem.Entries.ContainsKey("UpgradeCityGuards"))
+        if (!CommandSystem.Entries.ContainsKey("SetCityCenter"))
         {
             CityControlSystem.Configure();
         }

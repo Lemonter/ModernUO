@@ -146,14 +146,9 @@ public class CityControlSystem : GenericPersistence
     {
         _instance = new CityControlSystem();
 
-        CommandSystem.Register("ClaimCity", AccessLevel.Player, ClaimCity_OnCommand);
-        CommandSystem.Register("SetCityTax", AccessLevel.Player, SetCityTax_OnCommand);
+        // Players claim and run a city through its city stone; only staff tools are commands.
         CommandSystem.Register("SetCityCenter", AccessLevel.GameMaster, SetCityCenter_OnCommand);
-        CommandSystem.Register("CityStatus", AccessLevel.Player, CityStatus_OnCommand);
-        CommandSystem.Register("UpgradeCityGuards", AccessLevel.Player, UpgradeCityGuards_OnCommand);
-        CommandSystem.Register("HireCityMage", AccessLevel.Player, HireCityMage_OnCommand);
-        CommandSystem.Register("GuildDeposit", AccessLevel.Player, GuildDeposit_OnCommand);
-        CommandSystem.Register("GuildTreasury", AccessLevel.Player, GuildTreasury_OnCommand);
+        CommandSystem.Register("CityStatus", AccessLevel.GameMaster, CityStatus_OnCommand);
     }
 
     public static void Initialize()
@@ -381,95 +376,59 @@ public class CityControlSystem : GenericPersistence
         }
     }
 
-    [Usage("ClaimCity <city>")]
-    [Description("Lays your guild's claim to a city at its banner; held for ten minutes, the city is yours.")]
-    private static void ClaimCity_OnCommand(CommandEventArgs e)
+    public const int MaxTax = 30;
+
+    /// <summary>
+    /// Lays a guild leader's claim to the city at its stone. Null when the claim is laid, else
+    /// why not, in words for the claimant.
+    /// </summary>
+    public static string TryClaim(Mobile from, Items.MahaonCityClaimPoint point)
     {
-        var from = e.Mobile;
-
-        if (from is not PlayerMobile pm || pm.Guild is not Guild guild)
+        if (from is not PlayerMobile { Guild: Guild guild } || guild.Leader != from)
         {
-            from.SendMessage("Чтобы захватить город, нужно состоять в гильдии.");
-            return;
+            return "Заявить права на город может только лидер гильдии.";
         }
 
-        if (guild.Leader != from)
+        var city = point.City;
+        if (city == null || !Cities.ContainsKey(city))
         {
-            from.SendMessage("Захватить город может только лидер гильдии.");
-            return;
+            return "Этот камень не привязан к городу.";
         }
-
-        if (e.Length < 1 || !Cities.ContainsKey(e.GetString(0)))
-        {
-            from.SendMessage($"Использование: [ClaimCity <{string.Join("|", Cities.Keys)}>");
-            return;
-        }
-
-        var city = e.GetString(0);
 
         if (GetController(city) == guild)
         {
-            from.SendMessage("Твоя гильдия уже контролирует этот город.");
-            return;
-        }
-
-        if (Items.MahaonCityClaimPoint.Of(city) is not { } point)
-        {
-            from.SendMessage($"В городе {city} нет знамени — захватить его нельзя.");
-            return;
+            return "Твоя гильдия уже держит этот город.";
         }
 
         if (point.Map != from.Map || !from.InRange(point.GetWorldLocation(), Items.MahaonCityClaimPoint.ClaimRange))
         {
-            from.SendMessage("Город берут у его знамени — подойди к нему.");
-            return;
+            return "Город берут у его камня — подойди ближе.";
         }
 
         if (point.Contested)
         {
-            from.SendMessage($"{city} уже оспаривает гильдия {point.Contender.Name}.");
-            return;
+            return $"{city} уже оспаривает гильдия {point.Contender.Name}.";
         }
 
         point.StartContest(guild);
-        from.SendMessage(0x59, "Права заявлены. Продержитесь у знамени десять минут.");
+        return null;
     }
 
-    [Usage("SetCityTax <city> <percent>")]
-    [Description("Sets the tax rate for a city your guild controls (0-30).")]
-    private static void SetCityTax_OnCommand(CommandEventArgs e)
+    /// <summary>Sets a held city's tax, from 0 to <see cref="MaxTax"/> percent, by its holder's leader.</summary>
+    public static bool SetTax(string city, Mobile leader, int percent)
     {
-        var from = e.Mobile;
-
-        if (from is not PlayerMobile pm || pm.Guild is not Guild guild)
+        if (leader?.Guild is not Guild guild || guild.Leader != leader || GetController(city) != guild)
         {
-            from.SendMessage("Нужно состоять в гильдии.");
-            return;
+            return false;
         }
 
-        if (e.Length < 2 || !Cities.ContainsKey(e.GetString(0)) || !int.TryParse(e.GetString(1), out var percent))
-        {
-            from.SendMessage("Использование: [SetCityTax <город> <процент>");
-            return;
-        }
-
-        var city = e.GetString(0);
-
-        if (GetController(city) != guild)
-        {
-            from.SendMessage("Твоя гильдия не контролирует этот город.");
-            return;
-        }
-
-        if (guild.Leader != from)
-        {
-            from.SendMessage("Установить налог может только лидер гильдии.");
-            return;
-        }
-
-        TaxRate[city] = System.Math.Clamp(percent, 0, 30);
-        from.SendMessage(0x59, $"Налог в {city} теперь {TaxRate[city]}%.");
+        TaxRate[city] = System.Math.Clamp(percent, 0, MaxTax);
+        return true;
     }
+
+    /// <summary>Whether this mobile leads the guild holding the city.</summary>
+    public static bool Rules(Mobile m, string city) =>
+        city != null && m?.Guild is Guild guild && guild.Leader == m && GetController(city) == guild;
 
     [Usage("CityStatus")]
     [Description("Shows who controls each city and its tax rate.")]
@@ -496,101 +455,8 @@ public class CityControlSystem : GenericPersistence
         }
     }
 
-    // A guild leader acting for a city the guild holds: the city named, or null with the reason told.
-    private static string LeaderCity(CommandEventArgs e, string usage, out Guild guild)
-    {
-        var from = e.Mobile;
-        guild = (from as PlayerMobile)?.Guild as Guild;
-
-        if (guild == null || guild.Leader != from)
-        {
-            from.SendMessage("Это решает только лидер гильдии.");
-            return null;
-        }
-
-        if (e.Length < 1 || Find(e.ArgString.Trim().Trim('"')) is not { } city)
-        {
-            from.SendMessage($"Использование: {usage}");
-            return null;
-        }
-
-        if (GetController(city) != guild)
-        {
-            from.SendMessage("Твоя гильдия не контролирует этот город.");
-            return null;
-        }
-
-        return city;
-    }
-
-    [Usage("UpgradeCityGuards <city>")]
-    [Description("Raises the guard of a city your guild holds one step, paid in gold and ingots from the guild bank.")]
-    private static void UpgradeCityGuards_OnCommand(CommandEventArgs e)
-    {
-        if (LeaderCity(e, "[UpgradeCityGuards <город>", out var guild) is not { } city)
-        {
-            return;
-        }
-
-        if (NextStep(city) is not { } step)
-        {
-            e.Mobile.SendMessage("Стража этого города уже на высшем уровне.");
-            return;
-        }
-
-        var metalName = Systems.MahaonMetals.MahaonMetalTable.Get(step.Metal).RuName;
-        if (!UpgradeGuards(city, guild))
-        {
-            e.Mobile.SendMessage(
-                0x22,
-                $"В казне гильдии не хватает: нужно {step.Gold} золота и {step.Ingots} слитков ({metalName})."
-            );
-            return;
-        }
-
-        e.Mobile.SendMessage(0x59, $"Стража {city} поднята до {GetGuardLevel(city)} уровня, доспехи — {metalName}.");
-    }
-
-    [Usage("HireCityMage <city>")]
-    [Description("Hires a battle mage for a city your guild holds, paid from the guild bank.")]
-    private static void HireCityMage_OnCommand(CommandEventArgs e)
-    {
-        if (LeaderCity(e, "[HireCityMage <город>", out var guild) is not { } city)
-        {
-            return;
-        }
-
-        if (MagesIn(city) >= MaxMages)
-        {
-            e.Mobile.SendMessage($"У {city} уже {MaxMages} боевых мага.");
-            return;
-        }
-
-        var cost = MageCost(city);
-        if (!HireMage(city, guild))
-        {
-            e.Mobile.SendMessage(0x22, $"В казне гильдии не хватает: маг стоит {cost} золота.");
-            return;
-        }
-
-        e.Mobile.SendMessage(0x59, $"Боевой маг нанят в {city} за {cost} золота.");
-    }
-
-    [Usage("GuildDeposit")]
-    [Description("Puts gold or ingots from your pack into your guild's bank.")]
-    private static void GuildDeposit_OnCommand(CommandEventArgs e)
-    {
-        if (e.Mobile.Guild is not Guild)
-        {
-            e.Mobile.SendMessage("Ты не в гильдии.");
-            return;
-        }
-
-        e.Mobile.SendMessage("Что положить в казну гильдии? (золото или слитки)");
-        e.Mobile.Target = new GuildDepositTarget();
-    }
-
-    private sealed class GuildDepositTarget : Server.Targeting.Target
+    /// <summary>The cursor that puts a pile of gold or ingots from the pack into the guild bank.</summary>
+    public sealed class GuildDepositTarget : Server.Targeting.Target
     {
         public GuildDepositTarget() : base(2, false, Server.Targeting.TargetFlags.None)
         {
@@ -617,27 +483,6 @@ public class CityControlSystem : GenericPersistence
             }
 
             from.SendMessage(0x59, $"В казну гильдии внесено: {amount}.");
-        }
-    }
-
-    [Usage("GuildTreasury")]
-    [Description("Shows the gold and ingots in your guild's bank.")]
-    private static void GuildTreasury_OnCommand(CommandEventArgs e)
-    {
-        if (e.Mobile.Guild is not Guild guild)
-        {
-            e.Mobile.SendMessage("Ты не в гильдии.");
-            return;
-        }
-
-        e.Mobile.SendMessage(0x59, $"Казна гильдии {guild.Name}: {MahaonBots.GuildBank.GetGoldValue(guild.Name)} золота.");
-        foreach (var (metal, info) in Systems.MahaonMetals.MahaonMetalTable.Data)
-        {
-            var ingots = MahaonBots.GuildBank.GetIngots(guild.Name, metal);
-            if (ingots > 0)
-            {
-                e.Mobile.SendMessage($"{info.RuName}: {ingots} слитков");
-            }
         }
     }
 

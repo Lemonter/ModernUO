@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Server.Commands;
 using Server.Guilds;
 using Server.Items;
 using Server.Mobiles;
@@ -51,7 +50,7 @@ public static class BotCityGuard
 /// <summary>
 /// The leader of a guild holding a city spends the guild bank on its guard: the next step when the
 /// bank holds the gold and the ingots, a battle mage when there's gold to spare after that. Through
-/// the commands a player's leader uses.
+/// the city stone's buttons a player's leader presses.
 /// </summary>
 public sealed class CityGuardUpgradeGoal : BotGoal
 {
@@ -105,7 +104,18 @@ public sealed class CityGuardCommandAction : BotAction
     {
         var bot = brain.Bot;
         var before = (CityControlSystem.GetGuardLevel(_city), CityControlSystem.MagesIn(_city));
-        BotCityControl.Command(bot, _mage ? "HireCityMage" : "UpgradeCityGuards", _city);
+        // The city stone's buttons.
+        if (bot.Guild is Guild guild)
+        {
+            if (_mage)
+            {
+                CityControlSystem.HireMage(_city, guild);
+            }
+            else
+            {
+                CityControlSystem.UpgradeGuards(_city, guild);
+            }
+        }
 
         if ((CityControlSystem.GetGuardLevel(_city), CityControlSystem.MagesIn(_city)) == before)
         {
@@ -130,7 +140,7 @@ public sealed class CityGuardCommandAction : BotAction
 /// <summary>
 /// Members of a guild holding a city chip in for its guard: ingots of the metal the next step needs,
 /// which they don't keep for their own craft, and a share of their gold when the bank is short of
-/// it — the less greedy, the readier. Through [GuildDeposit, as a player gives.
+/// it — the less greedy, the readier. Through the treasury's deposit cursor, as a player gives.
 /// </summary>
 public sealed class GuildDonateGoal : BotGoal
 {
@@ -216,13 +226,9 @@ public sealed class GuildDonateAction : BotAction
             return BotActionResult.Failed();
         }
 
-        CommandSystem.Handle(bot, $"{CommandSystem.Prefix}GuildDeposit");
-        if (bot.Target is not { } cursor)
-        {
-            return BotActionResult.Failed();
-        }
-
-        cursor.Invoke(bot, gift);
+        // The treasury's "put in" button raises this cursor.
+        bot.Target = new CityControlSystem.GuildDepositTarget();
+        bot.Target.Invoke(bot, gift);
         brain.NextDonationTick = Core.TickCount + DonationCooldownMs;
         BotSpeech.SayText(bot, $"Это на стражу, гильдия {guild.Name}.");
         return gift.Deleted || gift.Parent != pack ? BotActionResult.Done(1000) : BotActionResult.Failed();

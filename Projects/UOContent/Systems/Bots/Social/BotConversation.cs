@@ -274,7 +274,7 @@ public static class BotConversation
         GuildOrderGoal       => "Заказ в гильдию ремесленников несу.",
         KillQuestGoal q      => $"{q.Name} выполняю.",
         ClaimCityGoal        => "Иду брать город для нашей гильдии.",
-        SiegeCityGoal        => "Держим знамя, город будет нашим.",
+        SiegeCityGoal        => "Держим камень, город будет нашим.",
         DefendCityGoal       => "Наш город атакуют, бегу на помощь!",
         TreasureHuntGoal     => "Клад ищу, есть у меня одна карта...",
         GuardShopGoal        => "К сержанту Гвидо за свитком иду.",

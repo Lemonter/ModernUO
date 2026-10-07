@@ -16,7 +16,7 @@ public class CityTaxTests
     [Fact]
     public void HeldCity_TaxesVendorPricesAndAuctionSales_IntoTheGuildBank()
     {
-        if (!CommandSystem.Entries.ContainsKey("ClaimCity"))
+        if (!CommandSystem.Entries.ContainsKey("SetCityCenter"))
         {
             CityControlSystem.Configure();
         }
@@ -48,7 +48,7 @@ public class CityTaxTests
             Assert.Equal(100, vendor.GetPriceScalar());
 
             CityControlSystem.Capture(city, guild);
-            CommandSystem.Handle(leader, $"{CommandSystem.Prefix}SetCityTax {city} 20");
+            Assert.True(CityControlSystem.SetTax(city, leader, 20));
             Assert.Equal(20, CityControlSystem.GetTaxRate(city));
             Assert.Equal(120, vendor.GetPriceScalar());
 
