@@ -80,10 +80,11 @@ public sealed class LootCorpseAction : BotAction
     }
 
     /// <summary>Anything with resale value that isn't trash: arms, armour, jewellery, gems,
-    /// reagents, scrolls, hides.</summary>
+    /// reagents, scrolls, hides, treasure maps.</summary>
     private static bool IsWorthTaking(Item item) =>
         item.Movable && item.LootType != LootType.Blessed &&
-        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll or BaseHides || BotCrafting.IsRawMeat(item) ||
+        (item is BaseWeapon or BaseArmor or BaseJewel or BaseReagent or SpellScroll or BaseHides or TreasureMap { Completed: false } ||
+         BotCrafting.IsRawMeat(item) ||
          Gems.Contains(item.GetType()));
 
     /// <summary>Something to skin with: the blade in hand, or a knife in the pack.</summary>

@@ -51,12 +51,14 @@ public static class BotGoods
 
     /// <summary>What a bot puts on the market: raw goods it doesn't need for its own craft, and
     /// what it crafted.</summary>
+    // A map the bot will dig itself, or one it has read (then only it can dig there), stays.
     public static bool IsForSale(Mobile bot, Item item) =>
+        item is not TreasureMap { Decoder: not null } && !(item is TreasureMap map && BotTreasure.Keeps(bot, map)) && (
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) ||
         IsProduct(bot, item) && !BotCrafting.KeepsForOwnUse(bot, item) ||
         IsFarmGood(item) && IsCarried(bot, item) && !KeepsAsFood(bot, item) && !WeaveGoal.KeepsForWeaving(bot, item) &&
         !BotCrafting.KeepsForCraft(bot, item) ||
-        bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item);
+        bot.GetBrain() is { } brain && brain.IsLoot(item) && IsCarried(bot, item));
 
     public static int BaseUnitPrice(Item item) => item switch
     {
@@ -78,6 +80,7 @@ public static class BotGoods
         BaseWeapon or BaseArmor or BaseJewel => 30,
         BaseReagent       => 3,
         SpellScroll       => 10,
+        TreasureMap { Completed: false } map => 150 * System.Math.Max(1, map.Level),
         _                 => 0
     };
 

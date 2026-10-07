@@ -454,7 +454,7 @@ public partial class TreasureMap : MapItem
         from.PlaySound(0x249);
         base.DisplayTo(from);
 
-        if (from is Mobiles.PlayerMobile player && !_completed && (_decoder == from || HasRequiredSkill(from)))
+        if (from is Mobiles.PlayerMobile { NetState: not null } player && !_completed && (_decoder == from || HasRequiredSkill(from)))
         {
             if (Systems.MahaonQuests.MahaonTreasureCompassSystem.IsTracking(player))
             {

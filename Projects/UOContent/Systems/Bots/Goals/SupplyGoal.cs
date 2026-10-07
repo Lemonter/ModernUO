@@ -161,6 +161,19 @@ public sealed class SupplyGoal : BotGoal
             }
         }
 
+        // Treasure is dug with a shovel; a pickaxe is a weapon to the dig.
+        if (BotTreasure.Usable(bot) != null && !TreasureMap.HasDiggingTool(bot))
+        {
+            (type, amount) = (typeof(Shovel), 1);
+            return true;
+        }
+
+        if (BotTreasure.WantsLockpicks(bot))
+        {
+            (type, amount) = (typeof(Lockpick), 5);
+            return true;
+        }
+
         // A cook short of meat buys ribs from the butcher; the rest comes from its hunting.
         if (BotCrafting.IsCook(bot) && pack.GetAmount(typeof(RawRibs)) + pack.GetAmount(typeof(RawBird)) +
             pack.GetAmount(typeof(RawFishSteak)) < 10)
