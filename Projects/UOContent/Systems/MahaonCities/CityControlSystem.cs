@@ -12,6 +12,18 @@ namespace Server.Systems.MahaonCities;
 ///     Guild.Enemies/war-declaration system rather than inventing a parallel rivalry
 ///     concept.
 /// </summary>
+/// <summary>Teachers a guild hires for its city's guard, each once.</summary>
+[System.Flags]
+public enum GuardTeachers
+{
+    None = 0,
+    Bushido = 1,
+    Shield = 2,
+    Anatomy = 4,
+    Resist = 8,
+    Meditation = 16
+}
+
 public class CityControlSystem : GenericPersistence
 {
     private static CityControlSystem _instance;
@@ -44,6 +56,33 @@ public class CityControlSystem : GenericPersistence
     private static readonly Dictionary<string, Guild> Control = new();
     private static readonly Dictionary<string, int> TaxRate = new();
     private static readonly Dictionary<string, int> GuardLevel = new();
+
+    // Teachers the holding guild has hired for the city's guard.
+    private static readonly Dictionary<string, GuardTeachers> Teachers = new();
+
+    public static GuardTeachers TeachersOf(string city) => Teachers.GetValueOrDefault(city);
+
+    /// <summary>What a teacher costs at the city's guard level.</summary>
+    public static int TeacherCost(string city) => 25_000 + GetGuardLevel(city) * 5_000;
+
+    /// <summary>Hires a teacher for a city's guard, paid from the holding guild's bank; the
+    /// guards learn at once.</summary>
+    public static bool HireTeacher(string city, Guild guild, GuardTeachers teacher)
+    {
+        if (GetController(city) != guild || (TeachersOf(city) & teacher) != 0 ||
+            !MahaonBots.GuildBank.TrySpend(guild.Name, TeacherCost(city), Systems.MahaonMetals.MahaonMetal.Iron, 0))
+        {
+            return false;
+        }
+
+        Teachers[city] = TeachersOf(city) | teacher;
+        foreach (var guard in CityGuard.Of(city))
+        {
+            guard.ApplyLevel(GetGuardLevel(city));
+        }
+
+        return true;
+    }
 
     // Battle mages the holding guild has hired; the dead are replaced from the guild bank.
     private static readonly Dictionary<string, int> MageSlots = new();
@@ -305,6 +344,7 @@ public class CityControlSystem : GenericPersistence
         // The guard is the city's, trained and armed by whoever held it: a new holder starts over.
         GuardLevel.Remove(city);
         MageSlots.Remove(city);
+        Teachers.Remove(city);
         SpawnGuards(city, guild);
         Server.Systems.MahaonAi.MahaonForumBridge.OnCityCaptured(city, guild);
 
@@ -524,7 +564,7 @@ public class CityControlSystem : GenericPersistence
 
     public override void Serialize(IGenericWriter writer)
     {
-        writer.WriteEncodedInt(2); // version
+        writer.WriteEncodedInt(3); // version
         writer.WriteEncodedInt(Control.Count);
 
         foreach (var (city, guild) in Control)
@@ -534,6 +574,7 @@ public class CityControlSystem : GenericPersistence
             writer.WriteEncodedInt(TaxRate.GetValueOrDefault(city, 0));
             writer.WriteEncodedInt(GuardLevel.GetValueOrDefault(city, 0));
             writer.WriteEncodedInt(MageSlots.GetValueOrDefault(city, 0));
+            writer.WriteEncodedInt((int)Teachers.GetValueOrDefault(city));
         }
     }
 
@@ -549,6 +590,7 @@ public class CityControlSystem : GenericPersistence
             var tax = reader.ReadEncodedInt();
             var level = version >= 1 ? reader.ReadEncodedInt() : 0;
             var mages = version >= 2 ? reader.ReadEncodedInt() : 0;
+            var teachers = version >= 3 ? (GuardTeachers)reader.ReadEncodedInt() : GuardTeachers.None;
 
             if (guild != null)
             {
@@ -556,6 +598,7 @@ public class CityControlSystem : GenericPersistence
                 TaxRate[city] = tax;
                 GuardLevel[city] = level;
                 MageSlots[city] = mages;
+                Teachers[city] = teachers;
             }
         }
     }

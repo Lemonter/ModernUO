@@ -132,8 +132,59 @@ public partial class CityGuard : BaseCreature
         SetSkill(SkillName.Tactics, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
         SetSkill(SkillName.MagicResist, Math.Min(120, 60.0 + level * 4), Math.Min(120, 80.0 + level * 4));
 
+        ApplyTeachers(level);
         ForgeGear(level);
         Hits = HitsMax;
+    }
+
+    /// <summary>What the teachers the guild hired taught: a school's skill, growing with the level.</summary>
+    protected void ApplyTeachers(int level)
+    {
+        var teachers = CityControlSystem.TeachersOf(_city);
+        var taught = Math.Min(120, 70.0 + level * 2);
+
+        if ((teachers & GuardTeachers.Bushido) != 0)
+        {
+            SetSkill(SkillName.Bushido, taught - 10, taught);
+        }
+
+        if ((teachers & GuardTeachers.Shield) != 0)
+        {
+            SetSkill(SkillName.Parry, taught - 10, taught);
+            if (this is not CityMageGuard && FindItemOnLayer(Layer.TwoHanded) == null && !HasShield())
+            {
+                AddItem(new HeaterShield());
+            }
+        }
+
+        if ((teachers & GuardTeachers.Anatomy) != 0)
+        {
+            SetSkill(SkillName.Anatomy, taught - 10, taught);
+        }
+
+        if ((teachers & GuardTeachers.Resist) != 0)
+        {
+            SetSkill(SkillName.MagicResist, Math.Min(120, Skills.MagicResist.Base + 20), Math.Min(120, Skills.MagicResist.Base + 20));
+        }
+
+        if ((teachers & GuardTeachers.Meditation) != 0)
+        {
+            SetSkill(SkillName.Meditation, taught - 10, taught);
+            SetSkill(SkillName.Focus, taught - 10, taught);
+        }
+    }
+
+    private bool HasShield()
+    {
+        foreach (var item in Items)
+        {
+            if (item is BaseShield)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Gear takes the colour of its metal: a guard's level shows on it at a glance.

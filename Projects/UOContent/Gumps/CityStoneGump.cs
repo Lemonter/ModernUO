@@ -50,7 +50,7 @@ public class CityStoneGump : DynamicGump
         var city = _stone.City;
         var holder = CityControlSystem.GetController(city);
         var rules = CityControlSystem.Rules(from, city);
-        var height = rules ? 410 : 200;
+        var height = rules ? 510 : 200;
 
         builder.AddPage();
         builder.AddBackground(0, 0, Width, height, 5054);
@@ -130,9 +130,37 @@ public class CityStoneGump : DynamicGump
             $"Жалованье: {CityGuardUpkeep.WagePerHour(level)} золота в час на стражника. Замена павшего: {replaceGold} золота и {replaceIngots} слитков."
         );
 
-        builder.AddButton(20, 320, 4005, 4007, 6);
-        builder.AddHtml(55, 320, Width - 75, 20, "Казна гильдии");
+        builder.AddHtml(20, 320, Width - 40, 20, $"Учителя для стражи, {CityControlSystem.TeacherCost(city)} золота каждый:");
+        var y = 344;
+        var hired = CityControlSystem.TeachersOf(city);
+        for (var i = 0; i < TeacherList.Length; i++)
+        {
+            var (teacher, name) = TeacherList[i];
+            if ((hired & teacher) != 0)
+            {
+                builder.AddHtml(55, y, Width - 75, 20, $"{name} — нанят");
+            }
+            else
+            {
+                builder.AddButton(20, y, 4005, 4007, 100 + i);
+                builder.AddHtml(55, y, Width - 75, 20, name);
+            }
+
+            y += 22;
+        }
+
+        builder.AddButton(20, y + 8, 4005, 4007, 6);
+        builder.AddHtml(55, y + 8, Width - 75, 20, "Казна гильдии");
     }
+
+    public static readonly (GuardTeachers teacher, string name)[] TeacherList =
+    [
+        (GuardTeachers.Bushido, "Мастер бусидо: парирование оружием"),
+        (GuardTeachers.Shield, "Щитоносец: щит и парирование"),
+        (GuardTeachers.Anatomy, "Лекарь-анатом: удары точнее и сильнее"),
+        (GuardTeachers.Resist, "Наставник защиты от магии"),
+        (GuardTeachers.Meditation, "Наставник медитации для магов")
+    ];
 
     public override void OnResponse(NetState sender, in RelayInfo info)
     {
@@ -188,6 +216,16 @@ public class CityStoneGump : DynamicGump
                 {
                     GuildTreasuryGump.DisplayTo(from);
                     return;
+                }
+            case >= 100 when info.ButtonID - 100 < TeacherList.Length:
+                {
+                    var teacher = TeacherList[info.ButtonID - 100].teacher;
+                    if (CityControlSystem.Rules(from, city) && !CityControlSystem.HireTeacher(city, (Guild)from.Guild, teacher))
+                    {
+                        from.SendMessage(0x22, "В казне не хватает золота на учителя.");
+                    }
+
+                    break;
                 }
         }
 

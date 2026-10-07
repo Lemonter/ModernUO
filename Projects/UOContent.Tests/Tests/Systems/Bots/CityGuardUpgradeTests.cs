@@ -60,7 +60,7 @@ public class CityGuardUpgradeTests
             Assert.Equal(0.6, BotGoals.CityGuardUpgrade.Score(leader.Brain));
             var guard = new List<CityGuard>(CityGuard.Of(city))[0];
             var hitsBefore = guard.HitsMax;
-            Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, false).Tick(leader.Brain).Status);
+            Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, GuardTeachers.None, false).Tick(leader.Brain).Status);
             Assert.Equal(1, CityControlSystem.GetGuardLevel(city));
             Assert.Equal(0, GuildBank.GetIngots(guild.Name, MahaonMetal.Iron));
             Assert.True(guard.HitsMax > hitsBefore * 1.0);
@@ -70,7 +70,7 @@ public class CityGuardUpgradeTests
 
             // Gold beyond the next step's: a battle mage.
             GuildBank.DepositGold(guild.Name, 50000);
-            Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, true).Tick(leader.Brain).Status);
+            Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, GuardTeachers.None, true).Tick(leader.Brain).Status);
             Assert.Equal(1, CityControlSystem.MagesIn(city));
 
             // A second step forges the gear in cobalt, coloured as the metal is.
@@ -92,10 +92,23 @@ public class CityGuardUpgradeTests
                 }
             }
 
+            // A shield teacher: the guards learn to parry and take up a shield of their metal.
+            GuildBank.DepositGold(guild.Name, CityControlSystem.TeacherCost(city));
+            Assert.Equal(
+                BotActionStatus.Done,
+                new CityGuardCommandAction(city, GuardTeachers.Shield, false).Tick(leader.Brain).Status
+            );
+            var trained = new List<CityGuard>(CityGuard.Of(city)).Find(g => g is not CityMageGuard);
+            Assert.True(trained.Skills.Parry.Base >= 60);
+            var shield = trained.Items.Find(item => item is BaseShield);
+            Assert.NotNull(shield);
+            Assert.Equal(cobaltHue, shield.Hue);
+
             // A new holder starts from nothing.
             CityControlSystem.Capture(city, guild);
             Assert.Equal(0, CityControlSystem.GetGuardLevel(city));
             Assert.Equal(0, CityControlSystem.MagesIn(city));
+            Assert.Equal(GuardTeachers.None, CityControlSystem.TeachersOf(city));
         }
         finally
         {

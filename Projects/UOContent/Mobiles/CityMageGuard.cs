@@ -70,6 +70,7 @@ public partial class CityMageGuard : CityGuard
         SetSkill(SkillName.Wrestling, 60.0, 80.0);
         SetSkill(SkillName.MagicResist, Math.Min(120, 70.0 + level * 4), Math.Min(120, 90.0 + level * 4));
 
+        ApplyTeachers(level);
         ForgeGear(level);
         Hits = HitsMax;
         Mana = ManaMax;

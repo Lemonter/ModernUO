@@ -49,16 +49,16 @@ public static class BotCityGuard
 
 /// <summary>
 /// The leader of a guild holding a city spends the guild bank on its guard: the next step when the
-/// bank holds the gold and the ingots, a battle mage when there's gold to spare after that. Through
-/// the city stone's buttons a player's leader presses.
+/// bank holds the gold and the ingots; a battle mage, then teachers, from gold the next step won't
+/// need. Through the city stone's buttons a player's leader presses.
 /// </summary>
 public sealed class CityGuardUpgradeGoal : BotGoal
 {
     public override string Name => "Стража города";
 
-    public override string[] News => ["Подняли стражу нашего города, теперь не сунутся.", "Наняли в город боевого мага."];
+    public override string[] News => ["Подняли стражу нашего города, теперь не сунутся.", "Наняли в город боевого мага.", "Нашли страже хорошего учителя."];
 
-    private static (string city, bool mage)? Plan(PlayerMobile bot)
+    private static CityGuardCommandAction Choice(PlayerMobile bot)
     {
         if (bot.Guild is not Guild guild || guild.Leader != bot)
         {
@@ -70,71 +70,93 @@ public sealed class CityGuardUpgradeGoal : BotGoal
         if (BotCityGuard.NextStep(guild) is { } next && gold >= next.step.Gold &&
             GuildBank.GetIngots(guild.Name, next.step.Metal) >= next.step.Ingots)
         {
-            return (next.city, false);
+            return new CityGuardCommandAction(next.city, GuardTeachers.None, false);
         }
 
-        // A mage is hired from gold the guard's next step won't need.
         var reserve = BotCityGuard.NextStep(guild)?.step.Gold ?? 0;
-        if (BotCityGuard.CityWantingMage(guild) is { } city && gold >= CityControlSystem.MageCost(city) + reserve)
+        if (BotCityGuard.CityWantingMage(guild) is { } mageCity && gold >= CityControlSystem.MageCost(mageCity) + reserve)
         {
-            return (city, true);
+            return new CityGuardCommandAction(mageCity, GuardTeachers.None, true);
+        }
+
+        foreach (var city in CityControlSystem.Cities.Keys)
+        {
+            if (CityControlSystem.GetController(city) != guild || gold < CityControlSystem.TeacherCost(city) + reserve)
+            {
+                continue;
+            }
+
+            foreach (var (teacher, _) in Gumps.CityStoneGump.TeacherList)
+            {
+                if ((CityControlSystem.TeachersOf(city) & teacher) == 0)
+                {
+                    return new CityGuardCommandAction(city, teacher, false);
+                }
+            }
         }
 
         return null;
     }
 
-    public override double Score(BotBrain brain) => Plan(brain.Bot) == null ? 0 : 0.6;
+    public override double Score(BotBrain brain) => Choice(brain.Bot) == null ? 0 : 0.6;
 
-    public override List<BotAction> Plan(BotBrain brain) =>
-        Plan(brain.Bot) is { } plan ? [new CityGuardCommandAction(plan.city, plan.mage)] : null;
+    public override List<BotAction> Plan(BotBrain brain) => Choice(brain.Bot) is { } action ? [action] : null;
 }
 
+/// <summary>One press of a city stone's button: the next guard step, a battle mage or a teacher.</summary>
 public sealed class CityGuardCommandAction : BotAction
 {
     private readonly string _city;
+    private readonly GuardTeachers _teacher;
     private readonly bool _mage;
 
-    public CityGuardCommandAction(string city, bool mage)
+    public CityGuardCommandAction(string city, GuardTeachers teacher, bool mage)
     {
         _city = city;
+        _teacher = teacher;
         _mage = mage;
     }
 
     public override BotActionResult Tick(BotBrain brain)
     {
         var bot = brain.Bot;
-        var before = (CityControlSystem.GetGuardLevel(_city), CityControlSystem.GetMageSlots(_city));
-        // The city stone's buttons.
-        if (bot.Guild is Guild guild)
-        {
-            if (_mage)
-            {
-                CityControlSystem.HireMage(_city, guild);
-            }
-            else
-            {
-                CityControlSystem.UpgradeGuards(_city, guild);
-            }
-        }
-
-        if ((CityControlSystem.GetGuardLevel(_city), CityControlSystem.GetMageSlots(_city)) == before)
+        if (bot.Guild is not Guild guild)
         {
             return BotActionResult.Failed();
         }
 
-        if (_mage)
+        if (_teacher != GuardTeachers.None)
         {
+            if (!CityControlSystem.HireTeacher(_city, guild, _teacher))
+            {
+                return BotActionResult.Failed();
+            }
+
+            BotSpeech.SayText(bot, $"Нанял страже {_city} учителя.");
+        }
+        else if (_mage)
+        {
+            if (!CityControlSystem.HireMage(_city, guild))
+            {
+                return BotActionResult.Failed();
+            }
+
             BotSpeech.SayText(bot, $"В {_city} теперь служит ещё один боевой маг.");
         }
         else
         {
+            if (!CityControlSystem.UpgradeGuards(_city, guild))
+            {
+                return BotActionResult.Failed();
+            }
+
             BotSpeech.SayText(bot, $"Стража {_city} теперь {CityControlSystem.GetGuardLevel(_city)} уровня!");
         }
 
         return BotActionResult.Done(1000);
     }
 
-    public override string Describe(BotBrain brain) => _mage ? $"Нанимает мага в {_city}" : $"Поднимает стражу {_city}";
+    public override string Describe(BotBrain brain) => $"Заботится о страже {_city}";
 }
 
 /// <summary>
