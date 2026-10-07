@@ -123,10 +123,10 @@ public partial class CityGuard : BaseCreature
     /// </summary>
     public virtual void ApplyLevel(int level)
     {
-        SetStr(100 + level * 5, 120 + level * 5);
-        SetDex(80 + level * 3, 100 + level * 3);
+        SetStr(100 + level * 3, 120 + level * 3);
+        SetDex(80 + level * 2, 100 + level * 2);
         SetInt(50, 60);
-        SetHits((int)(80 * (1 + level * 0.15)), (int)(100 * (1 + level * 0.15)));
+        SetHits((int)(80 * (1 + level * 0.1)), (int)(100 * (1 + level * 0.1)));
 
         SetSkill(SkillName.Swords, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
         SetSkill(SkillName.Tactics, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
@@ -136,6 +136,7 @@ public partial class CityGuard : BaseCreature
         Hits = HitsMax;
     }
 
+    // Gear takes the colour of its metal: a guard's level shows on it at a glance.
     protected void ForgeGear(int level)
     {
         if (CityControlSystem.MetalFor(level) is not { } metal)
@@ -145,7 +146,7 @@ public partial class CityGuard : BaseCreature
 
         foreach (var item in new List<Item>(Items))
         {
-            if (item is BaseArmor or BaseWeapon or BaseClothing)
+            if (item is BaseArmor or BaseWeapon)
             {
                 Systems.MahaonMetals.MahaonMetalTracker.Forge(item, metal);
             }

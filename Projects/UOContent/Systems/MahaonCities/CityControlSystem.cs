@@ -49,20 +49,21 @@ public class CityControlSystem : GenericPersistence
     /// metal and the gold the step costs the holding guild.</summary>
     public readonly record struct GuardStep(Systems.MahaonMetals.MahaonMetal Metal, int Ingots, int Gold);
 
-    // Each step costs more gold and more ingots of a rarer metal.
-    public static readonly GuardStep[] GuardSteps =
-    [
-        new(Systems.MahaonMetals.MahaonMetal.Iron, 100, 10_000),
-        new(Systems.MahaonMetals.MahaonMetal.Cobalt, 150, 20_000),
-        new(Systems.MahaonMetals.MahaonMetal.Bronze, 200, 35_000),
-        new(Systems.MahaonMetals.MahaonMetal.Silver, 250, 55_000),
-        new(Systems.MahaonMetals.MahaonMetal.Melchior, 300, 80_000),
-        new(Systems.MahaonMetals.MahaonMetal.Ice, 350, 120_000),
-        new(Systems.MahaonMetals.MahaonMetal.Agapite, 400, 170_000),
-        new(Systems.MahaonMetals.MahaonMetal.Verite, 450, 230_000),
-        new(Systems.MahaonMetals.MahaonMetal.Diamond, 500, 300_000),
-        new(Systems.MahaonMetals.MahaonMetal.Titanium, 600, 400_000)
-    ];
+    // One step per metal, from iron to the last mythic one; each costs more gold and more ingots
+    // of a rarer metal.
+    public static readonly GuardStep[] GuardSteps = BuildGuardSteps();
+
+    private static GuardStep[] BuildGuardSteps()
+    {
+        var metals = System.Enum.GetValues<Systems.MahaonMetals.MahaonMetal>();
+        var steps = new GuardStep[metals.Length];
+        for (var i = 0; i < metals.Length; i++)
+        {
+            steps[i] = new GuardStep(metals[i], 1000 + 500 * i, 10_000 + 4_000 * i * i);
+        }
+
+        return steps;
+    }
 
     public const int MaxMages = 3;
 

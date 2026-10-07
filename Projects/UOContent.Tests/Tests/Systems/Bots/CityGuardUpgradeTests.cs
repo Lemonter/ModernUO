@@ -44,11 +44,11 @@ public class CityGuardUpgradeTests
             Assert.Equal(0, BotGoals.CityGuardUpgrade.Score(leader.Brain)); // an empty bank buys nothing
 
             // The member gives the ingots the first step needs, then a share of its gold.
-            member.Backpack.DropItem(new MahaonIngot(MahaonMetal.Iron, 100));
+            member.Backpack.DropItem(new MahaonIngot(MahaonMetal.Iron, 1000));
             member.Backpack.DropItem(new Gold(60000));
             Assert.True(BotGoals.GuildDonate.Score(member.Brain) > 0.35);
             Assert.Equal(BotActionStatus.Done, new GuildDonateAction().Tick(member.Brain).Status);
-            Assert.Equal(100, GuildBank.GetIngots(guild.Name, MahaonMetal.Iron));
+            Assert.Equal(1000, GuildBank.GetIngots(guild.Name, MahaonMetal.Iron));
 
             member.Brain.NextDonationTick = Core.TickCount;
             Assert.Equal(BotActionStatus.Done, new GuildDonateAction().Tick(member.Brain).Status);
@@ -72,6 +72,25 @@ public class CityGuardUpgradeTests
             GuildBank.DepositGold(guild.Name, 50000);
             Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, true).Tick(leader.Brain).Status);
             Assert.Equal(1, CityControlSystem.MagesIn(city));
+
+            // A second step forges the gear in cobalt, coloured as the metal is.
+            Assert.Equal(24, CityControlSystem.GuardSteps.Length);
+            Assert.Equal(MahaonMetal.Lemium, CityControlSystem.GuardSteps[^1].Metal);
+            GuildBank.DepositGold(guild.Name, CityControlSystem.GuardSteps[1].Gold);
+            leader.Backpack.DropItem(new MahaonIngot(MahaonMetal.Cobalt, CityControlSystem.GuardSteps[1].Ingots));
+            GuildBank.Deposit(guild.Name, leader.Backpack.FindItemByType<MahaonIngot>());
+            Assert.True(CityControlSystem.UpgradeGuards(city, guild));
+            var cobaltHue = MahaonMetalTable.Get(MahaonMetal.Cobalt).Hue;
+            foreach (var g in CityGuard.Of(city))
+            {
+                foreach (var item in g.Items)
+                {
+                    if (item is BaseArmor)
+                    {
+                        Assert.Equal(cobaltHue, item.Hue);
+                    }
+                }
+            }
 
             // A new holder starts from nothing.
             CityControlSystem.Capture(city, guild);
