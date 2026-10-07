@@ -80,6 +80,11 @@ public static class BotGoods
         BaseWeapon or BaseArmor or BaseJewel => 30,
         BaseReagent       => 3,
         SpellScroll       => 10,
+        // Near what Guido asks for them: a scroll nobody here could read still has a buyer.
+        PowerScroll { Value: <= 105 } => 4000,
+        PowerScroll { Value: <= 110 } => 10000,
+        PowerScroll { Value: <= 115 } => 20000,
+        PowerScroll       => 40000,
         TreasureMap { Completed: false } map => 150 * System.Math.Max(1, map.Level),
         _                 => 0
     };

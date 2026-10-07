@@ -58,5 +58,7 @@ public static class BotGoals
 
     public static readonly TreasureHuntGoal TreasureHunt = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest, ClaimCity, SiegeCity, DefendCity, TreasureHunt];
+    public static readonly GuardShopGoal GuardShop = new();
+
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest, ClaimCity, SiegeCity, DefendCity, TreasureHunt, GuardShop];
 }

@@ -22,6 +22,13 @@ namespace Server.Systems.MahaonGuard;
 ///     (for the randomized PowerScroll/primer entries) show a different roll than what
 ///     actually gets handed over.
 /// </summary>
+public enum GuardShopKind
+{
+    Other,
+    PowerScroll,
+    StatScroll
+}
+
 public static class GuardRewardShop
 {
     private const int ScrollItemId = 0x14F0; // SpecialScroll's own base graphic
@@ -43,6 +50,10 @@ public static class GuardRewardShop
         // Фабрика принимает покупателя: свиток силы подбирается под его навыки, а не
         // вслепую — см. MahaonScrollPicker.
         public Func<PlayerMobile, Item> Factory { get; init; }
+
+        // What the entry sells and how much of it, for buyers that don't read the gump.
+        public GuardShopKind Kind { get; init; }
+        public int Value { get; init; }
     }
 
     // Свитки характеристик — наши (MahaonStatScroll), а не ванильные StatCapScroll.
@@ -64,54 +75,63 @@ public static class GuardRewardShop
         {
             Price = 5000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток силы<br>потолок навыка → 105",
+            Kind = GuardShopKind.PowerScroll, Value = 105,
             Factory = buyer => Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(buyer, 105)
         },
         new Entry
         {
             Price = 12000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток силы<br>потолок навыка → 110",
+            Kind = GuardShopKind.PowerScroll, Value = 110,
             Factory = buyer => Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(buyer, 110)
         },
         new Entry
         {
             Price = 25000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток силы<br>потолок навыка → 115",
+            Kind = GuardShopKind.PowerScroll, Value = 115,
             Factory = buyer => Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(buyer, 115)
         },
         new Entry
         {
             Price = 50000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток силы<br>потолок навыка → 120",
+            Kind = GuardShopKind.PowerScroll, Value = 120,
             Factory = buyer => Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(buyer, 120)
         },
         new Entry
         {
             Price = 4000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток статов<br>сумма статов +5",
+            Kind = GuardShopKind.StatScroll, Value = 5,
             Factory = _ => new MahaonStatScroll(5)
         },
         new Entry
         {
             Price = 9000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток статов<br>сумма статов +10",
+            Kind = GuardShopKind.StatScroll, Value = 10,
             Factory = _ => new MahaonStatScroll(10)
         },
         new Entry
         {
             Price = 16000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток статов<br>сумма статов +15",
+            Kind = GuardShopKind.StatScroll, Value = 15,
             Factory = _ => new MahaonStatScroll(15)
         },
         new Entry
         {
             Price = 25000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток статов<br>сумма статов +20",
+            Kind = GuardShopKind.StatScroll, Value = 20,
             Factory = _ => new MahaonStatScroll(20)
         },
         new Entry
         {
             Price = 40000, ItemID = ScrollItemId, Hue = ScrollHue,
             Description = "Свиток статов<br>сумма статов +25",
+            Kind = GuardShopKind.StatScroll, Value = 25,
             Factory = _ => new MahaonStatScroll(25)
         },
         // Свитки силы на мастерки — вдвое дороже обычных свитков силы того же значения
@@ -206,7 +226,9 @@ public static class GuardRewardShop
                 Hue = entry.Hue,
                 Tooltip = entry.Tooltip,
                 Description = entry.Description,
-                Factory = entry.Factory
+                Factory = entry.Factory,
+                Kind = entry.Kind,
+                Value = entry.Value
             };
         }
 
@@ -316,6 +338,27 @@ public static class GuardRewardShop
 
         return new SkillMasteryPrimer(chosen, volume);
     }
+
+    /// <summary>The catalog line selling this kind of reward at this value, or -1.</summary>
+    public static int IndexOf(GuardShopKind kind, int value)
+    {
+        for (var i = 0; i < Catalog.Length; i++)
+        {
+            if (Catalog[i] is Entry entry && entry.Kind == kind && entry.Value == value)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>What this buyer pays for a catalog line, its rank's discount taken off.</summary>
+    public static int PriceOf(PlayerMobile player, int index) =>
+        index >= 0 && index < Catalog.Length ? PriceFor(player, (Entry)Catalog[index]) : int.MaxValue;
+
+    /// <summary>Buys a catalog line, as the line's button in the shop gump does.</summary>
+    public static void Buy(PlayerMobile player, int index) => OnPicked(player, index);
 
     private static void OnPicked(Mobile from, int index)
     {
