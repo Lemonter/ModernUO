@@ -17,8 +17,8 @@ public partial class BotBrain
 
 /// <summary>
 /// Treasure maps as a bot sees them. A map is worth keeping when the bot can read it, survive its
-/// guardians and open its chest — by lockpick, or for the two lowest levels by the Unlock spell;
-/// any other map it finds goes to market.
+/// guardians and open its chest — by lockpick, or for the two lowest levels by the Unlock spell, or
+/// a thief learning to pick on a first-level chest; any other map it finds goes to market.
 /// </summary>
 public static class BotTreasure
 {
@@ -55,9 +55,14 @@ public static class BotTreasure
     /// <summary>The toughest map whose guardians the bot can take.</summary>
     public static int MaxLevel(Mobile bot) => Math.Clamp(1 + (int)(BotCombatStyles.FightingSkill(bot) / 25), 1, 5);
 
+    // A thief learns lockpicking on the easiest chests: below 10 skill every try teaches something,
+    // and a first-level lock is within reach soon after.
+    public static bool PracticesLockpicking(Mobile bot, int level) =>
+        level == 1 && Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(bot, Systems.MahaonProfessions.ProfessionCategory.Thief);
+
     public static bool Keeps(Mobile bot, TreasureMap map) =>
         map is { Deleted: false, Completed: false } && map.Level is >= 1 && map.Level <= MaxLevel(bot) &&
-        (PicksLock(bot, map.Level) || UnlocksBySpell(bot, map.Level)) &&
+        (PicksLock(bot, map.Level) || UnlocksBySpell(bot, map.Level) || PracticesLockpicking(bot, map.Level)) &&
         (map.Decoder == bot || map.Decoder == null && bot.Skills.Cartography.Value >= DecodeSkill(map.Level));
 
     /// <summary>The map the bot would go after now, if any.</summary>
@@ -83,7 +88,27 @@ public static class BotTreasure
 
     /// <summary>Whether this bot hunts treasure with picks and so keeps a few at hand.</summary>
     public static bool WantsLockpicks(Mobile bot) =>
-        Usable(bot) is { } map && !UnlocksBySpell(bot, map.Level) && bot.Backpack.GetAmount(typeof(Lockpick)) < 2;
+        (Usable(bot) ?? Pending(bot)) is { } map && !UnlocksBySpell(bot, map.Level) && bot.Backpack.GetAmount(typeof(Lockpick)) < 2;
+
+    /// <summary>A map whose chest the bot dug up but hasn't emptied yet — it ran out of picks, or
+    /// was driven off; the chest waits for its finder for a few hours.</summary>
+    public static TreasureMap Pending(Mobile bot)
+    {
+        if (bot.Backpack is not { } pack)
+        {
+            return null;
+        }
+
+        foreach (var map in pack.FindItemsByType<TreasureMap>())
+        {
+            if (map.Completed && map.CompletedBy == bot && ChestOf(bot, map) is { Locked: true })
+            {
+                return map;
+            }
+        }
+
+        return null;
+    }
 
     public static TreasureMapChest ChestOf(Mobile bot, TreasureMap map)
     {
@@ -119,7 +144,18 @@ public sealed class TreasureHuntGoal : BotGoal
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;
-        if (bot.Hits < bot.HitsMax * 0.8 || !TreasureMap.HasDiggingTool(bot) || BotTreasure.Usable(bot) is not { } map)
+        if (bot.Hits < bot.HitsMax * 0.8)
+        {
+            return 0;
+        }
+
+        // A chest already dug up comes first: it won't wait long.
+        if (BotTreasure.Pending(bot) is { } pending)
+        {
+            return BotTreasure.UnlocksBySpell(bot, pending.Level) || bot.Backpack.FindItemByType<Lockpick>() != null ? 0.75 : 0;
+        }
+
+        if (!TreasureMap.HasDiggingTool(bot) || BotTreasure.Usable(bot) is not { } map)
         {
             return 0;
         }
@@ -141,6 +177,11 @@ public sealed class TreasureHuntGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
+        if (BotTreasure.Pending(bot) is { } pending && BotTreasure.ChestOf(bot, pending) is { } chest)
+        {
+            return [new GoToAction(chest.Map, chest.Location, 1, "к выкопанному сундуку"), new TreasureChestAction(pending)];
+        }
+
         if (BotTreasure.Usable(bot) is not { } map)
         {
             return null;

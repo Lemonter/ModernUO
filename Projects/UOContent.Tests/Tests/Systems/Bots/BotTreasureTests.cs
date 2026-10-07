@@ -51,14 +51,22 @@ public class BotTreasureTests
             Assert.Same(map, BotTreasure.Usable(hunter));
             Assert.False(BotTreasure.Keeps(novice, map)); // can't open the chest
 
+            // A thief keeps a first-level map to learn picking on its chest.
+            Server.Systems.MahaonProfessions.ProfessionSystem.SetProfession(
+                novice,
+                Server.Systems.MahaonProfessions.MahaonProfession.Safecracker
+            );
+            Assert.True(BotTreasure.Keeps(novice, map));
+            Assert.False(BotTreasure.Keeps(novice, new TreasureMap(2, Map.Felucca) { Decoder = novice }));
+
             // An unread map the bot can't use is goods; one it keeps is not.
             hunter.Brain.MarkLoot(map);
             Assert.False(BotGoods.IsForSale(hunter, map));
-            var spare = new TreasureMap(1, Map.Felucca);
+            var spare = new TreasureMap(2, Map.Felucca); // beyond a learning thief
             novice.Backpack.DropItem(spare);
             novice.Brain.MarkLoot(spare);
             Assert.True(BotGoods.IsForSale(novice, spare));
-            Assert.Equal(150, BotGoods.BaseUnitPrice(spare));
+            Assert.Equal(300, BotGoods.BaseUnitPrice(spare));
 
             // A pick-hunter without picks has supply buy them first.
             Assert.True(BotTreasure.WantsLockpicks(hunter));
