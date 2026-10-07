@@ -1,0 +1,27 @@
+{
+  "version": 0,
+  "type": "Server.Items.MahaonCityClaimPoint",
+  "properties": [
+    {
+      "name": "City",
+      "type": "string",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "Contender",
+      "type": "Server.Guilds.Guild",
+      "rule": "SerializableInterfaceMigrationRule"
+    },
+    {
+      "name": "HoldTimer",
+      "type": "Server.Timer",
+      "rule": "TimerMigrationRule",
+      "ruleArguments": [
+        "@AnchoredTimer"
+      ]
+    }
+  ]
+}

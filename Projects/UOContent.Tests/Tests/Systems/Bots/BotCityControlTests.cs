@@ -26,84 +26,115 @@ public class BotCityControlTests
         return bot;
     }
 
-    private static void Cleanup(List<Mobile> mobiles, string city)
+    private static void Advance(int ms)
     {
-        foreach (var guard in new List<CityGuard>(CityGuard.Of(city)))
+        for (var elapsed = 0; elapsed < ms; elapsed += 64)
         {
-            guard.Delete();
-        }
-
-        foreach (var m in mobiles)
-        {
-            m.Delete();
+            Core._tickCount += 64;
+            Timer.Slice(Core.TickCount);
         }
     }
 
     [Fact]
-    public void GuildLeader_ClaimsAnUnheldCity_SetsTax_ThenEnemiesBesiegeAndMembersDefend()
+    public void Claim_IsHeldAtTheBannerForTenMinutes_ThenGuardsAndHoldersDefendIt()
     {
         if (!CommandSystem.Entries.ContainsKey("ClaimCity"))
         {
             CityControlSystem.Configure();
         }
 
+        Core._tickCount = 0;
+        Timer.Init(0);
+
         const string city = "Ocllo";
         var (center, map) = CityControlSystem.Cities[city];
+        var banner = new MahaonCityClaimPoint(city);
         var holders = new List<Mobile>();
         var attackers = new List<Mobile>();
 
         try
         {
+            banner.MoveToWorld(center, map);
+            Assert.Same(banner, MahaonCityClaimPoint.Of(city));
+
             for (var i = 0; i < 5; i++)
             {
-                holders.Add(NewBot(new Point3D(center.X + i, center.Y, center.Z), "ТестХранители"));
-                attackers.Add(NewBot(new Point3D(center.X + i, center.Y + 30, center.Z), "ТестОсаждающие"));
+                holders.Add(NewBot(new Point3D(center.X + i, center.Y + 1, center.Z), "ТестХранители"));
+                attackers.Add(NewBot(new Point3D(center.X + i, center.Y + 60, center.Z), "ТестОсаждающие"));
             }
 
             var leader = (BotMobile)holders[0];
             var guild = (Guild)leader.Guild;
-            Assert.Same(leader, guild.Leader);
 
-            Assert.Null(CityControlSystem.GetController(city));
+            // An unheld city: the leader claims it at the banner and its guild holds it ten minutes.
             Assert.True(BotGoals.ClaimCity.Score(leader.Brain) > 0.4);
             Assert.Equal(0, BotGoals.ClaimCity.Score(((BotMobile)holders[1]).Brain)); // only the leader
 
             Assert.Equal(BotActionStatus.Done, new ClaimCityAction(city).Tick(leader.Brain).Status);
+            Assert.True(banner.Contested);
+            Assert.Same(guild, banner.Contender);
+            Assert.True(BotGoals.SiegeCity.Score(((BotMobile)holders[1]).Brain) > 0.8);
+            Assert.Null(CityControlSystem.GetController(city));
+
+            Advance(9 * 60_000);
+            Assert.Null(CityControlSystem.GetController(city)); // not yet
+
+            Advance(61_000);
+            Assert.False(banner.Contested);
             Assert.Same(guild, CityControlSystem.GetController(city));
+            Assert.Equal(6, CityGuard.Of(city).Count);
+
+            // The holding action ends with the claim won, and the leader sets the tax.
+            Assert.Equal(BotActionStatus.Done, new BannerFightAction(city, false).Tick(leader.Brain).Status);
             Assert.Equal(15, CityControlSystem.GetTaxRate(city));
             Assert.Equal(0, BotGoals.ClaimCity.Score(leader.Brain)); // one city per guild
 
-            // Not at war yet: the other guild leaves the city alone.
-            var besieger = (BotMobile)attackers[1];
-            Assert.Equal(0, BotGoals.SiegeCity.Score(besieger.Brain));
-
+            // A guild at war claims it back: guards rally to the banner, holders come to defend.
             BotGuilds.SetRelation("ТестХранители", "ТестОсаждающие", BotGuildRelation.War);
-            Assert.True(BotGoals.SiegeCity.Score(besieger.Brain) > 0.3);
+            var rival = (BotMobile)attackers[0];
+            Assert.True(CityControlSystem.IsHostileToCity(city, rival));
+            Assert.False(CityControlSystem.IsHostileToCity(city, holders[1]));
 
-            // A guard in a fight calls the holders.
-            CityGuard first = null;
-            foreach (var g in CityGuard.Of(city))
+            rival.MoveToWorld(new Point3D(center.X - 2, center.Y, center.Z), map);
+            Assert.True(BotGoals.ClaimCity.Score(rival.Brain) > 0.4);
+            Assert.Equal(BotActionStatus.Done, new ClaimCityAction(city).Tick(rival.Brain).Status);
+            Assert.Same(rival.Guild, banner.Contender);
+
+            foreach (var guard in CityGuard.Of(city))
             {
-                first = g;
-                break;
+                Assert.Equal(banner.Location, guard.Home);
             }
 
-            Assert.NotNull(first);
-            Assert.Equal(6, CityGuard.Of(city).Count);
-            Assert.True(CityControlSystem.IsHostileToCity(city, besieger)); // a bot-guild war counts too
-            Assert.False(CityControlSystem.IsHostileToCity(city, holders[1]));
-            Assert.Equal(0, BotGoals.DefendCity.Score(((BotMobile)holders[2]).Brain));
-            first.Combatant = besieger;
-            BotCityControl.Invalidate(city);
-            Assert.Same(besieger, BotCityControl.StateOf(city).attacker);
             Assert.True(BotGoals.DefendCity.Score(((BotMobile)holders[2]).Brain) > 0.8);
-            Assert.Equal(0, BotGoals.DefendCity.Score(besieger.Brain));
+
+            // Every claimant gone from the banner: the claim fails and the guards go back to their posts.
+            rival.MoveToWorld(new Point3D(center.X, center.Y + 60, center.Z), map);
+            Advance(6000);
+            Assert.False(banner.Contested);
+            Assert.Same(guild, CityControlSystem.GetController(city));
+            foreach (var guard in CityGuard.Of(city))
+            {
+                Assert.Equal(guard.Post, guard.Home);
+            }
         }
         finally
         {
             BotGuilds.SetRelation("ТестХранители", "ТестОсаждающие", BotGuildRelation.Neutral);
-            holders.AddRange(attackers);
-            Cleanup(holders, city);
+            banner.Delete();
+            foreach (var guard in new List<CityGuard>(CityGuard.Of(city)))
+            {
+                guard.Delete();
+            }
+
+            foreach (var m in holders)
+            {
+                m.Delete();
+            }
+
+            foreach (var m in attackers)
+            {
+                m.Delete();
+            }
         }
     }
 }

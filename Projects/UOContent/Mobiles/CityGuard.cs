@@ -7,7 +7,7 @@ using Server.Systems.MahaonCities;
 
 namespace Server.Mobiles;
 
-[SerializationGenerator(0, false)]
+[SerializationGenerator(1, false)]
 public partial class CityGuard : BaseCreature
 {
     // The city keys the guard registry, so it is set once.
@@ -16,6 +16,39 @@ public partial class CityGuard : BaseCreature
 
     [SerializableField(1)]
     private Guild _controllingGuild;
+
+    // Where the guard keeps watch. A rally to the city's claim banner moves Home; this brings it back.
+    [SerializableField(2, setter: "private")]
+    private Point3D _post;
+
+    private void MigrateFrom(V0Content content)
+    {
+        _city = content.City;
+        _controllingGuild = content.ControllingGuild;
+        _post = Home;
+    }
+
+    /// <summary>Posts the guard where it patrols around.</summary>
+    public void StationAt(Point3D post, int patrolRadius)
+    {
+        Post = post;
+        Home = post;
+        RangeHome = patrolRadius;
+    }
+
+    /// <summary>Calls the guard to defend a spot: it walks there and stays close.</summary>
+    public void RallyTo(Point3D spot)
+    {
+        Home = spot;
+        RangeHome = 4;
+    }
+
+    /// <summary>Back to the post after a rally.</summary>
+    public void ReturnToPost(int patrolRadius)
+    {
+        Home = _post;
+        RangeHome = patrolRadius;
+    }
 
     private const int GuardScanRange = 15;
 
@@ -142,7 +175,8 @@ public partial class CityGuard : BaseCreature
         {
             foreach (var mobile in Map.GetMobilesInRange<Mobile>(Location, GuardScanRange))
             {
-                if (mobile.Alive && !mobile.Deleted && !mobile.Hidden && IsGuardTarget(mobile))
+                if (mobile.Alive && !mobile.Deleted && !mobile.Hidden &&
+                    (IsGuardTarget(mobile) || CityControlSystem.IsHostileToCity(_city, mobile)))
                 {
                     Combatant = mobile;
                     Warmode = true;

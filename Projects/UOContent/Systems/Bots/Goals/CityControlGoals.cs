@@ -9,8 +9,7 @@ namespace Server.Systems.Bots;
 
 public partial class BotBrain
 {
-    // A claim the city system refused (a guard still alive somewhere out of sight): not retried
-    // until this tick.
+    // A claim that failed — the banner was lost: not tried again until this tick.
     internal string FailedClaimCity;
     internal long FailedClaimUntil;
 }
@@ -125,8 +124,9 @@ public static class BotCityControl
 }
 
 /// <summary>
-/// A bot guild's leader claims a city for the guild: an unheld one, or an enemy's whose guards are
-/// all down. Through the same command a player's guild leader uses, standing in the city.
+/// A bot guild's leader lays claim to a city at its banner: an unheld city, or one held by a guild
+/// it is at war with. Through the same command a player's guild leader uses, standing by the banner;
+/// then it holds the banner with its guild for the ten minutes the claim takes.
 /// </summary>
 public sealed class ClaimCityGoal : BotGoal
 {
@@ -140,7 +140,8 @@ public sealed class ClaimCityGoal : BotGoal
     {
         var bot = brain.Bot;
         if (!BotCityControl.Enabled || bot.Guild is not Guild guild || guild.Leader != bot ||
-            guild.Members.Count < BotCityControl.MinGuildSize || BotCityControl.CitiesHeldBy(guild) >= BotCityControl.MaxPerGuild)
+            guild.Members.Count < BotCityControl.MinGuildSize || BotCityControl.CitiesHeldBy(guild) >= BotCityControl.MaxPerGuild ||
+            bot.Hits < bot.HitsMax * 0.8)
         {
             return null;
         }
@@ -151,37 +152,34 @@ public sealed class ClaimCityGoal : BotGoal
             SearchRange,
             city =>
             {
-                if (city == brain.FailedClaimCity && now - brain.FailedClaimUntil < 0)
+                if (city == brain.FailedClaimCity && now - brain.FailedClaimUntil < 0 ||
+                    Items.MahaonCityClaimPoint.Of(city) is not { Contested: false } point || point.Map != bot.Map)
                 {
                     return false;
                 }
 
                 var holder = CityControlSystem.GetController(city);
-                return holder == null || BotCityControl.AtWar(guild, holder) && BotCityControl.StateOf(city).guards == 0;
+                return holder == null || BotCityControl.AtWar(guild, holder);
             }
         );
     }
 
-    public override double Score(BotBrain brain)
-    {
-        if (Target(brain) is not { } city)
-        {
-            return 0;
-        }
-
-        // An enemy city left without guards won't stay that way for long.
-        return CityControlSystem.GetController(city) != null ? 0.95 : 0.45 + BotBrain.Trait(brain.Greed) * 0.3;
-    }
+    public override double Score(BotBrain brain) =>
+        Target(brain) == null ? 0 : 0.45 + BotBrain.Trait(brain.Greed) * 0.3 + BotBrain.Trait((byte)(100 - brain.Caution)) * 0.1;
 
     public override List<BotAction> Plan(BotBrain brain)
     {
-        if (Target(brain) is not { } city)
+        if (Target(brain) is not { } city || Items.MahaonCityClaimPoint.Of(city) is not { } point)
         {
             return null;
         }
 
-        var (center, map) = BotCityControl.CenterOf(city);
-        return [new GoToAction(map, center, 6, $"захватить {city}"), new ClaimCityAction(city)];
+        return
+        [
+            new GoToAction(point.Map, point.Location, 2, $"к знамени {city}"),
+            new ClaimCityAction(city),
+            new BannerFightAction(city, false)
+        ];
     }
 }
 
@@ -203,46 +201,36 @@ public sealed class ClaimCityAction : BotAction
 
         BotCityControl.Command(bot, "ClaimCity", _city);
 
-        if (CityControlSystem.GetController(_city) != guild)
+        if (Items.MahaonCityClaimPoint.Of(_city) is not { Contested: true } point || point.Contender != guild)
         {
             brain.FailedClaimCity = _city;
             brain.FailedClaimUntil = Core.TickCount + RetryMs;
             return BotActionResult.Failed();
         }
 
-        // Capturing replaced the city's guards.
-        BotCityControl.Invalidate(_city);
-
-        // A greedy leader taxes harder.
-        var tax = brain.Greed * 30 / 100;
-        BotCityControl.Command(bot, "SetCityTax", _city, tax.ToString());
-
-        BotSpeech.SayText(bot, $"Отныне {_city} под защитой гильдии {guild.Name}!");
-        BotRumors.Spread($"Гильдия {guild.Name} взяла {_city}.");
-        return BotActionResult.Done(2000);
+        BotSpeech.SayText(bot, $"Этот город будет нашим! Гильдия {guild.Name}, к знамени!");
+        return BotActionResult.Done(1000);
     }
 
-    public override string Describe(BotBrain brain) => $"Захватывает {_city}";
+    public override string Describe(BotBrain brain) => $"Заявляет права на {_city}";
 }
 
 /// <summary>
-/// Fighters of a guild at war with a city's holder go and cut its guards down, so their leader
-/// can take it. Only a guild big enough to have a chance tries.
+/// A claim laid by the bot's guild: its members come to the banner and hold it, fighting the
+/// guards and the holders who come to take it back.
 /// </summary>
 public sealed class SiegeCityGoal : BotGoal
 {
     private const int SearchRange = 400;
-    private const int MinFightingSkill = 60;
+    private const int MinFightingSkill = 40;
 
-    public override string Name => "Осада города";
+    public override string Name => "Удержание знамени";
 
-    public override string[] News => ["Ходили на осаду, стража там крепкая.", "Ещё немного, и город будет наш."];
+    public override string[] News => ["Держали знамя до последнего!", "Стража лезла со всех сторон, но мы выстояли."];
 
     private static string Target(PlayerMobile bot)
     {
-        if (!BotCityControl.Enabled || bot.Guild is not Guild guild || guild.Members.Count < BotCityControl.MinGuildSize ||
-            BotCombatStyles.FightingSkill(bot) < MinFightingSkill || bot.Hits < bot.HitsMax * 0.8 ||
-            BotCityControl.CitiesHeldBy(guild) >= BotCityControl.MaxPerGuild)
+        if (bot.Guild is not Guild guild || BotCombatStyles.FightingSkill(bot) < MinFightingSkill || bot.Hits < bot.HitsMax * 0.6)
         {
             return null;
         }
@@ -250,28 +238,28 @@ public sealed class SiegeCityGoal : BotGoal
         return BotCityControl.Nearest(
             bot,
             SearchRange,
-            city => BotCityControl.AtWar(guild, CityControlSystem.GetController(city)) && BotCityControl.StateOf(city).guards > 0
+            city => Items.MahaonCityClaimPoint.Of(city) is { Contested: true } point && point.Contender == guild
         );
     }
 
     public override double Score(BotBrain brain) =>
-        Target(brain.Bot) == null ? 0 : 0.35 + BotBrain.Trait((byte)(100 - brain.Caution)) * 0.3;
+        Target(brain.Bot) == null ? 0 : 0.8 + BotBrain.Trait((byte)(100 - brain.Caution)) * 0.3;
 
     public override List<BotAction> Plan(BotBrain brain)
     {
-        if (Target(brain.Bot) is not { } city)
+        if (Target(brain.Bot) is not { } city || Items.MahaonCityClaimPoint.Of(city) is not { } point)
         {
             return null;
         }
 
-        var (center, map) = BotCityControl.CenterOf(city);
-        BotSpeech.SayText(brain.Bot, $"На {city}! Возьмём его!");
-        return [new GoToAction(map, center, 10, $"на осаду {city}"), new CityFightAction(city, true)];
+        BotSpeech.SayText(brain.Bot, $"Держим знамя в {city}!");
+        return [new GoToAction(point.Map, point.Location, 4, $"к знамени {city}"), new BannerFightAction(city, false)];
     }
 }
 
 /// <summary>
-/// The holding guild's members come running when their city's guards are attacked.
+/// The holding guild's members come running when their city is claimed at its banner or its guards
+/// are attacked.
 /// </summary>
 public sealed class DefendCityGoal : BotGoal
 {
@@ -281,11 +269,24 @@ public sealed class DefendCityGoal : BotGoal
 
     public override string[] News => ["Отстояли наш город от чужаков.", "Сунулись к нам в город — пожалели."];
 
-    private static string Target(PlayerMobile bot)
+    private static string Target(PlayerMobile bot, out bool banner)
     {
+        banner = false;
         if (bot.Guild is not Guild guild || BotCombatStyles.FightingSkill(bot) < 40 || bot.Hits < bot.HitsMax * 0.6)
         {
             return null;
+        }
+
+        var claimed = BotCityControl.Nearest(
+            bot,
+            CallRange,
+            city => CityControlSystem.GetController(city) == guild && Items.MahaonCityClaimPoint.Of(city) is { Contested: true }
+        );
+
+        if (claimed != null)
+        {
+            banner = true;
+            return claimed;
         }
 
         return BotCityControl.Nearest(
@@ -296,38 +297,164 @@ public sealed class DefendCityGoal : BotGoal
     }
 
     public override double Score(BotBrain brain) =>
-        Target(brain.Bot) == null ? 0 : 0.85 + BotBrain.Trait((byte)(100 - brain.Caution)) * 0.3;
+        Target(brain.Bot, out _) == null ? 0 : 0.85 + BotBrain.Trait((byte)(100 - brain.Caution)) * 0.3;
 
     public override List<BotAction> Plan(BotBrain brain)
     {
-        if (Target(brain.Bot) is not { } city)
+        if (Target(brain.Bot, out var banner) is not { } city)
         {
             return null;
         }
 
+        if (banner && Items.MahaonCityClaimPoint.Of(city) is { } point)
+        {
+            BotSpeech.SayText(brain.Bot, $"Наш {city} оспаривают! Все к знамени!");
+            return [new GoToAction(point.Map, point.Location, 6, $"к знамени {city}"), new BannerFightAction(city, true)];
+        }
+
         var (center, map) = BotCityControl.CenterOf(city);
         BotSpeech.SayText(brain.Bot, $"На наш {city} напали! Все туда!");
-        return [new GoToAction(map, center, 10, $"на защиту {city}"), new CityFightAction(city, false)];
+        return [new GoToAction(map, center, 10, $"на защиту {city}"), new CityFightAction(city)];
     }
 }
 
-/// <summary>Fights at a city: its guards when besieging, whoever attacks them when defending.
-/// Ends when there is no one left to fight there.</summary>
+/// <summary>
+/// Fights at a city's banner for as long as the claim lasts: claimants fight the guards and the
+/// holders, holders fight the claimants. A claimant that walks away from the banner loses it, so
+/// the bot stays near and only steps out to a foe close by. When the claim ends in the guild's
+/// favour, the leader sets the city's tax.
+/// </summary>
+public sealed class BannerFightAction : BotAction
+{
+    private const long MaxMs = 15 * 60_000;
+
+    private readonly string _city;
+    private readonly bool _defending;
+    private BotAction _step;
+    private long _until;
+
+    public BannerFightAction(string city, bool defending)
+    {
+        _city = city;
+        _defending = defending;
+    }
+
+    public override void Start(BotBrain brain) => _until = Core.TickCount + MaxMs;
+
+    public override BotActionResult Tick(BotBrain brain)
+    {
+        var bot = brain.Bot;
+        var point = Items.MahaonCityClaimPoint.Of(_city);
+
+        if (point is not { Contested: true } || Core.TickCount - _until >= 0)
+        {
+            Settle(brain);
+            return BotActionResult.Done(1000);
+        }
+
+        if (_step != null)
+        {
+            var result = _step.Tick(brain);
+            if (result.Status == BotActionStatus.Running)
+            {
+                return result;
+            }
+
+            _step.Stop(brain);
+            _step = null;
+        }
+
+        if (brain.Combat.Opponent is { Alive: true, Deleted: false } opponent &&
+            opponent.InRange(point.Location, Items.MahaonCityClaimPoint.HoldRange + 4))
+        {
+            return BotActionResult.Running(1000);
+        }
+
+        if (!bot.InRange(point.Location, Items.MahaonCityClaimPoint.HoldRange - 4))
+        {
+            _step = new GoToAction(point.Map, point.Location, 3, "к знамени");
+            _step.Start(brain);
+            return BotActionResult.Running(250);
+        }
+
+        if (Foe(bot, point) is { } foe)
+        {
+            BotCombat.Engage(brain, foe);
+        }
+
+        return BotActionResult.Running(1000);
+    }
+
+    private Mobile Foe(PlayerMobile bot, Items.MahaonCityClaimPoint point)
+    {
+        Mobile best = null;
+        var bestDist = double.MaxValue;
+        var holder = CityControlSystem.GetController(_city);
+
+        foreach (var m in point.Map.GetMobilesInRange<Mobile>(point.Location, Items.MahaonCityClaimPoint.HoldRange + 4))
+        {
+            if (!m.Alive || m == bot || m.Hidden)
+            {
+                continue;
+            }
+
+            var isFoe = _defending
+                ? m is PlayerMobile && m.Guild == point.Contender
+                : m is CityGuard guard && guard.City == _city || m is PlayerMobile && holder != null && m.Guild == holder;
+
+            if (!isFoe)
+            {
+                continue;
+            }
+
+            var dist = bot.GetDistanceToSqrt(m);
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = m;
+            }
+        }
+
+        return best;
+    }
+
+    // A won claim: the leader sets the tax, as greedy as it is. A lost one is not tried again soon.
+    private void Settle(BotBrain brain)
+    {
+        var bot = brain.Bot;
+        if (_defending || bot.Guild is not Guild guild || guild.Leader != bot)
+        {
+            return;
+        }
+
+        if (CityControlSystem.GetController(_city) != guild)
+        {
+            brain.FailedClaimCity = _city;
+            brain.FailedClaimUntil = Core.TickCount + 30 * 60_000;
+            return;
+        }
+
+        BotCityControl.Invalidate(_city);
+        BotCityControl.Command(bot, "SetCityTax", _city, (brain.Greed * 30 / 100).ToString());
+        BotSpeech.SayText(bot, $"Отныне {_city} под защитой гильдии {guild.Name}!");
+    }
+
+    public override void Stop(BotBrain brain) => _step?.Stop(brain);
+
+    public override string Describe(BotBrain brain) => _defending ? $"Защищает знамя {_city}" : $"Держит знамя {_city}";
+}
+
+/// <summary>Fights whoever attacks the city's guards, until no one does.</summary>
 public sealed class CityFightAction : BotAction
 {
     private const long MaxMs = 20 * 60_000;
-    private const int GuardSight = 20;
+    private const int Reach = 20;
 
     private readonly string _city;
-    private readonly bool _siege;
     private long _until;
     private BotAction _step;
 
-    public CityFightAction(string city, bool siege)
-    {
-        _city = city;
-        _siege = siege;
-    }
+    public CityFightAction(string city) => _city = city;
 
     public override void Start(BotBrain brain) => _until = Core.TickCount + MaxMs;
 
@@ -356,16 +483,15 @@ public sealed class CityFightAction : BotAction
         }
 
         var bot = brain.Bot;
-        var foe = _siege ? NearestGuard(bot) : BotCityControl.StateOf(_city).attacker;
-        if (foe == null)
+        if (BotCityControl.StateOf(_city).attacker is not { } foe)
         {
             return BotActionResult.Done(2000);
         }
 
         // The reflexes only take on a foe within reach; walk up to one further off first.
-        if (!bot.InRange(foe, GuardSight))
+        if (!bot.InRange(foe, Reach))
         {
-            _step = new GoToAction(foe, 4, _siege ? "к страже" : "к нападающим");
+            _step = new GoToAction(foe, 4, "к нападающим");
             _step.Start(brain);
             return BotActionResult.Running(250);
         }
@@ -376,39 +502,5 @@ public sealed class CityFightAction : BotAction
 
     public override void Stop(BotBrain brain) => _step?.Stop(brain);
 
-    private Mobile NearestGuard(PlayerMobile bot)
-    {
-        Mobile best = null;
-        var bestDist = double.MaxValue;
-
-        foreach (var guard in bot.Map.GetMobilesInRange<CityGuard>(bot.Location, GuardSight))
-        {
-            if (guard.Alive && !guard.Deleted && guard.City == _city)
-            {
-                var dist = bot.GetDistanceToSqrt(guard);
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    best = guard;
-                }
-            }
-        }
-
-        return best ?? FindAnyGuard();
-    }
-
-    private Mobile FindAnyGuard()
-    {
-        foreach (var guard in CityGuard.Of(_city))
-        {
-            if (guard.Alive && !guard.Deleted)
-            {
-                return guard;
-            }
-        }
-
-        return null;
-    }
-
-    public override string Describe(BotBrain brain) => _siege ? $"Осаждает {_city}" : $"Защищает {_city}";
+    public override string Describe(BotBrain brain) => $"Защищает {_city}";
 }

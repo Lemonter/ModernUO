@@ -39,7 +39,7 @@ public class CityControlSystem : GenericPersistence
     // WalkRandomWithHome AI (Mobiles/AI/BaseAI/WalkRandomLogic.cs) already walks a mobile
     // back toward Home once it exceeds RangeHome, no teleporting involved, so this alone is
     // what keeps guards inside the city instead of drifting into the wilderness.
-    private const int GuardPatrolRadius = 20;
+    public const int GuardPatrolRadius = 20;
 
     private static readonly Dictionary<string, Guild> Control = new();
     private static readonly Dictionary<string, int> TaxRate = new();
@@ -109,7 +109,9 @@ public class CityControlSystem : GenericPersistence
             return false;
         }
 
-        return controller.Enemies.Contains(g) || g.Enemies.Contains(controller) ||
+        // Whoever is claiming the city at its banner is fought by its guards.
+        return Items.MahaonCityClaimPoint.Of(city) is { Contested: true } point && point.Contender == g ||
+               controller.Enemies.Contains(g) || g.Enemies.Contains(controller) ||
                MahaonBots.BotGuilds.GetRelation(controller.Name, g.Name) == MahaonBots.BotGuildRelation.War;
     }
 
@@ -155,8 +157,7 @@ public class CityControlSystem : GenericPersistence
             {
                 var guard = new CityGuard(city, guild);
                 guard.MoveToWorld(loc, map);
-                guard.Home = loc;
-                guard.RangeHome = GuardPatrolRadius;
+                guard.StationAt(loc, GuardPatrolRadius);
             }
 
             return;
@@ -181,8 +182,7 @@ public class CityControlSystem : GenericPersistence
 
             var guard = new CityGuard(city, guild);
             guard.MoveToWorld(loc, info.map);
-            guard.Home = loc;
-            guard.RangeHome = GuardPatrolRadius;
+            guard.StationAt(loc, GuardPatrolRadius);
         }
     }
 
@@ -215,7 +215,7 @@ public class CityControlSystem : GenericPersistence
     }
 
     [Usage("ClaimCity <city>")]
-    [Description("Claims an uncontrolled or undefended city for your guild.")]
+    [Description("Lays your guild's claim to a city at its banner; held for ten minutes, the city is yours.")]
     private static void ClaimCity_OnCommand(CommandEventArgs e)
     {
         var from = e.Mobile;
@@ -239,22 +239,33 @@ public class CityControlSystem : GenericPersistence
         }
 
         var city = e.GetString(0);
-        var controller = GetController(city);
 
-        if (controller == guild)
+        if (GetController(city) == guild)
         {
             from.SendMessage("Твоя гильдия уже контролирует этот город.");
             return;
         }
 
-        if (controller != null && !IsCityVulnerable(city))
+        if (Items.MahaonCityClaimPoint.Of(city) is not { } point)
         {
-            from.SendMessage($"{city} всё ещё защищён — сначала победи его стражу.");
+            from.SendMessage($"В городе {city} нет знамени — захватить его нельзя.");
             return;
         }
 
-        Capture(city, guild);
-        from.SendMessage(0x59, $"Твоя гильдия теперь контролирует {city}.");
+        if (point.Map != from.Map || !from.InRange(point.GetWorldLocation(), Items.MahaonCityClaimPoint.ClaimRange))
+        {
+            from.SendMessage("Город берут у его знамени — подойди к нему.");
+            return;
+        }
+
+        if (point.Contested)
+        {
+            from.SendMessage($"{city} уже оспаривает гильдия {point.Contender.Name}.");
+            return;
+        }
+
+        point.StartContest(guild);
+        from.SendMessage(0x59, "Права заявлены. Продержитесь у знамени десять минут.");
     }
 
     [Usage("SetCityTax <city> <percent>")]
