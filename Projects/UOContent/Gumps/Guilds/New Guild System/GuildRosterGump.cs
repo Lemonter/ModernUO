@@ -136,6 +136,11 @@ namespace Server.Guilds
             {
                 pm.SendLocalizedMessage(1063050, targ.Name); // ~1_val~ is already a member of your guild!
             }
+            else if (targ is BotMobile bot && Systems.Bots.BotParty.IsBot(bot))
+            {
+                // A bot weighs the invitation itself, and may leave its own guild for this one.
+                Systems.Bots.BotParty.OnGuildInvite(bot, Guild, pm);
+            }
             else if (targ.Guild != null)
             {
                 pm.SendLocalizedMessage(1063051, targ.Name); // ~1_val~ is already a member of a guild.

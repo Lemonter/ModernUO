@@ -12,12 +12,19 @@ public sealed class BotGroup
 {
     public const int MaxSize = 5;
 
+    /// <param name="leader">A bot, or a player whose party the bots joined.</param>
     public BotGroup(PlayerMobile leader)
     {
         Leader = leader;
         Members.Add(leader);
-        leader.GetBrain().Group = this;
+        if (leader.GetBrain() is { } brain)
+        {
+            brain.Group = this;
+        }
     }
+
+    /// <summary>Led by a player: the bots in it are in that player's party.</summary>
+    public bool LedByPlayer => Leader.GetBrain() == null;
 
     public PlayerMobile Leader { get; }
 
@@ -92,6 +99,12 @@ public sealed class BotGroup
         if (Leader.GetBrain()?.Combat.Opponent is { Alive: true, Deleted: false } foe)
         {
             return foe;
+        }
+
+        // A player leads by fighting: whoever it has in its sights, or whoever is hitting it.
+        if (LedByPlayer && Leader.Combatant is Mobile { Alive: true, Deleted: false } target)
+        {
+            return target;
         }
 
         foreach (var m in Members)

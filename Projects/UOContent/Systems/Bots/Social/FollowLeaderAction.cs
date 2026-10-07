@@ -23,6 +23,11 @@ public sealed class FollowLeaderAction : BotAction
             return BotActionResult.Done();
         }
 
+        if (_group.LedByPlayer && bot is Mobiles.BotMobile member && !BotParty.StillServes(member, _group))
+        {
+            return BotActionResult.Done();
+        }
+
         if (_group.CurrentFoe() is { } foe && foe.Map == bot.Map && bot.InRange(foe, 14))
         {
             BotCombat.Engage(brain, foe);

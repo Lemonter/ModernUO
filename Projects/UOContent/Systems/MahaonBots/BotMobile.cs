@@ -50,6 +50,10 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     // player there are otherwise no live monsters, spawners or AI for them to meet.
     public override bool ActivatesSectors => true;
 
+    // Gold handed to a bot by a player is an offer of hire.
+    public override bool OnDragDrop(Mobile from, Item dropped) =>
+        dropped is Gold gold && from.Player && from != this ? Systems.Bots.BotParty.OnPaid(this, from, gold) : base.OnDragDrop(from, dropped);
+
     public override bool HandlesOnSpeech(Mobile from) => Systems.Bots.BotConversation.Listens(this, from);
 
     public override void OnSpeech(SpeechEventArgs e)

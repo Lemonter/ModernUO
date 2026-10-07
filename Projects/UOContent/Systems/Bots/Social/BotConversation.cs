@@ -15,7 +15,9 @@ public enum BotIntent
     News,
     Home,
     Guild,
-    Greeting
+    Greeting,
+    Hire,
+    Dismiss
 }
 
 /// <summary>
@@ -35,6 +37,8 @@ public static class BotConversation
     private static readonly (BotIntent intent, string[] stems)[] _stems =
     [
         (BotIntent.Insult, ["дурак", "идиот", "урод", "тупой", "тупица", "козел", "сволоч", "мраз", "дебил", "кретин", "придур"]),
+        (BotIntent.Dismiss, ["свободен", "уходи", "отпускаю", "можешь идти"]),
+        (BotIntent.Hire, ["найм", "наня", "найму", "сколько стоишь", "служить мне", "пойдешь со мной"]),
         (BotIntent.Thanks, ["спасиб", "благодар", "пасиб"]),
         (BotIntent.Farewell, ["пока$", "бывай", "до встречи", "до свидан", "прощай", "увидимся"]),
         (BotIntent.HowAreYou, ["как дела", "как жизнь", "как ты", "как поживаешь", "как сам", "как оно"]),
@@ -180,6 +184,13 @@ public static class BotConversation
             return;
         }
 
+        // Dismissed by the player it follows: it leaves the party.
+        if (intent == BotIntent.Dismiss && brain.Group is { LedByPlayer: true } group && group.Leader == from)
+        {
+            BotParty.Leave(bot, Pick("Как скажешь. Бывай!", "Ладно, ухожу. Зови, если что."));
+            return;
+        }
+
         var line = Reply(brain, from, intent);
         if (line == null)
         {
@@ -216,6 +227,9 @@ public static class BotConversation
                 Pick($"Повтори это, {name}, и тебе конец.", "Язык отрежу.", "Договоришься сейчас."),
             BotIntent.Insult => Pick("Сам такой.", "Следи за языком.", "Ну и грубиян.", $"Ты чего, {name}?"),
             BotIntent.Thanks => Pick("Не за что.", "Обращайся.", $"Всегда пожалуйста, {name}."),
+            BotIntent.Hire when bot is BotMobile { IsPk: true } => "Я сам себе хозяин.",
+            BotIntent.Hire => $"Час моей службы — {BotParty.HourlyPrice(bot)} золота. Дай золото — и я с тобой, или зови в группу.",
+            BotIntent.Dismiss => "Я и так ни за кем не хожу.",
             BotIntent.Farewell => Pick($"Бывай, {name}.", "Удачи в пути.", "Ещё увидимся.", "Береги себя."),
             BotIntent.HowAreYou => HowAreYou(brain, friendly),
             BotIntent.Who => Who(bot),

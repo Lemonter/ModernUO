@@ -275,6 +275,7 @@ namespace Server.Engines.PartySystem
                 var m = this[i].Mobile;
                 m.NetState.SendPartyRemoveMember(m.Serial);
                 m.Party = null;
+                Systems.Bots.BotParty.OnLeft(m);
             }
 
             Members.Clear();
@@ -309,6 +310,7 @@ namespace Server.Engines.PartySystem
                 m.Party = null;
 
                 m.SendLocalizedMessage(1005451); // You have been removed from the party.
+                Systems.Bots.BotParty.OnLeft(m);
 
                 PartyPackets.CreatePartyRemoveMember(removeMember, m.Serial, this);
                 SendToAll(removeMember);
@@ -333,6 +335,7 @@ namespace Server.Engines.PartySystem
                 var m = this[i].Mobile;
                 m.NetState.SendPartyRemoveMember(m.Serial);
                 m.Party = null;
+                Systems.Bots.BotParty.OnLeft(m);
             }
 
             Members.Clear();
@@ -381,6 +384,9 @@ namespace Server.Engines.PartySystem
             target.Party = from;
 
             DeclineTimer.Start(target, from);
+
+            // A bot has no client to answer with; it answers itself.
+            Systems.Bots.BotParty.OnInvited(target, from);
         }
 
         public void SendToAll(int number, string args = "", int hue = 0x3B2)
