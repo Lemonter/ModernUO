@@ -87,30 +87,69 @@ public partial class CityGuard : BaseCreature
         base.OnDelete();
     }
 
-    public CityGuard(string city, Guild controllingGuild) : base(AIType.AI_Melee, FightMode.Aggressor)
+    public CityGuard(string city, Guild controllingGuild) : this(city, controllingGuild, AIType.AI_Melee)
+    {
+    }
+
+    protected CityGuard(string city, Guild controllingGuild, AIType ai) : base(ai, FightMode.Aggressor)
     {
         _city = city;
         _controllingGuild = controllingGuild;
         Register();
 
-        Name = $"{controllingGuild.Name} стражник";
+        Name = $"{controllingGuild.Name} {Title}";
         Body = 0x190;
         Hue = Race.Human.RandomSkinHue();
 
-        SetStr(100, 120);
-        SetDex(80, 100);
-        SetInt(50, 60);
-        SetHits(80, 100);
+        Outfit();
+        ApplyLevel(0);
+    }
 
-        SetSkill(SkillName.Swords, 80.0, 100.0);
-        SetSkill(SkillName.Tactics, 80.0, 100.0);
-        SetSkill(SkillName.MagicResist, 60.0, 80.0);
+    protected virtual string Title => "стражник";
 
+    protected virtual void Outfit()
+    {
         AddItem(new Longsword());
         AddItem(new PlateChest());
         AddItem(new PlateArms());
         AddItem(new PlateLegs());
         AddItem(new PlateGorget());
+    }
+
+    /// <summary>
+    /// Trains and arms the guard to its city's level: each level adds strength, health and
+    /// skill, and from the first one its gear is forged of the level's metal — the ingots the
+    /// guild paid for it.
+    /// </summary>
+    public virtual void ApplyLevel(int level)
+    {
+        SetStr(100 + level * 5, 120 + level * 5);
+        SetDex(80 + level * 3, 100 + level * 3);
+        SetInt(50, 60);
+        SetHits((int)(80 * (1 + level * 0.15)), (int)(100 * (1 + level * 0.15)));
+
+        SetSkill(SkillName.Swords, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
+        SetSkill(SkillName.Tactics, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
+        SetSkill(SkillName.MagicResist, Math.Min(120, 60.0 + level * 4), Math.Min(120, 80.0 + level * 4));
+
+        ForgeGear(level);
+        Hits = HitsMax;
+    }
+
+    protected void ForgeGear(int level)
+    {
+        if (CityControlSystem.MetalFor(level) is not { } metal)
+        {
+            return;
+        }
+
+        foreach (var item in new List<Item>(Items))
+        {
+            if (item is BaseArmor or BaseWeapon or BaseClothing)
+            {
+                Systems.MahaonMetals.MahaonMetalTracker.Forge(item, metal);
+            }
+        }
     }
 
     public override bool AlwaysMurderer => false;

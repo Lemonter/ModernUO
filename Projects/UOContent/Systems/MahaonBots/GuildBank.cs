@@ -225,6 +225,102 @@ public static class GuildBank
         }
     }
 
+    /// <summary>Ingots of one metal in the guild bank.</summary>
+    public static int GetIngots(string guildName, MahaonMetals.MahaonMetal metal)
+    {
+        if (string.IsNullOrEmpty(guildName))
+        {
+            return 0;
+        }
+
+        var total = 0;
+        foreach (var ingot in GetOrCreate(guildName).FindItemsByType<MahaonIngot>(false))
+        {
+            if (ingot.Metal == metal)
+            {
+                total += ingot.Amount;
+            }
+        }
+
+        return total;
+    }
+
+    /// <summary>Puts a stack of gold or ingots into the guild bank, merging ingots of the same metal.</summary>
+    public static bool Deposit(string guildName, Item item)
+    {
+        if (item is not (Gold or MahaonIngot) || GetOrCreate(guildName) is not { } bank)
+        {
+            return false;
+        }
+
+        if (item is Gold gold)
+        {
+            var amount = gold.Amount;
+            gold.Delete();
+            DepositGold(guildName, amount);
+            return true;
+        }
+
+        var ingot = (MahaonIngot)item;
+        foreach (var pile in bank.FindItemsByType<MahaonIngot>(false))
+        {
+            if (pile.Metal == ingot.Metal && pile.Amount + ingot.Amount <= MaxGoldPile)
+            {
+                pile.Amount += ingot.Amount;
+                ingot.Delete();
+                return true;
+            }
+        }
+
+        bank.DropItem(ingot);
+        return true;
+    }
+
+    /// <summary>
+    /// Takes gold and ingots of one metal from the guild bank together, or nothing at all when
+    /// either falls short.
+    /// </summary>
+    public static bool TrySpend(string guildName, long gold, MahaonMetals.MahaonMetal metal, int ingots)
+    {
+        if (string.IsNullOrEmpty(guildName) || GetGoldValue(guildName) < gold || GetIngots(guildName, metal) < ingots)
+        {
+            return false;
+        }
+
+        var bank = GetOrCreate(guildName);
+        var piles = new List<Item>();
+        foreach (var item in bank.Items)
+        {
+            if (item is Gold || item is MahaonIngot ore && ore.Metal == metal)
+            {
+                piles.Add(item);
+            }
+        }
+
+        foreach (var pile in piles)
+        {
+            var need = pile is Gold ? gold : ingots;
+            if (need <= 0)
+            {
+                continue;
+            }
+
+            var take = (int)System.Math.Min(need, pile.Amount);
+            pile.Consume(take);
+
+            if (pile is Gold)
+            {
+                gold -= take;
+            }
+            else
+            {
+                ingots -= take;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>A guild member's death feeds the guild bank a gem.</summary>
     public static void OnMemberDeath(Mobile bot)
     {

@@ -278,6 +278,8 @@ public static class BotConversation
         DefendCityGoal       => "Наш город атакуют, бегу на помощь!",
         TreasureHuntGoal     => "Клад ищу, есть у меня одна карта...",
         GuardShopGoal        => "К сержанту Гвидо за свитком иду.",
+        CityGuardUpgradeGoal => "О страже нашего города забочусь.",
+        GuildDonateGoal      => "Несу взнос в казну гильдии.",
         ShelterGoal          => "Прячусь, набег же! И тебе советую.",
         PkGoal               => "Не твоё дело.",
         CraftGoal            => "Ремеслом занят, заказов полно.",
