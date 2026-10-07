@@ -189,6 +189,42 @@ public static class GuildBank
         (() => new Diamond(), 2)
     };
 
+    // A gold pile holds at most this much; a larger sum is split into several.
+    private const int MaxGoldPile = 60000;
+
+    /// <summary>Puts gold into the guild bank, topping up the piles already there.</summary>
+    public static void DepositGold(string guildName, long amount)
+    {
+        if (amount <= 0 || GetOrCreate(guildName) is not { } bank)
+        {
+            return;
+        }
+
+        foreach (var pile in bank.FindItemsByType<Gold>(false))
+        {
+            var room = MaxGoldPile - pile.Amount;
+            if (room <= 0)
+            {
+                continue;
+            }
+
+            var add = (int)System.Math.Min(room, amount);
+            pile.Amount += add;
+            amount -= add;
+            if (amount <= 0)
+            {
+                return;
+            }
+        }
+
+        while (amount > 0)
+        {
+            var add = (int)System.Math.Min(MaxGoldPile, amount);
+            bank.DropItem(new Gold(add));
+            amount -= add;
+        }
+    }
+
     /// <summary>A guild member's death feeds the guild bank a gem.</summary>
     public static void OnMemberDeath(Mobile bot)
     {

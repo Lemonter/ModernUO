@@ -144,14 +144,20 @@ public class AuctionHouseSystem : GenericPersistence
             }
         }
 
-        var sellerCut = (long)(listing.Price * (1.0 - cutPercent));
+        // A guild holding the city adds its tax to the house's cut and keeps that part.
+        var city = Systems.MahaonCities.CityControlSystem.Find(listing.City);
+        var taxPercent = Systems.MahaonCities.CityControlSystem.TaxIn(city) / 100.0;
+        var tax = (long)(listing.Price * taxPercent);
+        Systems.MahaonCities.CityControlSystem.CollectTax(city, tax);
+
+        var sellerCut = (long)(listing.Price * (1.0 - cutPercent - taxPercent));
 
         if (listing.Seller is PlayerMobile sellerPm)
         {
             if (sellerPm.BankBox != null)
             {
                 Banker.Deposit(sellerPm, (int)sellerCut);
-                sellerPm.SendMessage(0x59, $"Твой лот продан за {listing.Price} золота (в банк зачислено {sellerCut} после комиссии аукциона).");
+                sellerPm.SendMessage(0x59, $"Твой лот продан за {listing.Price} золота (в банк зачислено {sellerCut} после комиссии аукциона и налога города).");
             }
         }
 

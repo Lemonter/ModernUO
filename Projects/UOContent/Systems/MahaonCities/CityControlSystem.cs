@@ -94,6 +94,72 @@ public class CityControlSystem : GenericPersistence
 
     public static Guild GetController(string city) => Control.GetValueOrDefault(city);
 
+    // The town region each claimable city lies in, found from its centre and refound if the
+    // centre is moved. A city found outside any town isn't remembered, so a region added later counts.
+    private static readonly Dictionary<string, (Point3D at, Map map, Region region)> _townRegions = new();
+
+    private static Region TownRegionOf(string city)
+    {
+        var (spawn, map) = Cities[city];
+        if (_townRegions.TryGetValue(city, out var known) && known.at == spawn && known.map == map && known.region.Registered)
+        {
+            return known.region;
+        }
+
+        var region = map == null || map == Map.Internal ? null : Region.Find(spawn, map)?.GetRegion<Regions.TownRegion>();
+        if (region != null)
+        {
+            _townRegions[city] = (spawn, map, region);
+        }
+
+        return region;
+    }
+
+    /// <summary>The claimable city this mobile stands in, if any.</summary>
+    public static string CityAt(Mobile m)
+    {
+        foreach (var (city, info) in Cities)
+        {
+            if (info.map == m.Map && TownRegionOf(city) is { } region && m.Region?.IsPartOf(region) == true)
+            {
+                return city;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The city key for a name spelled any which way ("skara brae"), or null.</summary>
+    public static string Find(string name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return null;
+        }
+
+        foreach (var city in Cities.Keys)
+        {
+            if (string.Equals(city, name, System.StringComparison.OrdinalIgnoreCase))
+            {
+                return city;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>The tax a held city puts on prices; nothing in a city nobody holds.</summary>
+    public static int TaxIn(string city) => city != null && GetController(city) != null ? GetTaxRate(city) : 0;
+
+    /// <summary>Hands the city's holder its tax.</summary>
+    public static void CollectTax(string city, long amount)
+    {
+        if (amount > 0 && city != null && GetController(city) is { } guild)
+        {
+            MahaonBots.GuildBank.DepositGold(guild.Name, amount);
+        }
+    }
+
     public static int GetTaxRate(string city) => TaxRate.GetValueOrDefault(city, 0);
 
     /// <summary>

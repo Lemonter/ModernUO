@@ -163,6 +163,7 @@ namespace Server.Mobiles
 
             var info = GetSellInfo();
             var totalCost = 0;
+            var resaleCost = 0; // goods players sold here, priced without the scalar
             var validBuy = new List<BuyItemResponse>(list.Count);
             var fromBank = false;
             var fullPurchase = true;
@@ -207,7 +208,9 @@ namespace Server.Mobiles
                         {
                             if (ssi.IsSellable(item) && ssi.IsResellable(item))
                             {
-                                totalCost += ssi.GetBuyPriceFor(item) * amount;
+                                var resale = ssi.GetBuyPriceFor(item) * amount;
+                                totalCost += resale;
+                                resaleCost += resale;
                                 validBuy.Add(buy);
                                 break;
                             }
@@ -280,6 +283,11 @@ namespace Server.Mobiles
             }
 
             buyer.PlaySound(0x32);
+
+            if (buyer.AccessLevel < AccessLevel.GameMaster)
+            {
+                CollectCityTax(totalCost - resaleCost);
+            }
 
             cont = buyer.Backpack ?? buyer.BankBox;
 
@@ -1350,7 +1358,22 @@ namespace Server.Mobiles
 
         public virtual IBuyItemInfo[] GetBuyInfo() => _buyInfo.ToArray();
 
-        public virtual int GetPriceScalar() => 100 + Town.FromRegion(Region)?.Tax ?? 0;
+        // A guild holding the city taxes the goods sold here, on top of a faction town's tax.
+        public virtual int GetPriceScalar() =>
+            100 + (Town.FromRegion(Region)?.Tax ?? 0) + Systems.MahaonCities.CityControlSystem.TaxIn(
+                Systems.MahaonCities.CityControlSystem.CityAt(this)
+            );
+
+        // The share of a scaled price that is the holding guild's tax.
+        private void CollectCityTax(int scaledCost)
+        {
+            var city = Systems.MahaonCities.CityControlSystem.CityAt(this);
+            var tax = Systems.MahaonCities.CityControlSystem.TaxIn(city);
+            if (tax > 0 && scaledCost > 0)
+            {
+                Systems.MahaonCities.CityControlSystem.CollectTax(city, (long)scaledCost * tax / GetPriceScalar());
+            }
+        }
 
         public void UpdateBuyInfo()
         {
