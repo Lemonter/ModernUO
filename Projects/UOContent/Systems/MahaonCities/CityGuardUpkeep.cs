@@ -89,10 +89,18 @@ public static class CityGuardUpkeep
         }
 
         var wages = (long)guards * WagePerHour(level);
-        if (wages <= 0 || GuildBank.TrySpend(guild.Name, wages, MahaonMetal.Iron, 0))
+        if (wages <= 0)
         {
             return;
         }
+
+        if (GuildBank.TrySpend(guild.Name, wages, MahaonMetal.Iron, 0))
+        {
+            CityGuardChatter.OnWages(city, true);
+            return;
+        }
+
+        CityGuardChatter.OnWages(city, false);
 
         // Nothing to pay with: one guard leaves the city's service each time.
         last.Say("Без жалованья служить не стану!");

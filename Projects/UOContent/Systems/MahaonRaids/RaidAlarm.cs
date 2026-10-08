@@ -31,6 +31,7 @@ public static class RaidAlarm
         }
 
         _alerts.Add(new RaidAlert { Map = map, Location = location, City = city, RaisedAt = Core.TickCount });
+        MahaonCities.CityGuardChatter.OnRaid(MahaonCities.CityControlSystem.Find(city));
     }
 
     /// <summary>The raid in progress nearest a point within <paramref name="range"/>, or null.</summary>

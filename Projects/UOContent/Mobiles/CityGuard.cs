@@ -387,6 +387,29 @@ public partial class CityGuard : BaseCreature
         return m.Murderer || m.Criminal;
     }
 
+    private const double ChatChance = 0.03;
+
+    // Whom the guard last fought: falling to its hand, that one becomes the talk of the garrison.
+    private Mobile _lastFoe;
+
+    private void NoteCatch()
+    {
+        if (_lastFoe is { } foe && !foe.Alive)
+        {
+            if (foe.LastKiller == this && (foe.Player || IsGuardTarget(foe)))
+            {
+                CityGuardChatter.OnCaught(_city, foe.Name);
+            }
+
+            _lastFoe = null;
+        }
+
+        if (Combatant is { Alive: true } current)
+        {
+            _lastFoe = current;
+        }
+    }
+
     // Potions a guard drinks are paced like a player's, not one per think.
     private const long DrinkDelayMs = 10_000;
     private long _nextDrink;
@@ -397,6 +420,13 @@ public partial class CityGuard : BaseCreature
 
         DrinkIfHurt();
         UseSupplies();
+        NoteCatch();
+
+        // At ease, a guard now and then talks with a comrade at its post.
+        if (Combatant == null && Utility.RandomDouble() < ChatChance)
+        {
+            CityGuardChatter.TryStart(this);
+        }
 
         // Only bother scanning for trouble on an occasional think tick, not every single
         // one — cheap and still looks natural. Wandering/patrolling itself is handled

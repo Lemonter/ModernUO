@@ -81,6 +81,7 @@ public class CityControlSystem : GenericPersistence
         }
 
         Teachers[city] = TeachersOf(city) | teacher;
+        CityGuardChatter.OnTeacher(city);
         foreach (var guard in CityGuard.Of(city))
         {
             guard.ApplyLevel(GetGuardLevel(city));
@@ -168,6 +169,7 @@ public class CityControlSystem : GenericPersistence
 
         var level = GetGuardLevel(city) + 1;
         GuardLevel[city] = level;
+        CityGuardChatter.OnNewArmour(city, Systems.MahaonMetals.MahaonMetalTable.Get(step.Metal).RuName.ToLowerInvariant());
 
         foreach (var guard in CityGuard.Of(city))
         {
@@ -351,6 +353,7 @@ public class CityControlSystem : GenericPersistence
         MageSlots.Remove(city);
         Teachers.Remove(city);
         SpawnGuards(city, guild);
+        CityGuardChatter.OnNewHolder(city, guild.Name);
         Server.Systems.MahaonAi.MahaonForumBridge.OnCityCaptured(city, guild);
 
         // The site's city map would otherwise show the old owner until the next scheduled

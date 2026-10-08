@@ -183,6 +183,7 @@ public partial class MahaonCityClaimPoint : Item
         if (guild != null)
         {
             World.Broadcast(0x59, false, $"Попытка гильдии {guild.Name} взять {_city} провалилась.");
+            CityGuardChatter.OnClaimRepelled(_city, guild.Name);
         }
     }
 
