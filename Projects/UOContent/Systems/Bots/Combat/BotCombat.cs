@@ -70,7 +70,9 @@ public static class BotCombat
         {
             var target = state.SpellTarget;
             state.SpellTarget = null;
-            cursor.Invoke(bot, target.Deleted || !target.Alive ? bot : target);
+            // A helping spell's cursor wants a friend: the bot itself, not the foe it fights.
+            var helps = (cursor.Flags & Targeting.TargetFlags.Beneficial) != 0;
+            cursor.Invoke(bot, helps || target.Deleted || !target.Alive ? bot : target);
             return 250;
         }
 
@@ -267,7 +269,7 @@ public static class BotCombat
             return FightTickMs;
         }
 
-        if (BotBard.TryDiscord(brain, foe) || BotSchools.TryCast(brain, SchoolUse.Buff, foe))
+        if (BotBard.TryDiscord(brain, foe) || BotMasteries.TryUse(brain, foe) || BotSchools.TryCast(brain, SchoolUse.Buff, foe))
         {
             return FightTickMs;
         }

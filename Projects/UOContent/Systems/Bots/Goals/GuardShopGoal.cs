@@ -18,8 +18,8 @@ public partial class BotBrain
 /// <summary>
 /// Sergeant Guido's reward shop, as a bot uses it. A bot whose skill has run into its cap buys a
 /// power scroll, one whose stats have run into theirs a stat scroll, one whose mastery has a
-/// mastery scroll, when it can spare the gold. Mastery primers it leaves: they teach the SA
-/// mastery abilities, which bots don't use.
+/// mastery scroll, one strong enough for an SA mastery (90 and up) its next tome, when it can
+/// spare the gold.
 /// The shop rolls the power scroll's skill among those it would raise, so the scroll may not be for
 /// the skill the bot hoped for: a scroll for a skill it trains it reads, any other it sells.
 /// </summary>
@@ -115,6 +115,14 @@ public static class BotScrolls
             }
         }
 
+        foreach (var primer in pack.FindItemsByType<SkillMasteryPrimer>())
+        {
+            if (BotMasteries.Reads(bot, primer))
+            {
+                return true;
+            }
+        }
+
         return WantsStatScroll(bot) && pack.FindItemByType<MahaonStatScroll>() != null;
     }
 }
@@ -144,6 +152,10 @@ public sealed class GuardShopGoal : BotGoal
         else if (BotScrolls.WantedMasteryScroll(brain) is > 0 and var mastery)
         {
             index = GuardRewardShop.IndexOf(GuardShopKind.MasteryScroll, mastery);
+        }
+        else if (BotMasteries.WantedPrimerVolume(bot) is > 0 and var volume)
+        {
+            index = GuardRewardShop.IndexOf(GuardShopKind.Primer, volume);
         }
 
         return index < 0 ? (-1, 0) : (index, GuardRewardShop.PriceOf(bot, index));
@@ -263,6 +275,20 @@ public sealed class ReadScrollsAction : BotAction
             else if (!brain.IsLoot(scroll))
             {
                 brain.MarkLoot(scroll);
+            }
+        }
+
+        // A tome of a mastery the bot can use teaches it; any other goes to market.
+        foreach (var primer in pack.EnumerateItemsByType<SkillMasteryPrimer>())
+        {
+            if (BotMasteries.Reads(bot, primer))
+            {
+                primer.OnDoubleClick(bot);
+                BotMasteries.EnsureActive(bot);
+            }
+            else if (!brain.IsLoot(primer))
+            {
+                brain.MarkLoot(primer);
             }
         }
 

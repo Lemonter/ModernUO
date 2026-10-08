@@ -27,7 +27,8 @@ public enum GuardShopKind
     Other,
     PowerScroll,
     StatScroll,
-    MasteryScroll
+    MasteryScroll,
+    Primer
 }
 
 public static class GuardRewardShop
@@ -170,18 +171,21 @@ public static class GuardRewardShop
         {
             Price = 3000, ItemID = PrimerItemId,
             Description = "Том мастерства I<br>случайная мастерка",
+            Kind = GuardShopKind.Primer, Value = 1,
             Factory = buyer => RandomPrimer(buyer, 1)
         },
         new Entry
         {
             Price = 7000, ItemID = PrimerItemId,
             Description = "Том мастерства II<br>случайная мастерка",
+            Kind = GuardShopKind.Primer, Value = 2,
             Factory = buyer => RandomPrimer(buyer, 2)
         },
         new Entry
         {
             Price = 15000, ItemID = PrimerItemId,
             Description = "Том мастерства III<br>случайная мастерка",
+            Kind = GuardShopKind.Primer, Value = 3,
             Factory = buyer => RandomPrimer(buyer, 3)
         }
     };
@@ -323,18 +327,27 @@ public static class GuardRewardShop
     private static SkillMasteryPrimer RandomPrimer(PlayerMobile buyer, int volume)
     {
         var all = Spells.SkillMasteries.MasteryInfo.Skills;
+        // A tome for a skill the buyer can already use the mastery of (90 and up) first, then for
+        // one it practises; never one it has learned to this volume.
+        var usable = new List<SkillName>();
         var candidates = new List<SkillName>();
 
-        // Том по навыку, которого у покупателя нет, — такая же бумага, как свиток силы на
-        // выкачанный навык. Берём только те, которыми он действительно занимается и по
-        // которым этот том ещё не изучен.
         foreach (var skill in all)
         {
             if (buyer?.Skills?[skill]?.Value >= PrimerSkillFloor &&
                 !Spells.SkillMasteries.MasteryInfo.HasLearned(buyer, skill, volume))
             {
                 candidates.Add(skill);
+                if (buyer.Skills[skill].Value >= Spells.SkillMasteries.MasteryInfo.MinSkillRequirement)
+                {
+                    usable.Add(skill);
+                }
             }
+        }
+
+        if (usable.Count > 0)
+        {
+            candidates = usable;
         }
 
         var chosen = candidates.Count > 0

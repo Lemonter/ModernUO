@@ -89,6 +89,9 @@ public static class BotGoods
         MahaonMasteryScroll { Value: <= 110 } => 20000,
         MahaonMasteryScroll { Value: <= 115 } => 40000,
         MahaonMasteryScroll => 80000,
+        SkillMasteryPrimer { Volume: 1 } => 3000,
+        SkillMasteryPrimer { Volume: 2 } => 7000,
+        SkillMasteryPrimer => 15000,
         TreasureMap { Completed: false } map => 150 * System.Math.Max(1, map.Level),
         _                 => 0
     };
