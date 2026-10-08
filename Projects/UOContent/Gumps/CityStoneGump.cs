@@ -50,7 +50,7 @@ public class CityStoneGump : DynamicGump
         var city = _stone.City;
         var holder = CityControlSystem.GetController(city);
         var rules = CityControlSystem.Rules(from, city);
-        var height = rules ? 510 : 200;
+        var height = rules ? 710 : 200;
 
         builder.AddPage();
         builder.AddBackground(0, 0, Width, height, 5054);
@@ -129,8 +129,13 @@ public class CityStoneGump : DynamicGump
             $"Жалованье: {CityGuardUpkeep.WagePerHour(level)} золота в час на стражника. Замена павшего: {CityGuardUpkeep.ReplaceCost(level)} золота."
         );
 
-        builder.AddHtml(20, 320, Width - 40, 20, $"Учителя для стражи, {CityControlSystem.TeacherCost(city)} золота каждый:");
-        var y = 344;
+        builder.AddHtml(
+            20, 318, Width - 40, 40,
+            "Ступень даёт стражникам: +3 силы, +2 ловкости, +10% здоровья, +2 к бою и магии, +4 к защите от магии (навыки до 120), доспехи из металла ступени."
+        );
+
+        builder.AddHtml(20, 365, Width - 40, 20, $"Учителя для стражи, {CityControlSystem.TeacherCost(city)} золота каждый:");
+        var y = 389;
         var hired = CityControlSystem.TeachersOf(city);
         for (var i = 0; i < TeacherList.Length; i++)
         {
@@ -156,9 +161,14 @@ public class CityStoneGump : DynamicGump
     [
         (GuardTeachers.Bushido, "Мастер бусидо: парирование оружием"),
         (GuardTeachers.Shield, "Щитоносец: щит и парирование"),
-        (GuardTeachers.Anatomy, "Лекарь-анатом: удары точнее и сильнее"),
-        (GuardTeachers.Resist, "Наставник защиты от магии"),
-        (GuardTeachers.Meditation, "Наставник медитации для магов")
+        (GuardTeachers.Anatomy, "Анатом: удары точнее и сильнее"),
+        (GuardTeachers.Resist, "Наставник защиты от магии: +20"),
+        (GuardTeachers.Meditation, "Наставник медитации: мана у магов"),
+        (GuardTeachers.Healer, "Лекарь: перевязка бинтами +20"),
+        (GuardTeachers.Blademaster, "Мастер клинка: меч и тактика +10"),
+        (GuardTeachers.Athlete, "Атлет: сила и ловкость +10, здоровье +10%"),
+        (GuardTeachers.Endurance, "Наставник выносливости: фокус"),
+        (GuardTeachers.Scholar, "Знаток магии: свитки и заклинания вернее")
     ];
 
     public override void OnResponse(NetState sender, in RelayInfo info)

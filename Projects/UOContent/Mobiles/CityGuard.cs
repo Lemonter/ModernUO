@@ -174,9 +174,47 @@ public partial class CityGuard : BaseCreature
         if ((teachers & GuardTeachers.Meditation) != 0)
         {
             SetSkill(SkillName.Meditation, taught - 10, taught);
+        }
+
+        if ((teachers & GuardTeachers.Healer) != 0)
+        {
+            Raise(SkillName.Healing, 20);
+        }
+
+        if ((teachers & GuardTeachers.Blademaster) != 0 && this is not CityMageGuard)
+        {
+            Raise(SkillName.Swords, 10);
+            Raise(SkillName.Tactics, 10);
+        }
+
+        if ((teachers & GuardTeachers.Athlete) != 0)
+        {
+            RawStr += 10;
+            RawDex += 10;
+            HitsMaxSeed = HitsMaxSeed * 11 / 10;
+        }
+
+        if ((teachers & GuardTeachers.Endurance) != 0)
+        {
             SetSkill(SkillName.Focus, taught - 10, taught);
         }
+
+        // A sword guard reads its scrolls surer; a mage casts harder.
+        if ((teachers & GuardTeachers.Scholar) != 0)
+        {
+            if (this is CityMageGuard)
+            {
+                Raise(SkillName.Magery, 10);
+                Raise(SkillName.EvalInt, 10);
+            }
+            else
+            {
+                Raise(SkillName.Magery, 20);
+            }
+        }
     }
+
+    private void Raise(SkillName skill, double by) => SetSkill(skill, Math.Min(120, Skills[skill].Base + by));
 
     private bool HasShield()
     {

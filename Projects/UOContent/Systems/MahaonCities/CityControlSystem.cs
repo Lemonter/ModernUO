@@ -21,7 +21,12 @@ public enum GuardTeachers
     Shield = 2,
     Anatomy = 4,
     Resist = 8,
-    Meditation = 16
+    Meditation = 16,
+    Healer = 32,
+    Blademaster = 64,
+    Athlete = 128,
+    Endurance = 256,
+    Scholar = 512
 }
 
 public class CityControlSystem : GenericPersistence

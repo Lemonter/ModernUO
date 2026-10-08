@@ -103,6 +103,16 @@ public class CityGuardUpgradeTests
             Assert.NotNull(shield);
             Assert.Equal(cobaltHue, shield.Hue);
 
+            // A blademaster, an athlete and a magic scholar raise what they teach.
+            GuildBank.DepositGold(guild.Name, 3 * CityControlSystem.TeacherCost(city));
+            Assert.True(CityControlSystem.HireTeacher(city, guild, GuardTeachers.Blademaster));
+            Assert.True(CityControlSystem.HireTeacher(city, guild, GuardTeachers.Athlete));
+            Assert.True(CityControlSystem.HireTeacher(city, guild, GuardTeachers.Scholar));
+            Assert.True(trained.Skills.Swords.Base >= 84); // the second step's floor of 84, before the +10
+            Assert.True(trained.Skills.Magery.Base >= 64); // 44 at the second step, +20
+            Assert.True(trained.RawStr >= 116);            // 106 at the second step, +10
+            Assert.False(CityControlSystem.HireTeacher(city, guild, GuardTeachers.Athlete)); // once only
+
             // A new holder starts from nothing.
             CityControlSystem.Capture(city, guild);
             Assert.Equal(0, CityControlSystem.GetGuardLevel(city));
