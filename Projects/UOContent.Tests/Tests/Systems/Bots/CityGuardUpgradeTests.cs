@@ -59,11 +59,10 @@ public class CityGuardUpgradeTests
             // Gold and ingots in the bank: the leader raises the guard, whose gear is forged of iron.
             Assert.Equal(0.6, BotGoals.CityGuardUpgrade.Score(leader.Brain));
             var guard = new List<CityGuard>(CityGuard.Of(city))[0];
-            var hitsBefore = guard.HitsMax;
             Assert.Equal(BotActionStatus.Done, new CityGuardCommandAction(city, GuardTeachers.None, false).Tick(leader.Brain).Status);
             Assert.Equal(1, CityControlSystem.GetGuardLevel(city));
             Assert.Equal(0, GuildBank.GetIngots(guild.Name, MahaonMetal.Iron));
-            Assert.True(guard.HitsMax > hitsBefore * 1.0);
+            Assert.True(guard.HitsMax >= 88); // the first step's floor, above the bare guard's 80
             var chest = guard.Items.Find(item => item is PlateChest);
             Assert.NotNull(chest);
             Assert.Equal(MahaonMetal.Iron, MahaonMetalTracker.GetMetal(chest));
