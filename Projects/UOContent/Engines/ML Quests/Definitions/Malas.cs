@@ -51,7 +51,7 @@ public partial class Drithen : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Drithen";
+    public override string DefaultName => "Дритен";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

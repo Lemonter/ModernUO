@@ -37,8 +37,8 @@ namespace Server.Mobiles
             VirtualArmor = 28;
         }
 
-        public override string CorpseName => "a harpy corpse";
-        public override string DefaultName => "a harpy";
+        public override string CorpseName => "труп гарпии";
+        public override string DefaultName => "гарпия";
 
         public override bool CanRummageCorpses => true;
         public override int Meat => 4;

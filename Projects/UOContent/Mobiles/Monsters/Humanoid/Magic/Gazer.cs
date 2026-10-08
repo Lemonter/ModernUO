@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackItem(new Nightshade(4));
         }
 
-        public override string CorpseName => "a gazer corpse";
-        public override string DefaultName => "a gazer";
+        public override string CorpseName => "труп газера";
+        public override string DefaultName => "газер";
 
         public override int TreasureMapLevel => 1;
         public override int Meat => 1;

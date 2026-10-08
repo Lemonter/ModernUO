@@ -75,7 +75,7 @@ public partial class GrimmochDrummel : BaseCreature
     public override bool ClickTitle => false;
     public override bool ShowFameTitle => false;
     public override bool DeleteCorpseOnDeath => true;
-    public override string DefaultName => "Grimmoch Drummel";
+    public override string DefaultName => "Гриммох Драммель";
 
     public override bool AlwaysMurderer => true;
 

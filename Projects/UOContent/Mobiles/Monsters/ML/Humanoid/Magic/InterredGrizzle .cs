@@ -49,8 +49,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "an interred grizzle corpse";
-        public override string DefaultName => "a interred grizzle";
+        public override string CorpseName => "труп погребённого гризли";
+        public override string DefaultName => "погребённый гризли";
 
         public override void GenerateLoot() // -- Need to verify
         {

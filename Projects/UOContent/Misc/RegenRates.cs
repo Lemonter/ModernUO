@@ -92,6 +92,12 @@ namespace Server.Misc
                 return Mobile.DefaultStamRate;
             }
 
+            // «Второе дыхание» — обычный перк категории Воин: воин переводит дух вдвое
+            // быстрее всех прочих. Прибавка идёт в самом низу, к уже посчитанному сроку.
+            var warriorScalar = Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                from, Systems.MahaonProfessions.ProfessionCategory.Warrior
+            ) ? 0.5 : 1.0;
+
             CheckBonusSkill(from, from.Stam, from.StamMax, SkillName.Focus);
 
             var points = (int)(from.Skills.Focus.Value * 0.1);
@@ -125,7 +131,7 @@ namespace Server.Misc
                 points = -1;
             }
 
-            return TimeSpan.FromSeconds(1.0 / (0.1 * (2 + points)));
+            return warriorScalar * TimeSpan.FromSeconds(1.0 / (0.1 * (2 + points)));
         }
 
         private static TimeSpan Mobile_ManaRegenRate(Mobile from)

@@ -8,7 +8,7 @@ public sealed partial class GemOfEmpowerment : PowerFactionItem
 {
     public GemOfEmpowerment() : base(7955) => Hue = 1154;
 
-    public override string DefaultName => "gem of empowerment";
+    public override string DefaultName => "самоцвет усиления";
 
     public override bool Use(Mobile from)
     {

@@ -113,6 +113,11 @@ namespace Server.SkillHandlers
                         var toConsume = theirPack.GetAmount(typeof(Gold)) / 10;
                         var max = Math.Clamp(10 + _from.Fame / 2500, 10, 14);
 
+                        if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(_from, Systems.MahaonProfessions.ProfessionCategory.Bard))
+                        {
+                            max = (int)(max * 1.75); // a bard knows how to work a crowd
+                        }
+
                         if (toConsume > max)
                         {
                             toConsume = max;
@@ -158,7 +163,7 @@ namespace Server.SkillHandlers
                     }
                     else
                     {
-                        _target.SendLocalizedMessage(500404); // They seem unwilling to give you any money.
+                        _from.SendLocalizedMessage(500404); // They seem unwilling to give you any money.
                     }
 
                     const int TargeterCooldown = 30000; // 30s

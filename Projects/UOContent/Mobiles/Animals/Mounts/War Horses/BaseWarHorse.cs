@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public abstract partial class BaseWarHorse : BaseMount
     {
-        public override string DefaultName => "a war horse";
+        public override string DefaultName => "боевой конь";
 
         public BaseWarHorse(
             int bodyID,
@@ -57,7 +57,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 6400;
-        public override string CorpseName => "a war horse corpse";
+        public override string CorpseName => "труп боевого коня";
 
         public override FoodType FavoriteFood => FoodType.FruitsAndVeggies | FoodType.GrainsAndHay;
     }

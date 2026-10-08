@@ -223,7 +223,7 @@ public sealed partial class CTFFlag : Item
     [Constructible]
     public CTFFlag() : base(5643) => Movable = false;
 
-    public override string DefaultName => "old people cookies";
+    public override string DefaultName => "печенье для стариков";
 
     public override void OnDoubleClick(Mobile from)
     {
@@ -360,7 +360,7 @@ public sealed partial class CTFFlag : Item
                 {
                     if (owner != null)
                     {
-                        owner.SendMessage(0x26, "You have taken too long to capture the cookies!");
+                        owner.SendMessage(0x26, "Ты слишком долго ловил печенье!");
                         owner.Kill();
                     }
 

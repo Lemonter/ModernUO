@@ -42,8 +42,8 @@ namespace Server.Mobiles
             MinTameSkill = 71.1;
         }
 
-        public override string CorpseName => "a hell cat corpse";
-        public override string DefaultName => "a hell cat";
+        public override string CorpseName => "труп адской кошки";
+        public override string DefaultName => "адская кошка";
 
         public override int Hides => 10;
         public override HideType HideType => HideType.Spined;

@@ -15,5 +15,5 @@ public partial class AlchemyBag : Bag
         DropItem(new Bottle(5000));
     }
 
-    public override string DefaultName => "an Alchemy Kit";
+    public override string DefaultName => "набор алхимика";
 }

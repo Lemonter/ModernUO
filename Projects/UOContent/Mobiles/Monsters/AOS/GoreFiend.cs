@@ -38,8 +38,8 @@ namespace Server.Mobiles
             VirtualArmor = 24;
         }
 
-        public override string CorpseName => "a gore fiend corpse";
-        public override string DefaultName => "a gore fiend";
+        public override string CorpseName => "труп кровавого беса";
+        public override string DefaultName => "кровавый бес";
 
         public override bool BleedImmune => true;
 

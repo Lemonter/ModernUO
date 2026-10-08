@@ -43,8 +43,8 @@ namespace Server.Mobiles
             ControlSlots = Core.SE ? 2 : 1;
         }
 
-        public override string CorpseName => "a blade spirit corpse";
-        public override string DefaultName => "a blade spirit";
+        public override string CorpseName => "труп духа клинка";
+        public override string DefaultName => "дух клинка";
 
         public override bool DeleteCorpseOnDeath => Core.AOS;
         public override bool IsHouseSummonable => true;
@@ -55,7 +55,8 @@ namespace Server.Mobiles
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;
 
-        public override bool FollowsAcquireRules => Core.AOS || !Summoned || SummonMaster?.Player != true || Map != Map.Felucca;
+        public override bool FollowsAcquireRules => Core.AOS || SummonMaster?.Player != true ||
+                                                    (Map?.Rules & MapRules.HarmfulRestrictions) != 0;
 
         public override double GetFightModeRanking(Mobile m, FightMode acqType, bool bPlayerOnly) =>
             (m.Str + m.Skills.Tactics.Value) / Math.Max(this.GetDistanceToSqrt(m), 1.0);

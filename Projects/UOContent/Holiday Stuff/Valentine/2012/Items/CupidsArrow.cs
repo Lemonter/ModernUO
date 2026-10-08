@@ -72,7 +72,7 @@ namespace Server.Items
             }
 
             from.BeginTarget(10, false, TargetFlags.None, OnTarget);
-            from.SendMessage("Who do you wish to use this on?");
+            from.SendMessage("На ком это применить?");
         }
 
         private void OnTarget(Mobile from, object targeted)
@@ -97,11 +97,11 @@ namespace Server.Items
 
                 InvalidateProperties();
 
-                from.SendMessage("You inscribe the arrow.");
+                from.SendMessage("Ты наносишь надпись на стрелу.");
             }
             else
             {
-                from.SendMessage("That is not a person.");
+                from.SendMessage("Это не человек.");
             }
         }
     }

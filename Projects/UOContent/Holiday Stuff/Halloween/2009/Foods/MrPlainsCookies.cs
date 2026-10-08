@@ -14,5 +14,5 @@ public partial class MrPlainsCookies : Food
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "Mr Plain's Cookies";
+    public override string DefaultName => "печенье мистера Плейна";
 }

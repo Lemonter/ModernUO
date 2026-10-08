@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
+using Server.Collections;
 using Server.Engines.CannedEvil;
 using Server.Engines.Virtues;
 using Server.Items;
@@ -103,7 +104,7 @@ public partial class Harrower : BaseCreature
 
     public static bool CanSpawn => Instances.Count == 0;
 
-    public override string DefaultName => "the harrower";
+    public override string DefaultName => "Разоритель";
 
     public override bool AutoDispel => true;
     public override bool Unprovokable => true;

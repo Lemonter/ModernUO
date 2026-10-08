@@ -52,9 +52,9 @@ namespace Server.Mobiles
             VirtualArmor = 50;
         }
 
-        [CommandProperty(AccessLevel.GameMaster)]
-        [SerializableProperty(3)]
-        public Mobile OpenedBy { get; set; }
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        [SerializableField(3)]
+        private Mobile _openedBy;
 
 
         [CommandProperty(AccessLevel.GameMaster)]
@@ -79,11 +79,11 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a plague beast lord corpse";
+        public override string CorpseName => "труп повелителя чумных тварей";
 
         public override Poison PoisonImmune => Poison.Lethal;
 
-        public override string DefaultName => "a plague beast lord";
+        public override string DefaultName => "повелитель чумных тварей";
 
         public virtual void Carve(Mobile from, Item item)
         {

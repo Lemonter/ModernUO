@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class DesertOstard : BaseMount
     {
-        public override string DefaultName => "a desert ostard";
+        public override string DefaultName => "пустынный остард";
 
         [Constructible]
         public DesertOstard() : base(0xD2, 0x3EA3, AIType.AI_Animal, FightMode.Aggressor)
@@ -38,7 +38,7 @@ namespace Server.Mobiles
             MinTameSkill = 29.1;
         }
 
-        public override string CorpseName => "an ostard corpse";
+        public override string CorpseName => "труп остарда";
 
         public override int Meat => 3;
         public override FoodType FavoriteFood => FoodType.FruitsAndVeggies | FoodType.GrainsAndHay;

@@ -7,8 +7,8 @@ namespace Server.Mobiles
     {
         public EnragedRabbit(Mobile summoner) : base(summoner) => Body = 0xcd;
 
-        public override string CorpseName => "a hare corpse";
-        public override string DefaultName => "a rabbit";
+        public override string CorpseName => "труп зайца";
+        public override string DefaultName => "кролик";
 
         public override int GetAttackSound() => 0xC9;
 
@@ -22,8 +22,8 @@ namespace Server.Mobiles
     {
         public EnragedHart(Mobile summoner) : base(summoner) => Body = 0xea;
 
-        public override string CorpseName => "a deer corpse";
-        public override string DefaultName => "a great hart";
+        public override string CorpseName => "труп оленя";
+        public override string DefaultName => "благородный олень";
 
         public override int GetAttackSound() => 0x82;
 
@@ -37,8 +37,8 @@ namespace Server.Mobiles
     {
         public EnragedHind(Mobile summoner) : base(summoner) => Body = 0xed;
 
-        public override string CorpseName => "a deer corpse";
-        public override string DefaultName => "a hind";
+        public override string CorpseName => "труп оленя";
+        public override string DefaultName => "лань";
 
         public override int GetAttackSound() => 0x82;
 
@@ -56,8 +56,8 @@ namespace Server.Mobiles
             BaseSoundID = 0xa3;
         }
 
-        public override string CorpseName => "a bear corpse";
-        public override string DefaultName => "a black bear";
+        public override string CorpseName => "труп медведя";
+        public override string DefaultName => "чёрный медведь";
     }
 
     [SerializationGenerator(0, false)]
@@ -69,8 +69,8 @@ namespace Server.Mobiles
             BaseSoundID = 0x2ee;
         }
 
-        public override string CorpseName => "an eagle corpse";
-        public override string DefaultName => "an eagle";
+        public override string CorpseName => "труп орла";
+        public override string DefaultName => "орёл";
     }
 
     [SerializationGenerator(0, false)]
@@ -92,12 +92,15 @@ namespace Server.Mobiles
             Karma = -1000;
             Tamable = false;
 
-            SummonMaster = summoner;
+            Master = summoner;
         }
+
+        // The meer's FightMode.Evil against our negative karma would otherwise make us enemies.
+        public override bool IsEnemy(Mobile m) => m != Master && base.IsEnemy(m);
 
         public override void OnThink()
         {
-            if (SummonMaster?.Deleted != false)
+            if (Master?.Deleted != false)
             {
                 Delete();
             }
@@ -108,7 +111,7 @@ namespace Server.Mobiles
             */
             else if (!Combat(this))
             {
-                AIObject?.MoveTo(SummonMaster, false, 5);
+                AIObject?.MoveTo(Master, 5);
             }
             /*
               On OSI, if the summon attacks a mobile, the summoner meer also
@@ -116,11 +119,11 @@ namespace Server.Mobiles
               is a player or controlled/summoned, and the summoner is not already
               engaged in combat.
             */
-            else if (!Combat(SummonMaster))
+            else if (!Combat(Master))
             {
-                if (Combatant.Player || Combatant is BaseCreature bc && (bc.Controlled || bc.SummonMaster != null))
+                if (Combatant.Player || Combatant is BaseCreature bc && bc.GetMaster() != null)
                 {
-                    SummonMaster.Combatant = Combatant;
+                    Master.Combatant = Combatant;
                 }
             }
             else

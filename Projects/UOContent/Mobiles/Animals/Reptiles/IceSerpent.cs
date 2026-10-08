@@ -61,8 +61,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an ice serpent corpse";
-        public override string DefaultName => "a giant ice serpent";
+        public override string CorpseName => "труп ледяного змея";
+        public override string DefaultName => "гигантский ледяной змей";
 
         public override bool DeathAdderCharmable => true;
 

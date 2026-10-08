@@ -68,8 +68,34 @@ Optional systems can add substantially more. The pathfinding prebake
 (`pathfinding.prebakeMaps`) peaks above 1 GB of heap while baking. Budget for it or leave it off on
 small hosts.
 
-Network buffers are minor by comparison: 64 KB receive plus a configurable 256 KB send
-(`network.sendBufferSize`) per connection, so 100 players is roughly 32 MB.
+Network buffers come from four pools that grow and shrink with the population rather than being
+sized for a full shard. A connection that has not yet presented valid credentials holds a 4 KB
+receive and a 4 KB send buffer (the platform's page size). On Windows Server 2012 R2 / 2016 the
+transport's legacy mapping path floors at 64 KB: the pre-auth receive pool is off there (its base is
+64 KB), while the pre-auth send buffer starts at 64 KB under the 256 KB base. Everything the server
+sends before that must fit in that ring — a connection that overruns it is dropped; the stock login
+sequence uses under 2 KB. Otherwise, when the game server verifies the account the connection is
+promoted to a 64 KB receive buffer and a `network.sendBufferSize` send buffer from the base pools,
+and nothing ever moves back. A flood of unauthenticated connections tops out at about 32 MB across
+the full 4096-connection cap where the platform minimum is 4 KB (the transport's retained slabs and
+the base pools used by logged-in players are separate), and never allocates a base-pool slab.
+At boot the network holds `network.initialBufferSlabs` slab(s) of each pool — at the defaults one
+2 MB receive slab, one 8 MB send slab and two 128 KB pre-auth slabs, about 10 MB — and allocates
+another slab only when the population needs one. Each slab covers 32 connections at the
+4096-connection maximum. After 15 quiet minutes idle slabs are trimmed back towards current usage,
+never past the last 15 minutes' peak, at one slab per pool per minute and never below
+`network.initialBufferSlabs`. Only the newest slab is trimmed, and buffers are handed out from the
+oldest slab first, so ordinary churn empties the newest slabs; a shard that drops from 4096 players
+to a handful takes about two hours to shrink fully, longer if a long-lived connection still holds a
+buffer in a newer slab.
+
+Send memory per authenticated connection is `network.sendBufferSize` at rest and can grow to
+`network.sendBufferMaxSize` under load. Shared send-buffer tier memory is capped by
+`network.sendBufferGrowthBudget`, and growth is refused when process memory exceeds
+`network.memoryCeilingPercent` of available memory. The worst case is the receive and base
+send-buffer sizes times the number of logged-in connections, plus the shared growth budget: a full
+4096 logged-in connections is roughly 1.25 GB of base buffers, and the growth budget can add up to
+another 256 MB.
 
 ModernUO runs **Workstation GC**, which is the right default for small hosts. Do not switch to
 Server GC on a 2-core box.
@@ -105,10 +131,16 @@ See the README for the full supported list. Two things are worth calling out:
 | Setting | Default | Why change it |
 |---|---|---|
 | `server.eventLoopIdleWaitMs` | `2` | `0` never sleeps: ~98% of one core, but zero skipped timer slots and zero lag. The choice for a large shard on dedicated CPU that would rather spend a core than risk a late wake. Above `2` the wheel starts losing slots. |
-| `server.lateWakeThreshold` | `1` | Idle waits the host may return a full tick late, per second, before idle sleeping backs off. Raise on a jittery host; set very high to disable the backoff. |
+| `server.lateWakeThreshold` | `1` | Floor for the backoff: idle waits the host may return a full tick late, per second, before the rate test below applies at all. Raise on a jittery host; set very high to disable the backoff. |
+| `server.lateWakePercent` | `10` | Share of a second's idle waits that must come back late before idle sleeping backs off. An idle loop sleeps hundreds of times a second, so a bare count cannot tell a few tail outliers from a host that never schedules the process — a genuinely bad host misses *most* of its waits. `0` leaves `lateWakeThreshold` in sole charge. |
 | `world.useMultithreadedSaves` | `true` | Set `false` on 2-core hosts so saves do not contend with the game loop. |
 | `pathfinding.prebakeMaps` | varies | Leave off on memory-constrained hosts; it peaks above 1 GB while baking. |
 | `network.sendBufferSize` | 256 KB | Lower it if you are memory-bound with many connections. |
+| `network.sendBufferMaxSize` | 2 MB (`2097152`) | Ceiling a single connection's send buffer can grow to under load. Lower it on memory-constrained hosts; raise it if slow clients are disconnected with "send buffer exhausted". |
+| `network.sendBufferGrowthBudget` | 256 MB (`268435456`) | Cap on the shared memory the larger send-buffer tiers may use. Lower it on memory-constrained hosts. |
+| `network.memoryCeilingPercent` | 80% | Refuse send-buffer growth once the process is above this share of available memory; 0 turns the check off. |
+| `network.initialBufferSlabs` | `1` | Slabs of each base pool held from boot, and the floor the trim never goes below. Raise it on a large shard to pre-warm the pools instead of paying for a slab as the population climbs. |
+| `network.maxBufferSlabs` | `128` | Divides the connection maximum into base-pool slabs: a slab holds `MaxConnections / maxBufferSlabs` connections, 32 at the default. Raise it for finer slabs on a small host (the slab floor is 16 buffers); lowering it makes each slab, and the boot allocation, larger. It is not a connection or memory cap — both pools still reach the connection maximum. |
 | `autoArchive.*` retention | 24h/30d/12m | Reduce if disk is tight. |
 
 ## Am I undersized?

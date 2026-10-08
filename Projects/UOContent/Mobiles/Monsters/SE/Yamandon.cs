@@ -49,8 +49,8 @@ namespace Server.Mobiles
             PackItem(new Eggs(2));
         }
 
-        public override string CorpseName => "a yamandon corpse";
-        public override string DefaultName => "a yamandon";
+        public override string CorpseName => "труп ямандона";
+        public override string DefaultName => "ямандон";
 
         public override bool ReacquireOnMovement => true;
         public override Poison PoisonImmune => Poison.Lethal;

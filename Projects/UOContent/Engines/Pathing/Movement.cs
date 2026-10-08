@@ -310,12 +310,26 @@ public class MovementImpl : IMovementImpl
              * 1. Item is a _passable_ surface and Mob can walk -or-
              * 2. Item is water and Mob can swim
              */
-            if (
-                (!itemData.Surface || itemData.Impassable) && (!canSwim || notWater) ||
-                cantWalk && notWater
-            )
+            var blockedByImpassableSurface = (!itemData.Surface || itemData.Impassable) && (!canSwim || notWater);
+            var blockedByCantWalk = cantWalk && notWater;
+
+            if (blockedByImpassableSurface || blockedByCantWalk)
             {
-                continue;
+                // City-house furniture exception: everything inside a GM-marked house floor
+                // (Systems.MahaonWorld.MahaonCityHouseSystem) is walkable, even if the
+                // underlying static's own TileData still says Impassable — but only bypasses
+                // the furniture-blocking reason, never the mob's own CantWalk status (an
+                // immobile mobile shouldn't suddenly be able to cross non-water tiles just
+                // because it's standing in a marked house). Cheap early-out inside
+                // IsInsideAnyHouse means this costs virtually nothing everywhere else in the
+                // game where no house has been marked.
+                var furnitureExempt = blockedByImpassableSurface && !blockedByCantWalk
+                    && Systems.MahaonWorld.MahaonCityHouseSystem.IsInsideAnyHouse(map, x, y);
+
+                if (!furnitureExempt)
+                {
+                    continue;
+                }
             }
 
             var itemZ = tile.Z;

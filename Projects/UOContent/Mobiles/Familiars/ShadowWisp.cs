@@ -38,8 +38,10 @@ public partial class ShadowWispFamiliar : BaseFamiliar
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a shadow wisp corpse";
-    public override string DefaultName => "a shadow wisp";
+    public override string CorpseName => "труп теневого огонька";
+    public override string DefaultName => "теневой огонёк";
+
+    public override bool AssistsMaster => false;
 
     public override void OnThink()
     {
@@ -60,7 +62,7 @@ public partial class ShadowWispFamiliar : BaseFamiliar
 
     private void Flare()
     {
-        var caster = ControlMaster ?? SummonMaster;
+        var caster = GetMaster();
 
         if (caster == null)
         {

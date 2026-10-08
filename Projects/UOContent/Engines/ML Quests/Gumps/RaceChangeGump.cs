@@ -304,7 +304,7 @@ namespace Server.Engines.MLQuests.Gumps
         [Constructible]
         public RaceChangeDeed() : base(0x14F0) => LootType = LootType.Blessed;
 
-        public override string DefaultName => "a race change deed";
+        public override string DefaultName => "грамота смены расы";
 
         public bool CheckComplete(PlayerMobile pm)
         {

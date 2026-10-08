@@ -1,0 +1,64 @@
+﻿using ModernUO.Serialization;
+
+namespace Server.Mobiles;
+
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Lifestealer.cs).
+/// AIType.AI_NecroMage has since been ported (Mobiles/AI/NecroMageAI.cs) and is restored
+/// here. LootPack.NecroRegs doesn't exist here
+/// (verified — not one of this codebase's LootPack members) — dropped.</summary>
+[SerializationGenerator(0, false)]
+[CorpseName("a lifestealer corpse")]
+public partial class Lifestealer : BaseCreature
+{
+    [Constructible]
+    public Lifestealer() : base(AIType.AI_NecroMage, FightMode.Closest, 10, 1)
+    {
+        Body = 303;
+        Hue = 2606;
+        BaseSoundID = 357;
+
+        SetStr(200, 240);
+        SetDex(130, 150);
+        SetInt(200, 250);
+
+        SetHits(4600, 4650);
+
+        SetDamage(22, 26);
+
+        SetDamageType(ResistanceType.Physical, 50);
+        SetDamageType(ResistanceType.Fire, 10);
+        SetDamageType(ResistanceType.Cold, 20);
+        SetDamageType(ResistanceType.Energy, 20);
+
+        SetResistance(ResistanceType.Physical, 45, 55);
+        SetResistance(ResistanceType.Fire, 25, 35);
+        SetResistance(ResistanceType.Cold, 15, 25);
+        SetResistance(ResistanceType.Poison, 60, 70);
+        SetResistance(ResistanceType.Energy, 40, 50);
+
+        SetSkill(SkillName.Necromancy, 90.1, 100.0);
+        SetSkill(SkillName.SpiritSpeak, 90.1, 105.0);
+        SetSkill(SkillName.EvalInt, 90.1, 100.0);
+        SetSkill(SkillName.Magery, 90.1, 100.0);
+        SetSkill(SkillName.Meditation, 90.1, 100.0);
+        SetSkill(SkillName.MagicResist, 90.1, 105.0);
+        SetSkill(SkillName.Tactics, 75.1, 85.0);
+        SetSkill(SkillName.Wrestling, 80.1, 100.0);
+        SetSkill(SkillName.DetectHidden, 84.3);
+
+        Fame = 9500;
+        Karma = -9500;
+    }
+
+    public override string DefaultName => "похититель жизни";
+
+    public override Poison PoisonImmune => Poison.Lethal;
+
+    public override int TreasureMapLevel => 4;
+    public override int Meat => 3;
+
+    public override void GenerateLoot()
+    {
+        AddLoot(LootPack.FilthyRich, 2);
+    }
+}

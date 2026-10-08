@@ -5,9 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace Server.Mobiles
 {
-    [SerializationGenerator(0, false)]
+    [SerializationGenerator(1, false)]
     public partial class Sheep : BaseCreature, ICarvable
     {
+        private void MigrateFrom(V0Content content)
+        {
+            _nextWoolTime = content.NextWoolTime;
+        }
+
         [Constructible]
         public Sheep() : base(AIType.AI_Animal, FightMode.Aggressor)
         {
@@ -41,26 +46,22 @@ namespace Server.Mobiles
             MinTameSkill = 11.1;
         }
 
-        public override string CorpseName => "a sheep corpse";
+        public override string CorpseName => "труп овцы";
 
-        [DeltaDateTime]
-        [SerializableProperty(0)]
-        [CommandProperty(AccessLevel.GameMaster)]
-        public DateTime NextWoolTime
+        [SerializableField(0, fieldChanged: nameof(OnNextWoolTimeChanged))]
+        [AnchoredDateTime]
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        private DateTime _nextWoolTime;
+
+        private void OnNextWoolTimeChanged(DateTime oldValue, DateTime newValue)
         {
-            get => _nextWoolTime;
-            set
-            {
-                _nextWoolTime = value;
-                SheepBody();
-                this.MarkDirty();
-            }
+            SheepBody();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SheepBody() => Body = Core.Now >= _nextWoolTime ? 0xCF : 0xDF;
 
-        public override string DefaultName => "a sheep";
+        public override string DefaultName => "овца";
 
         public override int Meat => 3;
         public override MeatType MeatType => MeatType.LambLeg;

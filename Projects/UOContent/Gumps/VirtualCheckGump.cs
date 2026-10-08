@@ -189,12 +189,12 @@ public sealed class VirtualCheckGump : Gump, IVirtualCheckGump
 
                     if (!int.TryParse(platText, out _plat))
                     {
-                        User.SendMessage("That is not a valid amount of platinum.");
+                        User.SendMessage("Неверная сумма платины.");
                         refresh = true;
                     }
                     else if (!int.TryParse(goldText, out _gold))
                     {
-                        User.SendMessage("That is not a valid amount of gold.");
+                        User.SendMessage("Неверная сумма золота.");
                         refresh = true;
                     }
                     else
@@ -206,7 +206,7 @@ public sealed class VirtualCheckGump : Gump, IVirtualCheckGump
                         {
                             _plat = User.Account.TotalPlat;
                             _gold = User.Account.TotalGold;
-                            User.SendMessage("You do not have that much currency.");
+                            User.SendMessage("Столько у тебя нет.");
                             refresh = true;
                         }
                         else
@@ -234,7 +234,7 @@ public sealed class VirtualCheckGump : Gump, IVirtualCheckGump
 
         if (updated)
         {
-            User.SendMessage("Your offer has been updated.");
+            User.SendMessage("Твоё предложение обновлено.");
         }
 
         if (refresh && Check?.Deleted == false)

@@ -47,7 +47,7 @@ namespace Server.Mobiles
             VirtualArmor = 120;
         }
 
-        public override string CorpseName => "an ethereal warrior corpse";
+        public override string CorpseName => "труп эфирного воина";
         public override bool InitialInnocent => true;
 
         public override int TreasureMapLevel => Core.AOS ? 5 : 0;

@@ -668,7 +668,7 @@ public partial class Aelorn : KeeperOfChivalry
         SetSkill(SkillName.Chivalry, 120.0);
     }
 
-    public override string DefaultName => "Aelorn";
+    public override string DefaultName => "Аэлорн";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -721,7 +721,7 @@ public partial class Dimethro : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Dimethro";
+    public override string DefaultName => "Диметро";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -781,7 +781,7 @@ public partial class Churchill : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Churchill";
+    public override string DefaultName => "Черчилль";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -815,7 +815,7 @@ public partial class Robyn : Bowyer
         SetSkill(SkillName.Focus, 120.0);
     }
 
-    public override string DefaultName => "Robyn";
+    public override string DefaultName => "Робин";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -908,7 +908,7 @@ public partial class Recaro : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Recaro";
+    public override string DefaultName => "Рекаро";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -952,7 +952,7 @@ public partial class AldenArmstrong : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Alden Armstrong";
+    public override string DefaultName => "Олден Армстронг";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -996,7 +996,7 @@ public partial class Jockles : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Jockles";
+    public override string DefaultName => "Джоклс";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1059,7 +1059,7 @@ public partial class TylAriadne : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Tyl Ariadne";
+    public override string DefaultName => "Тил Ариадна";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1097,7 +1097,7 @@ public partial class Alefian : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Alefian";
+    public override string DefaultName => "Алефиан";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1135,7 +1135,7 @@ public partial class Gustar : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Gustar";
+    public override string DefaultName => "Густар";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1183,7 +1183,7 @@ public partial class Jillian : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Jillian";
+    public override string DefaultName => "Джиллиан";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1222,7 +1222,7 @@ public partial class Kaelynna : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Kaelynna";
+    public override string DefaultName => "Каэлинна";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1264,7 +1264,7 @@ public partial class Mithneral : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Mithneral";
+    public override string DefaultName => "Митнерал";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1298,7 +1298,7 @@ public partial class AmeliaYoungstone : Tinker
         SetSkill(SkillName.Mining, 120.0);
     }
 
-    public override string DefaultName => "Amelia Youngstone";
+    public override string DefaultName => "Амелия Янгстоун";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1349,7 +1349,7 @@ public partial class AndreasVesalius : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Andreas Vesalius";
+    public override string DefaultName => "Андреас Везалий";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1388,7 +1388,7 @@ public partial class Avicenna : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Avicenna";
+    public override string DefaultName => "Авиценна";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1432,7 +1432,7 @@ public partial class SarsmeaSmythe : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Sarsmea Smythe";
+    public override string DefaultName => "Сарсмея Смайт";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1462,7 +1462,7 @@ public partial class Ryuichi : BaseVendor
 
     protected override List<SBInfo> SBInfos => m_SBInfos;
 
-    public override string DefaultName => "Ryuichi";
+    public override string DefaultName => "Рюити";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1515,7 +1515,7 @@ public partial class Chiyo : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Chiyo";
+    public override string DefaultName => "Тиё";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1557,7 +1557,7 @@ public partial class Jun : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Jun";
+    public override string DefaultName => "Дзюн";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1637,7 +1637,7 @@ public partial class Hamato : BaseVendor
 
     protected override List<SBInfo> SBInfos => m_SBInfos;
 
-    public override string DefaultName => "Hamato";
+    public override string DefaultName => "Хамато";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1692,7 +1692,7 @@ public partial class Mulcivikh : Mage
         SetSkill(SkillName.Necromancy, 120.0);
     }
 
-    public override string DefaultName => "Mulcivikh";
+    public override string DefaultName => "Мулцивих";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1754,7 +1754,7 @@ public partial class Morganna : Mage
         SetSkill(SkillName.Necromancy, 120.0);
     }
 
-    public override string DefaultName => "Morganna";
+    public override string DefaultName => "Морганна";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1807,7 +1807,7 @@ public partial class JacobWaltz : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Jacob Waltz";
+    public override string DefaultName => "Джейкоб Вальц";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1841,7 +1841,7 @@ public partial class GeorgeHephaestus : Blacksmith
         SetSkill(SkillName.Mining, 120.0);
     }
 
-    public override string DefaultName => "George Hephaestus";
+    public override string DefaultName => "Джордж Гефест";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

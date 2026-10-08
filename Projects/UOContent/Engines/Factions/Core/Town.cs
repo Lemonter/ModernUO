@@ -203,15 +203,15 @@ public abstract class Town : IComparable<Town>, ISpanParsable<Town>
         }
         else if (isFinance && isSheriff) // GM only
         {
-            from.SendMessage("That is not a vendor or guard!");
+            from.SendMessage("Это не торговец и не страж!");
         }
         else if (isFinance)
         {
-            from.SendMessage("That is not a vendor!");
+            from.SendMessage("Это не торговец!");
         }
         else if (isSheriff)
         {
-            from.SendMessage("That is not a guard!");
+            from.SendMessage("Это не страж!");
         }
     }
 
@@ -530,7 +530,7 @@ public abstract class Town : IComparable<Town>, ISpanParsable<Town>
 
         if (town == null)
         {
-            e.Mobile.SendMessage("You are not in a faction town.");
+            e.Mobile.SendMessage("Ты не в городе фракции.");
         }
         else if (e.Length == 0)
         {

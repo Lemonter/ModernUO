@@ -103,11 +103,14 @@ internal static class TestServerInitializer
             // Registers the Accounts entity persistence; without it no test can construct an Account.
             Server.Accounting.Accounts.Configure();
             RaceDefinitions.Configure();
+            Server.Movement.Movement.Configure();
             MovementImpl.Configure();
             PathFollower.Configure();
             World.Load();
             World.ExitSerializationThreads();
             DecayScheduler.Configure();
+            // Without npc-speeds.json every BaseCreature constructor throws.
+            Server.Mobiles.NPCSpeeds.Configure();
             Server.Engines.Spawners.SpawnerJsonSerializer.Configure();
 
             if (TileDataLoaded)

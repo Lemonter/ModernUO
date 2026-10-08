@@ -122,7 +122,7 @@ public class AcceptDuelGump : DynamicGump
         _challenged.CloseGump<AcceptDuelGump>();
 
         _challenger.SendMessage($"{_challenged.Name} seems unresponsive.");
-        _challenged.SendMessage("You decline the challenge.");
+        _challenged.SendMessage("Ты отклоняешь вызов.");
     }
 
     public static void BeginIgnore(Mobile source, Mobile toIgnore)
@@ -200,11 +200,11 @@ public class AcceptDuelGump : DynamicGump
             {
                 if (pm.DuelContext.Initiator == pm)
                 {
-                    pm.SendMessage(0x22, "You have already started a duel.");
+                    pm.SendMessage(0x22, "Ты уже начал дуэль.");
                 }
                 else
                 {
-                    pm.SendMessage(0x22, "You have already been challenged in a duel.");
+                    pm.SendMessage(0x22, "Тебе уже бросили вызов на дуэль.");
                 }
 
                 _challenger.SendMessage($"{pm.Name} cannot fight because they are already assigned to another duel.");
@@ -213,7 +213,7 @@ public class AcceptDuelGump : DynamicGump
             {
                 pm.SendMessage(
                     0x22,
-                    "You have recently been in combat with another player and must wait before starting a duel."
+                    "Ты недавно дрался с игроком — придётся подождать перед дуэлью."
                 );
                 _challenger.SendMessage(
                     $"{pm.Name} cannot fight because they have recently been in combat with another player."
@@ -221,8 +221,8 @@ public class AcceptDuelGump : DynamicGump
             }
             else if (TournamentController.IsActive)
             {
-                pm.SendMessage(0x22, "A tournament is currently active and you may not duel.");
-                _challenger.SendMessage(0x22, "A tournament is currently active and you may not duel.");
+                pm.SendMessage(0x22, "Сейчас идёт турнир, дуэли запрещены.");
+                _challenger.SendMessage(0x22, "Сейчас идёт турнир, дуэли запрещены.");
             }
             else
             {

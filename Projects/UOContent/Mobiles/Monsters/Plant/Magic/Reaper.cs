@@ -45,8 +45,8 @@ namespace Server.Mobiles
             PackItem(new MandrakeRoot(5));
         }
 
-        public override string CorpseName => "a reapers corpse";
-        public override string DefaultName => "a reaper";
+        public override string CorpseName => "труп жнеца";
+        public override string DefaultName => "жнец";
 
         public override Poison PoisonImmune => Poison.Greater;
         public override int TreasureMapLevel => 2;

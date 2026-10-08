@@ -9,7 +9,7 @@ public partial class PieceWhiteChecker : BasePiece
     {
     }
 
-    public override string DefaultName => "white checker";
+    public override string DefaultName => "белая шашка";
 }
 
 [SerializationGenerator(0, false)]
@@ -19,5 +19,5 @@ public partial class PieceBlackChecker : BasePiece
     {
     }
 
-    public override string DefaultName => "black checker";
+    public override string DefaultName => "чёрная шашка";
 }

@@ -12,7 +12,7 @@ namespace Server.Engines.UltimaStore
 
         public static void UltimaStoreOpenRequest(NetState state, SpanReader reader)
         {
-            state.Mobile.SendMessage("Ultima Store is not currently available.");
+            state.Mobile.SendMessage("Магазин Ultima сейчас недоступен.");
         }
     }
 }

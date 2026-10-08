@@ -33,17 +33,13 @@ public partial class ChampionSkullBrazier : AddonComponent
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private ChampionSkullPlatform _platform;
 
-    [SerializableProperty(2)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public Item Skull
+    [SerializableField(2, fieldChanged: nameof(OnSkullChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    private Item _skull;
+
+    private void OnSkullChanged(Item oldValue, Item newValue)
     {
-        get => _skull;
-        set
-        {
-            _skull = value;
-            this.MarkDirty();
-            _platform?.Validate();
-        }
+        _platform?.Validate();
     }
 
     public override int LabelNumber => 1049489 + (int)_type;
@@ -81,7 +77,7 @@ public partial class ChampionSkullBrazier : AddonComponent
         }
         else if (!Harrower.CanSpawn)
         {
-            from.SendMessage("The harrower has already been spawned.");
+            from.SendMessage("Разоритель уже призван.");
         }
         else if (_skull == null)
         {
@@ -112,7 +108,7 @@ public partial class ChampionSkullBrazier : AddonComponent
         }
         else if (!Harrower.CanSpawn)
         {
-            from.SendMessage("The harrower has already been spawned.");
+            from.SendMessage("Разоритель уже призван.");
         }
         else if (skull == null)
         {

@@ -17,7 +17,7 @@ namespace Server.Items
             ItemID = Utility.RandomBool() ? 0x09F0 : 0x09AD;
         }
 
-        public override string DefaultName => "Murky Milk";
+        public override string DefaultName => "мутное молоко";
         public override int MaxQuantity => 5;
         public override double DefaultWeight => 1;
     }

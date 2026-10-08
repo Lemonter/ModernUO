@@ -45,7 +45,7 @@ namespace Server.Mobiles
             PackItem(new Bandage(5)); // How many?
         }
 
-        public override string CorpseName => "a pestilent bandage corpse";
+        public override string CorpseName => "труп чумного бинта";
         // Neither Stratics nor UOGuide have much description
         // beyond being a "Grey Mummy". Body, Sound and
         // Hue are all guessed until they can be verified.
@@ -53,7 +53,7 @@ namespace Server.Mobiles
         //
         // They also apparently have a Poison Attack, which I've stolen from Yamandons.
 
-        public override string DefaultName => "a pestilent bandage";
+        public override string DefaultName => "чумной бинт";
 
         public override Poison HitPoison => Poison.Lethal;
         public override bool CanHeal => true;

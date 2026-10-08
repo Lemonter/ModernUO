@@ -382,7 +382,7 @@ public partial class WeatherMap : MapItem
     [Constructible]
     public WeatherMap() => SetDisplay(0, 0, 5119, 4095, 400, 400);
 
-    public override string DefaultName => "weather map";
+    public override string DefaultName => "карта погоды";
 
     public override void OnDoubleClick(Mobile from)
     {

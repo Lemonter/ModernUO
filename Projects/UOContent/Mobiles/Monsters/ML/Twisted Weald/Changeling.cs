@@ -68,8 +68,8 @@ namespace Server.Mobiles
             PackArcaneScroll(0, 1);
         }
 
-        public override string CorpseName => "a changeling corpse";
-        public override string DefaultName => "a changeling";
+        public override string CorpseName => "труп оборотня";
+        public override string DefaultName => "оборотень";
         public virtual int DefaultHue => 0;
 
         public override bool ShowFameTitle => false;

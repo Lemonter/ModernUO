@@ -179,6 +179,7 @@ version of this -- it is a correctness bug.
 |---|---|---|
 | `Accounting/Security/PasswordWorker.cs` | Password verification and hashing | `docs/handoffs/2026-08-07-off-loop-argon2-hashing.md` -- 8.9 ms/login on-loop at Argon2, measured 3.5--8.9 ms saved |
 | `Engines/Advanced Search/AdvancedSearchGump.cs` | Parallel entity search | Admin-triggered full-world scan; saves disabled for its duration |
+| `Engines/Pathing/Nav/NavRouteWorker.cs` | Nav-graph route search (A* over baked region graphs) | Fork: reads only an immutable `NavSnapshot`; regions resolved and routes converted on the loop. Added ahead of a recorded measurement at the shard owner's request — `[NavStats` reports on-loop vs off-loop route time; record the figure here once measured |
 
 Adding to this table needs the same bar: a measurement, and all five rules below.
 

@@ -570,20 +570,16 @@ namespace Server.Engines.VeteranRewards
                 return;
             }
 
-            ComputeRewardInfo(pm, out var cur, out var max, out var level);
+            ComputeRewardInfo(pm, out var cur, out var max, out _);
 
+            // Shard-wide: no total skill cap (see Skills.NoSkillCap) — this tiered veteran
+            // perk is retired since it's moot once the cap itself is unlimited. Kept only to
+            // migrate any character still sitting at one of the old default/tier values (from
+            // before the cap was removed) up to the new uncapped value on next login; already
+            // one-time-migrated characters won't match this range again.
             if (pm.SkillsCap is 7000 or 7050 or 7100 or 7150 or 7200)
             {
-                level = Math.Clamp(level, 0, 4);
-
-                if (SkillCapRewards)
-                {
-                    pm.SkillsCap = 7000 + level * 50;
-                }
-                else
-                {
-                    pm.SkillsCap = 7000;
-                }
+                pm.SkillsCap = Skills.NoSkillCap;
             }
 
             if (Core.ML && !pm.HasStatReward && HasHalfLevel(pm))

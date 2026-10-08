@@ -37,8 +37,8 @@ namespace Server.Mobiles
             VirtualArmor = 38;
         }
 
-        public override string CorpseName => "an ettins corpse";
-        public override string DefaultName => "an ettin";
+        public override string CorpseName => "труп эттина";
+        public override string DefaultName => "эттин";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 1;

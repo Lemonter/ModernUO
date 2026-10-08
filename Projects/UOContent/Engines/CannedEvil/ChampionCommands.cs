@@ -30,7 +30,7 @@ namespace Server.Engines.CannedEvil
         private static void KillByTarget_OnCommand(CommandEventArgs e)
         {
             e.Mobile.Target = new KillTarget();
-            e.Mobile.SendMessage("Which champion spawn would you like to clear?");
+            e.Mobile.SendMessage("Какой чемпионский спавн очистить?");
         }
 
         private class KillTarget : Target
@@ -57,7 +57,7 @@ namespace Server.Engines.CannedEvil
 
                 if (spawn == null)
                 {
-                    from.SendMessage("That is not a valid target. Please target the champion, altar, platform, or idol.");
+                    from.SendMessage("Не та цель. Укажи чемпиона, алтарь, помост или идол.");
                 }
 
                 spawn?.DeleteCreatures();
@@ -76,7 +76,7 @@ namespace Server.Engines.CannedEvil
             }
             else
             {
-                e.Mobile.SendMessage("You are not in a champion spawn region.");
+                e.Mobile.SendMessage("Ты не в области чемпионского спавна.");
             }
         }
     }

@@ -40,11 +40,11 @@ namespace Server.Mobiles
             VirtualArmor = 24;
         }
 
-        public override string CorpseName => "a fleshrenderer corpse";
+        public override string CorpseName => "труп раздирателя плоти";
 
         public override bool IgnoreYoungProtection => Core.ML;
 
-        public override string DefaultName => "a fleshrenderer";
+        public override string DefaultName => "раздиратель плоти";
 
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.SE;

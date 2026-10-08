@@ -12,7 +12,7 @@ public partial class RegStone : Item
         Hue = 0x2D1;
     }
 
-    public override string DefaultName => "a reagent stone";
+    public override string DefaultName => "камень реагентов";
 
     public override void OnDoubleClick(Mobile from)
     {

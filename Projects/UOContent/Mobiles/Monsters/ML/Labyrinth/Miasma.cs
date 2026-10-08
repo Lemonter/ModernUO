@@ -72,8 +72,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "a Miasma corpse";
-        public override string DefaultName => "Miasma";
+        public override string CorpseName => "труп Миазмы";
+        public override string DefaultName => "Миазма";
 
         /* yes, this is OSI style */
         public override double WeaponAbilityChance => 0.75;

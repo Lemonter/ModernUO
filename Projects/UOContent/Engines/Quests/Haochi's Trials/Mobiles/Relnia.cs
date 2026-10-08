@@ -12,7 +12,7 @@ public partial class Relnia : BaseQuester
     {
     }
 
-    public override string DefaultName => "Disheveled Relnia";
+    public override string DefaultName => "растрёпанная Рельния";
 
     public override int TalkNumber => -1;
 

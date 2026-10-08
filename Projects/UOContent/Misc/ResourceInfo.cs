@@ -34,7 +34,17 @@ namespace Server.Items
         YewWood,
         Heartwood,
         Bloodwood,
-        Frostwood
+        Frostwood,
+
+        // Mahaon: appended after Frostwood rather than inserted between Bloodwood and
+        // Frostwood (where they'd gameplay-wise belong, minSkill-wise — see
+        // MahaonResourceTiers.WoodTable) so every existing saved item's Frostwood=307
+        // value stays byte-for-byte the same. Inserting them in "logical" order would
+        // shift Frostwood's underlying int and silently corrupt every already-serialized
+        // Frostwood log/board/weapon on next world load.
+        BananaWood,
+        CoconutWood,
+        PalmWood
     }
 
     public enum CraftResourceType
@@ -53,6 +63,7 @@ namespace Server.Items
         public static readonly CraftAttributeInfo Spined, Horned, Barbed;
         public static readonly CraftAttributeInfo RedScales, YellowScales, BlackScales, GreenScales, WhiteScales, BlueScales;
         public static readonly CraftAttributeInfo OakWood, AshWood, YewWood, Heartwood, Bloodwood, Frostwood;
+        public static readonly CraftAttributeInfo BananaWood, CoconutWood, PalmWood;
 
         static CraftAttributeInfo()
         {
@@ -331,6 +342,12 @@ namespace Server.Items
             var blood = Bloodwood = new CraftAttributeInfo();
 
             var frost = Frostwood = new CraftAttributeInfo();
+
+            var banana = BananaWood = new CraftAttributeInfo();
+
+            var coconut = CoconutWood = new CraftAttributeInfo();
+
+            var palm = PalmWood = new CraftAttributeInfo();
         }
 
         public int WeaponFireDamage { get; set; }
@@ -565,8 +582,8 @@ namespace Server.Items
         {
             new(
                 0x000,
-                1049353,
-                "Normal",
+                0,
+                "Обычная",
                 CraftAttributeInfo.Blank,
                 CraftResource.RegularLeather,
                 typeof(Leather),
@@ -574,8 +591,8 @@ namespace Server.Items
             ),
             new(
                 0x283,
-                1049354,
-                "Spined",
+                0,
+                "Шипастая",
                 CraftAttributeInfo.Spined,
                 CraftResource.SpinedLeather,
                 typeof(SpinedLeather),
@@ -583,8 +600,8 @@ namespace Server.Items
             ),
             new(
                 0x227,
-                1049355,
-                "Horned",
+                0,
+                "Роговая",
                 CraftAttributeInfo.Horned,
                 CraftResource.HornedLeather,
                 typeof(HornedLeather),
@@ -592,8 +609,8 @@ namespace Server.Items
             ),
             new(
                 0x1C1,
-                1049356,
-                "Barbed",
+                0,
+                "Зазубренная",
                 CraftAttributeInfo.Barbed,
                 CraftResource.BarbedLeather,
                 typeof(BarbedLeather),
@@ -605,8 +622,8 @@ namespace Server.Items
         {
             new(
                 0x000,
-                1049353,
-                "Normal",
+                0,
+                "Обычная",
                 CraftAttributeInfo.Blank,
                 CraftResource.RegularLeather,
                 typeof(Leather),
@@ -614,8 +631,8 @@ namespace Server.Items
             ),
             new(
                 0x8AC,
-                1049354,
-                "Spined",
+                0,
+                "Шипастая",
                 CraftAttributeInfo.Spined,
                 CraftResource.SpinedLeather,
                 typeof(SpinedLeather),
@@ -623,8 +640,8 @@ namespace Server.Items
             ),
             new(
                 0x845,
-                1049355,
-                "Horned",
+                0,
+                "Роговая",
                 CraftAttributeInfo.Horned,
                 CraftResource.HornedLeather,
                 typeof(HornedLeather),
@@ -632,8 +649,8 @@ namespace Server.Items
             ),
             new(
                 0x851,
-                1049356,
-                "Barbed",
+                0,
+                "Зазубренная",
                 CraftAttributeInfo.Barbed,
                 CraftResource.BarbedLeather,
                 typeof(BarbedLeather),
@@ -645,8 +662,8 @@ namespace Server.Items
         {
             new(
                 0x000,
-                1011542,
-                "Normal",
+                0,
+                "Обычное",
                 CraftAttributeInfo.Blank,
                 CraftResource.RegularWood,
                 typeof(Log),
@@ -654,8 +671,8 @@ namespace Server.Items
             ),
             new(
                 0x7DA,
-                1072533,
-                "Oak",
+                0,
+                "Дубовое",
                 CraftAttributeInfo.OakWood,
                 CraftResource.OakWood,
                 typeof(OakLog),
@@ -663,8 +680,8 @@ namespace Server.Items
             ),
             new(
                 0x4A7,
-                1072534,
-                "Ash",
+                0,
+                "Ясеневое",
                 CraftAttributeInfo.AshWood,
                 CraftResource.AshWood,
                 typeof(AshLog),
@@ -672,8 +689,8 @@ namespace Server.Items
             ),
             new(
                 0x4A8,
-                1072535,
-                "Yew",
+                0,
+                "Тисовое",
                 CraftAttributeInfo.YewWood,
                 CraftResource.YewWood,
                 typeof(YewLog),
@@ -681,8 +698,8 @@ namespace Server.Items
             ),
             new(
                 0x4A9,
-                1072536,
-                "Heartwood",
+                0,
+                "Сердцевинное",
                 CraftAttributeInfo.Heartwood,
                 CraftResource.Heartwood,
                 typeof(HeartwoodLog),
@@ -690,8 +707,8 @@ namespace Server.Items
             ),
             new(
                 0x4AA,
-                1072538,
-                "Bloodwood",
+                0,
+                "Кровавое",
                 CraftAttributeInfo.Bloodwood,
                 CraftResource.Bloodwood,
                 typeof(BloodwoodLog),
@@ -699,12 +716,42 @@ namespace Server.Items
             ),
             new(
                 0x47F,
-                1072539,
-                "Frostwood",
+                0,
+                "Морозное",
                 CraftAttributeInfo.Frostwood,
                 CraftResource.Frostwood,
                 typeof(FrostwoodLog),
                 typeof(FrostwoodBoard)
+            ),
+            // Mahaon: no real OSI cliloc for these — Number: 0 falls back to the given
+            // Name string (see Log/Board's ICommodity.GetProperties, num<=0 branch),
+            // Russian per the shard's naming convention for anything new/custom.
+            new(
+                0x4AB,
+                0,
+                "Банановое",
+                CraftAttributeInfo.BananaWood,
+                CraftResource.BananaWood,
+                typeof(BananaLog),
+                typeof(BananaBoard)
+            ),
+            new(
+                0x38E,
+                0,
+                "Кокосовое",
+                CraftAttributeInfo.CoconutWood,
+                CraftResource.CoconutWood,
+                typeof(CoconutLog),
+                typeof(CoconutBoard)
+            ),
+            new(
+                0x58C,
+                0,
+                "Пальмовое",
+                CraftAttributeInfo.PalmWood,
+                CraftResource.PalmWood,
+                typeof(PalmLog),
+                typeof(PalmBoard)
             )
         };
 
@@ -781,7 +828,7 @@ namespace Server.Items
                 >= CraftResource.Iron and <= CraftResource.Valorite                => CraftResourceType.Metal,
                 >= CraftResource.RegularLeather and <= CraftResource.BarbedLeather => CraftResourceType.Leather,
                 >= CraftResource.RedScales and <= CraftResource.BlueScales         => CraftResourceType.Scales,
-                >= CraftResource.RegularWood and <= CraftResource.Frostwood        => CraftResourceType.Wood,
+                >= CraftResource.RegularWood and <= CraftResource.PalmWood         => CraftResourceType.Wood,
                 _                                                                  => CraftResourceType.None
             };
 
@@ -844,6 +891,21 @@ namespace Server.Items
             GetInfo(
                 (CraftResource)Utility.RandomMinMax((int)startResource, (int)endResource)
             );
+
+        /// <summary>
+        ///     Mahaon: Russian caption for the material line on equipment. BaseWeapon used to
+        ///     hard-code "Металл:" for every resource, so a yew bow or a barbed leather tunic
+        ///     announced itself as metal. Pick the word from the resource family instead.
+        /// </summary>
+        public static string GetRuTypeLabel(CraftResource resource) =>
+            GetType(resource) switch
+            {
+                CraftResourceType.Metal   => "Металл",
+                CraftResourceType.Leather => "Кожа",
+                CraftResourceType.Scales  => "Чешуя",
+                CraftResourceType.Wood    => "Дерево",
+                _                         => "Материал"
+            };
 
         /// <summary>
         ///     Returns the <see cref="CraftResourceInfo.Name" /> property of '<paramref name="resource" />' -or- an empty string if the

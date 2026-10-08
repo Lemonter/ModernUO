@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "type": "Server.Mobiles.CityGuard",
+  "properties": [
+    {
+      "name": "City",
+      "type": "string",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "ControllingGuild",
+      "type": "Server.Guilds.Guild",
+      "rule": "SerializableInterfaceMigrationRule"
+    },
+    {
+      "name": "Post",
+      "type": "Server.Point3D",
+      "rule": "PrimitiveUOTypeMigrationRule",
+      "ruleArguments": [
+        "Point3D"
+      ]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ namespace Server.Mobiles
             NoKillAwards = true;
         }
 
-        public override string CorpseName => "an orcish corpse";
+        public override string CorpseName => "труп орка";
 
         public override void OnDeath(Container c)
         {

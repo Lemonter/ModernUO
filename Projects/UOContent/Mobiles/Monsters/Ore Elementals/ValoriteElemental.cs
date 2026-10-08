@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -7,7 +8,7 @@ namespace Server.Mobiles
     public partial class ValoriteElemental : BaseCreature
     {
         [Constructible]
-        public ValoriteElemental(int oreAmount = 2) : base(AIType.AI_Melee)
+        public ValoriteElemental(int oreAmount = 2) : base(AIType.AI_Mage)
         {
             Body = 112;
             BaseSoundID = 268;
@@ -31,6 +32,11 @@ namespace Server.Mobiles
             SetResistance(ResistanceType.Poison, 50, 60);
             SetResistance(ResistanceType.Energy, 40, 50);
 
+            // Mahaon: was AI_Melee. Every elemental and golem casts now; the spell
+            // circle is held to 5 by Systems.MahaonCombat.ElementalMagerySystem, so
+            // the Magery here is set for reliable casting, not to limit the circle.
+            SetSkill(SkillName.Magery, 70.1, 90.0);
+            SetSkill(SkillName.EvalInt, 60.1, 80.0);
             SetSkill(SkillName.MagicResist, 50.1, 95.0);
             SetSkill(SkillName.Tactics, 60.1, 100.0);
             SetSkill(SkillName.Wrestling, 60.1, 100.0);
@@ -40,14 +46,11 @@ namespace Server.Mobiles
 
             VirtualArmor = 38;
 
-            PackItem(new ValoriteOre(oreAmount)
-            {
-                ItemID = 0x19B9
-            });
+            PackItem(new MahaonOre(MahaonMetal.Valorite, oreAmount));
         }
 
-        public override string CorpseName => "an ore elemental corpse";
-        public override string DefaultName => "a valorite elemental";
+        public override string CorpseName => "труп рудного элементаля";
+        public override string DefaultName => "валоритовый элементаль";
 
         public override bool AutoDispel => true;
         public override bool BleedImmune => true;

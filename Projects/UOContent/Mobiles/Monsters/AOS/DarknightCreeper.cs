@@ -47,7 +47,7 @@ namespace Server.Mobiles
             VirtualArmor = 34;
         }
 
-        public override string CorpseName => "a darknight creeper corpse";
+        public override string CorpseName => "труп ночного ползуна";
         public override bool IgnoreYoungProtection => Core.ML;
 
         public override bool BardImmune => !Core.SE;

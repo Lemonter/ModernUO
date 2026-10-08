@@ -39,9 +39,9 @@ namespace Server.Mobiles
             VirtualArmor = 54;
         }
 
-        public override string CorpseName => "a patchwork skeletal corpse";
+        public override string CorpseName => "труп лоскутного скелета";
 
-        public override string DefaultName => "a patchwork skeleton";
+        public override string DefaultName => "лоскутный скелет";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

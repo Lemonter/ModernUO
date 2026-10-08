@@ -52,8 +52,8 @@ namespace Server.Mobiles
             PackNecroReg(1, 10);
         }
 
-        public override string CorpseName => "a Master Mikael corpse";
-        public override string DefaultName => "Master Mikael";
+        public override string CorpseName => "труп мастера Микаэля";
+        public override string DefaultName => "мастер Микаэль";
 
         // TODO: Special move?
 

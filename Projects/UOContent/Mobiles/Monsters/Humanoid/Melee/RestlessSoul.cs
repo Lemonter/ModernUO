@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 6;
         }
 
-        public override string CorpseName => "a ghostly corpse";
-        public override string DefaultName => "a restless soul";
+        public override string CorpseName => "призрачный труп";
+        public override string DefaultName => "неупокоенная душа";
 
         public override bool AlwaysAttackable => true;
         public override bool BleedImmune => true;

@@ -40,8 +40,8 @@ public partial class Spellbinder : BaseCreature
 
     protected override BaseAI ForcedAI => new SpellbinderAI(this);
 
-    public override string CorpseName => "a ghostly corpse";
-    public override string DefaultName => "a spectral spellbinder";
+    public override string CorpseName => "призрачный труп";
+    public override string DefaultName => "призрачный чародей";
 
     public override bool BleedImmune => true;
 

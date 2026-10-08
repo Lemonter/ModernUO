@@ -701,7 +701,7 @@ public partial class GreenThornsSHTeleporter : Item
         Hue = 0x1;
     }
 
-    public override string DefaultName => "a hole";
+    public override string DefaultName => "дыра";
 
     public override bool SkipSerialization => true;
 

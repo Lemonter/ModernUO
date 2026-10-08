@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -7,7 +8,7 @@ namespace Server.Mobiles
     public partial class SnowElemental : BaseCreature
     {
         [Constructible]
-        public SnowElemental() : base(AIType.AI_Melee)
+        public SnowElemental() : base(AIType.AI_Mage)
         {
             Body = 163;
             BaseSoundID = 263;
@@ -29,6 +30,11 @@ namespace Server.Mobiles
             SetResistance(ResistanceType.Poison, 25, 35);
             SetResistance(ResistanceType.Energy, 25, 35);
 
+            // Mahaon: was AI_Melee. Every elemental and golem casts now; the spell
+            // circle is held to 5 by Systems.MahaonCombat.ElementalMagerySystem, so
+            // the Magery here is set for reliable casting, not to limit the circle.
+            SetSkill(SkillName.Magery, 70.1, 90.0);
+            SetSkill(SkillName.EvalInt, 60.1, 80.0);
             SetSkill(SkillName.MagicResist, 50.1, 65.0);
             SetSkill(SkillName.Tactics, 80.1, 100.0);
             SetSkill(SkillName.Wrestling, 80.1, 100.0);
@@ -39,14 +45,11 @@ namespace Server.Mobiles
             VirtualArmor = 50;
 
             PackItem(new BlackPearl(3));
-            PackItem(new IronOre(3)
-            {
-                ItemID = 0x19B8
-            });
+            PackItem(new MahaonOre(MahaonMetal.Iron, 3));
         }
 
-        public override string CorpseName => "a snow elemental corpse";
-        public override string DefaultName => "a snow elemental";
+        public override string CorpseName => "труп снежного элементаля";
+        public override string DefaultName => "снежный элементаль";
 
         public override bool BleedImmune => true;
 

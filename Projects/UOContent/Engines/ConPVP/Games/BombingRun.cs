@@ -38,7 +38,7 @@ public partial class BRBomb : Item
 
     public override bool SkipSerialization => true;
 
-    public override string DefaultName => "da bomb";
+    public override string DefaultName => "бомба";
 
     public Mobile Thrower { get; private set; }
 
@@ -792,7 +792,7 @@ public partial class BRBomb : Item
             m_Bomb = bomb;
             m_Mob = from;
 
-            m_Mob.SendMessage(0x26, "Where do you want to throw it?");
+            m_Mob.SendMessage(0x26, "Куда бросить?");
         }
 
         protected override void OnTarget(Mobile from, object targeted)
@@ -830,10 +830,9 @@ public partial class BRBomb : Item
 [SerializationGenerator(0, false)]
 public partial class BRGoal : BaseAddon
 {
-    [SerializableField(0)]
+    [SerializableField(0, fieldChanged: nameof(OnNorthChanged))]
     private bool _north;
 
-    [SerializableFieldChanged(0)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void OnNorthChanged(bool oldValue, bool newValue) => Remake();
 

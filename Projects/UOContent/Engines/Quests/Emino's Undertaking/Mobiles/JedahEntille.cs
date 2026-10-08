@@ -12,7 +12,7 @@ public partial class JedahEntille : BaseQuester
     {
     }
 
-    public override string DefaultName => "Jedah Entille";
+    public override string DefaultName => "Джеда Энтиль";
 
     public override int TalkNumber => -1;
 

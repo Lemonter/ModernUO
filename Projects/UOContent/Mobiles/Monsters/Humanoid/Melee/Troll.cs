@@ -37,8 +37,8 @@ namespace Server.Mobiles
             VirtualArmor = 40;
         }
 
-        public override string CorpseName => "a troll corpse";
-        public override string DefaultName => "a troll";
+        public override string CorpseName => "труп тролля";
+        public override string DefaultName => "тролль";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 1;

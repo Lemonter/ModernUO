@@ -27,7 +27,7 @@ public class DrainLifeAreaAttack : AreaEffectMonsterAbility
         defender.FixedParticles(0x374A, 10, 15, 5013, 0x496, 0, EffectLayer.Waist);
         defender.PlaySound(0x231);
 
-        defender.SendMessage("You feel the life drain out of you!");
+        defender.SendMessage("Ты чувствуешь, как из тебя утекает жизнь!");
         DrainLife(source, defender);
     }
 }

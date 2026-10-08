@@ -40,8 +40,8 @@ public partial class ToxicSlith : BaseCreature
         // ToxicVenomSac / SlithEye / AncientPotteryFragments / TatteredAncientScroll (not yet in ModernUO).
     }
 
-    public override string CorpseName => "a slith corpse";
-    public override string DefaultName => "a toxic slith";
+    public override string CorpseName => "труп слита";
+    public override string DefaultName => "ядовитый слит";
 
     public override int Meat => 6;
     public override int Hides => 11;

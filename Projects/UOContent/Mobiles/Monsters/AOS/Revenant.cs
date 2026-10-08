@@ -49,7 +49,11 @@ namespace Server.Mobiles
             Fame = 0;
             Karma = 0;
 
-            ControlSlots = 3;
+            // Mahaon: was 3, which meant a necromancer could never have more than one
+            // revenant out no matter what — and the summoning mastery now hands out extra
+            // revenants (1 per 30 Школа призыва). The head-count limit lives in
+            // VengefulSpiritSpell instead, so one follower slot each is enough here.
+            ControlSlots = 1;
 
             VirtualArmor = 32;
 
@@ -65,7 +69,7 @@ namespace Server.Mobiles
         public override double DispelDifficulty => 80.0;
         public override double DispelFocus => 20.0;
 
-        public override string DefaultName => "a revenant";
+        public override string DefaultName => "ревенант";
 
         public override bool AlwaysMurderer => true;
 

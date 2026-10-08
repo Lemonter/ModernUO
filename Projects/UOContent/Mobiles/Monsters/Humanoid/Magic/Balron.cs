@@ -47,7 +47,7 @@ namespace Server.Mobiles
             PackItem(new Longsword());
         }
 
-        public override string CorpseName => "a balron corpse";
+        public override string CorpseName => "труп балрона";
 
         public override bool CanRummageCorpses => true;
         public override Poison PoisonImmune => Poison.Deadly;

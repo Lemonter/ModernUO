@@ -55,8 +55,8 @@ namespace Server.Mobiles
             });
         }
 
-        public override string CorpseName => "a human corpse";
-        public override string DefaultName => "a Protector";
+        public override string CorpseName => "труп человека";
+        public override string DefaultName => "защитник";
 
         public override bool AlwaysMurderer => true;
         public override bool PropertyTitle => false;

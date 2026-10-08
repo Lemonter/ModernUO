@@ -19,7 +19,7 @@ namespace Server.SkillHandlers
 
             m.SendLocalizedMessage(502137); // Select the poison you wish to use
 
-            return TimeSpan.FromSeconds(10.0); // 10 second delay before being able to re-use a skill
+            return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
         }
 
         private class InternalTargetPoison : Target
@@ -60,17 +60,13 @@ namespace Server.SkillHandlers
                     {
                         startTimer = true;
                     }
-                    else if (targeted is BaseWeapon weapon)
+                    else if (targeted is BaseWeapon)
                     {
-                        if (Core.AOS)
-                        {
-                            startTimer = weapon.PrimaryAbility == WeaponAbility.InfectiousStrike ||
-                                         weapon.SecondaryAbility == WeaponAbility.InfectiousStrike;
-                        }
-                        else if (weapon.Layer == Layer.OneHanded)
-                        {
-                            startTimer = weapon.Type is WeaponType.Slashing or WeaponType.Piercing;
-                        }
+                        // Mahaon: any weapon can be poisoned. Vanilla AOS only allowed the
+                        // handful of types carrying InfectiousStrike, which locked out
+                        // Swordsmanship and most of Fencing; delivery on a normal hit is
+                        // handled by Systems.MahaonCombat.WeaponPoisonSystem.
+                        startTimer = true;
                     }
 
                     if (startTimer)
@@ -87,18 +83,8 @@ namespace Server.SkillHandlers
                     }
                     else // Target can't be poisoned
                     {
-                        if (Core.AOS)
-                        {
-                            from.SendLocalizedMessage(
-                                1060204
-                            ); // You cannot poison that! You can only poison infectious weapons, food or drink.
-                        }
-                        else
-                        {
-                            from.SendLocalizedMessage(
-                                502145
-                            ); // You cannot poison that! You can only poison bladed or piercing weapons, food or drink.
-                        }
+                        // You cannot poison that! You can only poison weapons, food or drink.
+                        from.SendLocalizedMessage(502145);
                     }
                 }
 
@@ -152,11 +138,17 @@ namespace Server.SkillHandlers
                             m_From.SendLocalizedMessage(1010517); // You apply the poison
 
                             Titles.AwardKarma(m_From, -20, true);
+
+                            Server.Systems.MahaonCombat.ThievingSpecializationSystem.Train(
+                                m_From, Server.Systems.MahaonCombat.ThievingSpecialization.Poisoner
+                            );
                         }
                         else // Failed
                         {
-                            // 5% of chance of getting poisoned if failed
-                            if (m_From.Skills.Poisoning.Base < 80.0 && Utility.Random(20) == 0)
+                            // 5% of chance of getting poisoned if failed, reduced by Отравитель specialization
+                            var reduction = Server.Systems.MahaonCombat.ThievingSpecializationSystem.GetSelfPoisonReduction(m_From);
+
+                            if (m_From.Skills.Poisoning.Base < 80.0 && Utility.RandomDouble() < 0.05 * (1.0 - reduction))
                             {
                                 m_From.SendLocalizedMessage(502148); // You make a grave mistake while applying the poison.
                                 m_From.ApplyPoison(m_From, m_Poison);

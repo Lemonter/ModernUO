@@ -11,7 +11,7 @@ public abstract partial class BaseReagent : Item, ICommodity
         Amount = amount;
     }
 
-    public override double DefaultWeight => 0.1;
+    public override double DefaultWeight => 0; // Mahaon: consumables are weightless by design
 
     public virtual int DescriptionNumber => LabelNumber;
     public virtual bool IsDeedable => true;

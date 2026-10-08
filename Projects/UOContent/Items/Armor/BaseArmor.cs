@@ -12,101 +12,98 @@ using AMT = Server.Items.ArmorMaterialType;
 
 namespace Server.Items
 {
-    [SerializationGenerator(9, false)]
+    [SerializationGenerator(10, false)]
     public abstract partial class BaseArmor
         : Item, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem, IIdentifiable
     {
         [SerializedIgnoreDupe]
         [SerializableField(0, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeAosAttributes), nameof(AttributesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosAttributes _attributes;
 
-        [SerializableFieldSaveFlag(0)]
         private bool ShouldSerializeAosAttributes() => !_attributes.IsEmpty;
 
-        [SerializableFieldDefault(0)]
         private AosAttributes AttributesDefaultValue() => new(this);
 
         [SerializedIgnoreDupe]
         [SerializableField(1, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeArmorAttributes), nameof(ArmorAttributesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosArmorAttributes _armorAttributes;
 
-        [SerializableFieldSaveFlag(1)]
         private bool ShouldSerializeArmorAttributes() => !_armorAttributes.IsEmpty;
 
-        [SerializableFieldDefault(1)]
         private AosArmorAttributes ArmorAttributesDefaultValue() => new(this);
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(2)]
+        [SaveFlag(nameof(ShouldSerializePhysicalBonus))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _physicalBonus;
 
-        [SerializableFieldSaveFlag(2)]
         private bool ShouldSerializePhysicalBonus() => _physicalBonus != 0;
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(3)]
+        [SaveFlag(nameof(ShouldSerializeFireBonus))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _fireBonus;
 
-        [SerializableFieldSaveFlag(3)]
         private bool ShouldSerializeFireBonus() => _fireBonus != 0;
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(4)]
+        [SaveFlag(nameof(ShouldSerializeColdBonus))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _coldBonus;
 
-        [SerializableFieldSaveFlag(4)]
         private bool ShouldSerializeColdBonus() => _coldBonus != 0;
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(5)]
+        [SaveFlag(nameof(ShouldSerializePoisonBonus))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _poisonBonus;
 
-        [SerializableFieldSaveFlag(5)]
         private bool ShouldSerializePoisonBonus() => _poisonBonus != 0;
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(6)]
+        [SaveFlag(nameof(ShouldSerializeEnergyBonus))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _energyBonus;
 
-        [SerializableFieldSaveFlag(6)]
         private bool ShouldSerializeEnergyBonus() => _energyBonus != 0;
 
         [SerializableField(7)]
+        [SaveFlag(nameof(ShouldSerializeIdentified))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private bool _identified;
 
-        [SerializableFieldSaveFlag(7)]
         private bool ShouldSerializeIdentified() => _identified;
 
         [EncodedInt]
         [SerializableField(8)]
+        [SaveFlag(nameof(ShouldSerializeMaxHitPoints))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _maxHitPoints;
 
-        [SerializableFieldSaveFlag(8)]
         private bool ShouldSerializeMaxHitPoints() => _maxHitPoints != 0;
 
         [InvalidateProperties]
         [SerializableField(10)]
+        [SaveFlag(nameof(ShouldSerializeCrafter))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private string _crafter;
 
-        [SerializableFieldSaveFlag(10)]
         private bool ShouldSerializeCrafter() => !string.IsNullOrEmpty(_crafter);
 
-        [SerializableFieldSaveFlag(14)]
         private bool ShouldSerializeResource() => _resource != DefaultResource;
 
         // Field 15
@@ -135,21 +132,13 @@ namespace Server.Items
 
         [SerializedIgnoreDupe]
         [SerializableField(23, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeSkillBonuses), nameof(SkillBonusesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         public AosSkillBonuses _skillBonuses;
 
-        [SerializableFieldSaveFlag(23)]
         private bool ShouldSerializeSkillBonuses() => !_skillBonuses.IsEmpty;
 
-        [SerializableFieldDefault(23)]
         private AosSkillBonuses SkillBonusesDefaultValue() => new(this);
-
-        [SerializableField(24)]
-        [SerializedCommandProperty(AccessLevel.GameMaster)]
-        public bool _playerConstructed;
-
-        [SerializableFieldSaveFlag(24)]
-        private bool ShouldSerializePlayerConstructed() => _playerConstructed;
 
         private FactionItem m_FactionState;
 
@@ -197,6 +186,7 @@ namespace Server.Items
         public virtual int OldIntReq => 0;
 
         [SerializableProperty(11)]
+        [SaveFlag(nameof(ShouldSerializeArmorQuality), nameof(QualityDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public ArmorQuality Quality
         {
@@ -205,17 +195,17 @@ namespace Server.Items
             {
                 UnscaleDurability();
                 _quality = value;
+                this.MarkDirty();
                 ScaleDurability();
             }
         }
 
-        [SerializableFieldSaveFlag(11)]
         private bool ShouldSerializeArmorQuality() => _quality != ArmorQuality.Regular;
 
-        [SerializableFieldDefault(11)]
         private ArmorQuality QualityDefaultValue() => ArmorQuality.Regular;
 
         [SerializableProperty(12)]
+        [SaveFlag(nameof(ShouldSerializeDurability))]
         [CommandProperty(AccessLevel.GameMaster)]
         public ArmorDurabilityLevel Durability
         {
@@ -224,37 +214,29 @@ namespace Server.Items
             {
                 UnscaleDurability();
                 _durability = value;
+                this.MarkDirty();
                 ScaleDurability();
             }
         }
 
-        [SerializableFieldSaveFlag(12)]
         private bool ShouldSerializeDurability() => _durability != ArmorDurabilityLevel.Regular;
 
-        [SerializableProperty(13)]
-        [CommandProperty(AccessLevel.GameMaster)]
-        public ArmorProtectionLevel ProtectionLevel
+        [SerializableField(13, fieldChanged: nameof(OnProtectionLevelChanged))]
+        [SaveFlag(nameof(ShouldSerializeProtectionLevel))]
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        [InvalidateProperties]
+        private ArmorProtectionLevel _protectionLevel;
+
+        private void OnProtectionLevelChanged(ArmorProtectionLevel oldValue, ArmorProtectionLevel newValue)
         {
-            get => _protectionLevel;
-            set
-            {
-                if (_protectionLevel != value)
-                {
-                    _protectionLevel = value;
-
-                    Invalidate();
-                    InvalidateProperties();
-
-                    (Parent as Mobile)?.UpdateResistances();
-                    this.MarkDirty();
-                }
-            }
+            Invalidate();
+            (Parent as Mobile)?.UpdateResistances();
         }
 
-        [SerializableFieldSaveFlag(13)]
         private bool ShouldSerializeProtectionLevel() => _protectionLevel != ArmorProtectionLevel.Regular;
 
         [SerializableProperty(14)]
+        [SaveFlag(nameof(ShouldSerializeResource), nameof(ResourceDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public CraftResource Resource
         {
@@ -266,6 +248,7 @@ namespace Server.Items
                     UnscaleDurability();
 
                     _resource = value;
+                    this.MarkDirty();
 
                     if (CraftItem.RetainsColor(GetType()))
                     {
@@ -280,11 +263,11 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldDefault(14)]
         private CraftResource ResourceDefaultValue() => DefaultResource;
 
         [EncodedInt]
         [SerializableProperty(15, useField: nameof(_armorBase))]
+        [SaveFlag(nameof(ShouldSerializeArmorBase), nameof(ArmorBaseDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int BaseArmorRating
         {
@@ -297,10 +280,8 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(15)]
         private bool ShouldSerializeArmorBase() => _armorBase != -1;
 
-        [SerializableFieldDefault(15)]
         private int ArmorBaseDefaultValue() => -1;
 
         public double BaseArmorRatingScaled => BaseArmorRating * ArmorScalar;
@@ -350,6 +331,7 @@ namespace Server.Items
 
         [EncodedInt]
         [SerializableProperty(16, useField: nameof(_strBonus))]
+        [SaveFlag(nameof(ShouldSerializeStrBonus), nameof(StrBonusDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int StrBonus
         {
@@ -362,14 +344,13 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(16)]
         private bool ShouldSerializeStrBonus() => _strBonus != -1;
 
-        [SerializableFieldDefault(16)]
         private int StrBonusDefaultValue() => -1;
 
         [EncodedInt]
         [SerializableProperty(17, useField: nameof(_dexBonus))]
+        [SaveFlag(nameof(ShouldSerializeDexBonus), nameof(DexBonusDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int DexBonus
         {
@@ -382,14 +363,13 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(17)]
         private bool ShouldSerializeDexBonus() => _dexBonus != -1;
 
-        [SerializableFieldDefault(17)]
         private int DexBonusDefaultValue() => -1;
 
         [EncodedInt]
         [SerializableProperty(18, useField: nameof(_intBonus))]
+        [SaveFlag(nameof(ShouldSerializeIntBonus), nameof(IntBonusDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int IntBonus
         {
@@ -402,14 +382,13 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(18)]
         private bool ShouldSerializeIntBonus() => _intBonus != -1;
 
-        [SerializableFieldDefault(18)]
         private int IntBonusDefaultValue() => -1;
 
         [EncodedInt]
         [SerializableProperty(19, useField: nameof(_strReq))]
+        [SaveFlag(nameof(ShouldSerializeStrReq), nameof(StrReqDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int StrRequirement
         {
@@ -422,14 +401,13 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(19)]
         private bool ShouldSerializeStrReq() => _strReq != -1;
 
-        [SerializableFieldDefault(19)]
         private int StrReqDefaultValue() => -1;
 
         [EncodedInt]
         [SerializableProperty(20, useField: nameof(_dexReq))]
+        [SaveFlag(nameof(ShouldSerializeDexReq), nameof(DexReqDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int DexRequirement
         {
@@ -442,14 +420,13 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(20)]
         private bool ShouldSerializeDexReq() => _dexReq != -1;
 
-        [SerializableFieldDefault(20)]
         private int DexReqDefaultValue() => -1;
 
         [EncodedInt]
         [SerializableProperty(21, useField: nameof(_intReq))]
+        [SaveFlag(nameof(ShouldSerializeIntReq), nameof(IntReqDefaultValue))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int IntRequirement
         {
@@ -462,13 +439,12 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(21)]
         private bool ShouldSerializeIntReq() => _intReq != -1;
 
-        [SerializableFieldDefault(21)]
         private int IntReqDefaultValue() => -1;
 
         [SerializableProperty(22, useField: nameof(_meditate))]
+        [SaveFlag(nameof(ShouldSerializeMeditationAllowance))]
         [CommandProperty(AccessLevel.GameMaster)]
         public AMA MeditationAllowance
         {
@@ -480,7 +456,6 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(22)]
         private bool ShouldSerializeMeditationAllowance() => _meditate >= AMA.All;
 
         public virtual double ArmorScalar
@@ -570,7 +545,6 @@ namespace Server.Items
             var resourceType = typeRes ?? craftItem.Resources[0].ItemType;
 
             Resource = CraftResources.GetFromType(resourceType);
-            PlayerConstructed = true;
             Identified = true;
 
             var context = craftSystem.GetContext(from);
@@ -697,6 +671,7 @@ namespace Server.Items
 
         [EncodedInt]
         [SerializableProperty(9)]
+        [SaveFlag(nameof(ShouldSerializeHitPoints))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int HitPoints
         {
@@ -724,7 +699,6 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(9)]
         private bool ShouldSerializeHitPoints() => _hitPoints != 0;
 
         public virtual int InitMinHits => 0;
@@ -757,8 +731,12 @@ namespace Server.Items
 
             damageTaken = Math.Max(0, damageTaken - absorbed);
 
-            // 25% chance to lower durability
-            if (Utility.Random(4) == 0)
+            // 25% chance to lower durability.
+            // Mahaon: Arms Lore cancels up to half of those rolls at GM - see
+            // SkillHandlers.MahaonArmsLore.TryPreventWear. The wearer is the one who knows
+            // how to take care of the piece, so the roll is theirs.
+            if (Utility.Random(4) == 0 &&
+                !SkillHandlers.MahaonArmsLore.TryPreventWear(Parent as Mobile))
             {
                 if (Core.AOS && ArmorAttributes.SelfRepair > Utility.Random(10))
                 {
@@ -948,7 +926,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(armor);
@@ -961,7 +939,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(armor);
@@ -1006,6 +984,7 @@ namespace Server.Items
                 }
 
                 from.Delta(MobileDelta.Armor); // Tell them armor rating has changed
+                Systems.MahaonMetals.MahaonMetalWearEffects.OnWorn(this, from);
             }
         }
 
@@ -1025,8 +1004,6 @@ namespace Server.Items
         {
             (Parent as Mobile)?.Delta(MobileDelta.Armor); // Tell them armor rating has changed
         }
-
-        private static bool GetSaveFlag(OldSaveFlag flags, OldSaveFlag toGet) => (flags & toGet) != 0;
 
         [AfterDeserialization]
         private void AfterDeserialization()
@@ -1105,7 +1082,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -1119,7 +1096,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -1143,7 +1120,7 @@ namespace Server.Items
 
             if (from.Int < intReq || from.Int + intBonus < 1)
             {
-                from.SendMessage("You are not smart enough to equip that.");
+                from.SendMessage("Тебе не хватает ума, чтобы это надеть.");
                 return false;
             }
 
@@ -1167,6 +1144,12 @@ namespace Server.Items
 
         public override bool OnEquip(Mobile from)
         {
+            if (!Systems.MahaonMetals.MahaonMetalWearEffects.CanWear(this, from, out var reason))
+            {
+                from.SendMessage(0x22, reason);
+                return false;
+            }
+
             from.CheckStatTimers();
 
             var strBonus = ComputeStatBonus(StatType.Str);
@@ -1213,6 +1196,7 @@ namespace Server.Items
 
                 m.Delta(MobileDelta.Armor); // Tell them armor rating has changed
                 m.CheckStatTimers();
+                Systems.MahaonMetals.MahaonMetalWearEffects.OnUnworn(this, m);
             }
 
             base.OnRemoved(parent);
@@ -1293,6 +1277,13 @@ namespace Server.Items
         public override void GetProperties(IPropertyList list)
         {
             base.GetProperties(list);
+
+            // Mahaon: always stated — plain iron, plain leather, cloth and dyed pieces
+            // included. See Systems.MahaonMetals.MaterialLineSystem.
+            list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
+
+            Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+            Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
             if (_crafter != null)
             {
@@ -1514,35 +1505,5 @@ namespace Server.Items
                 };
         }
 
-        [Flags]
-        private enum OldSaveFlag
-        {
-            None = 0x00000000,
-            Attributes = 0x00000001,
-            ArmorAttributes = 0x00000002,
-            PhysicalBonus = 0x00000004,
-            FireBonus = 0x00000008,
-            ColdBonus = 0x00000010,
-            PoisonBonus = 0x00000020,
-            EnergyBonus = 0x00000040,
-            Identified = 0x00000080,
-            MaxHitPoints = 0x00000100,
-            HitPoints = 0x00000200,
-            Crafter = 0x00000400,
-            Quality = 0x00000800,
-            Durability = 0x00001000,
-            Protection = 0x00002000,
-            Resource = 0x00004000,
-            BaseArmor = 0x00008000,
-            StrBonus = 0x00010000,
-            DexBonus = 0x00020000,
-            IntBonus = 0x00040000,
-            StrReq = 0x00080000,
-            DexReq = 0x00100000,
-            IntReq = 0x00200000,
-            MedAllowance = 0x00400000,
-            SkillBonuses = 0x00800000,
-            PlayerConstructed = 0x01000000
-        }
     }
 }

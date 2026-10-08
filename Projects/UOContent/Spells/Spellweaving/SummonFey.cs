@@ -1,5 +1,4 @@
 using System;
-using Server.Engines.MLQuests;
 using Server.Mobiles;
 
 namespace Server.Spells.Spellweaving
@@ -23,22 +22,8 @@ namespace Server.Spells.Spellweaving
 
         public override int Sound => 0x217;
 
-        public override bool CheckSequence()
-        {
-            // This is done after casting completes
-            if (Caster is PlayerMobile mobile)
-            {
-                var context = MLQuestSystem.GetContext(mobile);
-
-                if (context?.SummonFey != true)
-                {
-                    // You haven't forged a friendship with the fey and are unable to summon their aid.
-                    mobile.SendLocalizedMessage(1074563);
-                    return false;
-                }
-            }
-
-            return base.CheckSequence();
-        }
+        // Mahaon: removed the "haven't forged a friendship with the fey"
+        // (MLQuestSystem.GetContext(mobile).SummonFey) quest gate per the shard owner's
+        // ask — CheckSequence override no longer needed at all, base handles it.
     }
 }

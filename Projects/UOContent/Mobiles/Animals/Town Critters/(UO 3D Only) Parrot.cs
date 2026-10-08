@@ -25,8 +25,8 @@ namespace Server.Mobiles
             MinTameSkill = 0.0;
         }
 
-        public override string CorpseName => "a parrot corpse";
-        public override string DefaultName => "a parrot";
+        public override string CorpseName => "труп попугая";
+        public override string DefaultName => "попугай";
 
         public override int GetAngerSound() => 0x1B;
 

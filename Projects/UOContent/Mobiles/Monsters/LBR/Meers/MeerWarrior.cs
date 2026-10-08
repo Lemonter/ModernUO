@@ -38,8 +38,8 @@ namespace Server.Mobiles
             Karma = 5000;
         }
 
-        public override string CorpseName => "a meer corpse";
-        public override string DefaultName => "a meer warrior";
+        public override string CorpseName => "труп мира";
+        public override string DefaultName => "воин миров";
 
         public override bool BardImmune => !Core.AOS;
         public override bool CanRummageCorpses => true;

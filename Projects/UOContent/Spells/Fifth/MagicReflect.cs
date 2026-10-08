@@ -23,6 +23,10 @@ namespace Server.Spells.Fifth
         {
         }
 
+        /// <summary>Whether the AOS resistance-mod flavour of the reflect is up. Needed by
+        /// Mysticism's Purge Magic, which has to know what it can strip.</summary>
+        public static bool HasReflect(Mobile m) => _table.ContainsKey(m);
+
         public override SpellCircle Circle => SpellCircle.Fifth;
 
         public override bool CheckCast()

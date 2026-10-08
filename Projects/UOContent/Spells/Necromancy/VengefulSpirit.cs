@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Server.Mobiles;
 using Server.Targeting;
 
@@ -16,8 +17,53 @@ public class VengefulSpiritSpell : NecromancerSpell, ITargetingSpell<Mobile>
         Reagent.PigIron
     );
 
+    // Mahaon: vanilla allowed exactly one revenant (enforced only by its 3-slot follower
+    // cost). Школа призыва now grants one more per 30 mastery, which needs a real
+    // head-count of its own. Revenants are never serialized (SkipSerialization), so this
+    // is safe to keep purely in memory — a restart legitimately clears it.
+    private static readonly Dictionary<Mobile, List<Revenant>> _table = new();
+
     public VengefulSpiritSpell(Mobile caster, Item scroll = null) : base(caster, scroll, _info)
     {
+    }
+
+    public static int CountRevenants(Mobile caster)
+    {
+        if (caster == null || !_table.TryGetValue(caster, out var list))
+        {
+            return 0;
+        }
+
+        for (var i = list.Count - 1; i >= 0; --i)
+        {
+            if (list[i]?.Deleted != false)
+            {
+                list.RemoveAt(i);
+            }
+        }
+
+        if (list.Count == 0)
+        {
+            _table.Remove(caster);
+            return 0;
+        }
+
+        return list.Count;
+    }
+
+    private static void Register(Mobile caster, Revenant rev)
+    {
+        if (caster == null || rev == null)
+        {
+            return;
+        }
+
+        if (!_table.TryGetValue(caster, out var list))
+        {
+            _table[caster] = list = new List<Revenant>();
+        }
+
+        list.Add(rev);
     }
 
     public override TimeSpan CastDelayBase => TimeSpan.FromSeconds(2.0);
@@ -50,6 +96,10 @@ public class VengefulSpiritSpell : NecromancerSpell, ITargetingSpell<Mobile>
 
             var rev = new Revenant(Caster, m, duration);
 
+            // Mahaon: Школа призыва raises the revenant's stats and damage on top of the
+            // SpiritSpeak scaling its constructor already does.
+            Systems.MahaonCombat.NecromancySummonSystem.ApplyMasteryPower(Caster, rev);
+
             if (BaseCreature.Summon(
                     rev,
                     false,
@@ -60,6 +110,14 @@ public class VengefulSpiritSpell : NecromancerSpell, ITargetingSpell<Mobile>
                 ))
             {
                 rev.FixedParticles(0x373A, 1, 15, 9909, EffectLayer.Waist);
+                Register(Caster, rev);
+
+                Systems.MahaonCombat.NecromancySummonSystem.AnnounceSummon(
+                    Caster,
+                    rev,
+                    CountRevenants(Caster),
+                    Systems.MahaonCombat.NecromancySummonSystem.GetVengefulLimit(Caster)
+                );
             }
         }
     }
@@ -76,7 +134,15 @@ public class VengefulSpiritSpell : NecromancerSpell, ITargetingSpell<Mobile>
             return false;
         }
 
-        if (Caster.Followers + 3 > Caster.FollowersMax)
+        var limit = Systems.MahaonCombat.NecromancySummonSystem.GetVengefulLimit(Caster);
+
+        if (CountRevenants(Caster) >= limit)
+        {
+            Caster.SendMessage(0x3B2, $"Больше мстительных духов тебе не удержать ({limit}).");
+            return false;
+        }
+
+        if (Caster.Followers + 1 > Caster.FollowersMax)
         {
             Caster.SendLocalizedMessage(1049645); // You have too many followers to summon that creature.
             return false;

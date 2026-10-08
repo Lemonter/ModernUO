@@ -42,8 +42,8 @@ namespace Server.Mobiles
             Karma = -21000;
         }
 
-        public override string CorpseName => "a Virulent corpse";
-        public override string DefaultName => "Virulent";
+        public override string CorpseName => "труп Ядовитого";
+        public override string DefaultName => "Ядовитый";
 
         /*
         // TODO: uncomment once added

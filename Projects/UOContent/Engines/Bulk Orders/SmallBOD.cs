@@ -78,7 +78,7 @@ public abstract partial class SmallBOD : BaseBOD
 
         if (!ContentFeatureFlags.BulkOrders && from.AccessLevel < AccessLevel.Administrator)
         {
-            from.SendMessage(0x22, "Bulk orders are temporarily disabled.");
+            from.SendMessage(0x22, "Оптовые заказы временно отключены.");
             return;
         }
 

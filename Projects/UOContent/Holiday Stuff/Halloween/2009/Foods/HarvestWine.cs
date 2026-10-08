@@ -12,7 +12,7 @@ namespace Server.Items
         [Constructible]
         public HarvestWine() : base(BeverageType.Wine) => Hue = 0xe0;
 
-        public override string DefaultName => "Harvest Wine";
+        public override string DefaultName => "вино урожая";
         public override double DefaultWeight => 1;
     }
 }

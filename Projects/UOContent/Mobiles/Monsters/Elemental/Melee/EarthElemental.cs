@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonMetals;
 
 namespace Server.Mobiles
 {
@@ -7,7 +8,7 @@ namespace Server.Mobiles
     public partial class EarthElemental : BaseCreature
     {
         [Constructible]
-        public EarthElemental() : base(AIType.AI_Melee)
+        public EarthElemental() : base(AIType.AI_Mage)
         {
             Body = 14;
             BaseSoundID = 268;
@@ -28,6 +29,11 @@ namespace Server.Mobiles
             SetResistance(ResistanceType.Poison, 15, 25);
             SetResistance(ResistanceType.Energy, 15, 25);
 
+            // Mahaon: was AI_Melee. Every elemental and golem casts now; the spell
+            // circle is held to 5 by Systems.MahaonCombat.ElementalMagerySystem, so
+            // the Magery here is set for reliable casting, not to limit the circle.
+            SetSkill(SkillName.Magery, 70.1, 90.0);
+            SetSkill(SkillName.EvalInt, 60.1, 80.0);
             SetSkill(SkillName.MagicResist, 50.1, 95.0);
             SetSkill(SkillName.Tactics, 60.1, 100.0);
             SetSkill(SkillName.Wrestling, 60.1, 100.0);
@@ -40,14 +46,11 @@ namespace Server.Mobiles
             PackItem(new FertileDirt(Utility.RandomMinMax(1, 4)));
             PackItem(new MandrakeRoot());
 
-            PackItem(new IronOre(5)
-            {
-                ItemID = 0x19B7
-            });
+            PackItem(new MahaonOre(MahaonMetal.Iron, 5));
         }
 
-        public override string CorpseName => "an earth elemental corpse";
-        public override string DefaultName => "an earth elemental";
+        public override string CorpseName => "труп земляного элементаля";
+        public override string DefaultName => "земляной элементаль";
 
         public override bool BleedImmune => true;
         public override int TreasureMapLevel => 1;

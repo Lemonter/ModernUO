@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 40;
         }
 
-        public override string CorpseName => "an air elemental corpse";
-        public override string DefaultName => "an air elemental";
+        public override string CorpseName => "труп воздушного элементаля";
+        public override string DefaultName => "воздушный элементаль";
 
         public override bool BleedImmune => true;
         public override int TreasureMapLevel => 2;

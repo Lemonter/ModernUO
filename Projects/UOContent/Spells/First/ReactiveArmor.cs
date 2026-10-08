@@ -30,6 +30,10 @@ namespace Server.Spells.First
 
         public static bool HasEffect(Mobile m) => _t2aTable?.ContainsKey(m) == true;
 
+        /// <summary>The AOS-era effect, as opposed to <see cref="HasEffect"/>'s T2A one.
+        /// Needed by Mysticism's Purge Magic, which has to know what it can strip.</summary>
+        public static bool HasArmor(Mobile m) => _table?.ContainsKey(m) == true;
+
         public static void RemoveEffect(Mobile m)
         {
             if (_t2aTable?.Remove(m, out var token) == true)

@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackItem(new LesserPoisonPotion());
         }
 
-        public override string CorpseName => "a wyvern corpse";
-        public override string DefaultName => "a wyvern";
+        public override string CorpseName => "труп виверны";
+        public override string DefaultName => "виверна";
 
         public override bool ReacquireOnMovement => true;
 

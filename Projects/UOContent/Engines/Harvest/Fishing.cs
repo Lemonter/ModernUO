@@ -10,6 +10,12 @@ namespace Server.Engines.Harvest
     {
         private static Fishing _system;
 
+        // Mahaon: MutateType already computes deepWater from the real cast location, but
+        // OnHarvestFinished (fired right after, same synchronous harvest cycle) has no loc
+        // parameter of its own to recompute it from — caching here instead of guessing off
+        // from.Location, which is where the player is STANDING, not where they cast.
+        private static readonly System.Collections.Generic.Dictionary<Mobile, bool> _lastDeepWater = new();
+
         private static readonly MutateEntry[] _mutateTable =
         {
             new(80.0, 80.0, 4080.0, true, typeof(SpecialFishingNet)),
@@ -165,6 +171,7 @@ namespace Server.Engines.Harvest
         )
         {
             var deepWater = SpecialFishingNet.FullValidation(map, loc.X, loc.Y);
+            _lastDeepWater[from] = deepWater;
 
             var skillBase = from.Skills.Fishing.Base;
             var skillValue = from.Skills.Fishing.Value;
@@ -476,6 +483,14 @@ namespace Server.Engines.Harvest
         )
         {
             base.OnHarvestFinished(from, tool, def, vein, bank, resource, harvested);
+
+            if (harvested is Item caught)
+            {
+                var deepWater = _lastDeepWater.TryGetValue(from, out var dw) && dw;
+                Systems.MahaonCombat.FishingSpecializationSystem.OnFishCaught(from, caught, deepWater);
+            }
+
+            _lastDeepWater.Remove(from);
 
             if (Core.ML)
             {

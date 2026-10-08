@@ -42,7 +42,7 @@ namespace Server.Mobiles
             VirtualArmor = 49;
         }
 
-        public override string CorpseName => "an impaler corpse";
+        public override string CorpseName => "труп протыкателя";
 
         public override bool IgnoreYoungProtection => Core.ML;
 

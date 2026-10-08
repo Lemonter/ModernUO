@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Mobiles;
@@ -68,7 +68,7 @@ public partial class RatCamp : BaseCamp
         AddMobile(_prisoner, 2, Utility.RandomMinMax(-2, 2), Utility.RandomMinMax(-2, 2), 0);
     }
 
-    private void AddCampChests()
+    protected override void AddCampChests()
     {
         var chest = Utility.Random(3) switch
         {

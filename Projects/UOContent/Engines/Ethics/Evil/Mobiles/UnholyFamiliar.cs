@@ -42,10 +42,10 @@ public partial class UnholyFamiliar : BaseCreature
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "an evil corpse";
+    public override string CorpseName => "злой труп";
     public override bool IsDispellable => false;
     public override bool IsBondable => false;
-    public override string DefaultName => "a dark wolf";
+    public override string DefaultName => "тёмный волк";
 
     public override int Meat => 1;
     public override int Hides => 7;

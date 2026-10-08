@@ -43,8 +43,9 @@ namespace Server.Mobiles
             MinTameSkill = 93.9;
         }
 
-        public override string CorpseName => "a dragon corpse";
-        public override string DefaultName => "a dragon";
+        public override string CorpseName => "труп дракона";
+        public override string DefaultName => "дракон";
+        public override bool IsDragonKind => true;
 
         public override bool ReacquireOnMovement => !Controlled;
         public override bool AutoDispel => !Controlled;

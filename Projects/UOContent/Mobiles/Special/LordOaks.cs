@@ -74,7 +74,7 @@ public partial class LordOaks : BaseChampion
 
     public override MonsterStatuetteType[] StatueTypes => Array.Empty<MonsterStatuetteType>();
 
-    public override string DefaultName => "Lord Oaks";
+    public override string DefaultName => "лорд Дубрав";
 
     public override bool AutoDispel => true;
     public override bool CanFly => true;

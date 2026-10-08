@@ -8,7 +8,7 @@ public partial class ServantOfSemidar : BaseCreature
     [Constructible]
     public ServantOfSemidar() : base(AIType.AI_Melee, FightMode.None) => Body = 0x26;
 
-    public override string DefaultName => "a Servant of Semidar";
+    public override string DefaultName => "слуга Семидар";
 
     public override bool DisallowAllMoves => true;
 

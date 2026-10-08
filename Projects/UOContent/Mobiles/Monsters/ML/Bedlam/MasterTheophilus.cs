@@ -62,8 +62,8 @@ namespace Server.Mobiles
             PackReg(8);
         }
 
-        public override string CorpseName => "a Master Theophilus corpse";
-        public override string DefaultName => "Master Theophilus";
+        public override string CorpseName => "труп мастера Теофила";
+        public override string DefaultName => "мастер Теофил";
 
         public override bool GivesMLMinorArtifact => true;
         public override int TreasureMapLevel => 5;

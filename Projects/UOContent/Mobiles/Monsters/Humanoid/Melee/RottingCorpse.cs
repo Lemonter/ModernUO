@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 40;
         }
 
-        public override string CorpseName => "a rotting corpse";
-        public override string DefaultName => "a rotting corpse";
+        public override string CorpseName => "гниющий труп";
+        public override string DefaultName => "гниющий труп";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

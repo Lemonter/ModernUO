@@ -65,6 +65,14 @@ namespace Server.Mobiles
 
             AddItem(new Shirt(Utility.RandomNondyedHue()));
 
+            // Mahaon: сет из шипастой кожи (Spined) — отличается от обычного Brigand,
+            // чтобы разные типы бандитов визуально не повторяли друг друга.
+            AddItem(new LeatherChest { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherArms { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherGloves { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherGorget { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherLegs { Resource = CraftResource.SpinedLeather });
+
             AddItem(
                 Utility.Random(7) switch
                 {

@@ -49,8 +49,8 @@ namespace Server.Mobiles
             PackItem(new BlackPearl(3));
         }
 
-        public override string CorpseName => "a water elemental corpse";
-        public override string DefaultName => "a water elemental";
+        public override string CorpseName => "труп водяного элементаля";
+        public override string DefaultName => "водяной элементаль";
 
         public override bool BleedImmune => true;
         public override int TreasureMapLevel => 2;

@@ -222,6 +222,19 @@ public partial class ForestWolf : BaseCreature
 | `AI_Berserk` | Mindless aggressors |
 | `AI_Thief` | Pickpockets |
 
+**Bespoke policy: `ForcedAI`.** A creature whose behavior is not one of the stock AIs
+overrides `protected override BaseAI ForcedAI => new MyAI(this);` and `ChangeAIType` uses that
+instance regardless of `AIType` (`CloneAI` for mirror images, `FamiliarAI` for necromancy
+familiars, `FactionGuardAI`, `SpellbinderAI`). The property is read exactly once per
+`ChangeAIType`; do not put side effects in it. Movement or order decisions belong in the AI
+class — `OnThink` is for content extras (see the excess-call contract below). A controlled
+creature is dispatched through `Obey()`, an uncontrolled one through `Think()`; an AI that owns
+both routes them into one decision (`FamiliarAI.Act`). Overriding `IssueOrder` to return a
+fixed order is how "command immunity" is expressed without bypassing the order machinery.
+`OnAggressiveAction(aggressor) -> bool` is the retaliation policy: `BaseCreature` sets no
+combatant of its own and runs `StopFlee`/`ForceReacquire` only on `true`, so an AI that
+returns `false` has refused the fight outright.
+
 ### Fight Modes
 | FightMode | Behavior |
 |---|---|
@@ -253,6 +266,163 @@ public override bool CanFly => true;                      // Can fly
 public override int TreasureMapLevel => 3;               // Drops treasure map
 public override double WeaponAbilityChance => 0.4;        // Weapon ability chance
 ```
+
+### Masters: owner, summoner, responsible party
+
+A creature stores one master. Read it through the view that matches the question:
+
+| Read | Returns | Use it for |
+|---|---|---|
+| `ControlMaster` | the master while `Controlled`, else null | the owner: commands, bonding, friends, stabling |
+| `SummonMaster` | the master while `Summoned`, else null | the summoner: dispel, summon acquire rules |
+| `GetMaster()` | `ControlMaster ?? SummonMaster` | whoever answers for the creature: notoriety, kill credit, guild and party checks |
+| `Master` | the stored reference, flags ignored | a creature's own AI following or defending a master it has no flag for |
+
+A master with neither flag is legal. A meer mage's enraged creatures carry their meer in `Master`
+without being `Controlled` or `Summoned`, so `GetMaster()` is null and the meer never answers for them.
+
+To set a master, tame through `SetControlMaster(m)` (it raises `Controlled`, resets the order and
+checks follower slots) and summon through `BaseCreature.Summon(...)`. Assign `Master` directly only
+for a master with no flag. The `ControlMaster` and `SummonMaster` setters are aliases for `Master`:
+they don't set `Controlled` or `Summoned`, so the value reads back as null until the flag is set.
+Every assignment moves the creature's follower slots from the old master to the new one.
+
+The view already checks its flag, so don't repeat it:
+
+```csharp
+// Redundant: ControlMaster is null unless Controlled
+if (Controlled && ControlMaster == from) { ... }
+if (ControlMaster == from) { ... }
+
+// Not equivalent: without the flag this is true for every wild creature
+if (Controlled && ControlMaster != from) { ... }
+```
+
+### Creature Speeds (think vs move clocks)
+
+All "speed" values are **delays in seconds** (smaller = faster). A creature runs two clocks:
+
+- **Think clock** — `ActiveSpeed`/`PassiveSpeed`/`CurrentSpeed`: seconds per AI decision
+  (combat decisions, target acquisition, spell timing).
+- **Move clock** — `ActiveMoveSpeed`/`PassiveMoveSpeed`/`CurrentMoveSpeed`: seconds per
+  step. Inherits the matching think value until overridden, so a creature configured with
+  only think speeds behaves as one clock. The properties read the raw override (`0` =
+  inheriting); `CurrentMoveSpeed` is the resolved pace. Any value is legal — steps are
+  scheduled independently of think ticks, so the two need not divide evenly.
+
+Speeds normally come from `Distribution/Data/npc-speeds.json` (via `SpeedClass` or type
+lists); `activeMove`/`passiveMove` are optional per bucket. Prefer data over code:
+
+```csharp
+public override SpeedLevel SpeedClass => SpeedLevel.Slow;  // bucket in npc-speeds.json
+```
+
+Code-level overrides for special cases:
+
+```csharp
+SetSpeed(0.5, 2.0);          // think clock; ALSO clears move overrides (one-clock legacy semantics)
+SetMoveSpeed(0.45, 0.9);     // move clock only — call after SetSpeed if both are wanted
+ClearMoveSpeed();            // back to inheriting the think clock
+```
+
+All four are `[props`-tunable per instance (move values: set `0` to re-inherit); per-instance
+move overrides serialize. Being badly hurt slows steps, never decisions (RunUO parity).
+
+Two conditions cap the resolved step pace without touching either clock, so nothing is
+stored and nothing needs undoing when the condition ends:
+
+- **Herding** — a creature with a `TargetLocation` is driven at a fixed `HerdingMoveSpeed`.
+- **Pacing to the master** — a pet following its master, or guarding from outside guard
+  range, is capped at `FollowMoveSpeed` (AOS 0.1, earlier eras 0; RunUO's pet sprint). It is
+  a cap, not an override: a creature configured faster keeps its own pace, and its
+  `ActiveMoveSpeed`/`PassiveMoveSpeed` are left untouched. Override the virtual to change
+  the pace or to enable it in an era that has it off. Decisions are unaffected — a following
+  pet thinks on its active clock.
+
+The client's `Running` bit is derived from the step pace, never passed by callers
+(`BaseAI.ShouldRun`, stamped in `DoMoveImpl`): a step shorter than the client's walk
+interpolation — 400 ms on foot, 200 ms mounted/flying (`Movement.WalkFootDelay` /
+`WalkMountDelay`) — is flagged as a run, or the client falls behind and snaps. An isolated
+step (resuming after at least a walk interval standing) goes out as a walk regardless of
+pace — the client renders each step alone, so a run-flagged single step darts — unless the
+pace beats the run interpolation (a true sprinter), where a walk-rendered first step would
+flood the client's step queue. Movement APIs (`MoveTo`, `WalkMobileRange`,
+`ApproachTarget`, `MoveToPoint`) take no run argument; to make a creature run, make it
+fast. Creatures step at most once per `CurrentMoveSpeed` period, paced from the step just
+taken — a stall never banks catch-up steps, so a resumed chase restarts at full pace.
+
+### Target Acquisition: the reaction-time gradient
+
+Acquisition is event-driven, not polled. The periodic scan (`AcquireFocusMob`) is gated by
+`ReacquireDelay` (10 s default) and every scan re-arms it in full, success or failure — it
+is target stickiness plus the fallback for what movement cannot signal (reveals, doors,
+summons). Reaction time comes from `BaseCreature.OnMovement`: an enemy moving inside
+`AcquireOnApproachRange` (10 — on-screen; the periodic scan keeps the wider
+`RangePerception`) clamps the next scan to
+at most **`AcquireOnApproachDelay`** — the intelligence gradient. `TimeSpan.Zero`
+(paragons) also prods the AI, so the ranked scan engages within a timer-wheel turn; the
+2 s default reads as "took a beat to notice you"; larger is dumber; a creature that
+overrides the delay above `ReacquireDelay` is effectively oblivious to approach. Repeated
+steps cannot shorten the clamp, so an armed creature scans once per delay period, not once
+per step or think. `ReacquireOnMovement` remains the broader hook (any mover, no enemy
+check, scan next think). The gate self-heals: a deadline further out than `ReacquireDelay`
+is illegal and reads as open, so no wedged or wrapped value can silence acquisition beyond
+one delay period.
+
+### OnThink: the excess-call contract
+
+`OnThink()` is a scheduler pass, not an action. The AI timer calls it *at least* at the
+think cadence (`CurrentSpeed`), but it can and does fire more often: a player command
+wakes the AI immediately (`AITimer.Prod()`), a speed-up reschedules the pending wake, and
+players run command macros that drive extra thinks deliberately (order spam is spam-safe
+by design — reaction, never action). RunUO had the same property (its timer restarted
+with a random delay on every speed change), so this has never been a fixed-rate callback.
+
+**Every `OnThink` override must be excess-call tolerant.** An extra call must never grant
+an extra action:
+
+- Gate consequential work on its own deadline field, compared in subtraction form
+  (`Core.TickCount - _nextX >= 0` — see `tick-counts.md`), or make it idempotent.
+- Never pace a consequential action with a bare per-call `Utility.RandomDouble()` roll —
+  its frequency then scales with think rate, which players can influence. Per-call rolls
+  are acceptable only for pure cosmetics (idle animations, flavor sounds).
+- The engine already gates the expensive things: steps (the `NextMove` budget), weapon
+  swings, spell casts, detect-hidden, and the base `BaseCreature.OnThink` actions (heal,
+  rummage, aura) all carry their own clocks. Follow that pattern.
+
+```csharp
+private long _nextSpecial;
+
+public override void OnThink()
+{
+    base.OnThink();
+
+    if (Core.TickCount - _nextSpecial >= 0)
+    {
+        DoSpecial();
+        _nextSpecial = Core.TickCount + 5000; // the real rate limit lives here
+    }
+}
+```
+
+### MonsterAbility: same contract
+
+`MonsterAbility.CanTrigger` is sampled once per think for `Think`- and
+`CombatAction`-triggered abilities, so abilities live under the same rule:
+
+- **`MinTriggerCooldown`/`MaxTriggerCooldown` is the real rate limit** — the floor holds
+  no matter how often thinks fire. Always give a triggered ability a real cooldown.
+- **`ChanceToTrigger` is a per-sample roll**: above the cooldown floor, the expected
+  trigger delay shrinks as think rate rises. Treat the chance as flavor jitter, never as
+  the rate limiter, and keep cooldowns long relative to the think interval so the jitter
+  stays negligible (fire breath — chance 0.5, cooldown 30–45s — varies under 1% between
+  natural and spammed think rates).
+- A **zero-cooldown ability records no cooldown at all** and triggers on every sampled
+  think that passes its chance — only ever correct for passive alteration hooks, never
+  for `Think`/`CombatAction` triggers.
+- An ability that breaks pet orders (fear-style effects) must own its duration explicitly
+  (a hold state, or a "refuses orders until" deadline checked in the order handlers) —
+  pets react to re-issued commands immediately, so think latency is not a hold.
 
 ---
 

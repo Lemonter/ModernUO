@@ -1,4 +1,3 @@
-using Server.Engines.MLQuests;
 using Server.Items;
 using Server.Mobiles;
 
@@ -24,6 +23,22 @@ namespace Server.Spells.Spellweaving
 
         public static int GetFocusLevel(Mobile from)
         {
+            // Mahaon: «Тонкая нить» — сигнатурный перк категории Плетение. Обычно сила
+            // плетения целиком зависит от аркановой сферы в руках или рюкзаке, без неё
+            // заклинания работают на нулевом уровне. Плетущим сфера не нужна: они и без
+            // неё держат средний уровень, а с ней — свой обычный.
+            if (Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+                    from, Systems.MahaonProfessions.ProfessionCategory.Weaving
+                ))
+            {
+                // «Сила круга» — обычный перк Плетения поверх сигнатурного: у того, кому
+                // Плетение первично, круг сам по себе прибавляет два уровня.
+                return System.Math.Max(3, FindArcaneFocus(from)?.StrengthBonus ?? 0) +
+                       (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                           from, Systems.MahaonProfessions.ProfessionCategory.Weaving
+                       ) ? 2 : 0);
+            }
+
             var focus = FindArcaneFocus(from);
 
             return focus?.Deleted != false ? 0 : focus.StrengthBonus;
@@ -51,17 +66,9 @@ namespace Server.Spells.Spellweaving
                 return false;
             }
 
-            if (caster is PlayerMobile mobile)
-            {
-                var context = MLQuestSystem.GetContext(mobile);
-
-                if (context?.Spellweaving != true)
-                {
-                    // You must have completed the epic arcanist quest to use this ability.
-                    mobile.SendLocalizedMessage(1073220);
-                    return false;
-                }
-            }
+            // Mahaon: removed the "must have completed the epic arcanist quest" gate
+            // (MLQuestSystem.GetContext(mobile).Spellweaving) per the shard owner's ask —
+            // Spellweaving now works purely off skill/mana like every other discipline.
 
             var mana = ScaleMana(RequiredMana);
 

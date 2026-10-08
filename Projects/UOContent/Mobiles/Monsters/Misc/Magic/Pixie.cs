@@ -46,7 +46,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a pixie corpse";
+        public override string CorpseName => "труп пикси";
         public override bool InitialInnocent => true;
 
         public override HideType HideType => HideType.Spined;

@@ -93,6 +93,21 @@ public static class World
     public static string SavePath { get; private set; }
     public static WorldState WorldState { get; private set; }
     public static bool Saving => WorldState == WorldState.Saving;
+
+    /// <summary>
+    /// UTC time the current or most recent world save started. Written into save indexes so
+    /// anchored timestamps can be re-based by the downtime at load.
+    /// </summary>
+    public static DateTime SaveStartTime { get; internal set; }
+
+    /// <summary>
+    /// The anchored-time shift for the save currently being loaded: the downtime between the
+    /// save's start and this load. Stamped while entity indexes are read (they all carry the
+    /// same anchor, since the whole save shares one <see cref="SaveStartTime" />) and applied
+    /// to every reader of that save's files — including <see cref="GenericPersistence" />
+    /// payloads, which carry no anchor of their own. Zero for saves that predate the anchor.
+    /// </summary>
+    public static TimeSpan LoadTimeShift { get; internal set; }
     public static bool Running => WorldState is not WorldState.Loading and not WorldState.Initial;
     public static bool Loading => WorldState == WorldState.Loading;
 
@@ -106,6 +121,8 @@ public static class World
 
         UseMultiThreadedSaves = ServerConfiguration.GetOrUpdateSetting("world.useMultithreadedSaves", true);
     }
+
+    internal static void SetSavePathForTest(string path) => SavePath = path;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void WaitForWriteCompletion() => _diskWriteHandle.WaitOne();
@@ -179,6 +196,8 @@ public static class World
 
         logger.Information("Loading world");
         var watch = Stopwatch.StartNew();
+
+        RecoverStagedSave();
 
         Persistence.Load(SavePath);
         EventSink.InvokeWorldLoad();
@@ -256,6 +275,8 @@ public static class World
     {
         try
         {
+            RecoverStagedSave();
+
             // Allocate the heaps for the GC
             foreach (var worker in _threadWorkers)
             {
@@ -287,6 +308,10 @@ public static class World
 
         WorldState = WorldState.Saving;
 
+        // The world is frozen from here: one anchor for the whole save. Written into save
+        // indexes so anchored timestamps can be re-based by the downtime at load.
+        SaveStartTime = Core.Now;
+
         Broadcast(0x35, true, "The world is saving, please wait.");
 
         logger.Information("Saving world");
@@ -303,22 +328,49 @@ public static class World
             }
 
             Persistence.SerializeAll();
-            PauseSerializationThreads();
-            LogWorkerBalance();
-
-            EventSink.InvokeWorldSave();
         }
         catch (Exception ex)
         {
             exception = ex;
         }
 
-        WorldState = WorldState.WritingSave;
-        ThreadPool.QueueUserWorkItem(WriteFiles, snapshotPath);
+        // Always join the workers; any serializer exception fails the save.
+        try
+        {
+            PauseSerializationThreads();
+        }
+        catch (Exception ex)
+        {
+            exception ??= ex;
+        }
+
+        for (var i = 0; i < _threadWorkers.Length; i++)
+        {
+            exception ??= _threadWorkers[i].Error;
+        }
+
+        if (exception == null)
+        {
+            LogWorkerBalance();
+
+            try
+            {
+                EventSink.InvokeWorldSave();
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "A WorldSave handler failed");
+                Persistence.TraceException(ex);
+            }
+        }
+
         watch.Stop();
 
         if (exception == null)
         {
+            WorldState = WorldState.WritingSave;
+            ThreadPool.QueueUserWorkItem(WriteFiles, snapshotPath);
+
             var duration = watch.Elapsed.TotalSeconds;
             logger.Information("Saving world {Status} ({Duration:F2} seconds)", "done", duration);
 
@@ -330,6 +382,9 @@ public static class World
             Persistence.TraceException(exception);
 
             BroadcastStaff(0x35, true, "World save failed! Check the logs!");
+
+            _diskWriteHandle.Set();
+            FinishWorldSave();
         }
     }
 
@@ -342,17 +397,7 @@ public static class World
             logger.Information("Writing world save snapshot");
 
             Persistence.WriteSnapshotAll(snapshotPath);
-
-            try
-            {
-                EventSink.InvokeWorldSavePostSnapshot(SavePath, snapshotPath);
-                PathUtility.MoveDirectoryContents(snapshotPath, SavePath);
-                Directory.SetLastWriteTimeUtc(SavePath, Core.Now);
-            }
-            catch (Exception ex)
-            {
-                Persistence.TraceException(ex);
-            }
+            PublishSnapshot(snapshotPath);
 
             watch.Stop();
             logger.Information("Writing world save snapshot {Status} ({Duration:F2} seconds)", "done", watch.Elapsed.TotalSeconds);
@@ -367,6 +412,90 @@ public static class World
 
         _diskWriteHandle.Set();
         Core.LoopContext.Post(FinishWorldSave);
+    }
+
+    /// <summary>
+    /// A complete snapshot is staged here before the previous save is touched; a staged
+    /// directory is always a complete save newer than <see cref="SavePath" />.
+    /// </summary>
+    internal static string StagedSavePath => SavePath + ".next";
+
+    // Stage, let subscribers archive the previous save, then rename the staged save into place.
+    private static void PublishSnapshot(string snapshotPath)
+    {
+        var staging = StagedSavePath;
+
+        if (Directory.Exists(staging))
+        {
+            SetAside(staging, "unpublished");
+        }
+
+        MoveDirectory(snapshotPath, staging);
+        PublishStagedSave(archive: true);
+    }
+
+    private static void PublishStagedSave(bool archive)
+    {
+        var staging = StagedSavePath;
+
+        if (archive)
+        {
+            EventSink.InvokeWorldSavePostSnapshot(SavePath, staging);
+        }
+
+        if (Directory.Exists(SavePath))
+        {
+            SetAside(SavePath, "previous");
+        }
+
+        MoveDirectory(staging, SavePath);
+        Directory.SetLastWriteTimeUtc(SavePath, Core.Now);
+    }
+
+    /// <summary>
+    /// Finishes an interrupted publish. Runs at boot (before load) and before every save;
+    /// whatever is at Saves/ is set aside, never deleted.
+    /// </summary>
+    internal static void RecoverStagedSave()
+    {
+        var staging = StagedSavePath;
+
+        if (!Directory.Exists(staging))
+        {
+            return;
+        }
+
+        logger.Warning(
+            "A complete world save was staged at {Staging} but never published; publishing it now.",
+            staging
+        );
+
+        PublishStagedSave(archive: false);
+    }
+
+    private static void SetAside(string path, string reason)
+    {
+        var aside = $"{path}.{reason}-{Core.Now:yyyy-MM-dd-HH-mm-ss-fff}";
+        MoveDirectory(path, aside);
+        logger.Warning("Set aside {Path} as {Aside}; delete or archive it by hand.", path, aside);
+    }
+
+    // Atomic rename on one volume, file-by-file move otherwise.
+    private static void MoveDirectory(string source, string destination)
+    {
+        try
+        {
+            Directory.Move(source, destination);
+        }
+        catch (IOException)
+        {
+            if (Directory.Exists(destination))
+            {
+                throw;
+            }
+
+            PathUtility.MoveDirectoryContents(source, destination);
+        }
     }
 
     private static void FinishWorldSave()

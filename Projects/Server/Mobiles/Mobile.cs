@@ -42,7 +42,7 @@ public delegate void PromptCallback(Mobile from, string text);
 
 public delegate void PromptStateCallback<in T>(Mobile from, string text, T state);
 
-public class DamageEntry
+public class DamageEntry : IValueLinkListNode<DamageEntry>
 {
     public DamageEntry(Mobile damager) => Damager = damager;
 
@@ -57,6 +57,11 @@ public class DamageEntry
     public List<DamageEntry> Responsible { get; set; }
 
     public static TimeSpan ExpireDelay { get; set; } = TimeSpan.FromMinutes(2.0);
+
+    // Intrusive links for Mobile._damageEntries. Sub-entries in Responsible never join a list.
+    public DamageEntry Next { get; set; }
+    public DamageEntry Previous { get; set; }
+    public bool OnLinkList { get; set; }
 }
 
 [Flags]
@@ -377,7 +382,6 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         Aggressors = new List<AggressorInfo>();
         Aggressed = new List<AggressorInfo>();
         NextSkillTime = Core.TickCount;
-        DamageEntries = new List<DamageEntry>();
     }
 
     // Sectors
@@ -790,7 +794,23 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         var weapon = Weapon;
 
-        if (weapon == null || !InRange(combatant, weapon.MaxRange))
+        if (weapon == null)
+        {
+            return;
+        }
+
+        // Mahaon: Archery > 90 lets a bow/crossbow (BaseRanged only — see IWeapon.
+        // IsRangedWeapon's doc comment) fire past its own MaxRange, out to double that —
+        // BaseWeapon.GetDelay applies a matching speed penalty for shots actually taken
+        // beyond MaxRange, dropping back to normal speed once the target is back within it.
+        var effectiveMaxRange = weapon.MaxRange;
+
+        if (weapon.IsRangedWeapon && Skills[SkillName.Archery].Value > 90.0)
+        {
+            effectiveMaxRange *= 2;
+        }
+
+        if (!InRange(combatant, effectiveMaxRange))
         {
             return;
         }
@@ -958,7 +978,23 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public static VisibleDamageType VisibleDamageType { get; set; }
 
-    public List<DamageEntry> DamageEntries { get; private set; }
+    private ValueLinkList<DamageEntry> _damageEntries;
+
+    /// <summary>
+    /// Damage entries ordered least recent (head) to most recent (tail). Expired entries are
+    /// pruned on access. Enumerate with <c>foreach</c> (ascending) or <c>.ByDescending()</c>.
+    /// Mutate only through <see cref="RegisterDamage"/> and <see cref="ClearDamageEntries"/>.
+    /// Calling a ValueLinkList mutator on this reference compiles, but operates on a defensive copy
+    /// while still unlinking the real nodes — it silently corrupts the list.
+    /// </summary>
+    public ref readonly ValueLinkList<DamageEntry> DamageEntries
+    {
+        get
+        {
+            PruneExpiredDamageEntries();
+            return ref _damageEntries;
+        }
+    }
 
     [CommandProperty(AccessLevel.GameMaster)]
     public Mobile LastKiller { get; set; }
@@ -1627,7 +1663,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public virtual bool KeepsItemsOnDeath => m_AccessLevel > AccessLevel.Player;
 
-    public bool HasTrade => m_NetState?.Trades.Count > 0;
+    public bool HasTrade => m_NetState?.Trades?.Count > 0;
 
     public bool NoMoveHS { get; set; }
 
@@ -2020,10 +2056,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
                     Aggressors[i].CanReportMurder = false;
                 }
 
-                if (DamageEntries.Count > 0)
-                {
-                    DamageEntries.Clear(); // reset damage entries on full HP
-                }
+                ClearDamageEntries(); // reset damage entries on full HP
             }
             else if (CanRegenHits)
             {
@@ -2324,11 +2357,11 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public virtual void Serialize(IGenericWriter writer)
     {
-        writer.Write(37); // version
+        writer.Write(38); // version
 
-        writer.WriteDeltaTime(LastStrGain);
-        writer.WriteDeltaTime(LastIntGain);
-        writer.WriteDeltaTime(LastDexGain);
+        writer.WriteAnchoredTime(LastStrGain);
+        writer.WriteAnchoredTime(LastIntGain);
+        writer.WriteAnchoredTime(LastDexGain);
 
         byte hairflag = 0x00;
 
@@ -3469,6 +3502,19 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         for (var i = _skillMods.Count - 1; i >= 0; i--)
         {
+            // Skills[mod.Skill]?.Update() below can re-enter this same method (e.g. a
+            // caller removing several mods for the same skill in one pass, each triggering
+            // Skill.Update -> OnSkillChange -> SendSkillChange -> NonRacialValue, which
+            // calls ValidateSkillMods again) — the reentrant call runs its own full
+            // backward pass over _skillMods and can shrink it out from under this one, so
+            // the outer loop's cached index can end up past the end of the (now shorter)
+            // list. The reentrant pass already left the list in a valid state, so it's
+            // safe to just stop once our index no longer exists.
+            if (i >= _skillMods.Count)
+            {
+                continue;
+            }
+
             var mod = _skillMods[i];
 
             if (!mod.CheckCondition())
@@ -3672,6 +3718,10 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         {
             Paralyzed = true;
             Timer.StartTimer(duration, ExpireParalyzed, out _paraTimerToken);
+
+            // Mahaon: paralyze is now one of the two remaining fizzle causes — see
+            // Spell.OnCasterParalyzed/DisturbType.Paralyzed.
+            m_Spell?.OnCasterParalyzed();
         }
     }
 
@@ -3686,6 +3736,9 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         {
             Frozen = true;
             Timer.StartTimer(duration, ExpireFrozen, out _frozenTimerToken);
+
+            // Mahaon: same as Paralyze() above — freeze/stun also fizzles a cast now.
+            m_Spell?.OnCasterParalyzed();
         }
     }
 
@@ -5248,8 +5301,15 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         item.Name = oldItem.Name;
         item.Weight = oldItem.Weight;
 
+        item.PlayerConstructed = oldItem.PlayerConstructed;
         item.Amount = oldAmount - amount;
-        item.Map = oldItem.Map;
+
+        // A parented remainder gets its map from AddItem (parent first, then map), keeping the
+        // split off the decay scheduler; a ground remainder is placed and enrolled here.
+        if (oldItem.Parent == null)
+        {
+            item.Map = oldItem.Map;
+        }
 
         oldItem.OnAfterDuped(item);
 
@@ -5738,24 +5798,54 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         }
     }
 
+    // Entries are kept in LastDamage order, so expired entries are always a head prefix.
+    private void PruneExpiredDamageEntries()
+    {
+#if DEBUG
+        for (var node = _damageEntries._first; node != null; node = node.Next)
+        {
+            Debug.Assert(
+                node.Next == null || node.Next.LastDamage >= node.LastDamage,
+                "Damage entries must be ordered by LastDamage ascending."
+            );
+        }
+#endif
+
+        var first = _damageEntries._first;
+
+        if (first?.HasExpired != true)
+        {
+            return;
+        }
+
+        var firstLive = first.Next;
+
+        while (firstLive?.HasExpired == true)
+        {
+            firstLive = firstLive.Next;
+        }
+
+        if (firstLive == null)
+        {
+            _damageEntries.RemoveAll();
+        }
+        else
+        {
+            _damageEntries.RemoveAllBefore(firstLive);
+        }
+    }
+
+    public void ClearDamageEntries() => _damageEntries.RemoveAll();
+
     public Mobile FindMostRecentDamager(bool allowSelf) => FindMostRecentDamageEntry(allowSelf)?.Damager;
 
     public DamageEntry FindMostRecentDamageEntry(bool allowSelf)
     {
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if (allowSelf || de.Damager != this)
+            if (allowSelf || de.Damager != this)
             {
                 return de;
             }
@@ -5768,21 +5858,11 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public DamageEntry FindLeastRecentDamageEntry(bool allowSelf)
     {
-        for (var i = 0; i < DamageEntries.Count; ++i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._first; de != null; de = de.Next)
         {
-            if (i < 0)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-                --i;
-            }
-            else if (allowSelf || de.Damager != this)
+            if (allowSelf || de.Damager != this)
             {
                 return de;
             }
@@ -5793,24 +5873,17 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public Mobile FindMostTotalDamager(bool allowSelf) => FindMostTotalDamageEntry(allowSelf)?.Damager;
 
+    // Walks most recent first with a strict comparison so the most recent entry wins ties,
+    // matching the previous reverse-indexed loop.
     public DamageEntry FindMostTotalDamageEntry(bool allowSelf)
     {
+        PruneExpiredDamageEntries();
+
         DamageEntry mostTotal = null;
 
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven > mostTotal.DamageGiven))
+            if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven > mostTotal.DamageGiven))
             {
                 mostTotal = de;
             }
@@ -5823,46 +5896,28 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
     public DamageEntry FindLeastTotalDamageEntry(bool allowSelf)
     {
-        DamageEntry mostTotal = null;
+        PruneExpiredDamageEntries();
 
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        DamageEntry leastTotal = null;
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
+            if ((allowSelf || de.Damager != this) && (leastTotal == null || de.DamageGiven < leastTotal.DamageGiven))
             {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if ((allowSelf || de.Damager != this) && (mostTotal == null || de.DamageGiven < mostTotal.DamageGiven))
-            {
-                mostTotal = de;
+                leastTotal = de;
             }
         }
 
-        return mostTotal;
+        return leastTotal;
     }
 
     public DamageEntry FindDamageEntryFor(Mobile m)
     {
-        for (var i = DamageEntries.Count - 1; i >= 0; --i)
+        PruneExpiredDamageEntries();
+
+        for (var de = _damageEntries._last; de != null; de = de.Previous)
         {
-            if (i >= DamageEntries.Count)
-            {
-                continue;
-            }
-
-            var de = DamageEntries[i];
-
-            if (de.HasExpired)
-            {
-                DamageEntries.RemoveAt(i);
-            }
-            else if (de.Damager == m)
+            if (de.Damager == m)
             {
                 return de;
             }
@@ -5880,8 +5935,13 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         de.DamageGiven += amount;
         de.LastDamage = Core.Now;
 
-        DamageEntries.Remove(de);
-        DamageEntries.Add(de);
+        // Move to the tail so the list stays in LastDamage order.
+        if (de.OnLinkList)
+        {
+            _damageEntries.Remove(de);
+        }
+
+        _damageEntries.AddLast(de);
 
         var master = from.GetDamageMaster(this);
 
@@ -5949,10 +6009,13 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         var oldHits = Hits;
         var newHits = oldHits - amount;
 
-        m_Spell?.OnCasterHurt();
-
-        // if (m_Spell != null && m_Spell.State == SpellState.Casting)
-        // m_Spell.Disturb( DisturbType.Hurt, false, true );
+        // Mahaon: no longer disturbs the caster on its own — plain melee, enemy spells, and
+        // poison ticks all flow through Damage(), so "any damage fizzles a cast" meant every
+        // hit source disturbed equally. The shard owner wants only a called-shot hit on the
+        // caster's chosen casting channel (CastingChannelSystem, checked in Spell.
+        // CheckSequence) or being paralyzed/frozen (Spell.OnCasterParalyzed, called from
+        // Paralyze()/Freeze() below) to fizzle a spell now.
+        // m_Spell?.OnCasterHurt();
 
         if (from != null)
         {
@@ -6143,6 +6206,7 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
 
         switch (version)
         {
+            case 38: // Stat-gain stamps moved from delta time to anchored time
             case 37: // Decomposed hair into inline item id/hue (dropped the VirtualHairInfo object)
             case 36: // Moved virtues to VirtueSystem
             case 35: // Moved short term murders to PlayerMurderSystem
@@ -6151,9 +6215,18 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
             case 32: // Removed StuckMenu
             case 31:
                 {
-                    LastStrGain = reader.ReadDeltaTime();
-                    LastIntGain = reader.ReadDeltaTime();
-                    LastDexGain = reader.ReadDeltaTime();
+                    if (version >= 38)
+                    {
+                        LastStrGain = reader.ReadAnchoredTime();
+                        LastIntGain = reader.ReadAnchoredTime();
+                        LastDexGain = reader.ReadAnchoredTime();
+                    }
+                    else
+                    {
+                        LastStrGain = reader.ReadDeltaTime();
+                        LastIntGain = reader.ReadDeltaTime();
+                        LastDexGain = reader.ReadDeltaTime();
+                    }
 
                     goto case 30;
                 }
@@ -6460,9 +6533,6 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
                     m_StrLock = (StatLockType)reader.ReadByte();
                     m_DexLock = (StatLockType)reader.ReadByte();
                     m_IntLock = (StatLockType)reader.ReadByte();
-
-                    _statMods = new List<StatMod>();
-                    _skillMods = new List<SkillMod>();
 
                     if (version < 32)
                     {
@@ -7796,13 +7866,10 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
         m_FollowersMax = 5;
         Skills = new Skills(this);
         Items = new List<Item>();
-        _statMods = new List<StatMod>();
-        _skillMods = new List<SkillMod>();
         Map = Map.Internal;
         AutoPageNotify = true;
         Aggressors = new List<AggressorInfo>();
         Aggressed = new List<AggressorInfo>();
-        DamageEntries = new List<DamageEntry>();
 
         NextSkillTime = Core.TickCount;
     }
@@ -8080,6 +8147,14 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
             SendLocalizedMessage(500134); // You stop meditating.
         }
     }
+
+    /// <summary>
+    ///     Overridable. True for a client-less mobile that keeps the world awake around it the way a
+    ///     connected player does — creature AI, spawners and other sector-driven systems run within
+    ///     <see cref="Map.SectorActiveRange"/> of it. Sectors count such mobiles on enter and leave,
+    ///     so the value must not change while the mobile is on a map.
+    /// </summary>
+    public virtual bool ActivatesSectors => false;
 
     /// <summary>
     ///     Overridable. Virtual event invoked when the sector this Mobile is in gets <see cref="Map.Sector.Activate">activated</see>.

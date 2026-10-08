@@ -20,7 +20,7 @@ public partial class TournamentSignupItem : Item
     [Constructible]
     public TournamentSignupItem() : base(4029) => Movable = false;
 
-    public override string DefaultName => "tournament signup book";
+    public override string DefaultName => "книга записи на турнир";
 
     public override void OnDoubleClick(Mobile from)
     {

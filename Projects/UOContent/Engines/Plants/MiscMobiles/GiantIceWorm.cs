@@ -43,9 +43,9 @@ public partial class GiantIceWorm : BaseCreature
         MinTameSkill = 71.1;
     }
 
-    public override string CorpseName => "a giant ice worm corpse";
+    public override string CorpseName => "труп гигантского ледяного червя";
     public override bool SubdueBeforeTame => true;
-    public override string DefaultName => "a giant ice worm";
+    public override string DefaultName => "гигантский ледяной червь";
 
     public override Poison PoisonImmune => Poison.Greater;
 

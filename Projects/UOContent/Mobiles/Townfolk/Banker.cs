@@ -611,6 +611,13 @@ public partial class Banker : BaseVendor
             }
         }
 
+        // "Казна": the guild's bank, for any member.
+        if (!e.Handled && e.Mobile.InRange(Location, 12) && e.Speech.Contains("казна", System.StringComparison.OrdinalIgnoreCase))
+        {
+            e.Handled = true;
+            Gumps.GuildTreasuryGump.DisplayTo(e.Mobile);
+        }
+
         base.OnSpeech(e);
     }
 

@@ -47,8 +47,8 @@ namespace Server.Mobiles
             PackScroll(4, 7);
         }
 
-        public override string CorpseName => "a Putrefier corpse";
-        public override string DefaultName => "Putrefier";
+        public override string CorpseName => "труп Гнилостного";
+        public override string DefaultName => "Гнилостный";
 
         /*
         // TODO: uncomment once added

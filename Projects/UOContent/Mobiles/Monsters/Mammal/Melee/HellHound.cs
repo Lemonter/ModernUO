@@ -40,8 +40,8 @@ namespace Server.Mobiles
             PackItem(new SulfurousAsh(5));
         }
 
-        public override string CorpseName => "a hell hound corpse";
-        public override string DefaultName => "a hell hound";
+        public override string CorpseName => "труп адской гончей";
+        public override string DefaultName => "адская гончая";
         public override int Meat => 1;
         public override FoodType FavoriteFood => FoodType.Meat;
         public override PackInstinct PackInstinct => PackInstinct.Canine;

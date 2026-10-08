@@ -43,8 +43,8 @@ namespace Server.Mobiles
             PackItem(new Ribs());
         }
 
-        public override string CorpseName => "a troglodyte corpse";
-        public override string DefaultName => "a troglodyte";
+        public override string CorpseName => "труп троглодита";
+        public override string DefaultName => "троглодит";
         public override bool CanHeal => true;
 
         public override void GenerateLoot()

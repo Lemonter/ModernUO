@@ -51,7 +51,7 @@ namespace Server.Mobiles
             PackItem(new Arrow(Utility.RandomMinMax(500, 700)));
         }
 
-        public override string CorpseName => "a corpse of Twaulo";
+        public override string CorpseName => "труп Тваулo";
         public override ChampionSkullType SkullType => ChampionSkullType.Pain;
 
         public override Type[] UniqueList => new[] { typeof(Quell) };
@@ -60,7 +60,7 @@ namespace Server.Mobiles
 
         public override MonsterStatuetteType[] StatueTypes => new[] { MonsterStatuetteType.DreadHorn };
 
-        public override string DefaultName => "Twaulo";
+        public override string DefaultName => "Тваулo";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

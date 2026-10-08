@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Server.Items;
 
 namespace Server.Engines.Craft;
@@ -684,15 +684,15 @@ public class DefBlacksmithy : CraftSystem
 
         // Add every material you want the player to be able to choose from
         // This will override the overridable material
-        AddSubRes(typeof(IronIngot), 1044022, 00.0, 1044036, 1044267);
-        AddSubRes(typeof(DullCopperIngot), 1044023, 65.0, 1044036, 1044268);
-        AddSubRes(typeof(ShadowIronIngot), 1044024, 70.0, 1044036, 1044268);
-        AddSubRes(typeof(CopperIngot), 1044025, 75.0, 1044036, 1044268);
-        AddSubRes(typeof(BronzeIngot), 1044026, 80.0, 1044036, 1044268);
-        AddSubRes(typeof(GoldIngot), 1044027, 85.0, 1044036, 1044268);
-        AddSubRes(typeof(AgapiteIngot), 1044028, 90.0, 1044036, 1044268);
-        AddSubRes(typeof(VeriteIngot), 1044029, 95.0, 1044036, 1044268);
-        AddSubRes(typeof(ValoriteIngot), 1044030, 99.0, 1044036, 1044268);
+        // Наши 24 металла вместо девяти ванильных. Список строится из MahaonMetalTable,
+        // чтобы добавленный туда металл появлялся в меню сам, без правки здесь.
+        //
+        // SetSubRes выше остаётся ванильным typeof(IronIngot) НАМЕРЕННО: он не материал,
+        // а метка «в этом рецепте идёт металл». Мутация ресурса в ConsumeRes срабатывает
+        // по совпадению типа рецепта с ResType и подставляет тип ВЫБРАННОЙ строки, так что
+        // сотню рецептов ниже переписывать не пришлось — они как ссылались на
+        // typeof(IronIngot), так и ссылаются.
+        Systems.MahaonMetals.MahaonCraftMetals.AddMetalSubResources(this);
 
         SetSubRes2(typeof(RedScales), 1060875);
 

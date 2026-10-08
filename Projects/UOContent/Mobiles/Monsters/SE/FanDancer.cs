@@ -53,8 +53,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a fan dancer corpse";
-        public override string DefaultName => "a fan dancer";
+        public override string CorpseName => "труп танцовщицы с веером";
+        public override string DefaultName => "танцовщица с веером";
 
         public override bool Uncalmable => true;
 

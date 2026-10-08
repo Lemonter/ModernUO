@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 80;
         }
 
-        public override string CorpseName => "a succubus corpse";
-        public override string DefaultName => "a succubus";
+        public override string CorpseName => "труп суккуба";
+        public override string DefaultName => "суккуб";
 
         public override int Meat => 1;
         public override int TreasureMapLevel => 5;

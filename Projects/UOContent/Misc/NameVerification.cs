@@ -93,11 +93,11 @@ public static class NameVerification
     {
         if (Validate(e.ArgString, 2, 16, true, false, true, 1, SpaceDashPeriodQuote))
         {
-            e.Mobile.SendMessage(0x59, "That name is considered valid.");
+            e.Mobile.SendMessage(0x59, "Такое имя допустимо.");
         }
         else
         {
-            e.Mobile.SendMessage(0x22, "That name is considered invalid.");
+            e.Mobile.SendMessage(0x22, "Такое имя недопустимо.");
         }
     }
 

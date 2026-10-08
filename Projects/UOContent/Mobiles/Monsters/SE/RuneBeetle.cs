@@ -63,8 +63,8 @@ namespace Server.Mobiles
             MinTameSkill = 93.9;
         }
 
-        public override string CorpseName => "a rune beetle corpse";
-        public override string DefaultName => "a rune beetle";
+        public override string CorpseName => "труп рунного жука";
+        public override string DefaultName => "рунный жук";
 
         public override Poison PoisonImmune => Poison.Greater;
         public override Poison HitPoison => Poison.Greater;

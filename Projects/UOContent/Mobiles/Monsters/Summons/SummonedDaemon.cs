@@ -67,7 +67,7 @@ namespace Server.Mobiles
         }
         
         public override bool DeleteCorpseOnDeath => Summoned;
-        public override string CorpseName => "a daemon corpse";
+        public override string CorpseName => "труп демона";
         
         public override double DispelDifficulty => 125.0;
         public override double DispelFocus => 45.0;

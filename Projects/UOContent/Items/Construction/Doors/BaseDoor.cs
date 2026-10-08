@@ -74,43 +74,31 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
         Movable = false;
     }
 
-    [SerializableProperty(1)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public bool Open
+    [SerializableField(1, fieldChanged: nameof(OnOpenChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    private bool _open;
+
+    private void OnOpenChanged(bool oldValue, bool newValue)
     {
-        get => _open;
-        set
+        ItemID = _open ? _openedId : _closedId;
+        if (_open)
         {
-            if (_open != value)
-            {
-                _open = value;
-
-                ItemID = _open ? _openedId : _closedId;
-
-                if (_open)
-                {
-                    Location = new Point3D(X + _offset.X, Y + _offset.Y, Z + _offset.Z);
-                }
-                else
-                {
-                    Location = new Point3D(X - _offset.X, Y - _offset.Y, Z - _offset.Z);
-                }
-
-                Effects.PlaySound(this, _open ? OpenedSound : ClosedSound);
-
-                if (_open)
-                {
-                    _timer ??= new InternalTimer(this);
-                    _timer.Start();
-                }
-                else
-                {
-                    _timer.Stop();
-                    _timer = null;
-                }
-
-                this.MarkDirty();
-            }
+            Location = new Point3D(X + _offset.X, Y + _offset.Y, Z + _offset.Z);
+        }
+        else
+        {
+            Location = new Point3D(X - _offset.X, Y - _offset.Y, Z - _offset.Z);
+        }
+        Effects.PlaySound(this, _open ? OpenedSound : ClosedSound);
+        if (_open)
+        {
+            _timer ??= new InternalTimer(this);
+            _timer.Start();
+        }
+        else
+        {
+            _timer.Stop();
+            _timer = null;
         }
     }
 
@@ -134,7 +122,7 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
     private static void Link_OnCommand(CommandEventArgs e)
     {
         e.Mobile.BeginTarget(-1, false, TargetFlags.None, Link_OnFirstTarget);
-        e.Mobile.SendMessage("Target the first door to link.");
+        e.Mobile.SendMessage("Укажи первую дверь для связки.");
     }
 
     private static void Link_OnFirstTarget(Mobile from, object targeted)
@@ -142,12 +130,12 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
         if (targeted is not BaseDoor door)
         {
             from.BeginTarget(-1, false, TargetFlags.None, Link_OnFirstTarget);
-            from.SendMessage("That is not a door. Try again.");
+            from.SendMessage("Это не дверь. Попробуй ещё раз.");
         }
         else
         {
             from.BeginTarget(-1, false, TargetFlags.None, Link_OnSecondTarget, door);
-            from.SendMessage("Target the second door to link.");
+            from.SendMessage("Укажи вторую дверь для связки.");
         }
     }
 
@@ -156,13 +144,13 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
         if (targeted is not BaseDoor second)
         {
             from.BeginTarget(-1, false, TargetFlags.None, Link_OnSecondTarget, first);
-            from.SendMessage("That is not a door. Try again.");
+            from.SendMessage("Это не дверь. Попробуй ещё раз.");
         }
         else
         {
             first.Link = second;
             second.Link = first;
-            from.SendMessage("The doors have been linked.");
+            from.SendMessage("Двери связаны.");
         }
     }
 
@@ -170,7 +158,7 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
     private static void ChainLink_OnCommand(CommandEventArgs e)
     {
         e.Mobile.BeginTarget(-1, false, TargetFlags.None, ChainLink_OnTarget, new List<BaseDoor>());
-        e.Mobile.SendMessage("Target the first of a sequence of doors to link.");
+        e.Mobile.SendMessage("Укажи первую дверь в цепочке.");
     }
 
     private static void ChainLink_OnTarget(Mobile from, object targeted, List<BaseDoor> list)
@@ -178,7 +166,7 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
         if (targeted is not BaseDoor door)
         {
             from.BeginTarget(-1, false, TargetFlags.None, ChainLink_OnTarget, list);
-            from.SendMessage("That is not a door. Try again.");
+            from.SendMessage("Это не дверь. Попробуй ещё раз.");
         }
         else
         {
@@ -191,19 +179,19 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
                         list[i].Link = list[(i + 1) % list.Count];
                     }
 
-                    from.SendMessage("The chain of doors have been linked.");
+                    from.SendMessage("Цепочка дверей связана.");
                 }
                 else
                 {
                     from.BeginTarget(-1, false, TargetFlags.None, ChainLink_OnTarget, list);
-                    from.SendMessage("You have not yet targeted two unique doors. Target the second door to link.");
+                    from.SendMessage("Две разные двери ещё не указаны. Укажи вторую.");
                 }
             }
             else if (list.Contains(door))
             {
                 from.BeginTarget(-1, false, TargetFlags.None, ChainLink_OnTarget, list);
                 from.SendMessage(
-                    "You have already targeted that door. Target another door, or retarget the first door to complete the chain."
+                    "Эта дверь уже указана. Укажи другую или первую снова, чтобы замкнуть цепочку."
                 );
             }
             else
@@ -214,11 +202,11 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
 
                 if (list.Count == 1)
                 {
-                    from.SendMessage("Target the second door to link.");
+                    from.SendMessage("Укажи вторую дверь для связки.");
                 }
                 else
                 {
-                    from.SendMessage("Target another door to link. To complete the chain, retarget the first door.");
+                    from.SendMessage("Укажи следующую дверь. Чтобы замкнуть цепочку, укажи первую снова.");
                 }
             }
         }
@@ -335,6 +323,13 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
 
     public virtual void Use(Mobile from)
     {
+        // A city apartment's door keeps strangers out once someone owns it.
+        if (!_open && Systems.MahaonWorld.MahaonCityHouseSystem.DoorBlocks(this, from))
+        {
+            from.LocalOverheadMessage(MessageType.Regular, 0x3B2, 502503); // That is locked.
+            return;
+        }
+
         if (Locked && !_open && UseLocks())
         {
             if (from.AccessLevel >= AccessLevel.GameMaster)
@@ -496,8 +491,9 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
             }
             else
             {
-                _current = _current.Link;
-                valid = _current?.Deleted == false && _current != _door;
+                var next = _current.Link;
+                valid = next?.Deleted == false && !IsVisited(next);
+                _current = next;
             }
 
             if (!valid)
@@ -507,6 +503,27 @@ public abstract partial class BaseDoor : Item, ILockable, ITelekinesisable
             }
 
             return valid;
+        }
+
+        // Links are set pairwise by GMs, so a chain can loop back to a door other than the start
+        private readonly bool IsVisited(BaseDoor door)
+        {
+            var visited = _door;
+
+            while (true)
+            {
+                if (visited == door)
+                {
+                    return true;
+                }
+
+                if (visited == _current || visited == null)
+                {
+                    return false;
+                }
+
+                visited = visited.Link;
+            }
         }
 
         public BaseDoor Current

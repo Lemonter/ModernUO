@@ -34,8 +34,8 @@ namespace Server.Mobiles
             VirtualArmor = 24;
         }
 
-        public override string CorpseName => "a maggoty corpse";
-        public override string DefaultName => "a mound of maggots";
+        public override string CorpseName => "червивый труп";
+        public override string DefaultName => "куча личинок";
 
         public override Poison PoisonImmune => Poison.Lethal;
 

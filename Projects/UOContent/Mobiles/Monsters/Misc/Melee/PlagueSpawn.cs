@@ -69,7 +69,7 @@ namespace Server.Mobiles
             VirtualArmor = 20;
         }
 
-        public override string CorpseName => "a plague spawn corpse";
+        public override string CorpseName => "труп чумного отродья";
 
         [CommandProperty(AccessLevel.GameMaster)]
         public Mobile Owner { get; set; }
@@ -79,7 +79,7 @@ namespace Server.Mobiles
 
         public override bool AlwaysMurderer => true;
 
-        public override string DefaultName => "a plague spawn";
+        public override string DefaultName => "чумное отродье";
 
         public override void DisplayPaperdollTo(Mobile to)
         {

@@ -1,5 +1,6 @@
 using ModernUO.Serialization;
 using Server.Items;
+using Server.Systems.MahaonWorld;
 
 namespace Server.Mobiles
 {
@@ -39,9 +40,9 @@ namespace Server.Mobiles
             VirtualArmor = 15;
         }
 
-        public override string CorpseName => "a chaos daemon corpse";
+        public override string CorpseName => "труп демона хаоса";
 
-        public override string DefaultName => "a chaos daemon";
+        public override string DefaultName => "демон хаоса";
 
         public override WeaponAbility GetWeaponAbility() => WeaponAbility.CrushingBlow;
 
@@ -49,6 +50,13 @@ namespace Server.Mobiles
         {
             AddLoot(LootPack.Average);
             AddLoot(LootPack.Meager);
+        }
+
+        public override void OnCarve(Mobile from, Corpse corpse, Item with)
+        {
+            base.OnCarve(from, corpse, with);
+            MahaonCarvedBoneSystem.TryDropDemonBone(from, corpse);
+            corpse.Carved = true;
         }
     }
 }

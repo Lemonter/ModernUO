@@ -41,8 +41,8 @@ namespace Server.Mobiles
             Karma = -21000;
         }
 
-        public override string CorpseName => "a Spite corpse";
-        public override string DefaultName => "Spite";
+        public override string CorpseName => "труп Злобы";
+        public override string DefaultName => "Злоба";
         public override int DefaultHue => 0x21;
 
         public override bool GivesMLMinorArtifact => true;

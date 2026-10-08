@@ -17,7 +17,7 @@ using EDI = Server.Mobiles.EscortDestinationInfo;
 
 namespace Server.Mobiles;
 
-[SerializationGenerator(2, false)]
+[SerializationGenerator(3, false)]
 public partial class BaseEscortable : BaseCreature
 {
     private static readonly ILogger logger = LogFactory.GetLogger(typeof(BaseEscortable));
@@ -158,16 +158,22 @@ public partial class BaseEscortable : BaseCreature
     [SerializableField(0, setter: "private")]
     private string _destinationString;
 
-    [TimerDrift]
     [SerializableField(1)]
+    [DeserializeTimer(nameof(DeserializeDeleteTimer))]
     private Timer _deleteTimer;
 
-    [DeserializeTimerField(1)]
-    private void DeserializeDeleteTimer(TimeSpan delay)
+    private void DeserializeDeleteTimer(TimeSpan delay) => Timer.DelayCall(delay, Delete);
+
+    private void MigrateFrom(V2Content content)
     {
-        if (delay >= TimeSpan.Zero)
+        _destinationString = content.DestinationString;
+        _mlQuestType = content.MlQuestType;
+        _mlQuestDestinationMessage = content.MlQuestDestinationMessage;
+        _mlQuestPaymentMessage = content.MlQuestPaymentMessage;
+
+        if (content.DeleteTimerDelay != TimeSpan.MinValue)
         {
-            Timer.DelayCall(delay, Delete);
+            DeserializeDeleteTimer(content.DeleteTimerDelay);
         }
     }
 
@@ -407,7 +413,7 @@ public partial class BaseEscortable : BaseCreature
         if (EscortTable.TryGetValue(m, out var escortable) && escortable?.Deleted == false &&
             escortable.GetEscorter() == m)
         {
-            Say("I see you already have an escort.");
+            Say("Я вижу, тебя уже кто-то сопровождает.");
             return false;
         }
 
@@ -418,11 +424,11 @@ public partial class BaseEscortable : BaseCreature
 
             if (minutes == 1)
             {
-                Say($"You must rest {minutes} minute before we set out on this journey.");
+                Say($"Мне нужно отдохнуть {minutes} минуту, прежде чем мы отправимся в путь.");
             }
             else
             {
-                Say($"You must rest {minutes} minutes before we set out on this journey.");
+                Say($"Мне нужно отдохнуть {minutes} минут, прежде чем мы отправимся в путь.");
             }
 
             return false;

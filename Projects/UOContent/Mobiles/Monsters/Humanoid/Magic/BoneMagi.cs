@@ -47,8 +47,8 @@ namespace Server.Mobiles
             PackItem(new Bone());
         }
 
-        public override string CorpseName => "a skeletal corpse";
-        public override string DefaultName => "a bone mage";
+        public override string CorpseName => "труп скелета";
+        public override string DefaultName => "костяной маг";
 
         public override bool BleedImmune => true;
 

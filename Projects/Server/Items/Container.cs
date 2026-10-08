@@ -44,10 +44,10 @@ public partial class Container : Item
     internal int _version;
 
     [SerializableField(3)]
+    [SaveFlag(nameof(ShouldSerializeLiftOverride))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private bool _liftOverride;
 
-    [SerializableFieldSaveFlag(3)]
     private bool ShouldSerializeLiftOverride() => _liftOverride;
 
     public Container(int itemID) : base(itemID)
@@ -84,6 +84,7 @@ public partial class Container : Item
 
     [EncodedInt]
     [SerializableProperty(0)]
+    [SaveFlag(nameof(ShouldSerializeMaxItems), nameof(MaxItemsDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int MaxItems
     {
@@ -96,14 +97,13 @@ public partial class Container : Item
         }
     }
 
-    [SerializableFieldSaveFlag(0)]
     private bool ShouldSerializeMaxItems() => _maxItems != -1;
 
-    [SerializableFieldDefault(0)]
     private int MaxItemsDefaultValue() => -1;
 
     [EncodedInt]
     [SerializableProperty(1)]
+    [SaveFlag(nameof(ShouldSerializeGumpId), nameof(GumpIDDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int GumpID
     {
@@ -115,14 +115,13 @@ public partial class Container : Item
         }
     }
 
-    [SerializableFieldSaveFlag(1)]
     private bool ShouldSerializeGumpId() => _gumpID != -1;
 
-    [SerializableFieldDefault(1)]
     private int GumpIDDefaultValue() => -1;
 
     [EncodedInt]
     [SerializableProperty(2)]
+    [SaveFlag(nameof(ShouldSerializeDropSound), nameof(DropSoundDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int DropSound
     {
@@ -134,10 +133,8 @@ public partial class Container : Item
         }
     }
 
-    [SerializableFieldSaveFlag(2)]
     private bool ShouldSerializeDropSound() => _dropSound != -1;
 
-    [SerializableFieldDefault(2)]
     private int DropSoundDefaultValue() => -1;
 
     [CommandProperty(AccessLevel.GameMaster)]
@@ -155,6 +152,27 @@ public partial class Container : Item
     public virtual int DefaultMaxWeight => GlobalMaxWeight;
 
     public virtual bool IsDecoContainer => !Movable && !IsLockedDown && !IsSecure && Parent == null && !LiftOverride;
+
+    /// <summary>
+    /// True when this container's direct contents decay on their own schedule: a locked-down,
+    /// non-secure container in a house. Containers whose contents are part of the object
+    /// (game boards, aquariums) override this to false.
+    /// </summary>
+    public virtual bool ContentsDecay => IsLockedDown && !IsSecure;
+
+    /// <summary>
+    /// Re-evaluates decay registration for every direct child. Call when
+    /// <see cref="ContentsDecay" /> may have changed.
+    /// </summary>
+    public void UpdateContentsDecayRegistration()
+    {
+        var items = Items;
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            items[i].UpdateDecayRegistration();
+        }
+    }
 
     public static int GlobalMaxItems { get; set; } = 125;
 

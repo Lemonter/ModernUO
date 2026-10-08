@@ -687,7 +687,7 @@ namespace Server.Engines.ConPVP
                         {
                             for (var j = 0; j < part.Players.Count; ++j)
                             {
-                                part.Players[j].SendMessage("You have been disqualified from the tournament.");
+                                part.Players[j].SendMessage("Тебя дисквалифицировали с турнира.");
                             }
 
                             Participants.RemoveAt(i);
@@ -871,7 +871,7 @@ namespace Server.Engines.ConPVP
 
                             for (var j = 0; j < part.Players.Count; ++j)
                             {
-                                part.Players[j].SendMessage("You have been disqualified from the tournament.");
+                                part.Players[j].SendMessage("Тебя дисквалифицировали с турнира.");
                             }
 
                             Undefeated.RemoveAt(i);

@@ -41,8 +41,13 @@ public static class ItemIdentification
 
             if (o is Item item)
             {
-                if (item is IIdentifiable identifiable && from.CheckTargetSkill(SkillName.ItemID, item, 0, 100))
+                if (item is IIdentifiable identifiable && from.CheckTargetSkill(
+                    SkillName.ItemID, item,
+                    0 - Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(from, Systems.MahaonCombat.MinorSkill.ItemID),
+                    100
+                ))
                 {
+                    Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(from, Systems.MahaonCombat.MinorSkill.ItemID);
                     identifiable.Identified = true;
                     identified = true;
                 }

@@ -44,8 +44,8 @@ namespace Server.Mobiles
             Karma = -8000;
         }
 
-        public override string CorpseName => "a rai-ju corpse";
-        public override string DefaultName => "a Rai-Ju";
+        public override string CorpseName => "труп рай-дзю";
+        public override string DefaultName => "рай-дзю";
         public override bool BleedImmune => true;
 
         public override void GenerateLoot()

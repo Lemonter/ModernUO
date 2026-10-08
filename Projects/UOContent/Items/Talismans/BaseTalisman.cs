@@ -128,136 +128,131 @@ public partial class BaseTalisman : Item, IAosItem
 
     [SerializedIgnoreDupe]
     [SerializableField(0, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeAttributes), nameof(AttributesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosAttributes _attributes;
 
-    [SerializableFieldSaveFlag(0)]
     public bool ShouldSerializeAttributes() => !_attributes.IsEmpty;
 
-    [SerializableFieldDefault(0)]
     private AosAttributes AttributesDefaultValue() => new(this);
 
     [SerializedIgnoreDupe]
     [SerializableField(1, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeSkillBonuses), nameof(SkillBonusesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosSkillBonuses _skillBonuses;
 
-    [SerializableFieldSaveFlag(1)]
     public bool ShouldSerializeSkillBonuses() => !_skillBonuses.IsEmpty;
 
-    [SerializableFieldDefault(1)]
     private AosSkillBonuses SkillBonusesDefaultValue() => new(this);
 
     [SerializedIgnoreDupe]
     [InvalidateProperties]
     [SerializableField(2)]
+    [SaveFlag(nameof(ShouldSerializeProtection), nameof(ProtectionDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private TalismanAttribute _protection;
 
-    [SerializableFieldSaveFlag(2)]
     public bool ShouldSerializeProtection() => !_protection.IsEmpty;
 
-    [SerializableFieldDefault(2)]
-    private TalismanAttribute ProtectionDefaultValue() => new();
+    private TalismanAttribute ProtectionDefaultValue() => new(this);
 
     [SerializedIgnoreDupe]
     [InvalidateProperties]
     [SerializableField(3)]
+    [SaveFlag(nameof(ShouldSerializeKiller), nameof(KillerDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private TalismanAttribute _killer;
 
-    [SerializableFieldSaveFlag(3)]
     public bool ShouldSerializeKiller() => !_killer.IsEmpty;
 
-    [SerializableFieldDefault(3)]
-    private TalismanAttribute KillerDefaultValue() => new();
+    private TalismanAttribute KillerDefaultValue() => new(this);
 
     [SerializedIgnoreDupe]
     [InvalidateProperties]
     [SerializableField(4)]
+    [SaveFlag(nameof(ShouldSerializeSummoner), nameof(SummonerDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private TalismanAttribute _summoner;
 
-    [SerializableFieldSaveFlag(4)]
     public bool ShouldSerializeSummoner() => !_summoner.IsEmpty;
 
-    [SerializableFieldDefault(4)]
-    private TalismanAttribute SummonerDefaultValue() => new();
+    private TalismanAttribute SummonerDefaultValue() => new(this);
 
     [InvalidateProperties]
     [SerializableField(5)]
+    [SaveFlag(nameof(ShouldSerializeRemoval))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private TalismanRemoval _removal;
 
-    [SerializableFieldSaveFlag(5)]
     public bool ShouldSerializeRemoval() => _removal != TalismanRemoval.None;
 
     [InvalidateProperties]
     [SerializableField(6)]
+    [SaveFlag(nameof(ShouldSerializeSkill))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private SkillName _skill;
 
-    [SerializableFieldSaveFlag(6)]
     public bool ShouldSerializeSkill() => (int)_skill != 0;
 
     [EncodedInt]
     [InvalidateProperties]
     [SerializableField(7)]
+    [SaveFlag(nameof(ShouldSerializeSuccessBonus))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _successBonus;
 
-    [SerializableFieldSaveFlag(7)]
     public bool ShouldSerializeSuccessBonus() => _successBonus != 0;
 
     [EncodedInt]
     [InvalidateProperties]
     [SerializableField(8)]
+    [SaveFlag(nameof(ShouldSerializeExceptionalBonus))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _exceptionalBonus;
 
-    [SerializableFieldSaveFlag(8)]
     public bool ShouldSerializeExceptionalBonus() => _exceptionalBonus != 0;
 
     [EncodedInt]
     [InvalidateProperties]
     [SerializableField(9)]
+    [SaveFlag(nameof(ShouldSerializeMaxCharges))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _maxCharges;
 
-    [SerializableFieldSaveFlag(9)]
     public bool ShouldSerializeMaxCharges() => _maxCharges != 0;
 
     [EncodedInt]
     [InvalidateProperties]
     [SerializableField(11)]
+    [SaveFlag(nameof(ShouldSerializeMaxChargeTime))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _maxChargeTime;
 
-    [SerializableFieldSaveFlag(11)]
     public bool ShouldSerializeMaxChargeTime() => _maxChargeTime != 0;
 
     [EncodedInt]
     [InvalidateProperties]
     [SerializableField(12)]
+    [SaveFlag(nameof(ShouldSerializeChargeTime))]
     private int _chargeTime;
 
-    [SerializableFieldSaveFlag(12)]
     public bool ShouldSerializeChargeTime() => _chargeTime != 0;
 
     [InvalidateProperties]
     [SerializableField(13)]
+    [SaveFlag(nameof(ShouldSerializeBlessed))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private bool _blessed;
 
-    [SerializableFieldSaveFlag(13)]
     public bool ShouldSerializeBlessed() => _blessed;
 
     [InvalidateProperties]
     [SerializableField(14)]
+    [SaveFlag(nameof(ShouldSerializeSlayer))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private TalismanSlayerName _slayer;
 
-    [SerializableFieldSaveFlag(14)]
     public bool ShouldSerializeSlayer() => _slayer != TalismanSlayerName.None;
 
     private BaseCreature _creature;
@@ -272,9 +267,9 @@ public partial class BaseTalisman : Item, IAosItem
     {
         Layer = Layer.Talisman;
 
-        _protection = new TalismanAttribute();
-        _killer = new TalismanAttribute();
-        _summoner = new TalismanAttribute();
+        _protection = new TalismanAttribute(this);
+        _killer = new TalismanAttribute(this);
+        _summoner = new TalismanAttribute(this);
         Attributes = new AosAttributes(this);
         SkillBonuses = new AosSkillBonuses(this);
     }
@@ -284,26 +279,20 @@ public partial class BaseTalisman : Item, IAosItem
     public override int LabelNumber => 1071023; // Talisman
     public virtual bool ForceShowName => false; // used to override default summoner/removal name
 
-    [SerializableProperty(10)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public int Charges
+    [SerializableField(10, fieldChanged: nameof(OnChargesChanged))]
+    [SaveFlag(nameof(ShouldSerializeCharges))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private int _charges;
+
+    private void OnChargesChanged(int oldValue, int newValue)
     {
-        get => _charges;
-        set
+        if (_chargeTime > 0)
         {
-            _charges = value;
-
-            if (_chargeTime > 0)
-            {
-                StartTimer();
-            }
-
-            InvalidateProperties();
-            this.MarkDirty();
+            StartTimer();
         }
     }
 
-    [SerializableFieldSaveFlag(10)]
     public bool ShouldSerializeCharges() => _charges != 0;
 
     public static void Configure()
@@ -330,9 +319,9 @@ public partial class BaseTalisman : Item, IAosItem
             return;
         }
 
-        talisman._summoner = new TalismanAttribute(_summoner);
-        talisman._protection = new TalismanAttribute(_protection);
-        talisman._killer = new TalismanAttribute(_killer);
+        talisman._summoner = new TalismanAttribute(talisman, _summoner);
+        talisman._protection = new TalismanAttribute(talisman, _protection);
+        talisman._killer = new TalismanAttribute(talisman, _killer);
         talisman.Attributes = new AosAttributes(newItem, Attributes);
         talisman.SkillBonuses = new AosSkillBonuses(newItem, SkillBonuses);
     }
@@ -513,7 +502,7 @@ public partial class BaseTalisman : Item, IAosItem
                     );
 
                     mob.Summoned = false;
-                    mob.ControlOrder = OrderType.Friend;
+                    mob.IssueOrder(OrderType.Follow, null, from);
 
                     _creature = mob;
                 }
@@ -563,6 +552,9 @@ public partial class BaseTalisman : Item, IAosItem
     public override void GetProperties(IPropertyList list)
     {
         base.GetProperties(list);
+
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
         if (Blessed)
         {
@@ -671,17 +663,17 @@ public partial class BaseTalisman : Item, IAosItem
 
     public virtual void SetSummoner(Type type, TextDefinition name)
     {
-        _summoner = new TalismanAttribute(type, name);
+        _summoner = new TalismanAttribute(this, type, name);
     }
 
     public virtual void SetProtection(Type type, TextDefinition name, int amount)
     {
-        _protection = new TalismanAttribute(type, name, amount);
+        _protection = new TalismanAttribute(this, type, name, amount);
     }
 
     public virtual void SetKiller(Type type, TextDefinition name, int amount)
     {
-        _killer = new TalismanAttribute(type, name, amount);
+        _killer = new TalismanAttribute(this, type, name, amount);
     }
 
     public virtual void StartTimer()
@@ -723,18 +715,18 @@ public partial class BaseTalisman : Item, IAosItem
 
     public static Type GetRandomSummonType() => _summons.RandomElement();
 
-    public static TalismanAttribute GetRandomSummoner()
+    public static TalismanAttribute GetRandomSummoner(BaseTalisman owner)
     {
         if (Utility.RandomDouble() < 0.975)
         {
-            return new TalismanAttribute();
+            return new TalismanAttribute(owner);
         }
 
         var num = Utility.Random(_summons.Length);
 
         return num > 14
-            ? new TalismanAttribute(_summons[num], _summonLabels[num], 10)
-            : new TalismanAttribute(_summons[num], _summonLabels[num]);
+            ? new TalismanAttribute(owner, _summons[num], _summonLabels[num], 10)
+            : new TalismanAttribute(owner, _summons[num], _summonLabels[num]);
     }
 
     public static TalismanRemoval GetRandomRemoval()
@@ -747,32 +739,32 @@ public partial class BaseTalisman : Item, IAosItem
         return TalismanRemoval.None;
     }
 
-    public static TalismanAttribute GetRandomKiller() => GetRandomKiller(true);
+    public static TalismanAttribute GetRandomKiller(BaseTalisman owner) => GetRandomKiller(owner, true);
 
-    public static TalismanAttribute GetRandomKiller(bool includingNone)
+    public static TalismanAttribute GetRandomKiller(BaseTalisman owner, bool includingNone)
     {
         if (includingNone && Utility.RandomBool())
         {
-            return new TalismanAttribute();
+            return new TalismanAttribute(owner);
         }
 
         var num = Utility.Random(_killers.Length);
 
-        return new TalismanAttribute(_killers[num], _killerLabels[num], Utility.RandomMinMax(10, 100));
+        return new TalismanAttribute(owner, _killers[num], _killerLabels[num], Utility.RandomMinMax(10, 100));
     }
 
-    public static TalismanAttribute GetRandomProtection() => GetRandomProtection(true);
+    public static TalismanAttribute GetRandomProtection(BaseTalisman owner) => GetRandomProtection(owner, true);
 
-    public static TalismanAttribute GetRandomProtection(bool includingNone)
+    public static TalismanAttribute GetRandomProtection(BaseTalisman owner, bool includingNone)
     {
         if (includingNone && Utility.RandomBool())
         {
-            return new TalismanAttribute();
+            return new TalismanAttribute(owner);
         }
 
         var num = Utility.Random(_killers.Length);
 
-        return new TalismanAttribute(_killers[num], _killerLabels[num], Utility.RandomMinMax(5, 60));
+        return new TalismanAttribute(owner, _killers[num], _killerLabels[num], Utility.RandomMinMax(5, 60));
     }
 
     public static SkillName GetRandomSkill() => _skills.RandomElement();

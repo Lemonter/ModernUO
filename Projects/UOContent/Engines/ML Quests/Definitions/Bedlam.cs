@@ -90,7 +90,7 @@ public partial class Kia : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Kia";
+    public override string DefaultName => "Кия";
 }
 
 [QuesterName("Emerillo (Bedlam)")]
@@ -119,7 +119,7 @@ public partial class Emerillo : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Emerillo";
+    public override string DefaultName => "Эмерилло";
 
     public override bool CanShout => true;
 
@@ -152,5 +152,5 @@ public partial class Nythalia : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Mythalia";
+    public override string DefaultName => "Миталия";
 }

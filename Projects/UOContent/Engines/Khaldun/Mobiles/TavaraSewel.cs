@@ -62,7 +62,7 @@ public partial class TavaraSewel : BaseCreature
 
     public override bool ShowFameTitle => false;
     public override bool DeleteCorpseOnDeath => true;
-    public override string DefaultName => "Tavara Sewel";
+    public override string DefaultName => "Тавара Сьюэл";
 
     public override bool AlwaysMurderer => true;
 

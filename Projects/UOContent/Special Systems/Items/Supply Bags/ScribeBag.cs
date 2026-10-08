@@ -13,5 +13,5 @@ public partial class ScribeBag : Bag
         DropItem(new BlankScroll(amount));
     }
 
-    public override string DefaultName => "a Scribe Kit";
+    public override string DefaultName => "набор писца";
 }

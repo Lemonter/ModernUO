@@ -438,7 +438,7 @@ public class BlacksmithMenu : ItemListMenu
             var menu = new BlacksmithMenu(from, _tool, (Category)(craftIndex - MainActionCount));
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything in that category.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 
@@ -451,7 +451,7 @@ public class BlacksmithMenu : ItemListMenu
             var menu = new BlacksmithMenu(from, _tool, (Category)craftIndex);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything in that category.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 
@@ -496,7 +496,7 @@ public class BlacksmithMenu : ItemListMenu
             }
 
             // Invalid target — prompt for ingots
-            from.SendMessage("Target the ingots you wish to use.");
+            from.SendMessage("Укажи слитки.");
             from.Target = new BlacksmithResourceTarget(tool, afterSelect);
             return;
         }
@@ -526,7 +526,7 @@ public class BlacksmithMenu : ItemListMenu
         }
         else
         {
-            from.SendMessage("Target the ingots you wish to use.");
+            from.SendMessage("Укажи слитки.");
             from.Target = new BlacksmithResourceTarget(tool, afterSelect);
         }
     }
@@ -618,7 +618,7 @@ public class BlacksmithResourceTarget : Target
             }
         }
 
-        from.SendMessage("That is not a valid ingot.");
+        from.SendMessage("Это не подходящий слиток.");
         from.Target = new BlacksmithResourceTarget(_tool, _afterSelect);
     }
 }

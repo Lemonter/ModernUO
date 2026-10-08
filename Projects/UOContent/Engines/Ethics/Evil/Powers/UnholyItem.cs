@@ -16,7 +16,7 @@ public sealed class UnholyItem : Power
     public override void BeginInvoke(Player from)
     {
         from.Mobile.BeginTarget(12, false, TargetFlags.None, Power_OnTarget, from);
-        from.Mobile.SendMessage("Which item do you wish to imbue?");
+        from.Mobile.SendMessage("Какую вещь наделить силой?");
     }
 
     private void Power_OnTarget(Mobile fromMobile, object obj, Player from)

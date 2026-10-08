@@ -1,8 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Server.Engines.ConPVP;
 using Server.Engines.PartySystem;
 using Server.Factions;
 using Server.Guilds;
+using Server.Systems.MahaonBots;
 using Server.Items;
 using Server.Mobiles;
 using Server.Multis;
@@ -228,14 +229,9 @@ namespace Server.Misc
             }
 
             if (bcTarg?.Controlled == true
-                || bcTarg?.Summoned == true && bcTarg.SummonMaster != from && bcTarg.SummonMaster.Player)
+                || bcTarg?.SummonMaster is { Player: true } summoner && summoner != from)
             {
                 return false; // Cannot harm other controlled mobiles from players
-            }
-
-            if (pmFrom == null && bcFrom != null && bcFrom.Summoned && target.Player)
-            {
-                return true; // Summons from monsters can attack players
             }
 
             if (target.Player)
@@ -275,7 +271,24 @@ namespace Server.Misc
                 return Notoriety.CanBeAttacked;
             }
 
-            Body body = target.Amount;
+            // BaseCreatures are deleted on death, so target.Owner is null after a server restart.
+            // The OwnerWasBaseCreature flag is the persisted snapshot that survives the live mobile.
+            var creature = target.Owner as BaseCreature;
+            var ownerWasCreature = target.OwnerWasBaseCreature || creature != null;
+
+            // A player's murderer and criminal status outrank guild standing, as on the live mobile.
+            if (!ownerWasCreature)
+            {
+                if (target.Murderer)
+                {
+                    return Notoriety.Murderer;
+                }
+
+                if (target.Criminal && (target.Map?.Rules & MapRules.HarmfulRestrictions) == 0)
+                {
+                    return Notoriety.Criminal;
+                }
+            }
 
             var sourceGuild = GetGuildFor(source.Guild as Guild, source);
             var targetGuild = GetGuildFor(target.Guild, target.Owner);
@@ -297,11 +310,7 @@ namespace Server.Misc
                 }
             }
 
-            // BaseCreatures are deleted on death, so target.Owner is null after a server restart.
-            // The OwnerWasBaseCreature flag is the persisted snapshot that survives the live mobile.
-            var creature = target.Owner as BaseCreature;
-
-            if (target.OwnerWasBaseCreature || creature != null)
+            if (ownerWasCreature)
             {
                 if (srcFaction != null && trgFaction != null && srcFaction != trgFaction && source.Map == Faction.Facet)
                 {
@@ -314,6 +323,7 @@ namespace Server.Misc
                 }
 
                 var actual = Notoriety.CanBeAttacked;
+                Body body = target.Amount;
 
                 if (target.Murderer || body.IsMonster && target.OwnerWasSummoned || target.OwnerWasAnimatedDead)
                 {
@@ -336,16 +346,6 @@ namespace Server.Misc
                 }
 
                 return Notoriety.Innocent;
-            }
-
-            if (target.Murderer || body.IsMonster)
-            {
-                return Notoriety.Murderer;
-            }
-
-            if (target.Criminal && (target.Map?.Rules & MapRules.HarmfulRestrictions) == 0)
-            {
-                return Notoriety.Criminal;
             }
 
             if (srcFaction != null && trgFaction != null && srcFaction != trgFaction && source.Map == Faction.Facet)
@@ -422,7 +422,7 @@ namespace Server.Misc
                     return Notoriety.CanBeAttacked;
                 }
 
-                master = bcTarg.ControlMaster;
+                master = bcTarg.Controlled ? bcTarg.ControlMaster : null;
 
                 if (Core.ML && master != null)
                 {
@@ -463,7 +463,20 @@ namespace Server.Misc
                     return Notoriety.Ally;
                 }
 
-                if (sourceGuild.IsEnemy(targetGuild))
+                // Гильдейские войны ботов живут в своей таблице (BotGuilds), а не в
+                // Guild.Enemies — см. развёрнутое объяснение почему в шапке BotGuilds.
+                // Из-за этого движок их попросту не видел: враг по войне оставался для
+                // него синим, а значит удар по нему шёл как нападение на невиновного
+                // (Mobile.IsHarmfulCriminal сравнивает ровно с Notoriety.Innocent) —
+                // бот сереет, и городская стража, которая теперь берёт и серых, идёт
+                // резать обоих участников совершенно законной войны.
+                //
+                // Здесь война становится видимой всему серверу разом: оранжевый цвет,
+                // удар без криминала, стража не вмешивается. Союзы из той же таблицы
+                // намеренно НЕ подставляются в ветку Ally выше — это сделало бы удар по
+                // союзнику тоже безнаказанным, а такого никто не просил.
+                if (sourceGuild.IsEnemy(targetGuild) ||
+                    BotGuilds.GetRelation(sourceGuild.Name, targetGuild.Name) == BotGuildRelation.War)
                 {
                     return Notoriety.Enemy;
                 }

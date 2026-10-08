@@ -28,7 +28,7 @@ public partial class VendorBackpack : Backpack
         {
             if (message)
             {
-                m.SendMessage("Imbued items may not be sold here.");
+                m.SendMessage("Наделённые вещи здесь не продаются.");
             }
 
             return false;

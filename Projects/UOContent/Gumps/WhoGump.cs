@@ -177,12 +177,12 @@ public class WhoGump : DynamicGump
 
                         if (m.Deleted)
                         {
-                            from.SendMessage("That player has deleted their character.");
+                            from.SendMessage("Этот игрок удалил персонажа.");
                             from.SendGump(new WhoGump(_mobiles, _page));
                         }
                         else if (m.NetState == null)
                         {
-                            from.SendMessage("That player is no longer online.");
+                            from.SendMessage("Этот игрок больше не в сети.");
                             from.SendGump(new WhoGump(_mobiles, _page));
                         }
                         else if (m == from || !m.Hidden || from.AccessLevel >= m.AccessLevel ||
@@ -192,7 +192,7 @@ public class WhoGump : DynamicGump
                         }
                         else
                         {
-                            from.SendMessage("You cannot see them.");
+                            from.SendMessage("Ты их не видишь.");
                             from.SendGump(new WhoGump(_mobiles, _page));
                         }
                     }

@@ -40,8 +40,8 @@ namespace Server.Mobiles
             CantWalk = true;
         }
 
-        public override string CorpseName => "a dolphin corpse";
-        public override string DefaultName => "a dolphin";
+        public override string CorpseName => "труп дельфина";
+        public override string DefaultName => "дельфин";
 
         public override int Meat => 1;
 

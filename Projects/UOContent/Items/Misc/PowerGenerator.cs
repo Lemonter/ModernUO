@@ -240,7 +240,7 @@ public partial class ControlPanel : AddonComponent
         Effects.SendLocationEffect(new Point3D(X - 1, Y - 1, Z + 2), Map, 0x36B0, 4, 4);
         Effects.SendLocationEffect(new Point3D(X - 2, Y - 1, Z + 2), Map, 0x36B0, 4, 4);
 
-        from.SendMessage("You scrounge some gems from the wreckage.");
+        from.SendMessage("Ты выуживаешь пару самоцветов из обломков.");
 
         for (var i = 0; i < SideLength; i++)
         {

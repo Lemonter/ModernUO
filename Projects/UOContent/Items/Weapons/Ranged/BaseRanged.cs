@@ -31,6 +31,8 @@ namespace Server.Items
         public override int DefHitSound => 0x234;
         public override int DefMissSound => 0x238;
 
+        public override bool IsRangedWeapon => true; // Mahaon: gates the Archery>90 extended-range mechanic
+
         public override SkillName DefSkill => SkillName.Archery;
         public override WeaponType DefType => WeaponType.Ranged;
         public override WeaponAnimation DefAnimation => WeaponAnimation.ShootXBow;
@@ -168,7 +170,22 @@ namespace Server.Items
                 var quiver = attacker.FindItemOnLayer<BaseQuiver>(Layer.Cloak);
                 var pack = attacker.Backpack;
 
-                if (quiver == null || Utility.Random(100) >= quiver.LowerAmmoCost)
+                // «Бережливый колчан» — обычный перк категории Следопыт: половина
+                // выстрелов не забирает стрелу из колчана. Проверка стоит перед списанием,
+                // но после проверки на «а есть ли вообще чем стрелять» ниже — оставшийся
+                // без стрел следопыт по-прежнему не стреляет.
+                var thrifty = Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                    attacker, Systems.MahaonProfessions.ProfessionCategory.Ranger
+                ) && Utility.RandomBool();
+
+                if (thrifty)
+                {
+                    if (quiver?.FindItemByType(AmmoType) == null && pack?.FindItemByType(AmmoType) == null)
+                    {
+                        return false;
+                    }
+                }
+                else if (quiver == null || Utility.Random(100) >= quiver.LowerAmmoCost)
                 {
                     // consume ammo
                     if (quiver?.ConsumeTotal(AmmoType) == true)
@@ -252,6 +269,28 @@ namespace Server.Items
                         AosElementDamages.Physical = 60;
                         AosElementDamages.Cold = 40;
                         Attributes.WeaponDamage += 12;
+                        break;
+                    }
+                // Mahaon: 3 new tiers slotted between Bloodwood and Frostwood by rarity
+                // (see MahaonResourceTiers.WoodTable) — WeaponDamage climbs from just above
+                // Yew's +10 up to just under Frostwood's +12, so rarer wood really does hit
+                // harder, not just a different color.
+                case CraftResource.BananaWood:
+                    {
+                        Attributes.WeaponDamage += 9;
+                        Attributes.Luck += 20;
+                        break;
+                    }
+                case CraftResource.CoconutWood:
+                    {
+                        Attributes.WeaponDamage += 10;
+                        WeaponAttributes.HitLeechStam += 15;
+                        break;
+                    }
+                case CraftResource.PalmWood:
+                    {
+                        Attributes.WeaponDamage += 11;
+                        Attributes.AttackChance += 5;
                         break;
                     }
             }

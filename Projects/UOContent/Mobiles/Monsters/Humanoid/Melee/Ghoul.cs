@@ -39,8 +39,8 @@ namespace Server.Mobiles
             PackItem(Loot.RandomWeapon());
         }
 
-        public override string CorpseName => "a ghostly corpse";
-        public override string DefaultName => "a ghoul";
+        public override string CorpseName => "призрачный труп";
+        public override string DefaultName => "гуль";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Regular;

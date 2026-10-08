@@ -12,7 +12,7 @@ public partial class SmithStone : Item
         Hue = 0x476;
     }
 
-    public override string DefaultName => "a Blacksmith Supply Stone";
+    public override string DefaultName => "камень припасов кузнеца";
 
     public override void OnDoubleClick(Mobile from)
     {

@@ -29,10 +29,19 @@ namespace Server.Spells.First
 
                 SpellHelper.CheckReflect((int)Circle, Caster, ref m);
 
-                var length = SpellHelper.GetDuration(Caster, m);
+                if (CheckResisted(m))
+                {
+                    m.FixedParticles(0x3779, 10, 15, 5052, EffectLayer.Waist);
+                    m.PlaySound(0x1F7); // resisted sound
+                    HarmfulSpell(m);
+                    return;
+                }
+
+                var length = SpellHelper.GetHarmfulDuration(Caster, m);
                 SpellHelper.AddStatCurse(Caster, m, StatType.Str, length, false);
 
-                m.Spell?.OnCasterHurt();
+                // Mahaon: no longer disturbs the target's own cast — enemy spells don't
+                // fizzle casting anymore (see Spell.OnCasterHurt's doc comment).
 
                 m.Paralyzed = false;
 

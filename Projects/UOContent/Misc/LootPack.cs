@@ -510,6 +510,55 @@ namespace Server
         public static LootPack SuperBoss => Core.SE ? SeSuperBoss :
             Core.AOS ? AosSuperBoss : OldSuperBoss;
 
+        // Peerless bosses drop one imbuing ingredient apiece, one Spellweaving scroll, and a
+        // random talisman. Ported from ServUO (Scripts/Misc/LootPack.cs) alongside the
+        // Peerless system in Engines/Peerless.
+        public static readonly LootPackItem[] PeerlessResourceItems =
+        [
+            new LootPackItem(typeof(Blight), 1),
+            new LootPackItem(typeof(Scourge), 1),
+            new LootPackItem(typeof(Taint), 1),
+            new LootPackItem(typeof(Putrefication), 1),
+            new LootPackItem(typeof(Corruption), 1),
+            new LootPackItem(typeof(Muculent), 1)
+        ];
+
+        public static readonly LootPack PeerlessResource = new(
+            [
+                new LootPackEntry(false, PeerlessResourceItems, 100.00, 1)
+            ]
+        );
+
+        public static readonly LootPackItem[] ArcanistScrollItems =
+        [
+            new LootPackItem(typeof(ArcaneCircleScroll), 1),
+            new LootPackItem(typeof(GiftOfRenewalScroll), 1),
+            new LootPackItem(typeof(ImmolatingWeaponScroll), 1),
+            new LootPackItem(typeof(AttuneWeaponScroll), 1),
+            new LootPackItem(typeof(ThunderstormScroll), 1),
+            new LootPackItem(typeof(NatureFuryScroll), 1),
+            new LootPackItem(typeof(ReaperFormScroll), 1),
+            new LootPackItem(typeof(WildfireScroll), 1),
+            new LootPackItem(typeof(EssenceOfWindScroll), 1),
+            new LootPackItem(typeof(DryadAllureScroll), 1),
+            new LootPackItem(typeof(EtherealVoyageScroll), 1),
+            new LootPackItem(typeof(WordOfDeathScroll), 1),
+            new LootPackItem(typeof(GiftOfLifeScroll), 1),
+            new LootPackItem(typeof(ArcaneEmpowermentScroll), 1)
+        ];
+
+        public static readonly LootPack ArcanistScrolls = new(
+            [
+                new LootPackEntry(false, ArcanistScrollItems, 100.00, 1)
+            ]
+        );
+
+        public static readonly LootPack Talisman = new(
+            [
+                new LootPackEntry(false, [new LootPackItem(typeof(RandomTalisman), 1)], 100.00, 1)
+            ]
+        );
+
         /*
         // TODO: Uncomment once added Legacy
         public static readonly LootPackItem[] ParrotItem = new LootPackItem[]

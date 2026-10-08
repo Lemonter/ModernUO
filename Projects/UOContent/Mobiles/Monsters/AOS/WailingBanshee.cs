@@ -40,9 +40,9 @@ namespace Server.Mobiles
             VirtualArmor = 19;
         }
 
-        public override string CorpseName => "a wailing banshee corpse";
+        public override string CorpseName => "труп воющей банши";
 
-        public override string DefaultName => "a wailing banshee";
+        public override string DefaultName => "воющая банши";
 
         public override bool BleedImmune => true;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Server.Items;
 using Server.Spells;
 using Server.Spells.Fifth;
@@ -15,7 +15,7 @@ namespace Server.Mobiles;
 
 public class MageAI : BaseAI
 {
-    private const double HealChance = 0.10;     // 10% chance to heal at gm magery
+    protected const double HealChance = 0.10;   // 10% chance to heal at gm magery
     private const double TeleportChance = 0.05; // 5% chance to teleport at gm magery
     private const double DispelChance = 0.75;   // 75% chance to dispel at gm magery
     private const double InvisChance = 0.50; // 50% chance to invis at gm magery
@@ -116,7 +116,7 @@ public class MageAI : BaseAI
         return true;
     }
 
-    private Spell CheckCastHealingSpell()
+    protected virtual Spell CheckCastHealingSpell()
     {
         // If I'm poisoned, always attempt to cure.
         if (Mobile.Poisoned)
@@ -171,7 +171,7 @@ public class MageAI : BaseAI
     {
         if (!SmartAI)
         {
-            if (!MoveTo(m, false, Mobile.RangeFight))
+            if (!MoveTo(m, Mobile.RangeFight))
             {
                 OnFailedMove();
             }
@@ -185,14 +185,14 @@ public class MageAI : BaseAI
             {
                 RunFrom(m);
             }
-            else if (!Mobile.InRange(m, Math.Max(Mobile.RangeFight, 2)) && !MoveTo(m, false, 1))
+            else if (!Mobile.InRange(m, Math.Max(Mobile.RangeFight, 2)) && !MoveTo(m, 1))
             {
                 OnFailedMove();
             }
         }
         else if (!Mobile.InRange(m, Mobile.RangeFight))
         {
-            if (!MoveTo(m, false, 1))
+            if (!MoveTo(m, 1))
             {
                 OnFailedMove();
             }
@@ -275,7 +275,11 @@ public class MageAI : BaseAI
 
     public virtual Spell GetRandomDamageSpellMage()
     {
-        var maxCircle = Math.Clamp((int)((Mobile.Skills.Magery.Value + 20.0) / (100.0 / 7.0)), 1, 8);
+        // Mahaon: elementals and golems are held to 5th circle no matter how high their
+        // Magery is — see Systems.MahaonCombat.ElementalMagerySystem. Everything else keeps
+        // the vanilla skill-derived ceiling of 8.
+        var cap = Systems.MahaonCombat.ElementalMagerySystem.GetSpellCircleCap(Mobile);
+        var maxCircle = Math.Clamp((int)((Mobile.Skills.Magery.Value + 20.0) / (100.0 / 7.0)), 1, cap);
 
         return Utility.Random(maxCircle * 2) switch
         {
@@ -323,6 +327,10 @@ public class MageAI : BaseAI
             _ => new FeeblemindSpell(Mobile)
         };
     }
+
+    /// <summary>The self-buff slot. Plain mages only know Bless; NecroMageAI puts Curse Weapon
+    /// and the Animate Dead summon in here, as the original does.</summary>
+    public virtual Spell GetRandomBuffSpell() => new BlessSpell(Mobile);
 
     public virtual Spell GetRandomManaDrainSpell()
     {
@@ -407,11 +415,11 @@ public class MageAI : BaseAI
                         spell = new PoisonSpell(Mobile);
                         break;
                     }
-                case 2: // Bless ourselves
+                case 2: // Buff ourselves
                     {
                         DebugSay("Blessing myself");
 
-                        spell = new BlessSpell(Mobile);
+                        spell = GetRandomBuffSpell();
                         break;
                     }
                 case 3:
@@ -679,7 +687,7 @@ public class MageAI : BaseAI
                 Mobile.Combatant = Mobile.FocusMob;
                 Mobile.FocusMob = null;
             }
-            else if (!Mobile.InRange(c, Mobile.RangePerception * 3))
+            else if (!Mobile.InRange(c, Mobile.ChaseLeashRange))
             {
                 Mobile.Combatant = null;
             }
@@ -693,6 +701,23 @@ public class MageAI : BaseAI
                 Action = ActionType.Guard;
                 return true;
             }
+        }
+
+        // Geometry (not hiding — CanSee passed above) is blocking the shot: close in until
+        // line of sight returns. Poisoned mages still fall through to cure.
+        if (!Mobile.Poisoned && Mobile.Spell?.IsCasting != true && !Mobile.InLOS(c))
+        {
+            DebugSay("I cannot see my target, moving to regain line of sight");
+
+            if (!MoveTo(c, 1))
+            {
+                OnFailedMove();
+            }
+
+            _lastTarget = c;
+            _lastTargetLoc = c.Location;
+
+            return true;
         }
 
         if (Mobile.TriggerAbility(MonsterAbilityTrigger.CombatAction, c))
@@ -952,7 +977,7 @@ public class MageAI : BaseAI
         m is BaseCreature creature && creature.Summoned && creature.SummonMaster != Mobile &&
         Mobile.CanBeHarmful(creature, false) && !creature.IsAnimatedDead;
 
-    private bool ProcessTarget()
+    protected virtual bool ProcessTarget()
     {
         var targ = Mobile.Target;
 
@@ -1018,7 +1043,16 @@ public class MageAI : BaseAI
 
             if (toTarget != null)
             {
-                RunTo(toTarget);
+                // Without line of sight the stand-off is pointless — close in so the held
+                // target can be invoked.
+                if (!Mobile.InLOS(toTarget))
+                {
+                    MoveTo(toTarget, 1);
+                }
+                else
+                {
+                    RunTo(toTarget);
+                }
             }
         }
 

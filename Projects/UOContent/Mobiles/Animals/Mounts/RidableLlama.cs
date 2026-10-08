@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class RidableLlama : BaseMount
     {
-        public override string DefaultName => "a ridable llama";
+        public override string DefaultName => "верховая лама";
 
         [Constructible]
         public RidableLlama() : base(0xDC, 0x3EA6, AIType.AI_Animal, FightMode.Aggressor
@@ -43,7 +43,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 2560;
-        public override string CorpseName => "a llama corpse";
+        public override string CorpseName => "труп ламы";
 
         public override int Meat => 1;
         public override int Hides => 12;

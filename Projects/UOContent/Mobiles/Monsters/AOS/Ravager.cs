@@ -38,9 +38,9 @@ namespace Server.Mobiles
             VirtualArmor = 54;
         }
 
-        public override string CorpseName => "a ravager corpse";
+        public override string CorpseName => "труп опустошителя";
 
-        public override string DefaultName => "a ravager";
+        public override string DefaultName => "опустошитель";
 
         public override WeaponAbility GetWeaponAbility() =>
             Utility.RandomBool() ? WeaponAbility.Dismount : WeaponAbility.CrushingBlow;

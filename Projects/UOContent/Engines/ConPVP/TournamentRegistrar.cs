@@ -26,7 +26,7 @@ public partial class TournamentRegistrar : Banker
                 MessageType.Regular,
                 0x35,
                 false,
-                "Come one, come all! Do you aspire to be a fighter of great renown? Join this tournament and show the world your abilities."
+                "Подходите все! Мечтаешь о славе великого бойца? Вступай в турнир и покажи миру, чего ты стоишь."
             );
         }
     }

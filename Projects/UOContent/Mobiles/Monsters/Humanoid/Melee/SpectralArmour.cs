@@ -45,7 +45,7 @@ namespace Server.Mobiles
 
         public override bool DeleteCorpseOnDeath => true;
 
-        public override string DefaultName => "a spectral armour";
+        public override string DefaultName => "призрачный доспех";
 
         public override Poison PoisonImmune => Poison.Regular;
 

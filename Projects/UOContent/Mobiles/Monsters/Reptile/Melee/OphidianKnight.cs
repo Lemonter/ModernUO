@@ -50,7 +50,7 @@ namespace Server.Mobiles
             PackItem(new LesserPoisonPotion());
         }
 
-        public override string CorpseName => "an ophidian corpse";
+        public override string CorpseName => "труп офидиана";
 
         public override int Meat => 2;
 

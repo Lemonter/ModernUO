@@ -30,7 +30,14 @@ namespace Server.Engines.Harvest
             0x0D97, 0x0D99, 0x0D9A, 0x0D9B, 0x0D9D, 0x0D9E, 0x0D9F, 0x0DA1,
             0x0DA2, 0x0DA3, 0x0DA5, 0x0DA6, 0x0DA7, 0x0DA9, 0x0DAA, 0x0DAB,
             0x12BE, 0x12BF, 0x12C0, 0x12C1, 0x12C2, 0x12C3, 0x12C4, 0x12C5,
-            0x12C6, 0x12C7
+            0x12C6, 0x12C7,
+
+            // Mahaon: confirmed via in-game debug clicks that these two were missing from
+            // the list above (player reported "осенние деревья не рубятся" — autumn trees
+            // don't chop) — 0xCC6 sits right next to the main confirmed cluster (0xCCE-
+            // 0xCE8) but wasn't actually included, and 0xD40 is a separate, far-off
+            // confirmed graphic.
+            0x0CC6, 0x0D40, 0x0C9E, 0x0CEA, 0x0CF5, 0x0CF6, 0x0CF7
         };
 
         private Lumberjacking()
@@ -184,6 +191,19 @@ namespace Server.Engines.Harvest
             if (Core.ML)
             {
                 from.RevealingAction();
+            }
+        }
+
+        public override void OnHarvestFinished(
+            Mobile from, Item tool, HarvestDefinition def, HarvestVein vein,
+            HarvestBank bank, HarvestResource resource, object harvested
+        )
+        {
+            base.OnHarvestFinished(from, tool, def, vein, bank, resource, harvested);
+
+            if (harvested is Log log)
+            {
+                Systems.MahaonCombat.GatheringSpecializationSystem.OnWoodChopped(from, log);
             }
         }
 

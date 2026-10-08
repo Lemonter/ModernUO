@@ -36,6 +36,7 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     private const int HuePickerCap = 512;
     private const int MenuCap = 512;
     private const int PacketPerSecondThreshold = 3000;
+    internal const long DrainTimeoutMs = 10000; // graceful disconnect gets this long to drain
 
     private static readonly Queue<NetState> _flushPending = new(2048);
     private static readonly Queue<NetState> _pendingDisconnects = new(256); // Processed AFTER flush
@@ -44,7 +45,21 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     private static readonly Queue<NetState> _connectingQueue = new(2048);
     private static readonly HashSet<NetState> _instances = new(2048);
-    public static IReadOnlySet<NetState> Instances => _instances;
+    public static HashSet<NetState> Instances => _instances;
+
+    // GC's container-aware figure: a heuristic, not a hard bound; fails open when unpopulated
+    private static bool UnderMemoryCeiling() =>
+        _memoryCeilingPercent <= 0 ||
+        _availableMemoryBytes <= 0 ||
+        Environment.WorkingSet < _availableMemoryBytes / 100 * _memoryCeilingPercent;
+
+    private const long MemoryCeilingWarnIntervalMs = 60000;
+    private static long _memoryCeilingWarnedAt;
+    private static bool _memoryCeilingWarned;
+
+    // Reset by MaintainSendBuffers; the transport counts budget refusals
+    private static int _ceilingRefusals;
+    private static int _capRefusals;
 
     private readonly string _toString;
     private ClientVersion _version;
@@ -54,7 +69,13 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     private bool _disconnectQueued; // Queued for disconnect processing (after flush)
     private long[] _packetThrottles;
     private long[] _packetCounts;
-    private string _disconnectReason = string.Empty;
+    internal string _disconnectReason = string.Empty;
+    private long _drainDeadline;
+    private bool _drainDeadlineArmed;
+
+    internal bool _sendBufferGrown;
+    internal long _sendBufferGrewAt;
+    internal const long SendBufferHoldMs = 30000;
 
     internal ParserState _parserState = ParserState.AwaitingNextPacket;
     internal ProtocolState _protocolState = ProtocolState.AwaitingSeed;
@@ -109,9 +130,6 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
         Address = address;
 
         Seeded = false;
-        HuePickers = [];
-        Menus = [];
-        Trades = [];
         NextActivityCheck = Core.TickCount + 30000;
         ConnectedOn = Core.Now;
         _toString = address?.ToString() ?? "(error)";
@@ -166,7 +184,7 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     public bool BlockAllPackets { get; set; }
 
-    public List<SecureTrade> Trades { get; }
+    public List<SecureTrade> Trades { get; private set; }
 
     public bool Seeded { get; set; }
 
@@ -209,7 +227,39 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     public IAccount Account
     {
         get => _account;
-        set => _account = value;
+        set
+        {
+            _account = value;
+
+            // 0x91 credentials just verified: the character list and the world-entry burst follow.
+            // The login-server pass stays on the initial buffers; it never sends more than a server list.
+            // An off-loop password check can land its verdict after HandleReceive already flipped the
+            // state to LoggedIn, so both states promote; both calls below are no-ops once applied.
+            if (value != null && _protocolState is ProtocolState.GameServer_AwaitingGameServerLogin or ProtocolState.GameServer_LoggedIn)
+            {
+                PromoteBuffers();
+            }
+        }
+    }
+
+    private void PromoteBuffers()
+    {
+        if (_socket == null)
+        {
+            return;
+        }
+
+        if (!_socketManager.TryPromoteSendBuffer(_socket) && _socket.SendBuffer.PhysicalSize < SendBufferSize)
+        {
+            // The send path promotes on demand and disconnects if that fails too
+            logger.Debug("{NetState}: send buffer promotion deferred to the send path", this);
+        }
+
+        if (!_socketManager.TryPromoteRecvBuffer(_socket) && _socket.RecvBuffer.PhysicalSize < RecvBufferSize)
+        {
+            // The oversize-packet guard in HandlePacket gets one more try where the small buffer matters
+            logger.Debug("{NetState}: recv buffer promotion deferred", this);
+        }
     }
 
     public string Assistant { get; set; }
@@ -260,8 +310,18 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     public void ValidateAllTrades()
     {
+        if (Trades == null)
+        {
+            return;
+        }
+
         for (var i = Trades.Count - 1; i >= 0; --i)
         {
+            if (Trades == null)
+            {
+                break;
+            }
+
             if (i >= Trades.Count)
             {
                 continue;
@@ -280,8 +340,19 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     public void CancelAllTrades()
     {
+        if (Trades == null)
+        {
+            return;
+        }
+
         for (var i = Trades.Count - 1; i >= 0; --i)
         {
+            // RemoveTrade() nulls the list once empty
+            if (Trades == null)
+            {
+                break;
+            }
+
             if (i < Trades.Count)
             {
                 Trades[i].Cancel();
@@ -291,11 +362,21 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     public void RemoveTrade(SecureTrade trade)
     {
-        Trades.Remove(trade);
+        Trades?.Remove(trade);
+
+        if (Trades?.Count == 0)
+        {
+            Trades = null;
+        }
     }
 
     public SecureTrade FindTrade(Mobile m)
     {
+        if (Trades == null)
+        {
+            return null;
+        }
+
         for (var i = 0; i < Trades.Count; ++i)
         {
             var trade = Trades[i];
@@ -311,6 +392,11 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
     public SecureTradeContainer FindTradeContainer(Mobile m)
     {
+        if (Trades == null)
+        {
+            return null;
+        }
+
         for (var i = 0; i < Trades.Count; ++i)
         {
             var trade = Trades[i];
@@ -336,7 +422,11 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     {
         var newTrade = new SecureTrade(Mobile, state.Mobile);
 
+        Trades ??= [];
+
         Trades.Add(newTrade);
+
+        state.Trades ??= [];
         state.Trades.Add(newTrade);
 
         return newTrade.From.Container;
@@ -440,6 +530,96 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
         return buffer.Length > 0;
     }
 
+    // Grows tier by tier until `needed` fits or a tier is refused.
+    internal bool TryGrowSendBuffer(int needed)
+    {
+        if (_socket == null)
+        {
+            return false;
+        }
+
+        while (_socket.SendBuffer.WritableBytes < needed)
+        {
+            if (!TryGrowSendBufferOneTier())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // One tier; compression learns its output size by retrying
+    internal bool TryGrowSendBufferOneTier()
+    {
+        if (_socket == null)
+        {
+            return false;
+        }
+
+        if (_socket.SendBuffer.PhysicalSize < SendBufferSize)
+        {
+            // Promotion is unbudgeted and is not growth, so neither the ceiling nor the shrink
+            // bookkeeping applies. Before credentials verify nothing promotes: the 4 KiB ring is the
+            // whole pre-auth send budget, and a connection that exceeds it is dropped as exhausted.
+            if (_account == null)
+            {
+                return false;
+            }
+
+            return _socketManager.TryPromoteSendBuffer(_socket);
+        }
+
+        if (!UnderMemoryCeiling())
+        {
+            _ceilingRefusals++;
+
+            var now = Core.TickCount;
+            if (!_memoryCeilingWarned || now - (_memoryCeilingWarnedAt + MemoryCeilingWarnIntervalMs) >= 0)
+            {
+                _memoryCeilingWarned = true;
+                _memoryCeilingWarnedAt = now;
+                logger.Warning("Send buffer growth refused: process is above {Percent}% of available memory", _memoryCeilingPercent);
+            }
+
+            return false;
+        }
+
+        if (!_socketManager.TryGrowSendBuffer(_socket))
+        {
+            // At the cap; the transport counts budget refusals
+            if (_socket.SendBuffer.PhysicalSize >= MaxSendBufferSize)
+            {
+                _capRefusals++;
+            }
+
+            return false;
+        }
+
+        _sendBufferGrown = true;
+        _sendBufferGrewAt = Core.TickCount;
+        logger.Debug("{NetState}: send buffer grown to {Size}", this, _socket.SendBuffer.PhysicalSize);
+        return true;
+    }
+
+    // The pool retains the larger buffer
+    internal bool TryShrinkSendBuffer(long curTicks)
+    {
+        if (!_sendBufferGrown || _socket == null || curTicks - (_sendBufferGrewAt + SendBufferHoldMs) < 0)
+        {
+            return false;
+        }
+
+        if (!_socketManager.TryShrinkSendBuffer(_socket))
+        {
+            return false;
+        }
+
+        _sendBufferGrown = false;
+        logger.Debug("{NetState}: send buffer returned to {Size}", this, _socket.SendBuffer.PhysicalSize);
+        return true;
+    }
+
     public void Send(ReadOnlySpan<byte> span)
     {
         if (span == ReadOnlySpan<byte>.Empty || this.CannotSendPackets())
@@ -453,31 +633,63 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
             return;
         }
 
-        // Never drop silently: the client would stay connected while missing game state.
-        if (!GetSendBuffer(out var buffer))
+        // Closing; nothing to report
+        if (!_running || _socket == null)
         {
-            SendBufferExhausted(length, 0);
             return;
         }
 
         try
         {
+            // Never drop silently: the client would stay connected while missing game state.
+            if (!GetSendBuffer(out var buffer))
+            {
+                // Full; the compressed size is unknown, so grow one tier and let the retry loop finish
+                var grown = CompressionEnabled ? TryGrowSendBufferOneTier() : TryGrowSendBuffer(length);
+
+                if (!grown || !GetSendBuffer(out buffer))
+                {
+                    SendBufferExhausted(length);
+                    return;
+                }
+            }
+
             // Apply encoding first (e.g., compression from UOContent)
             if (CompressionEnabled)
             {
                 length = NetworkCompression.Compress(span, buffer);
 
-                // 0 means nothing was written, whether it did not fit or the input was too large.
                 if (length <= 0)
                 {
-                    SendBufferExhausted(span.Length, buffer.Length);
-                    return;
+                    // Compress refuses this length outright; growth cannot help
+                    if (span.Length > NetworkCompression.DefiniteOverflow)
+                    {
+                        SendBufferExhausted(span.Length);
+                        return;
+                    }
+
+                    // Output size is unknown until compressed; grow a tier and retry
+                    while (length <= 0 && TryGrowSendBufferOneTier() && GetSendBuffer(out buffer))
+                    {
+                        length = NetworkCompression.Compress(span, buffer);
+                    }
+
+                    if (length <= 0)
+                    {
+                        SendBufferExhausted(span.Length);
+                        return;
+                    }
                 }
             }
             else if (span.Length > buffer.Length)
             {
-                SendBufferExhausted(span.Length, buffer.Length);
-                return;
+                if (!TryGrowSendBuffer(span.Length) || !GetSendBuffer(out buffer))
+                {
+                    SendBufferExhausted(span.Length);
+                    return;
+                }
+
+                span.CopyTo(buffer);
             }
             else
             {
@@ -512,16 +724,24 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     /// </summary>
     /// <remarks>
     /// High unacked means a slow client holding the buffer; needed approaching capacity means the
-    /// buffer is too small for this shard and network.sendBufferSize should be raised.
+    /// buffer is too small for this shard and network.sendBufferMaxSize should be raised.
     /// </remarks>
-    private void SendBufferExhausted(int needed, int writable)
+    private void SendBufferExhausted(int needed)
     {
+        // One report per disconnect; the first reason wins
+        if (_disconnectQueued)
+        {
+            return;
+        }
+
+        // Read fresh; the caller's span may predate a growth
         var sendBuffer = _socket?.SendBuffer;
+        var writable = sendBuffer?.WritableBytes ?? 0;
         var unacked = sendBuffer?.InFlightBytes ?? 0;
         var capacity = sendBuffer?.PhysicalSize ?? 0;
 
         logger.Warning(
-            "{NetState}: send buffer exhausted - needed {Needed} bytes, {Writable} writable, {Unacked} awaiting acknowledgement, {Capacity} capacity. Raise network.sendBufferSize (power of two) if this recurs on healthy connections.",
+            "{NetState}: send buffer exhausted - needed {Needed} bytes, {Writable} writable, {Unacked} awaiting acknowledgement, {Capacity} capacity. Raise network.sendBufferMaxSize (power of two) if this recurs on healthy connections.",
             this,
             needed,
             writable,
@@ -909,6 +1129,13 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
                     break;
                 }
             }
+
+            // A completion that fills the buffer arms no receive; whatever the loop consumed is free
+            // space again. No-op while a receive is armed or the buffer is still full.
+            if (_running)
+            {
+                _socket.ResumeReceive();
+            }
         }
         catch (Exception ex)
         {
@@ -960,6 +1187,22 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
             {
                 return ParserState.Error;
             }
+        }
+
+        // Can never complete: the buffer holds PhysicalSize - 1 bytes (one slot tells full from
+        // empty) and a recv arms only into free space
+        if (packetLength >= _socket.RecvBuffer.PhysicalSize)
+        {
+            // A verified account whose promotion could not be applied earlier gets one more try here,
+            // where the small buffer actually matters; the swap lands before the next completion's event
+            if (_account != null && _socket.RecvBuffer.PhysicalSize < RecvBufferSize &&
+                _socketManager.TryPromoteRecvBuffer(_socket))
+            {
+                return ParserState.AwaitingPartialPacket;
+            }
+
+            LogInfo($"Received packet 0x{packetId:X2} declaring {packetLength} bytes, more than the receive buffer holds.");
+            return ParserState.Error;
         }
 
         // Not enough data, let's wait for more to come in
@@ -1017,31 +1260,52 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
         return ParserState.AwaitingNextPacket;
     }
 
+    // Bounds the graceful drain. Send completions keep NextActivityCheck moving, so a slow peer
+    // could otherwise hold a closing socket open indefinitely.
+    internal void ArmDrainDeadline(long curTicks)
+    {
+        if (!_drainDeadlineArmed)
+        {
+            _drainDeadlineArmed = true;
+            _drainDeadline = curTicks + DrainTimeoutMs;
+        }
+    }
+
     public void CheckAlive(long curTicks)
     {
-        if (_socket == null || NextActivityCheck - curTicks >= 0)
+        if (_socket == null)
         {
             return;
         }
 
         if (_socket.DisconnectPending)
         {
-            LogInfo("Force disconnecting stuck socket...");
-            _socketManager.DisconnectImmediate(_socket);
-        }
-        else
-        {
-            // Authenticated pre-game clients (login screens): send keep-alive instead of disconnecting.
-            // The 0xBD ClientVersionRequest resets NextActivityCheck via DataSent.
-            if (_account != null && Mobile == null)
+            ArmDrainDeadline(curTicks); // transport-initiated drains are first seen here
+
+            if (curTicks - _drainDeadline >= 0 || NextActivityCheck - curTicks < 0)
             {
-                this.SendClientVersionRequest();
-                return;
+                LogInfo("Force disconnecting stuck socket...");
+                _socketManager.DisconnectImmediate(_socket);
             }
 
-            LogInfo("Disconnecting due to inactivity...");
-            Disconnect("Disconnecting due to inactivity.");
+            return;
         }
+
+        if (NextActivityCheck - curTicks >= 0)
+        {
+            return;
+        }
+
+        // Authenticated pre-game clients (login screens): send keep-alive instead of disconnecting.
+        // The 0xBD ClientVersionRequest resets NextActivityCheck via DataSent.
+        if (_account != null && Mobile == null)
+        {
+            this.SendClientVersionRequest();
+            return;
+        }
+
+        LogInfo("Disconnecting due to inactivity...");
+        Disconnect("Disconnecting due to inactivity.");
     }
 
     public void Trace(ReadOnlySpan<byte> buffer)
@@ -1087,8 +1351,8 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
     }
 
     /// <summary>
-    /// Requests a graceful disconnect. The disconnect is queued and processed after the flush
-    /// queue in Slice(), ensuring Send() calls made in the same tick are processed first.
+    /// Requests a graceful disconnect. Processed after the flush queue in Slice(): sends made before
+    /// that handoff are flushed first, sends after it are dropped (see CannotSendPackets).
     /// </summary>
     public void Disconnect(string reason)
     {
@@ -1176,8 +1440,16 @@ public partial class NetState : IComparable<NetState>, IValueLinkListNode<NetSta
 
         var a = Account;
 
-        Menus.Clear();
-        HuePickers.Clear();
+        Menus?.Clear();
+        Menus = null;
+
+        HuePickers?.Clear();
+        HuePickers = null;
+
+        // Just in case, but should already be nulled when Mobile.NetState is set to null and CancelAllTrades is called.
+        Trades?.Clear();
+        Trades = null;
+
         Account = null;
         ServerInfo = null;
         CityInfo = null;

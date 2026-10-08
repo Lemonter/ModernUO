@@ -30,7 +30,7 @@
     "walkingRange": 20,
     "entries": [
       { "name": "CuSidhe", "maxCount": 8, "probability": 100 },
-      { "name": "DryadA", "maxCount": 8, "probability": 100 },
+      { "name": "Dryad", "maxCount": 8, "probability": 100 },
       { "name": "Changeling", "maxCount": 8, "probability": 100 },
       { "name": "Satyr", "maxCount": 8, "probability": 100 },
       { "name": "DireWolf", "maxCount": 2, "probability": 100 }
@@ -98,7 +98,7 @@
     "walkingRange": 25,
     "entries": [
       { "name": "CuSidhe", "maxCount": 12, "probability": 100 },
-      { "name": "Dryada", "maxCount": 12, "probability": 100 },
+      { "name": "Dryad", "maxCount": 12, "probability": 100 },
       { "name": "Changeling", "maxCount": 12, "probability": 100 },
       { "name": "Satyr", "maxCount": 12, "probability": 100 },
       { "name": "DireWolf", "maxCount": 3, "probability": 100 }

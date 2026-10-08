@@ -75,8 +75,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a glowing yomotsu corpse";
-        public override string DefaultName => "a yomotsu priest";
+        public override string CorpseName => "светящийся труп ёмоцу";
+        public override string DefaultName => "жрец ёмоцу";
 
         public override FoodType FavoriteFood => FoodType.Fish;
 

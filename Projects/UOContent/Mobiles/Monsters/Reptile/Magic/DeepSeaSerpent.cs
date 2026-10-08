@@ -53,8 +53,8 @@ namespace Server.Mobiles
             // PackItem( new SpecialFishingNet() );
         }
 
-        public override string CorpseName => "a deep sea serpents corpse";
-        public override string DefaultName => "a deep sea serpent";
+        public override string CorpseName => "труп глубинного морского змея";
+        public override string DefaultName => "глубинный морской змей";
         public override int Meat => 1;
         public override int Scales => 8;
         public override ScaleType ScaleType => ScaleType.Blue;

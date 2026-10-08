@@ -49,8 +49,8 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "a Gnaw corpse";
-        public override string DefaultName => "Gnaw";
+        public override string CorpseName => "труп Грызуна";
+        public override string DefaultName => "Грызун";
         public override bool GivesMLMinorArtifact => true;
         public override int Hides => 28;
         public override int Meat => 4;

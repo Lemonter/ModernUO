@@ -14,11 +14,11 @@ namespace Server.SkillHandlers
 
         public static TimeSpan OnUse(Mobile m)
         {
-            if (m.Skills.Lockpicking.Value < 50)
-            {
-                m.SendLocalizedMessage(502366); // You do not know enough about locks.  Become better at picking locks.
-            }
-            else if (m.Skills.DetectHidden.Value < 50)
+            // Mahaon: no longer gated by Lockpicking — RemoveTrap's own skill value is what
+            // drives success chance anyway (see InternalTarget.OnTarget's CheckTargetSkill
+            // call below), so the Lockpicking prerequisite was an artificial second gate on
+            // top of that, not something the chance formula itself used.
+            if (m.Skills.DetectHidden.Value < 50)
             {
                 m.SendLocalizedMessage(502367); // You are not perceptive enough.  Become better at detect hidden.
             }
@@ -28,7 +28,7 @@ namespace Server.SkillHandlers
                 m.SendLocalizedMessage(502368); // Which trap will you attempt to disarm?
             }
 
-            return TimeSpan.FromSeconds(10.0); // 10 second delay before being able to re-use a skill
+            return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
         }
 
         private class InternalTarget : Target

@@ -147,6 +147,9 @@ public class BitmapAStarAlgorithm : PathAlgorithm
             _currentMobileIgnoreMovableImpassables = false;
         }
 
+        // Walkers that open doors as they go plan straight through them.
+        _currentMobileIgnoreDoors |= m is IPathDoorOpener { OpensDoors: true };
+
         // Dead and spectral mobiles pass through doors too. Mirrors MovementImpl.
         _currentMobileIgnoreDoors |= !m.Alive || m.Body.BodyID == 0x3DB || m.IsDeadBondedPet;
         _currentMobileIgnoreSpellFields = m is PlayerMobile && map != Map.Felucca;
@@ -201,6 +204,10 @@ public class BitmapAStarAlgorithm : PathAlgorithm
             {
                 MoveImpl.AlwaysIgnoreDoors = bc.CanOpenDoors;
                 MoveImpl.IgnoreMovableImpassables = bc.CanMoveOverObstacles;
+            }
+            else if (m is IPathDoorOpener { OpensDoors: true })
+            {
+                MoveImpl.AlwaysIgnoreDoors = true;
             }
 
             MoveImpl.Goal = goal;

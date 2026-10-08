@@ -14,7 +14,7 @@ public partial class ResGate : Item
         Light = LightType.Circle300;
     }
 
-    public override string DefaultName => "a resurrection gate";
+    public override string DefaultName => "врата воскрешения";
 
     public override bool OnMoveOver(Mobile m)
     {

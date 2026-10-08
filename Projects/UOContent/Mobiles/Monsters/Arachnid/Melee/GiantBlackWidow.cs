@@ -44,8 +44,8 @@ namespace Server.Mobiles
             PackItem(new LesserPoisonPotion());
         }
 
-        public override string CorpseName => "a giant black widow spider corpse";
-        public override string DefaultName => "a giant black wide";
+        public override string CorpseName => "труп гигантской чёрной вдовы";
+        public override string DefaultName => "гигантская чёрная вдова";
 
         public override FoodType FavoriteFood => FoodType.Meat;
         public override Poison PoisonImmune => Poison.Deadly;

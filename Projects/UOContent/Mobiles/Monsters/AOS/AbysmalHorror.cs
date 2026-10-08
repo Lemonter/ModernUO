@@ -42,11 +42,11 @@ namespace Server.Mobiles
             VirtualArmor = 54;
         }
 
-        public override string CorpseName => "an abysmal horror corpse";
+        public override string CorpseName => "труп бездонного ужаса";
 
         public override bool IgnoreYoungProtection => Core.ML;
 
-        public override string DefaultName => "an abysmal horror";
+        public override string DefaultName => "бездонный ужас";
 
         public override bool BardImmune => !Core.SE;
         public override bool Unprovokable => Core.SE;

@@ -37,8 +37,8 @@ namespace Server.Mobiles
             VirtualArmor = 60;
         }
 
-        public override string CorpseName => "an ice fiend corpse";
-        public override string DefaultName => "an ice fiend";
+        public override string CorpseName => "труп ледяного беса";
+        public override string DefaultName => "ледяной бес";
 
         public override int TreasureMapLevel => 4;
         public override int Meat => 1;

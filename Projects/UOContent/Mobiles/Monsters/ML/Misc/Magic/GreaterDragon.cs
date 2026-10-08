@@ -48,9 +48,9 @@ namespace Server.Mobiles
             MinTameSkill = 104.7;
         }
 
-        public override string CorpseName => "a dragon corpse";
+        public override string CorpseName => "труп дракона";
         public override bool StatLossAfterTame => true;
-        public override string DefaultName => "a greater dragon";
+        public override string DefaultName => "великий дракон";
         public override bool ReacquireOnMovement => !Controlled;
         public override bool AutoDispel => !Controlled;
         public override int TreasureMapLevel => 5;

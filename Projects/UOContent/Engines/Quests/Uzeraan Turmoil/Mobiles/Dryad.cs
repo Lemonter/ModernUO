@@ -24,7 +24,7 @@ public partial class Dryad : BaseQuester
     public override bool DisallowAllMoves => false;
     public override bool ClickTitle => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Anwin Brenna";
+    public override string DefaultName => "Анвин Бренна";
 
     public override void InitBody()
     {

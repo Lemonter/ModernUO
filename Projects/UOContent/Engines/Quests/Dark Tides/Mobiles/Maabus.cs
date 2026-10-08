@@ -10,7 +10,7 @@ public partial class Maabus : BaseQuester
     {
     }
 
-    public override string DefaultName => "Maabus";
+    public override string DefaultName => "Маабус";
 
     public override void InitBody()
     {

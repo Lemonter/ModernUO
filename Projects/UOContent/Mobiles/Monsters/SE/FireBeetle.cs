@@ -8,7 +8,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class FireBeetle : BaseMount
     {
-        public override string DefaultName => "a fire beetle";
+        public override string DefaultName => "огненный жук";
 
         [Constructible]
         public FireBeetle() : base(0xA9, 0x3E95, AIType.AI_Melee)
@@ -48,7 +48,7 @@ namespace Server.Mobiles
             Hue = 0x489;
         }
 
-        public override string CorpseName => "a fire beetle corpse";
+        public override string CorpseName => "труп огненного жука";
         public override bool SubdueBeforeTame => true; // Must be beaten into submission
         public override bool StatLossAfterTame => true;
         public virtual double BoostedSpeed => 0.1;
@@ -59,7 +59,7 @@ namespace Server.Mobiles
 
         public override void OnHarmfulSpell(Mobile from)
         {
-            if (!Controlled && ControlMaster == null)
+            if (!Controlled)
             {
                 CurrentSpeed = BoostedSpeed;
             }
@@ -67,7 +67,7 @@ namespace Server.Mobiles
 
         public override void OnCombatantChange()
         {
-            if (Combatant == null && !Controlled && ControlMaster == null)
+            if (Combatant == null && !Controlled)
             {
                 CurrentSpeed = PassiveSpeed;
             }

@@ -1,6 +1,8 @@
 using ModernUO.Serialization;
 using Server.Ethics;
 using Server.Factions;
+using Server.Items;
+using Server.Systems.MahaonWorld;
 
 namespace Server.Mobiles
 {
@@ -42,7 +44,7 @@ namespace Server.Mobiles
             VirtualArmor = 58;
         }
 
-        public override string CorpseName => "a daemon corpse";
+        public override string CorpseName => "труп демона";
 
         public override Faction FactionAllegiance => Shadowlords.Instance;
         public override Ethic EthicAllegiance => Ethic.Evil;
@@ -62,6 +64,13 @@ namespace Server.Mobiles
             AddLoot(LootPack.Rich);
             AddLoot(LootPack.Average, 2);
             AddLoot(LootPack.MedScrolls, 2);
+        }
+
+        public override void OnCarve(Mobile from, Corpse corpse, Item with)
+        {
+            base.OnCarve(from, corpse, with);
+            MahaonCarvedBoneSystem.TryDropDemonBone(from, corpse);
+            corpse.Carved = true;
         }
     }
 }

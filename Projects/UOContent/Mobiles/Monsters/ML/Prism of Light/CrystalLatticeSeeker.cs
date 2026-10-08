@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackArcaneScroll(0, 2);
         }
 
-        public override string CorpseName => "a Crystal Lattice Seeker corpse";
-        public override string DefaultName => "Crystal Lattice Seeker";
+        public override string CorpseName => "труп кристаллического искателя";
+        public override string DefaultName => "кристаллический искатель";
 
         /*
         // TODO: uncomment once added

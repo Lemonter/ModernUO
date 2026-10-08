@@ -21,6 +21,7 @@ public delegate void RewardPickedHandler(Mobile from, int index);
 public class RewardGump : DynamicGump
 {
     private readonly TextDefinition _title;
+    private readonly string _subtitle;
     private readonly IRewardEntry[] _rewards;
     private readonly int _points;
     private readonly RewardPickedHandler _onPicked;
@@ -32,20 +33,27 @@ public class RewardGump : DynamicGump
     public int Points => _points;
     public RewardPickedHandler OnPicked => _onPicked;
 
-    private RewardGump(TextDefinition title, IRewardEntry[] rewards, int points, RewardPickedHandler onPicked)
-        : base(250, 50)
+    public string Subtitle => _subtitle;
+
+    private RewardGump(
+        TextDefinition title, string subtitle, IRewardEntry[] rewards, int points, RewardPickedHandler onPicked
+    ) : base(250, 50)
     {
         _title = title;
+        _subtitle = subtitle;
         _rewards = rewards;
         _points = points;
         _onPicked = onPicked;
     }
 
-    public static void DisplayTo(Mobile from, TextDefinition title, IRewardEntry[] rewards, int points, RewardPickedHandler onPicked)
+    public static void DisplayTo(
+        Mobile from, TextDefinition title, IRewardEntry[] rewards, int points, RewardPickedHandler onPicked,
+        string subtitle = null
+    )
     {
         if (from?.NetState != null && rewards != null && rewards.Length != 0 && onPicked != null)
         {
-            from.SendGump(new RewardGump(title, rewards, points, onPicked));
+            from.SendGump(new RewardGump(title, subtitle, rewards, points, onPicked));
         }
     }
 
@@ -64,14 +72,28 @@ public class RewardGump : DynamicGump
 
         _title.AddHtmlText(ref builder, 70, 35, 270, 20, numberColor: 1);
 
-        builder.AddHtmlLocalized(50, 65, 150, 20, 1072843, 1); // Your Reward Points:
-        builder.AddLabel(230, 65, 0x64, $"{_points}");
-        builder.AddImageTiled(35, 85, 270, 2, 0x23C5);
-        builder.AddHtmlLocalized(35, 90, 270, 20, 1072844, 1); // Please Choose a Reward:
+        // Раньше здесь стояла клилок-строка «Your Reward Points:», хотя платят тут
+        // золотом — игрок видел свой золотой запас под подписью про очки и не понимал, при
+        // чём здесь его очки стражи.
+        builder.AddHtml(50, 63, 170, 20, "<BASEFONT COLOR=#FFD700>Золота у тебя:</BASEFONT>");
+        builder.AddLabel(230, 63, 0x64, $"{_points}");
+
+        // Своя строка под пояснение (звание и скидка у Гвидо). В заголовок это не влезало:
+        // он и так шире рамки, а с длинным званием вроде «Генералиссимуса» текст просто
+        // обрезался на середине слова.
+        if (_subtitle != null)
+        {
+            builder.AddHtml(35, 83, 270, 20, _subtitle);
+        }
+
+        var headerBottom = _subtitle != null ? 105 : 85;
+
+        builder.AddImageTiled(35, headerBottom, 270, 2, 0x23C5);
+        builder.AddHtml(35, headerBottom + 5, 270, 20, "Выбери награду:");
 
         builder.AddPage(1);
 
-        var offset = 110;
+        var offset = headerBottom + 25;
         var page = 1;
 
         for (var i = 0; i < _rewards.Length; ++i)
@@ -79,7 +101,11 @@ public class RewardGump : DynamicGump
             var entry = _rewards[i];
 
             var bounds = ItemBounds.Bounds[entry.ItemID];
-            var height = Math.Max(36, bounds.Height);
+
+            // Было Max(36, ...) при ширине поля описания в 114 пикселей — на русском
+            // тексте это две строки в лучшем случае, и подпись обрезалась. Поле стало
+            // шире (см. ниже) и на строку выше.
+            var height = Math.Max(48, bounds.Height);
 
             if (offset + height > 320)
             {
@@ -118,13 +144,15 @@ public class RewardGump : DynamicGump
 
             if (entry.Description != null)
             {
+                // 170..315 вместо 190..304 — рамка кончается на 320, так что этот запас
+                // просто не использовался.
                 if (entry.Description.String != null)
                 {
-                    builder.AddHtml(190, offset, 114, height, entry.Description.String);
+                    builder.AddHtml(170, offset, 145, height, entry.Description.String);
                 }
                 else if (entry.Description.Number != 0)
                 {
-                    builder.AddHtmlLocalized(190, offset, 114, height, entry.Description.Number, 1);
+                    builder.AddHtmlLocalized(170, offset, 145, height, entry.Description.Number, 1);
                 }
             }
 
@@ -203,13 +231,21 @@ public class RewardConfirmGump : DynamicGump
             builder.AddTooltip(_entry.Tooltip);
         }
 
-        builder.AddHtmlLocalized(25, 22, 200, 20, 1074974, 0x7D00); // Confirm Selection
+        // Здесь стояли клилок-строки английского оригинала («Confirm Selection», «Are you
+        // sure you wish to select this?», Yes/No) — на русском шарде это выглядело чужим,
+        // а места в окне вдоволь, чтобы сказать словами, что именно покупается и почём.
+        builder.AddHtml(25, 22, 300, 20, "<BASEFONT COLOR=#FFD700>Подтверждение покупки</BASEFONT>");
         builder.AddImage(25, 40, 0xBBF);
-        builder.AddHtmlLocalized(25, 55, 300, 120, 1074975, 0x7FFF); // Are you sure you wish to select this?
+
+        var what = _entry.Description?.String ?? "эту награду";
+
+        builder.AddHtml(25, 55, 290, 60, what);
+        builder.AddHtml(25, 120, 100, 20, $"Цена: {_entry.Price} зм");
+
         builder.AddRadio(25, 175, 0x25F8, 0x25FB, true, 1);
         builder.AddRadio(25, 210, 0x25F8, 0x25FB, false, 0);
-        builder.AddHtmlLocalized(60, 180, 280, 20, 1074976, 0x7FFF); // Yes
-        builder.AddHtmlLocalized(60, 215, 280, 20, 1074977, 0x7FFF); // No
+        builder.AddHtml(60, 180, 280, 20, "Купить");
+        builder.AddHtml(60, 215, 280, 20, "Передумал");
         builder.AddButton(265, 220, 0xF7, 0xF8, 7);
     }
 
@@ -221,7 +257,9 @@ public class RewardConfirmGump : DynamicGump
         }
         else
         {
-            RewardGump.DisplayTo(sender.Mobile, _parent.Title, _parent.Rewards, _parent.Points, _parent.OnPicked);
+            RewardGump.DisplayTo(
+                sender.Mobile, _parent.Title, _parent.Rewards, _parent.Points, _parent.OnPicked, _parent.Subtitle
+            );
         }
     }
 }

@@ -1,4 +1,4 @@
-using Server.Ethics;
+﻿using Server.Ethics;
 using Server.Items;
 using Server.Targeting;
 
@@ -92,8 +92,20 @@ namespace Server.Engines.Craft
                         return SmeltResult.NoSkill;
                     }
 
-                    var resourceType = info.ResourceTypes[0];
-                    var ingot = resourceType.CreateInstance<Item>();
+                    // Что вернуть игроку за переплавку.
+                    //
+                    // Вещь, скованная у нас, несёт свой металл в MahaonMetalTracker, и
+                    // вернуть за неё ванильный слиток нельзя: ванильные слитки больше
+                    // нигде не принимаются, и переплавка превращалась бы в уничтожение
+                    // материала. Возвращаем слиток ТОГО ЖЕ металла.
+                    //
+                    // Вещам без записи в трекере (всё, что лежало в мире до перехода на
+                    // наши металлы, и всё, что спавнится готовым) отдаём железо: это
+                    // низший металл, так что обменять хлам на что-то ценное не выйдет.
+                    var trackedMetal = Systems.MahaonMetals.MahaonMetalTracker.GetMetal(item)
+                        ?? Systems.MahaonMetals.MahaonMetal.Iron;
+
+                    Item ingot = new MahaonIngot(trackedMetal);
 
                     if (item is DragonBardingDeed || item is BaseArmor armor && armor.PlayerConstructed ||
                         item is BaseWeapon weapon && weapon.PlayerConstructed ||

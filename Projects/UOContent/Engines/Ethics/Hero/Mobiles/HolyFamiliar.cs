@@ -42,11 +42,11 @@ public partial class HolyFamiliar : BaseCreature
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a holy corpse";
+    public override string CorpseName => "святой труп";
     public override bool IsDispellable => false;
     public override bool IsBondable => false;
 
-    public override string DefaultName => "a silver wolf";
+    public override string DefaultName => "серебряный волк";
 
     public override int Meat => 1;
     public override int Hides => 7;

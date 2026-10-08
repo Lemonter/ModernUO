@@ -46,8 +46,8 @@ namespace Server.Mobiles
             PackItem(new LesserPoisonPotion());
         }
 
-        public override string CorpseName => "a poison elementals corpse";
-        public override string DefaultName => "a poison elemental";
+        public override string CorpseName => "труп ядовитого элементаля";
+        public override string DefaultName => "ядовитый элементаль";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;

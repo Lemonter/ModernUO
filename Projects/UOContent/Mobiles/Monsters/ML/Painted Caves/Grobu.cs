@@ -42,8 +42,8 @@ namespace Server.Mobiles
             Karma = 1000;
         }
 
-        public override string CorpseName => "a Grobu corpse";
-        public override string DefaultName => "Grobu";
+        public override string CorpseName => "труп Гробу";
+        public override string DefaultName => "Гробу";
 
         public override bool GivesMLMinorArtifact => true;
 

@@ -214,7 +214,7 @@ public partial class MaulTheBear : GrizzlyBear
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Maul";
+    public override string DefaultName => "Молот";
 }
 
 [SerializationGenerator(0, false)]
@@ -228,7 +228,7 @@ public partial class Strongroot : Treefellow
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Strongroot";
+    public override string DefaultName => "Крепкокорень";
 }
 
 [SerializationGenerator(0, false)]
@@ -245,7 +245,7 @@ public partial class Enigma : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Enigma";
+    public override string DefaultName => "Загадка";
 }
 
 [SerializationGenerator(0, false)]
@@ -258,7 +258,7 @@ public partial class Bravehorn : BaseEscortable
 
     public override bool StaticMLQuester => true;
     public override bool InitialInnocent => true;
-    public override string DefaultName => "Bravehorn";
+    public override string DefaultName => "Храбророг";
 
     public override void InitBody()
     {
@@ -305,7 +305,7 @@ public partial class BravehornsMate : Hind
     [Constructible]
     public BravehornsMate() => Tamable = false;
 
-    public override string DefaultName => "bravehorn's mate";
+    public override string DefaultName => "подруга Храбророга";
 }
 
 [SerializationGenerator(0, false)]
@@ -319,7 +319,7 @@ public partial class Huntsman : Centaur
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Huntsman";
+    public override string DefaultName => "Охотник";
 }
 
 [SerializationGenerator(0, false)]
@@ -333,7 +333,7 @@ public partial class Arielle : Pixie
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Arielle";
+    public override string DefaultName => "Ариэль";
 }
 
 public class Ingenuity : MLQuest
@@ -493,7 +493,7 @@ public partial class Sledge : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Sledge";
+    public override string DefaultName => "Кувалда";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -531,7 +531,7 @@ public partial class Patricus : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Patricus";
+    public override string DefaultName => "Патрикус";
 }
 
 [QuesterName("Belulah (Nujel'm)")] // On OSI it's "Belulah (Nu'Jelm)" (incorrect spelling)
@@ -557,7 +557,7 @@ public partial class Belulah : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Belulah";
+    public override string DefaultName => "Белула";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

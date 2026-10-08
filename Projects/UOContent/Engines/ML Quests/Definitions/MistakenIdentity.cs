@@ -218,7 +218,7 @@ public partial class Aernya : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Aernya";
+    public override string DefaultName => "Аэрния";
 }
 
 [QuesterName("Gorrow (Luna)")]
@@ -245,7 +245,7 @@ public partial class Gorrow : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Gorrow";
+    public override string DefaultName => "Горроу";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -294,7 +294,7 @@ public partial class MasterGnosos : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Master Gnosos";
+    public override string DefaultName => "мастер Гнозос";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

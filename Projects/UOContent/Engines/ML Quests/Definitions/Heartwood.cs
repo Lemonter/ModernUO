@@ -2032,7 +2032,7 @@ public partial class Saril : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Saril";
+    public override string DefaultName => "Сарил";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2077,7 +2077,7 @@ public partial class Cailla : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Cailla";
+    public override string DefaultName => "Кайла";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2120,7 +2120,7 @@ public partial class Tamm : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Tamm";
+    public override string DefaultName => "Тамм";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2165,7 +2165,7 @@ public partial class Landy : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Landy";
+    public override string DefaultName => "Ланди";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2215,7 +2215,7 @@ public partial class Alejaha : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Alejaha";
+    public override string DefaultName => "старейшина Алеяха";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2254,7 +2254,7 @@ public partial class Mielan : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Mielan";
+    public override string DefaultName => "Миелан";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2303,7 +2303,7 @@ public partial class Ciala : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Ciala";
+    public override string DefaultName => "Сиала";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2344,7 +2344,7 @@ public partial class Aniel : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Aniel";
+    public override string DefaultName => "Аниэль";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2398,7 +2398,7 @@ public partial class Aulan : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Aulan";
+    public override string DefaultName => "Аулан";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2444,7 +2444,7 @@ public partial class Brinnae : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Brinnae";
+    public override string DefaultName => "Бриннэ";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -2483,7 +2483,7 @@ public partial class Caelas : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Caelas";
+    public override string DefaultName => "старейшина Каэлас";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2523,7 +2523,7 @@ public partial class Clehin : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Clehin";
+    public override string DefaultName => "Клехин";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2576,7 +2576,7 @@ public partial class Cloorne : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Cloorne";
+    public override string DefaultName => "Клоорн";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2637,7 +2637,7 @@ public partial class Salaenih : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Salaenih";
+    public override string DefaultName => "Салаэних";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2682,7 +2682,7 @@ public partial class Vilo : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Vilo";
+    public override string DefaultName => "Вило";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2728,7 +2728,7 @@ public partial class Tholef : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Tholef";
+    public override string DefaultName => "Толеф";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2768,7 +2768,7 @@ public partial class Tillanil : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Tillanil";
+    public override string DefaultName => "Тилланил";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2814,7 +2814,7 @@ public partial class Waelian : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Waelian";
+    public override string DefaultName => "Ваэлиан";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2855,7 +2855,7 @@ public partial class Sleen : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Sleen";
+    public override string DefaultName => "Слин";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2895,7 +2895,7 @@ public partial class Unoelil : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Unoelil";
+    public override string DefaultName => "Уноэлил";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -2936,7 +2936,7 @@ public partial class Anolly : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Anolly";
+    public override string DefaultName => "Анолли";
     public override bool CanTeach => true;
 }
 
@@ -2977,7 +2977,7 @@ public partial class Jusae : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Jusae";
+    public override string DefaultName => "Дзюсаэ";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3017,7 +3017,7 @@ public partial class Cillitha : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Cillitha";
+    public override string DefaultName => "Киллита";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3063,7 +3063,7 @@ public partial class Lohn : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lohn";
+    public override string DefaultName => "Лон";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3105,7 +3105,7 @@ public partial class Olla : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Olla";
+    public override string DefaultName => "Олла";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3146,7 +3146,7 @@ public partial class Thallary : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Thallary";
+    public override string DefaultName => "Талларий";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3187,7 +3187,7 @@ public partial class Ahie : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Ahie";
+    public override string DefaultName => "Ахие";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3243,7 +3243,7 @@ public partial class Tyeelor : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Tyeelor";
+    public override string DefaultName => "Тиилор";
 }
 
 [SerializationGenerator(0, false)]
@@ -3287,7 +3287,7 @@ public partial class Athailon : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Athailon";
+    public override string DefaultName => "Атайлон";
 }
 
 [SerializationGenerator(0, false)]
@@ -3314,7 +3314,7 @@ public partial class ElderTaellia : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Taellia";
+    public override string DefaultName => "старейшина Таэллия";
 }
 
 [SerializationGenerator(0, false)]
@@ -3354,7 +3354,7 @@ public partial class ElderMallew : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Mallew";
+    public override string DefaultName => "старейшина Маллью";
 }
 
 [SerializationGenerator(0, false)]
@@ -3380,7 +3380,7 @@ public partial class ElderAbbein : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Abbein";
+    public override string DefaultName => "старейшина Аббейн";
 }
 
 [SerializationGenerator(0, false)]
@@ -3410,7 +3410,7 @@ public partial class ElderVicaie : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Vicaie";
+    public override string DefaultName => "старейшина Викайе";
 }
 
 [SerializationGenerator(0, false)]
@@ -3438,7 +3438,7 @@ public partial class ElderJothan : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Jothan";
+    public override string DefaultName => "старейшина Джотан";
 }
 
 [SerializationGenerator(0, false)]
@@ -3466,7 +3466,7 @@ public partial class ElderAlethanian : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Alethanian";
+    public override string DefaultName => "старейшина Алетаниан";
 }
 
 [SerializationGenerator(0, false)]
@@ -3492,7 +3492,7 @@ public partial class Rebinil : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Rebinil";
+    public override string DefaultName => "Ребинил";
 }
 
 [SerializationGenerator(0, false)]
@@ -3518,7 +3518,7 @@ public partial class Aluniol : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Aluniol";
+    public override string DefaultName => "Алуниол";
 }
 
 [SerializationGenerator(0, false)]
@@ -3545,7 +3545,7 @@ public partial class Olaeni : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Olaeni";
+    public override string DefaultName => "Олаэни";
 }
 
 [SerializationGenerator(0, false)]
@@ -3577,7 +3577,7 @@ public partial class Bolaevin : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Bolaevin";
+    public override string DefaultName => "Болаевин";
 }
 
 [SerializationGenerator(0, false)]
@@ -3603,7 +3603,7 @@ public partial class LorekeeperAneen : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lorekeeper Aneen";
+    public override string DefaultName => "хранитель знаний Анин";
 }
 
 [SerializationGenerator(0, false)]
@@ -3638,7 +3638,7 @@ public partial class Daelas : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Daelas";
+    public override string DefaultName => "Даэлас";
 }
 
 [SerializationGenerator(0, false)]
@@ -3676,7 +3676,7 @@ public partial class Alelle : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Alelle";
+    public override string DefaultName => "Алелль";
 }
 
 [QuesterName("Nillaen (The Heartwood)")]
@@ -3709,7 +3709,7 @@ public partial class LorekeeperNillaen : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lorekeeper Nillaen";
+    public override string DefaultName => "хранитель знаний Ниллаэн";
     public override bool CanTeach => true;
 }
 
@@ -3742,7 +3742,7 @@ public partial class LorekeeperRyal : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lorekeeper Ryal";
+    public override string DefaultName => "хранитель знаний Риал";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3782,7 +3782,7 @@ public partial class Braen : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Braen";
+    public override string DefaultName => "Браэн";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3820,7 +3820,7 @@ public partial class ElderAcob : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Elder Acob";
+    public override string DefaultName => "старейшина Акоб";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3858,7 +3858,7 @@ public partial class LorekeeperCalendor : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lorekeeper Calendor";
+    public override string DefaultName => "хранитель знаний Календор";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;
@@ -3896,7 +3896,7 @@ public partial class LorekeeperSiarra : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Lorekeeper Siarra";
+    public override string DefaultName => "хранитель знаний Сиарра";
     public override bool CanTeach => true;
 
     public override bool CanShout => true;

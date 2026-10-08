@@ -55,8 +55,8 @@ namespace Server.Mobiles
             AddItem(pack);
         }
 
-        public override string CorpseName => "a horse corpse";
-        public override string DefaultName => "a pack horse";
+        public override string CorpseName => "труп лошади";
+        public override string DefaultName => "вьючная лошадь";
 
         public override int Meat => 3;
         public override int Hides => 10;
@@ -137,7 +137,7 @@ namespace Server.Mobiles
         public static bool CheckAccess(BaseCreature animal, Mobile from) =>
             from == animal || from.AccessLevel >= AccessLevel.GameMaster || from.Alive && animal.Controlled &&
             !animal.IsDeadPet &&
-            (from == animal.ControlMaster || from == animal.SummonMaster || animal.IsPetFriend(from));
+            (from == animal.GetMaster() || animal.IsPetFriend(from));
 
         public static void CombineBackpacks(BaseCreature animal)
         {

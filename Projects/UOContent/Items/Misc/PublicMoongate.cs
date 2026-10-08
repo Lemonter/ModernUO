@@ -94,6 +94,84 @@ public partial class PublicMoongate : Item
         return true;
     }
 
+    /// <summary>
+    /// Sends <paramref name="from"/> through <paramref name="gate"/> to a destination, with every
+    /// rule the destination gump enforces. The gump and the bots' route follower both come here.
+    /// </summary>
+    public static bool TryTravel(Mobile from, Item gate, Map destMap, Point3D dest)
+    {
+        if (gate.Deleted || !from.InRange(gate.GetWorldLocation(), 1) || from.Map != gate.Map)
+        {
+            from.SendLocalizedMessage(1019002); // You are too far away to use the gate.
+        }
+        else if (from.Player && from.Murderer && destMap != Map.Felucca ||
+                 Sigil.ExistsOn(from) && destMap != Faction.Facet)
+        {
+            from.SendLocalizedMessage(1019004); // You are not allowed to travel there.
+        }
+        else if (from.Criminal)
+        {
+            from.SendLocalizedMessage(1005561, "", 0x22); // Thou'rt a criminal and cannot escape so easily.
+        }
+        else if (SpellHelper.CheckCombat(from))
+        {
+            from.SendLocalizedMessage(1005564, "", 0x22); // Wouldst thou flee during the heat of battle??
+        }
+        else if (from.Spell != null)
+        {
+            from.SendLocalizedMessage(1049616); // You are too busy to do that at the moment.
+        }
+        else if (from.Map == destMap && from.InRange(dest, 1))
+        {
+            from.SendLocalizedMessage(1019003); // You are already there.
+        }
+        else
+        {
+            BaseCreature.TeleportPets(from, dest, destMap);
+
+            from.Combatant = null;
+            from.Warmode = false;
+            from.Hidden = true;
+
+            from.MoveToWorld(dest, destMap);
+
+            Effects.PlaySound(dest, destMap, 0x1FE);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>Every destination a gate offers an innocent with the full client, on the maps
+    /// this shard runs.</summary>
+    public static IEnumerable<(Map Map, Point3D Location)> AllDestinations()
+    {
+        var lists = Core.Expansion switch
+        {
+            >= Expansion.TOL => PMList.TOLLists,
+            >= Expansion.SA  => PMList.SALists,
+            >= Expansion.SE  => PMList.SELists,
+            >= Expansion.AOS => PMList.AOSLists,
+            >= Expansion.LBR => PMList.LBRLists,
+            >= Expansion.T2A => PMList.T2ALists,
+            _                => PMList.NoTrammelLists
+        };
+
+        var availableMaps = ExpansionInfo.CoreExpansion.MapSelectionFlags;
+        foreach (var list in lists)
+        {
+            if (!availableMaps.Includes(list.Map.ToSelectionFlag()))
+            {
+                continue;
+            }
+
+            foreach (var entry in list.Entries)
+            {
+                yield return (list.Map, entry.Location);
+            }
+        }
+    }
+
     public static void Configure()
     {
         CommandSystem.Register("MoonGen", AccessLevel.Developer, MoonGen_OnCommand);
@@ -480,43 +558,6 @@ public class MoongateGump : DynamicGump
         }
 
         var entry = list.Entries[listEntry];
-
-        if (!from.InRange(_moongate.GetWorldLocation(), 1) || from.Map != _moongate.Map)
-        {
-            from.SendLocalizedMessage(1019002); // You are too far away to use the gate.
-        }
-        else if (from.Player && from.Murderer && list.Map != Map.Felucca ||
-                 Sigil.ExistsOn(from) && list.Map != Faction.Facet)
-        {
-            from.SendLocalizedMessage(1019004); // You are not allowed to travel there.
-        }
-        else if (from.Criminal)
-        {
-            from.SendLocalizedMessage(1005561, "", 0x22); // Thou'rt a criminal and cannot escape so easily.
-        }
-        else if (SpellHelper.CheckCombat(from))
-        {
-            from.SendLocalizedMessage(1005564, "", 0x22); // Wouldst thou flee during the heat of battle??
-        }
-        else if (from.Spell != null)
-        {
-            from.SendLocalizedMessage(1049616); // You are too busy to do that at the moment.
-        }
-        else if (from.Map == list.Map && from.InRange(entry.Location, 1))
-        {
-            from.SendLocalizedMessage(1019003); // You are already there.
-        }
-        else
-        {
-            BaseCreature.TeleportPets(from, entry.Location, list.Map);
-
-            from.Combatant = null;
-            from.Warmode = false;
-            from.Hidden = true;
-
-            from.MoveToWorld(entry.Location, list.Map);
-
-            Effects.PlaySound(entry.Location, list.Map, 0x1FE);
-        }
+        PublicMoongate.TryTravel(from, _moongate, list.Map, entry.Location);
     }
 }

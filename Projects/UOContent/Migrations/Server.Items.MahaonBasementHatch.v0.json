@@ -1,0 +1,19 @@
+{
+  "version": 0,
+  "type": "Server.Items.MahaonBasementHatch",
+  "properties": [
+    {
+      "name": "House",
+      "type": "Server.Items.MahaonCityHouse",
+      "rule": "SerializableInterfaceMigrationRule"
+    },
+    {
+      "name": "Destination",
+      "type": "Server.Point3D",
+      "rule": "PrimitiveUOTypeMigrationRule",
+      "ruleArguments": [
+        "Point3D"
+      ]
+    }
+  ]
+}

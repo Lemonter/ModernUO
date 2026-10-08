@@ -35,6 +35,8 @@ namespace Server.Spells.Sixth
                 var dispelChance =
                     (50.0 + 100 * (Caster.Skills.Magery.Value - bc.DispelDifficulty) / (bc.DispelFocus * 2)) / 100;
 
+                dispelChance += Spellweaving.ArcaneEmpowermentSpell.GetDispellBonus(Caster) / 100.0;
+
                 if (dispelChance > Utility.RandomDouble())
                 {
                     Effects.SendLocationParticles(

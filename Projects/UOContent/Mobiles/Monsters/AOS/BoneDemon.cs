@@ -42,8 +42,8 @@ namespace Server.Mobiles
             VirtualArmor = 44;
         }
 
-        public override string CorpseName => "a bone demon corpse";
-        public override string DefaultName => "a bone demon";
+        public override string CorpseName => "труп костяного демона";
+        public override string DefaultName => "костяной демон";
 
         public override bool BardImmune => !Core.SE;
         public override bool Unprovokable => Core.SE;

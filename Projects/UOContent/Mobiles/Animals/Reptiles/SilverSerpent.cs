@@ -42,11 +42,11 @@ namespace Server.Mobiles
             VirtualArmor = 40;
         }
 
-        public override string CorpseName => "a silver serpent corpse";
+        public override string CorpseName => "труп серебряного змея";
         public override Faction FactionAllegiance => TrueBritannians.Instance;
         public override Ethic EthicAllegiance => Ethic.Hero;
 
-        public override string DefaultName => "a silver serpent";
+        public override string DefaultName => "серебряный змей";
 
         public override bool DeathAdderCharmable => true;
 

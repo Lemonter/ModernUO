@@ -42,11 +42,11 @@ namespace Server.Mobiles
             PackItem(new Club());
         }
 
-        public override string CorpseName => "an ogre lords corpse";
+        public override string CorpseName => "труп лорда-огра";
         public override Faction FactionAllegiance => Minax.Instance;
         public override Ethic EthicAllegiance => Ethic.Evil;
 
-        public override string DefaultName => "an ogre lord";
+        public override string DefaultName => "лорд-огр";
 
         public override bool CanRummageCorpses => true;
         public override Poison PoisonImmune => Poison.Regular;

@@ -57,7 +57,7 @@ namespace Server.Gumps
                     }
                     else
                     {
-                        m_From.SendMessage("You may not change that.");
+                        m_From.SendMessage("Это изменить нельзя.");
                     }
 
                     m_From.SendGump(new SkillsGump(m_From, m_Target, m_Selected));
@@ -292,7 +292,7 @@ namespace Server.Gumps
                                 }
                                 else
                                 {
-                                    m_From.SendMessage("You may not change that.");
+                                    m_From.SendMessage("Это изменить нельзя.");
                                     m_From.SendGump(new SkillsGump(m_From, m_Target, m_Selected));
                                 }
                             }
@@ -338,7 +338,7 @@ namespace Server.Gumps
                                 }
                                 else
                                 {
-                                    m_From.SendMessage("You may not change that.");
+                                    m_From.SendMessage("Это изменить нельзя.");
                                 }
 
                                 m_From.SendGump(new SkillsGump(m_From, m_Target, m_Selected));

@@ -21,22 +21,14 @@ public partial class Board : Item, ICommodity
         Hue = CraftResources.GetHue(resource);
     }
 
-    [SerializableProperty(0)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public CraftResource Resource
-    {
-        get => _resource;
-        set
-        {
-            if (_resource != value)
-            {
-                _resource = value;
-                Hue = CraftResources.GetHue(value);
+    [SerializableField(0, fieldChanged: nameof(OnResourceChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private CraftResource _resource;
 
-                InvalidateProperties();
-                this.MarkDirty();
-            }
-        }
+    private void OnResourceChanged(CraftResource oldValue, CraftResource newValue)
+    {
+        Hue = CraftResources.GetHue(newValue);
     }
 
     int ICommodity.DescriptionNumber
@@ -135,6 +127,33 @@ public partial class YewBoard : Board
 {
     [Constructible]
     public YewBoard(int amount = 1) : base(CraftResource.YewWood, amount)
+    {
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class BananaBoard : Board
+{
+    [Constructible]
+    public BananaBoard(int amount = 1) : base(CraftResource.BananaWood, amount)
+    {
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class CoconutBoard : Board
+{
+    [Constructible]
+    public CoconutBoard(int amount = 1) : base(CraftResource.CoconutWood, amount)
+    {
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class PalmBoard : Board
+{
+    [Constructible]
+    public PalmBoard(int amount = 1) : base(CraftResource.PalmWood, amount)
     {
     }
 }

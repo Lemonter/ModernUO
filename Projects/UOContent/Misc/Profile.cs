@@ -1,4 +1,6 @@
+using System.Text;
 using Server.Accounting;
+using Server.Mobiles;
 using Server.Network;
 
 namespace Server.Misc
@@ -9,7 +11,7 @@ namespace Server.Misc
         {
             if (beholder.ProfileLocked)
             {
-                beholder.SendMessage("Your profile is locked. You may not change it.");
+                beholder.SendMessage("Твой профиль закрыт для изменений.");
             }
             else
             {
@@ -50,10 +52,72 @@ namespace Server.Misc
                 footer = GetAccountDuration(beheld);
             }
 
+            // Заслуги идут в подвал, а не в тело. Тело — это то, что игрок сам о себе
+            // написал, и клиент присылает его обратно целиком при любой правке: допиши туда
+            // звания — и они осядут в тексте профиля, а на следующий показ допишутся ещё
+            // раз. Подвал же только отображается.
+            var earned = BuildEarned(beheld);
+
+            if (earned.Length > 0)
+            {
+                footer = footer.Length == 0 ? earned : $"{earned}\n{footer}";
+            }
+
             var body = beheld.Profile ?? "";
             var serial = beholder != beheld || !beheld.ProfileLocked ? beheld.Serial : Serial.Zero;
 
             beholder.NetState.SendDisplayProfile(serial, header, body, footer);
+        }
+
+        /// <summary>
+        ///     Что человек заслужил: звание стражи и звания охотника.
+        ///
+        ///     Считается на лету из тех же систем, что дают за эти звания бонусы —
+        ///     отдельного «списка достижений» нет намеренно, иначе он бы однажды разошёлся с
+        ///     настоящим положением дел и врал бы игроку.
+        ///
+        ///     Видно всем, кто рядом, а не только владельцу: звание для того и нужно, чтобы
+        ///     его видели.
+        /// </summary>
+        private static string BuildEarned(Mobile beheld)
+        {
+            var earned = new StringBuilder();
+
+            if (beheld is PlayerMobile player)
+            {
+                var rank = Systems.MahaonGuard.GuardSystem.GetRankName(player);
+
+                if (!string.IsNullOrEmpty(rank))
+                {
+                    earned.Append("Звание стражи: ").Append(rank).Append('\n');
+                }
+            }
+
+            var titles = Systems.MahaonSlayer.MahaonSlayerTitles.TitlesOf(beheld);
+
+            if (titles.Count > 0)
+            {
+                earned.Append("Звания охотника:\n");
+
+                foreach (var title in titles)
+                {
+                    earned.Append("  ").Append(title).Append('\n');
+                }
+            }
+
+            var progress = Systems.MahaonSlayer.MahaonSlayerTitles.ProgressOf(beheld);
+
+            if (progress.Count > 0)
+            {
+                earned.Append("На счету:\n");
+
+                foreach (var line in progress)
+                {
+                    earned.Append("  ").Append(line).Append('\n');
+                }
+            }
+
+            return earned.ToString();
         }
 
         private static string GetAccountDuration(Mobile m)

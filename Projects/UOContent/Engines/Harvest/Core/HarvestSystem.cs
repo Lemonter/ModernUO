@@ -219,7 +219,7 @@ namespace Server.Engines.Harvest
                             }
                             else
                             {
-                                item.Delete();
+                                bonusItem?.Delete();
                             }
                         }
 
@@ -289,6 +289,13 @@ namespace Server.Engines.Harvest
 
         public virtual bool Give(Mobile m, Item item, bool placeAtFeet)
         {
+            Systems.MahaonProfessions.ProfessionHarvestBonus.ApplyCraftsmanBonus(m, item);
+
+            if (Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(m, item))
+            {
+                return true;
+            }
+
             if (m.PlaceInBackpack(item))
             {
                 return true;

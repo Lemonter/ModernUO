@@ -15,7 +15,7 @@ public partial class PlagueBeastInnard : Item, IScissorable, ICarvable
     public override double DefaultWeight => 1.0;
 
     public PlagueBeastLord Owner => RootParent as PlagueBeastLord;
-    public override string DefaultName => "plague beast innards";
+    public override string DefaultName => "внутренности чумной твари";
 
     public virtual void Carve(Mobile from, Item with)
     {

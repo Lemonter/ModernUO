@@ -23,22 +23,14 @@ public abstract partial class BaseAddonContainerDeed : Item, ICraftable
 
     public abstract BaseAddonContainer Addon { get; }
 
-    [SerializableProperty(0)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public CraftResource Resource
-    {
-        get => _resource;
-        set
-        {
-            if (_resource != value)
-            {
-                _resource = value;
-                Hue = CraftResources.GetHue(_resource);
+    [SerializableField(0, fieldChanged: nameof(OnResourceChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private CraftResource _resource;
 
-                InvalidateProperties();
-                this.MarkDirty();
-            }
-        }
+    private void OnResourceChanged(CraftResource oldValue, CraftResource newValue)
+    {
+        Hue = CraftResources.GetHue(_resource);
     }
 
     public virtual int OnCraft(
@@ -137,7 +129,7 @@ public abstract partial class BaseAddonContainerDeed : Item, ICraftable
             }
             else if (res == AddonFitResult.DoorsNotClosed)
             {
-                from.SendMessage("You must close all house doors before placing this.");
+                from.SendMessage("Прежде закрой все двери дома.");
             }
             else if (res == AddonFitResult.DoorTooClose)
             {

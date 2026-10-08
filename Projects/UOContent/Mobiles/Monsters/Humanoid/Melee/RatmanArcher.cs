@@ -41,11 +41,19 @@ namespace Server.Mobiles
 
             VirtualArmor = 56;
 
-            AddItem(new Bow());
+            AddItem(new Bow { Hue = 0x3A2 }); // тёмное дерево
             PackItem(new Arrow(Utility.RandomMinMax(50, 70)));
+
+            // Mahaon: сет из шипастой (Spined) кожи — совпадает с их же типом шкуры
+            // (HideType ниже), одна кожа на весь набор.
+            AddItem(new LeatherChest { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherArms { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherGloves { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherGorget { Resource = CraftResource.SpinedLeather });
+            AddItem(new LeatherLegs { Resource = CraftResource.SpinedLeather });
         }
 
-        public override string CorpseName => "a ratman archer corpse";
+        public override string CorpseName => "труп крысолюда-лучника";
         public override InhumanSpeech SpeechType => InhumanSpeech.Ratman;
 
         public override bool CanRummageCorpses => true;

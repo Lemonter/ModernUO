@@ -38,8 +38,8 @@ public partial class DarkWolfFamiliar : BaseFamiliar
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "a dark wolf corpse";
-    public override string DefaultName => "a dark wolf";
+    public override string CorpseName => "труп тёмного волка";
+    public override string DefaultName => "тёмный волк";
 
     public override void OnThink()
     {
@@ -52,7 +52,7 @@ public partial class DarkWolfFamiliar : BaseFamiliar
 
         m_NextRestore = Core.Now + TimeSpan.FromSeconds(2.0);
 
-        var caster = ControlMaster ?? SummonMaster;
+        var caster = GetMaster();
 
         if (caster != null)
         {

@@ -41,6 +41,7 @@ public static class AutoArchive
     private static int _retryCount;
     private static int _retryDelayMs;
     private static int _backupMaxAgeDays;
+    private static int _backupMaxCount;
 
     public static event Action<ArchiveCompletedEventArgs> ArchiveCompleted;
     public static event Action<ArchiveFailedEventArgs> ArchiveFailed;
@@ -75,6 +76,14 @@ public static class AutoArchive
         _retryCount = ServerConfiguration.GetOrUpdateSetting("autoArchive.retryCount", 3);
         _retryDelayMs = ServerConfiguration.GetOrUpdateSetting("autoArchive.retryDelayMs", 500);
         _backupMaxAgeDays = ServerConfiguration.GetOrUpdateSetting("autoArchive.backupMaxAge", 30);
+
+        // Сколько последних резервных копий держать, сколько бы им ни было дней. Ноль —
+        // выключено, тогда работает только возраст, как было раньше. Архивы (Hourly/Daily/
+        // Monthly) считались по количеству с самого начала, а вот Backups/Automatic
+        // чистилась исключительно по возрасту: на частых сохранениях папка успевала
+        // распухнуть на гигабайты задолго до того, как самой старой копии исполнялось
+        // тридцать дней.
+        _backupMaxCount = ServerConfiguration.GetOrUpdateSetting("autoArchive.backupMaxCount", 0);
 
         // Configurable retention
         var hourlyRetention = ServerConfiguration.GetOrUpdateSetting("autoArchive.hourlyRetention", 24);
@@ -560,10 +569,12 @@ public static class AutoArchive
             return;
         }
 
-        var allFolders = Directory.EnumerateDirectories(AutomaticBackupPath);
+        // Обход идёт от самой свежей копии к самой старой (PathsByTimestampName сортирует
+        // по убыванию), поэтому счётчик оставленных считает именно последние N.
         var threshold = Core.Now.AddDays(-_backupMaxAgeDays);
+        var kept = 0;
 
-        foreach (var folder in allFolders)
+        foreach (var folder in PathsByTimestampName(AutomaticBackupPath))
         {
             // Skip backup directories that are still being written
             if (!File.Exists(Path.Combine(folder, BackupCompleteMarker)))
@@ -578,11 +589,20 @@ public static class AutoArchive
                 continue;
             }
 
-            if (date < threshold)
+            var tooOld = date < threshold;
+            var tooMany = _backupMaxCount > 0 && kept >= _backupMaxCount;
+
+            if (!tooOld && !tooMany)
             {
-                logger.Information("Pruning old backup {Directory}", folder);
-                RetryFileOperation(() => Directory.Delete(folder, true));
+                kept++;
+                continue;
             }
+
+            logger.Information(
+                "Pruning backup {Directory} ({Reason})", folder, tooOld ? "too old" : "over the keep limit"
+            );
+
+            RetryFileOperation(() => Directory.Delete(folder, true));
         }
     }
 

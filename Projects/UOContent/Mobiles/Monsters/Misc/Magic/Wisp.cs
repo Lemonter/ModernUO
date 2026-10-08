@@ -53,7 +53,7 @@ namespace Server.Mobiles
             AddItem(new LightSource());
         }
 
-        public override string CorpseName => "a wisp corpse";
+        public override string CorpseName => "труп огонька";
         public override InhumanSpeech SpeechType => InhumanSpeech.Wisp;
 
         public override Faction FactionAllegiance => CouncilOfMages.Instance;
@@ -61,7 +61,7 @@ namespace Server.Mobiles
 
         public override TimeSpan ReacquireDelay => TimeSpan.FromSeconds(1.0);
 
-        public override string DefaultName => "a wisp";
+        public override string DefaultName => "огонёк";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

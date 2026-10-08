@@ -46,12 +46,12 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an overseer's corpse";
+        public override string CorpseName => "труп надзирателя";
 
         public override bool IsScaredOfScaryThings => false;
         public override bool IsScaryToPets => true;
 
-        public override string DefaultName => "an exodus overseer";
+        public override string DefaultName => "надзиратель Исхода";
 
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.AOS;

@@ -94,7 +94,7 @@ public class FlippableAddonAttribute : Attribute
                 }
                 else if (result == AddonFitResult.DoorsNotClosed)
                 {
-                    from.SendMessage("You must close all house doors before placing this.");
+                    from.SendMessage("Прежде закрой все двери дома.");
                 }
                 else if (result == AddonFitResult.DoorTooClose)
                 {

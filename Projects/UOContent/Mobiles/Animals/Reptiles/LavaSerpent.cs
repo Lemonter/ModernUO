@@ -44,8 +44,8 @@ namespace Server.Mobiles
             // TODO: body parts, armour
         }
 
-        public override string CorpseName => "a lava serpent corpse";
-        public override string DefaultName => "a lava serpent";
+        public override string CorpseName => "труп лавового змея";
+        public override string DefaultName => "лавовый змей";
 
         public override bool DeathAdderCharmable => true;
         public override int Meat => 4;

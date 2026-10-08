@@ -86,7 +86,7 @@ public enum CorpseFlag
     OwnerWasAnimatedDead = 0x00000800
 }
 
-[SerializationGenerator(17, false)]
+[SerializationGenerator(19, false)]
 public partial class Corpse : Container, ICarvable
 {
     public static readonly TimeSpan MonsterLootRightSacrifice = TimeSpan.FromMinutes(2.0);
@@ -106,7 +106,7 @@ public partial class Corpse : Container, ICarvable
     [SerializableField(1)]
     private CorpseFlag _flags;
 
-    [DeltaDateTime]
+    [AnchoredDateTime]
     [SerializableField(2)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private DateTime _timeOfDeath;
@@ -114,11 +114,10 @@ public partial class Corpse : Container, ICarvable
     [SerializableField(3, getter: "private", setter: "private")]
     private Dictionary<Item, Point3D> _restoreTable;
 
-    [TimerDrift]
     [SerializableField(4, getter: "private", setter: "private")]
+    [DeserializeTimer(nameof(DeserializeDecayTimer))]
     private Timer _decayTimer;
 
-    [DeserializeTimerField(4)]
     private void DeserializeDecayTimer(TimeSpan delay) => BeginDecay(delay);
 
     [SerializableField(5, setter: "private")]
@@ -316,127 +315,6 @@ public partial class Corpse : Container, ICarvable
         BeginDecay(_defaultDecayTime);
 
         DevourCorpse();
-    }
-
-    // Decomposed VirtualHairInfo into discrete int fields (hair/facial hair item id + hue)
-    private void MigrateFrom(V16Content content)
-    {
-        _restoreEquip = content.RestoreEquip;
-        _flags = content.Flags;
-        _timeOfDeath = content.TimeOfDeath;
-        _restoreTable = content.RestoreTable;
-        _decayTimer = new InternalTimer(this, content.DecayTimerDelay);
-        _decayTimer.Start();
-        _looters = content.Looters;
-        _killer = content.Killer;
-        _aggressors = content.Aggressors;
-        _owner = content.Owner;
-        _corpseName = content.CorpseName;
-        _accessLevel = content.AccessLevel;
-        _guild = content.Guild;
-        _equipItems = content.EquipItems;
-        if (content.Hair != null)
-        {
-            _hairItemId = content.Hair.ItemId;
-            _hairHue = content.Hair.Hue;
-        }
-
-        if (content.FacialHair != null)
-        {
-            _facialHairItemId = content.FacialHair.ItemId;
-            _facialHairHue = content.FacialHair.Hue;
-        }
-    }
-
-    // Folded Murderer bool field into CorpseFlag.Murderer
-    private void MigrateFrom(V15Content content)
-    {
-        _restoreEquip = content.RestoreEquip;
-        _flags = content.Flags;
-        if (content.Murderer)
-        {
-            _flags |= CorpseFlag.Murderer;
-        }
-        _timeOfDeath = content.TimeOfDeath;
-        _restoreTable = content.RestoreTable;
-        _decayTimer = new InternalTimer(this, content.DecayTimerDelay);
-        _decayTimer.Start();
-        _looters = content.Looters;
-        _killer = content.Killer;
-        _aggressors = content.Aggressors;
-        _owner = content.Owner;
-        _corpseName = content.CorpseName;
-        _accessLevel = content.AccessLevel;
-        _guild = content.Guild;
-        _equipItems = content.EquipItems;
-        if (content.Hair != null)
-        {
-            _hairItemId = content.Hair.ItemId;
-            _hairHue = content.Hair.Hue;
-        }
-
-        if (content.FacialHair != null)
-        {
-            _facialHairItemId = content.FacialHair.ItemId;
-            _facialHairHue = content.FacialHair.Hue;
-        }
-    }
-
-    // Replaced int Kills snapshot with bool Murderer snapshot
-    private void MigrateFrom(V14Content content)
-    {
-        _restoreEquip = content.RestoreEquip;
-        _flags = content.Flags;
-        if (content.Kills >= 5)
-        {
-            _flags |= CorpseFlag.Murderer;
-        }
-        _timeOfDeath = content.TimeOfDeath;
-        _restoreTable = content.RestoreTable;
-        _decayTimer = new InternalTimer(this, content.DecayTimerDelay);
-        _decayTimer.Start();
-        _looters = content.Looters;
-        _killer = content.Killer;
-        _aggressors = content.Aggressors;
-        _owner = content.Owner;
-        _corpseName = content.CorpseName;
-        _accessLevel = content.AccessLevel;
-        _guild = content.Guild;
-        _equipItems = content.EquipItems;
-        if (content.Hair != null)
-        {
-            _hairItemId = content.Hair.ItemId;
-            _hairHue = content.Hair.Hue;
-        }
-
-        if (content.FacialHair != null)
-        {
-            _facialHairItemId = content.FacialHair.ItemId;
-            _facialHairHue = content.FacialHair.Hue;
-        }
-    }
-
-    // Added corpse hair and corpse facial hair
-    private void MigrateFrom(V13Content content)
-    {
-        _restoreEquip = content.RestoreEquip;
-        _flags = content.Flags;
-        if (content.Kills >= 5)
-        {
-            _flags |= CorpseFlag.Murderer;
-        }
-        _timeOfDeath = content.TimeOfDeath;
-        _restoreTable = content.RestoreTable;
-        _decayTimer = new InternalTimer(this, content.DecayTimerDelay);
-        _decayTimer.Start();
-        _looters = content.Looters;
-        _killer = content.Killer;
-        _aggressors = content.Aggressors;
-        _owner = content.Owner;
-        _corpseName = content.CorpseName;
-        _accessLevel = content.AccessLevel;
-        _guild = content.Guild;
-        _equipItems = content.EquipItems;
     }
 
     [CommandProperty(AccessLevel.GameMaster)]
@@ -669,6 +547,21 @@ public partial class Corpse : Container, ICarvable
 
     public void AddCarvedItem(Item carved, Mobile carver)
     {
+        // Skinning resources (hides/wool/feather — the hunter's bag's carcass half) are
+        // handed straight to the carver's matching bag when they have one, instead of
+        // landing on the corpse to be dragged in by hand like everything else looted here.
+        if (carver != null && Systems.MahaonWorld.MahaonResourceBagSystem.TryGive(carver, carved))
+        {
+            if (InstancedCorpse)
+            {
+                _instancedItems ??= new Dictionary<Item, InstancedItemInfo>();
+
+                _instancedItems.Add(carved, new InstancedItemInfo(carved, carver));
+            }
+
+            return;
+        }
+
         DropItem(carved);
 
         if (InstancedCorpse)
@@ -844,6 +737,27 @@ public partial class Corpse : Container, ICarvable
         }
 
         _equipItems = reader.ReadEntityList<Item>();
+    }
+
+    /// <summary>
+    ///     Выбрасывает пустые ячейки из списков снаряжения трупа.
+    ///
+    ///     Предмет, надетый на покойника, может быть удалён, пока труп ещё лежит в мире, —
+    ///     командой чистки, разбором вещей бота, чем угодно. Ссылка на него при этом
+    ///     остаётся в списке, и при следующей загрузке мира на её месте оказывается null:
+    ///     правило миграции для List&lt;Item&gt; читает элементы поштучно и пустые не
+    ///     отсеивает, в отличие от ReadEntityList.
+    ///
+    ///     Одна такая дырка роняла вход в игру целиком — SendEverything шлёт содержимое
+    ///     каждого видимого трупа, и NullReferenceException прилетал в цикл логина.
+    ///     Пакеты теперь и сами устойчивы к null (см. CorpsePackets), но носить дырявые
+    ///     списки в мире незачем.
+    /// </summary>
+    [AfterDeserialization]
+    private void AfterDeserialization()
+    {
+        _equipItems?.RemoveAll(item => item == null);
+        _restoreEquip?.RemoveAll(item => item == null);
     }
 
     public bool DevourCorpse()
@@ -1177,6 +1091,7 @@ public partial class Corpse : Container, ICarvable
     public override void OnDoubleClick(Mobile from)
     {
         Open(from, Core.AOS);
+        Systems.MahaonLooting.AutoLootSystem.TryAutoLoot(from, this);
     }
 
     public override bool CheckContentDisplay(Mobile from) => false;

@@ -114,7 +114,7 @@ public class ParticipantGump : DynamicGump
                 }
             case 1:
                 {
-                    from.SendMessage("You may not raise the team size any further.");
+                    from.SendMessage("Больше уже нельзя.");
                     break;
                 }
             case 2 when Participant.Count > 1 && Participant.Count > Participant.FilledSlots:
@@ -124,12 +124,12 @@ public class ParticipantGump : DynamicGump
                 }
             case 2:
                 {
-                    from.SendMessage("You may not lower the team size any further.");
+                    from.SendMessage("Меньше уже нельзя.");
                     break;
                 }
             case 3 when Participant.FilledSlots > 0:
                 {
-                    from.SendMessage("There is at least one currently active player. You must remove them first.");
+                    from.SendMessage("Есть хотя бы один активный игрок. Сначала убери его.");
                     break;
                 }
             case 3 when Context.Participants.Count > 2:
@@ -140,7 +140,7 @@ public class ParticipantGump : DynamicGump
                 }
             case 3:
                 {
-                    from.SendMessage("Duels must have at least two participating parties.");
+                    from.SendMessage("В дуэли должно участвовать минимум две стороны.");
                     break;
                 }
             default:
@@ -152,11 +152,11 @@ public class ParticipantGump : DynamicGump
                         if (Participant.Players[bid] == null)
                         {
                             from.Target = new ParticipantTarget(Context, Participant, bid);
-                            from.SendMessage("Target a player.");
+                            from.SendMessage("Укажи игрока.");
                             return;
                         }
 
-                        Participant.Players[bid].Mobile.SendMessage("You have been removed from the duel.");
+                        Participant.Players[bid].Mobile.SendMessage("Тебя убрали из дуэли.");
 
                         if (Participant.Players[bid].Mobile is PlayerMobile playerMobile)
                         {
@@ -164,7 +164,7 @@ public class ParticipantGump : DynamicGump
                         }
 
                         Participant.Players[bid] = null;
-                        from.SendMessage("They have been removed from the duel.");
+                        from.SendMessage("Их убрали из дуэли.");
                     }
                     else
                     {
@@ -205,7 +205,7 @@ public class ParticipantGump : DynamicGump
 
             if (targeted is not Mobile mob)
             {
-                from.SendMessage("That is not a player.");
+                from.SendMessage("Это не игрок.");
             }
             else if (!mob.Player)
             {
@@ -220,7 +220,7 @@ public class ParticipantGump : DynamicGump
             }
             else if (AcceptDuelGump.IsIgnored(mob, from) || mob.Blessed)
             {
-                from.SendMessage("They ignore your offer.");
+                from.SendMessage("Твоё предложение проигнорировано.");
             }
             else if (mob is not PlayerMobile pm)
             {

@@ -45,8 +45,8 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a gargoyle corpse";
-        public override string DefaultName => "a stone gargoyle";
+        public override string CorpseName => "труп гаргульи";
+        public override string DefaultName => "каменная гаргулья";
 
         public override int TreasureMapLevel => 2;
 

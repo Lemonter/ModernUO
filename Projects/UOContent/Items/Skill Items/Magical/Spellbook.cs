@@ -133,28 +133,19 @@ public partial class Spellbook : Item, ICraftable, ISlayer, IAosItem
     public virtual int BookOffset => 0;
     public virtual int BookCount => 64;
 
-    [CommandProperty(AccessLevel.GameMaster)]
-    [SerializableProperty(7)]
-    public ulong Content
+    [SerializableField(7, fieldChanged: nameof(OnContentChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private ulong _content;
+
+    private void OnContentChanged(ulong oldValue, ulong newValue)
     {
-        get => _content;
-        set
+        // This assignment will mark it as dirty
+        SpellCount = 0;
+        while (newValue > 0)
         {
-            if (_content != value)
-            {
-                _content = value;
-
-                // This assignment will mark it as dirty
-                SpellCount = 0;
-
-                while (value > 0)
-                {
-                    _spellCount += (int)(value & 0x1);
-                    value >>= 1;
-                }
-
-                InvalidateProperties();
-            }
+            _spellCount += (int)(newValue & 0x1);
+            newValue >>= 1;
         }
     }
 
@@ -227,7 +218,7 @@ public partial class Spellbook : Item, ICraftable, ISlayer, IAosItem
     private static void AllSpells_OnCommand(CommandEventArgs e)
     {
         e.Mobile.BeginTarget(-1, false, TargetFlags.None, AllSpells_OnTarget);
-        e.Mobile.SendMessage("Target the spellbook to fill.");
+        e.Mobile.SendMessage("Укажи книгу заклинаний, которую нужно заполнить.");
     }
 
     private static void AllSpells_OnTarget(Mobile from, object obj)
@@ -236,7 +227,7 @@ public partial class Spellbook : Item, ICraftable, ISlayer, IAosItem
         {
             book.Content = book.BookCount == 64 ? ulong.MaxValue : (1ul << book.BookCount) - 1;
 
-            from.SendMessage("The spellbook has been filled.");
+            from.SendMessage("Книга заклинаний заполнена.");
 
             CommandLogging.WriteLine(
                 from,
@@ -246,7 +237,7 @@ public partial class Spellbook : Item, ICraftable, ISlayer, IAosItem
         else
         {
             from.BeginTarget(-1, false, TargetFlags.None, AllSpells_OnTarget);
-            from.SendMessage("That is not a spellbook. Try again.");
+            from.SendMessage("Это не книга заклинаний. Попробуй ещё раз.");
         }
     }
 
@@ -641,6 +632,9 @@ public partial class Spellbook : Item, ICraftable, ISlayer, IAosItem
     public override void GetProperties(IPropertyList list)
     {
         base.GetProperties(list);
+
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
         if (_quality == BookQuality.Exceptional)
         {

@@ -115,7 +115,7 @@ public class ConfirmResizeHouseGump : StaticGump<ConfirmResizeHouseGump>
 
         if (from.AccessLevel > AccessLevel.Player)
         {
-            from.SendMessage("You do not get a refund for your house as you are not a player.");
+            from.SendMessage("Возврат за дом не положен — ты не игрок.");
         }
         else
         {
@@ -130,7 +130,7 @@ public class ConfirmResizeHouseGump : StaticGump<ConfirmResizeHouseGump>
 
             if (_house.Price <= 0 || !Banker.Deposit(from, _house.Price))
             {
-                from.SendMessage("Unable to refund house.");
+                from.SendMessage("Вернуть деньги за дом не удалось.");
                 return;
             }
 

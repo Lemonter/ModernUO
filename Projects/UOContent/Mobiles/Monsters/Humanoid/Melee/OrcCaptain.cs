@@ -39,6 +39,14 @@ namespace Server.Mobiles
 
             VirtualArmor = 34;
 
+            // Mahaon: сет из рогатой (Horned) кожи — свой тип на весь набор, отличный
+            // от остальных NPC-бандитов этого семейства.
+            AddItem(new LeatherChest { Resource = CraftResource.HornedLeather });
+            AddItem(new LeatherArms { Resource = CraftResource.HornedLeather });
+            AddItem(new LeatherGloves { Resource = CraftResource.HornedLeather });
+            AddItem(new LeatherGorget { Resource = CraftResource.HornedLeather });
+            AddItem(new LeatherLegs { Resource = CraftResource.HornedLeather });
+
             // TODO: Skull?
             PackItem(
                 Utility.Random(7) switch
@@ -59,7 +67,7 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "an orcish corpse";
+        public override string CorpseName => "труп орка";
         public override InhumanSpeech SpeechType => InhumanSpeech.Orc;
 
         public override bool CanRummageCorpses => true;

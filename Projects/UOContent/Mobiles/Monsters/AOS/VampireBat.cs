@@ -38,8 +38,8 @@ namespace Server.Mobiles
             VirtualArmor = 14;
         }
 
-        public override string CorpseName => "a vampire bat corpse";
-        public override string DefaultName => "a vampire bat";
+        public override string CorpseName => "труп вампирской летучей мыши";
+        public override string DefaultName => "вампирская летучая мышь";
 
         public override void GenerateLoot()
         {

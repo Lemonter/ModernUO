@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Server.Engines.Craft.T2A;
 using Server.Items;
 using Server.Mobiles;
@@ -209,7 +209,13 @@ namespace Server.Engines.Craft
 
                             if (pack != null)
                             {
-                                var v = pack.ConsumeUpTo(typeof(IronIngot), (damage + 4) / 5);
+                                // Железо теперь наше (MahaonIngot с металлом в поле), а не
+                                // ванильный тип. Просто подменить тип нельзя: ConsumeUpTo
+                                // сожрал бы любой металл подряд, включая ламий, — чинить
+                                // голема мифрилом никто не подписывался.
+                                var v = Systems.MahaonMetals.MahaonCraftMetals.ConsumeUpToIngots(
+                                    pack, Systems.MahaonMetals.MahaonMetal.Iron, (damage + 4) / 5
+                                );
 
                                 if (v > 0)
                                 {

@@ -135,7 +135,7 @@ namespace Server
             else
             {
                 from.BeginTarget(-1, false, TargetFlags.None, HWInfo_OnTarget);
-                from.SendMessage("That is not a player. Try again.");
+                from.SendMessage("Это не игрок. Попробуй ещё раз.");
             }
         }
 

@@ -70,9 +70,9 @@ namespace Server.Mobiles
             ControlSlots = 1;
         }
 
-        public override string CorpseName => "a deathwatchbeetle corpse";
+        public override string CorpseName => "труп жука-смертоносца";
 
-        public override string DefaultName => "a deathwatch beetle";
+        public override string DefaultName => "жук-смертоносец";
 
         public override int Hides => 8;
 

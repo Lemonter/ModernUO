@@ -44,8 +44,8 @@ public partial class DarkGuardian : BaseCreature
         PackItem(new DaemonBone(30));
     }
 
-    public override string CorpseName => "a dark guardians' corpse";
-    public override string DefaultName => "a dark guardian";
+    public override string CorpseName => "труп тёмного стража";
+    public override string DefaultName => "тёмный страж";
 
     public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
 

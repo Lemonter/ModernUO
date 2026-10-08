@@ -21,6 +21,13 @@ public interface ICarvable
 public interface IWeapon
 {
     int MaxRange { get; }
+
+    // Mahaon: true only for bows/crossbows (BaseRanged) — gates the Archery>90
+    // beyond-max-range shooting allowance in Mobile.CheckCombatTime. False (the BaseWeapon
+    // default) for melee/thrown weapons, including short-reach polearms — MaxRange alone
+    // isn't a safe proxy for "this uses Archery skill and ranged combat mechanics".
+    bool IsRangedWeapon { get; }
+
     void OnBeforeSwing(Mobile attacker, Mobile defender);
     TimeSpan OnSwing(Mobile attacker, Mobile defender, double damageBonus = 1.0);
     void GetStatusDamage(Mobile from, out int min, out int max);
@@ -36,6 +43,7 @@ public interface ISpell
     bool BlocksMovement { get; }
     bool IsCasting { get; }
     void OnCasterHurt();
+    void OnCasterParalyzed();
     void OnCasterKilled();
     void OnConnectionChanged();
     bool OnCasterMoving(Direction d);

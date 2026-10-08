@@ -59,7 +59,7 @@ public partial class Dyes : Item
                 }
                 else
                 {
-                    from.SendMessage("That dye tub may not be redyed.");
+                    from.SendMessage("Эту бочку с краской перекрасить нельзя.");
                 }
             }
             else

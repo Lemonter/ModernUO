@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Server.Collections;
 using Server.Commands;
@@ -614,6 +614,16 @@ namespace Server.Engines.Craft
 
             var resCol = UseSubRes2 ? craftSystem.CraftSubRes2 : craftSystem.CraftSubRes;
 
+            // Наши металлы. Все 24 объявлены одним типом C# (MahaonIngot, металл — поле),
+            // поэтому обычный путь «тип -> количество в рюкзаке» их не различает: выбрав
+            // ламий, игрок списал бы железо. Ниже каждое обращение к рюкзаку за металлом
+            // идёт через MahaonCraftMetals, а за всем остальным — как раньше.
+            var craftMetal = UseSubRes2
+                ? null
+                : Systems.MahaonMetals.MahaonCraftMetals.SelectedMetal(craftSystem, from);
+
+            var metalIndex = -1;
+
             CraftRes res;
             for (var i = 0; i < types.Length; ++i)
             {
@@ -625,7 +635,13 @@ namespace Server.Engines.Craft
                 {
                     baseType = typeRes;
 
-                    var subResource = resCol.SearchFor(baseType);
+                    // SearchFor ищет по типу, а у всех наших металлов он один — она
+                    // всегда возвращала бы первую строку (железо, требование 0), и порог
+                    // навыка на редкие металлы не срабатывал бы вовсе. Когда строка
+                    // металлическая, берём её по номеру: именно номер и есть выбор.
+                    var subResource = craftMetal != null
+                        ? MetalSubRes(craftSystem, from, resCol)
+                        : resCol.SearchFor(baseType);
 
                     if (subResource != null && from.Skills[craftSystem.MainSkill].Base < subResource.RequiredSkill)
                     {
@@ -646,10 +662,18 @@ namespace Server.Engines.Craft
                 types[i] ??= [baseType];
                 amounts[i] = craftRes.Amount;
 
+                if (craftMetal != null && types[i].Length > 0 && types[i][0] == typeof(MahaonIngot))
+                {
+                    metalIndex = i;
+                }
+
                 // For stackable items that can be crafted more than one at a time
                 if (UseAllRes)
                 {
-                    var tempAmount = ourPack.GetAmount(types[i]);
+                    var tempAmount = i == metalIndex
+                        ? Systems.MahaonMetals.MahaonCraftMetals.CountIngots(ourPack, craftMetal.Value)
+                        : ourPack.GetAmount(types[i]);
+
                     tempAmount /= amounts[i];
                     if (tempAmount < maxAmount)
                     {
@@ -733,9 +757,11 @@ namespace Server.Engines.Craft
                 // TODO: Optimize this
                 for (var i = 0; i < types.Length; i++)
                 {
-                    var quantity = isQuantityType
-                        ? GetQuantity(ourPack, types[i])
-                        : ourPack.GetBestGroupAmount(types[i], true, CheckHueGrouping);
+                    var quantity = i == metalIndex
+                        ? Systems.MahaonMetals.MahaonCraftMetals.CountIngots(ourPack, craftMetal.Value)
+                        : isQuantityType
+                            ? GetQuantity(ourPack, types[i])
+                            : ourPack.GetBestGroupAmount(types[i], true, CheckHueGrouping);
 
                     if (quantity < amounts[i])
                     {
@@ -754,13 +780,29 @@ namespace Server.Engines.Craft
                     }
                 }
 
+                for (var i = 0; i < amounts.Length; i++)
+                {
+                    var saved = Systems.MahaonCombat.MaterialEconomySystem.GetSavedUnits(from, craftSystem, amounts[i]);
+                    amounts[i] = Math.Max(1, amounts[i] - saved);
+                }
+
                 m_ResHue = 0;
                 m_ResAmount = 0;
                 m_System = craftSystem;
 
-                index = IsQuantityType(types)
-                    ? ConsumeQuantity(ourPack, types, amounts)
-                    : ourPack.ConsumeTotalGrouped(types, amounts, true, OnResourceConsumed, CheckHueGrouping);
+                if (metalIndex >= 0)
+                {
+                    // Металл списывается отдельно и ПОСЛЕ того, как всё остальное сошлось.
+                    // Порядок важен: спиши мы его первым и не хватило бы дерева — слитки
+                    // уже исчезли бы, а вещь не получилась.
+                    index = ConsumeWithMetal(ourPack, types, amounts, metalIndex, craftMetal.Value);
+                }
+                else
+                {
+                    index = IsQuantityType(types)
+                        ? ConsumeQuantity(ourPack, types, amounts)
+                        : ourPack.ConsumeTotalGrouped(types, amounts, true, OnResourceConsumed, CheckHueGrouping);
+                }
 
                 resHue = m_ResHue;
             }
@@ -791,6 +833,80 @@ namespace Server.Engines.Craft
             }
 
             return false;
+        }
+
+        /// <summary>Строка подресурса, выбранная игроком — по номеру, а не по типу.</summary>
+        private static CraftSubRes MetalSubRes(CraftSystem craftSystem, Mobile from, CraftSubResCol resCol)
+        {
+            if (resCol.Count == 0)
+            {
+                return null;
+            }
+
+            var index = craftSystem.GetContext(from)?.LastResourceIndex ?? -1;
+
+            return index >= 0 && index < resCol.Count ? resCol.GetAt(index) : resCol.GetAt(0);
+        }
+
+        /// <summary>
+        ///     Списание, когда один из ресурсов — наш металл.
+        ///
+        ///     Ванильный ConsumeTotalGrouped работает по массиву типов и про металл в поле
+        ///     ничего не знает, поэтому слот металла из массива исключается, остальное
+        ///     списывается как обычно, и только потом — если всё сошлось — тратится металл.
+        ///     Возвращает индекс НЕхватившего ресурса в исходной нумерации или -1.
+        /// </summary>
+        private int ConsumeWithMetal(
+            Container ourPack, Type[][] types, int[] amounts, int metalIndex, Systems.MahaonMetals.MahaonMetal metal
+        )
+        {
+            var needed = amounts[metalIndex];
+
+            if (Systems.MahaonMetals.MahaonCraftMetals.CountIngots(ourPack, metal) < needed)
+            {
+                return metalIndex;
+            }
+
+            var otherTypes = new List<Type[]>();
+            var otherAmounts = new List<int>();
+            var backToOriginal = new List<int>();
+
+            for (var i = 0; i < types.Length; i++)
+            {
+                if (i == metalIndex)
+                {
+                    continue;
+                }
+
+                otherTypes.Add(types[i]);
+                otherAmounts.Add(amounts[i]);
+                backToOriginal.Add(i);
+            }
+
+            var failed = -1;
+
+            if (otherTypes.Count > 0)
+            {
+                var arrTypes = otherTypes.ToArray();
+                var arrAmounts = otherAmounts.ToArray();
+
+                var result = IsQuantityType(arrTypes)
+                    ? ConsumeQuantity(ourPack, arrTypes, arrAmounts)
+                    : ourPack.ConsumeTotalGrouped(arrTypes, arrAmounts, true, OnResourceConsumed, CheckHueGrouping);
+
+                if (result != -1)
+                {
+                    failed = backToOriginal[result];
+                }
+            }
+
+            if (failed != -1)
+            {
+                return failed;
+            }
+
+            Systems.MahaonMetals.MahaonCraftMetals.ConsumeIngots(ourPack, metal, needed);
+            return -1;
         }
 
         private void OnResourceConsumed(Item item, int amount)
@@ -941,7 +1057,7 @@ namespace Server.Engines.Craft
                 from.EndAction<CraftSystem>();
                 if (T2ACraftSystem.Enabled)
                 {
-                    from.SendAsciiMessage("You lack the required skill to craft this item.");
+                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {
@@ -1043,7 +1159,7 @@ namespace Server.Engines.Craft
             if (!allRequiredSkills || chance <= 0.0)
             {
                 from.EndAction<CraftSystem>();
-                from.SendAsciiMessage("You lack the required skill to craft this item.");
+                from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
                 return;
             }
 
@@ -1309,11 +1425,82 @@ namespace Server.Engines.Craft
             };
         }
 
+        /// <summary>
+        ///     Учебная работа (галочка в меню ремесла): предмет не достаётся мастеру, а
+        ///     следующая попытка начинается сама, без клика.
+        ///
+        ///     Изделие при этом всё равно создаётся целиком и только потом уничтожается —
+        ///     не потому, что так проще, а потому, что весь смысл ремесла живёт внутри
+        ///     ICraftable.OnCraft: качество, клеймо мастера, ресурс изделия, рецептные
+        ///     бонусы, специализации. Подменять эту цепочку «пустой» веткой значило бы
+        ///     завести вторую реализацию крафта, которая разойдётся с настоящей на первой
+        ///     же новой вещи. Материалы тратятся, навык растёт — ровно то же, что при
+        ///     обычной работе, только результат уходит в брак.
+        /// </summary>
+        /// <returns>true, если очередная попытка запущена и вызывающему делать больше нечего.</returns>
+        private bool ContinuePractice(
+            Mobile from, CraftSystem craftSystem, Type typeRes, BaseTool tool, int resHue, TextDefinition notice
+        )
+        {
+            if (craftSystem.GetContext(from)?.Practice != true)
+            {
+                return false;
+            }
+
+            // Инструмент сточился или сломался — пусть обычная ветка сама об этом скажет.
+            if (tool?.Deleted != false || tool.UsesRemaining <= 0)
+            {
+                return false;
+            }
+
+            if (craftSystem.CanCraft(from, tool, ItemType) > 0)
+            {
+                return false;
+            }
+
+            // Ловушки (TrapCraft) каждый круг просили бы навести на сундук — не цикл, а морока.
+            if (typeof(CustomCraft).IsAssignableFrom(ItemType))
+            {
+                return false;
+            }
+
+            var checkHue = 0;
+            var checkAmount = 0;
+            TextDefinition checkMessage = null;
+
+            if (!ConsumeRes(from, typeRes, craftSystem, ref checkHue, ref checkAmount, ConsumeType.None, ref checkMessage))
+            {
+                // Материалы кончились — это и есть конец цикла. Галочку не снимаем:
+                // мастер мог просто отойти за новой партией.
+                ShowCraftMenu(from, craftSystem, tool, "Материалы кончились — учебная работа остановлена.");
+                return true;
+            }
+
+            // Меню переоткрываем на каждом круге не для красоты: пока идёт цикл, это
+            // единственное место, где можно снять галочку и остановиться.
+            ShowCraftMenu(from, craftSystem, tool, notice);
+
+            if (resHue >= 0)
+            {
+                Craft(from, craftSystem, typeRes, tool, resHue);
+            }
+            else
+            {
+                Craft(from, craftSystem, typeRes, tool);
+            }
+
+            return true;
+        }
+
         public void CompleteCraft(
             int quality, bool makersMark, Mobile from, CraftSystem craftSystem, Type typeRes,
             BaseTool tool, CustomCraft customCraft
         )
         {
+            // customCraft — это TrapCraft: «изделие» там ставится в наведённый сундук, а
+            // вернувшийся предмет лишь предлог закрыть операцию. Учить такое вхолостую
+            // нечего, да и удалять итог опасно, поэтому галочка на них не действует.
+            var practice = customCraft == null && craftSystem.GetContext(from)?.Practice == true;
             var badCraft = craftSystem.CanCraft(from, tool, ItemType);
 
             if (badCraft > 0)
@@ -1451,6 +1638,9 @@ namespace Server.Engines.Craft
 
                 if (item != null)
                 {
+                    // Stamped here, not in OnCraft: most craftables do not implement ICraftable.
+                    item.PlayerConstructed = true;
+
                     if (item is ICraftable craftable)
                     {
                         endquality = craftable.OnCraft(quality, makersMark, from, craftSystem, typeRes, tool, this, resHue);
@@ -1458,6 +1648,28 @@ namespace Server.Engines.Craft
                     else if (item.Hue == 0)
                     {
                         item.Hue = resHue;
+                    }
+
+                    Systems.MahaonCombat.BlacksmithSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.TailoringSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CarpentrySpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.TinkeringSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CookingSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.AlchemySpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.InscriptionSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+
+                    // Клеймо металла. Вещь получает металл СРАЗУ при ковке — раньше её
+                    // ковали из железа, а металл давала отдельная перековка молотом, и
+                    // добытый металл в меню крафта не участвовал вовсе.
+                    //
+                    // Идёт после OnCraft и специализаций намеренно: те выставляют
+                    // собственные свойства и цвет от рецепта, а цвет металла должен лечь
+                    // поверх — вещь из ламия обязана выглядеть ламиевой.
+                    var craftedMetal = Systems.MahaonMetals.MahaonCraftMetals.SelectedMetal(craftSystem, from);
+
+                    if (craftedMetal != null)
+                    {
+                        Systems.MahaonMetals.MahaonCraftMetals.StampCraftedItem(item, craftedMetal.Value);
                     }
 
                     if (maxAmount > 0)
@@ -1472,14 +1684,22 @@ namespace Server.Engines.Craft
                         }
                     }
 
-                    from.AddToBackpack(item);
-
-                    if (from.AccessLevel > AccessLevel.Player)
+                    if (practice)
                     {
-                        CommandLogging.WriteLine(
-                            from,
-                            $"Crafting {CommandLogging.Format(item)} with craft system {craftSystem.GetType().Name}"
-                        );
+                        // Учебная работа: вещь сделана по-настоящему и тут же уходит в брак.
+                        item.Delete();
+                    }
+                    else
+                    {
+                        from.AddToBackpack(item);
+
+                        if (from.AccessLevel > AccessLevel.Player)
+                        {
+                            CommandLogging.WriteLine(
+                                from,
+                                $"Crafting {CommandLogging.Format(item)} with craft system {craftSystem.GetType().Name}"
+                            );
+                        }
                     }
 
                     // from.PlaySound( 0x57 );
@@ -1495,7 +1715,7 @@ namespace Server.Engines.Craft
                 FactionItemDefinition def = null;
                 Faction faction = null;
 
-                if (item is IFactionItem)
+                if (!practice && item is IFactionItem)
                 {
                     def = FactionItemDefinition.Identify(item);
 
@@ -1526,6 +1746,11 @@ namespace Server.Engines.Craft
                 }
 
                 // TODO: Scroll imbuing
+
+                if (ContinuePractice(from, craftSystem, typeRes, tool, -1, "Учебная работа: изделие ушло в брак."))
+                {
+                    return;
+                }
 
                 if (queryFactionImbue)
                 {
@@ -1570,7 +1795,7 @@ namespace Server.Engines.Craft
             {
                 if (tool?.Deleted == false && tool.UsesRemaining > 0)
                 {
-                    from.SendAsciiMessage("You lack the required skill to craft this item.");
+                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {
@@ -1621,6 +1846,11 @@ namespace Server.Engines.Craft
             // SkillCheck failed.
             num = craftSystem.PlayEndingEffect(from, true, true, toolBroken, endquality, false, this);
 
+            if (ContinuePractice(from, craftSystem, typeRes, tool, -1, num))
+            {
+                return;
+            }
+
             if (tool?.Deleted == false && tool.UsesRemaining > 0)
             {
                 ShowCraftMenu(from, craftSystem, tool, num);
@@ -1640,6 +1870,10 @@ namespace Server.Engines.Craft
             BaseTool tool, CustomCraft customCraft, int targetHue
         )
         {
+            // customCraft — это TrapCraft: «изделие» там ставится в наведённый сундук, а
+            // вернувшийся предмет лишь предлог закрыть операцию. Учить такое вхолостую
+            // нечего, да и удалять итог опасно, поэтому галочка на них не действует.
+            var practice = customCraft == null && craftSystem.GetContext(from)?.Practice == true;
             var badCraft = craftSystem.CanCraft(from, tool, ItemType);
 
             if (badCraft > 0)
@@ -1742,6 +1976,9 @@ namespace Server.Engines.Craft
 
                 if (item != null)
                 {
+                    // Stamped here, not in OnCraft: most craftables do not implement ICraftable.
+                    item.PlayerConstructed = true;
+
                     if (item is ICraftable craftable)
                     {
                         endquality = craftable.OnCraft(quality, makersMark, from, craftSystem, typeRes, tool, this, resHue);
@@ -1751,9 +1988,45 @@ namespace Server.Engines.Craft
                         item.Hue = resHue;
                     }
 
-                    from.AddToBackpack(item);
+                    Systems.MahaonCombat.BlacksmithSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.TailoringSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CarpentrySpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.TinkeringSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CookingSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.AlchemySpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.InscriptionSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+
+                    // Клеймо металла. Вещь получает металл СРАЗУ при ковке — раньше её
+                    // ковали из железа, а металл давала отдельная перековка молотом, и
+                    // добытый металл в меню крафта не участвовал вовсе.
+                    //
+                    // Идёт после OnCraft и специализаций намеренно: те выставляют
+                    // собственные свойства и цвет от рецепта, а цвет металла должен лечь
+                    // поверх — вещь из ламия обязана выглядеть ламиевой.
+                    var craftedMetal = Systems.MahaonMetals.MahaonCraftMetals.SelectedMetal(craftSystem, from);
+
+                    if (craftedMetal != null)
+                    {
+                        Systems.MahaonMetals.MahaonCraftMetals.StampCraftedItem(item, craftedMetal.Value);
+                    }
+
+                    if (practice)
+                    {
+                        item.Delete(); // учебная работа — изделие в брак
+                    }
+                    else
+                    {
+                        from.AddToBackpack(item);
+                    }
 
                     num = craftSystem.PlayEndingEffect(from, false, true, toolBroken, endquality, false, this);
+
+                    if (ContinuePractice(
+                            from, craftSystem, typeRes, tool, targetHue, "Учебная работа: изделие ушло в брак."
+                        ))
+                    {
+                        return;
+                    }
 
                     if (T2ACraftSystem.Enabled)
                     {
@@ -1788,7 +2061,7 @@ namespace Server.Engines.Craft
             {
                 if (tool?.Deleted == false && tool.UsesRemaining > 0)
                 {
-                    from.SendAsciiMessage("You lack the required skill to craft this item.");
+                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {
@@ -1819,6 +2092,11 @@ namespace Server.Engines.Craft
             }
 
             num = craftSystem.PlayEndingEffect(from, true, true, toolBroken, endquality, false, this);
+
+            if (ContinuePractice(from, craftSystem, typeRes, tool, targetHue, num))
+            {
+                return;
+            }
 
             if (tool?.Deleted == false && tool.UsesRemaining > 0)
             {
@@ -1925,8 +2203,11 @@ namespace Server.Engines.Craft
                     makersMark = m_CraftItem.IsMarkable(m_CraftItem.ItemType);
                 }
 
-                // T2A menus always prompt for maker's mark (no auto-mark/don't-mark options)
-                if (makersMark &&
+                // T2A menus always prompt for maker's mark (no auto-mark/don't-mark options).
+                // В учебной работе не спрашиваем никогда: изделие всё равно уйдёт в брак, а
+                // вопрос про клеймо вставал бы гампом на каждой удачной вещи и вставал бы
+                // колом — цикл ждал бы ответа вместо того, чтобы идти дальше.
+                if (makersMark && !context.Practice &&
                     (T2ACraftSystem.Enabled || context.MarkOption == CraftMarkOption.PromptForMark))
                 {
                     m_From.SendGump(

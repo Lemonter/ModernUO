@@ -26,20 +26,20 @@ namespace Server.Items
         {
             if (IsModified)
             {
-                from.SendMessage("That has already been modified.");
+                from.SendMessage("Это уже переделано.");
             }
             else if (!IsChildOf(from.Backpack))
             {
-                from.SendMessage("This must be in your backpack to modify it.");
+                from.SendMessage("Чтобы это изменить, положи в рюкзак.");
             }
             else if (from.Skills.Fletching.Base < 100.0)
             {
-                from.SendMessage("Only a grandmaster bowcrafter can modify this weapon.");
+                from.SendMessage("Переделать это оружие может только мастер лучного дела.");
             }
             else
             {
                 from.BeginTarget(2, false, TargetFlags.None, OnTargetGears);
-                from.SendMessage("Select the gears you wish to use.");
+                from.SendMessage("Выбери шестерни.");
             }
         }
 
@@ -48,20 +48,20 @@ namespace Server.Items
             if (targ is not Gears g || !g.IsChildOf(from.Backpack))
             {
                 from.SendMessage(
-                    "Those are not gears."
+                    "Это не шестерни."
                 ); // Apparently gears that aren't in your backpack aren't really gears at all. :-(
             }
             else if (IsModified)
             {
-                from.SendMessage("That has already been modified.");
+                from.SendMessage("Это уже переделано.");
             }
             else if (!IsChildOf(from.Backpack))
             {
-                from.SendMessage("This must be in your backpack to modify it.");
+                from.SendMessage("Чтобы это изменить, положи в рюкзак.");
             }
             else if (from.Skills.Fletching.Base < 100.0)
             {
-                from.SendMessage("Only a grandmaster bowcrafter can modify this weapon.");
+                from.SendMessage("Переделать это оружие может только мастер лучного дела.");
             }
             else
             {
@@ -70,7 +70,7 @@ namespace Server.Items
                 Hue = 0x453;
                 Slayer = (SlayerName)Utility.Random(2, 25);
 
-                from.SendMessage("You modify it.");
+                from.SendMessage("Ты переделываешь это.");
             }
         }
     }

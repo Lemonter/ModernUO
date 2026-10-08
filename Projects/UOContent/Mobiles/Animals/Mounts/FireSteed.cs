@@ -6,7 +6,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class FireSteed : BaseMount
     {
-        public override string DefaultName => "a fire steed";
+        public override string DefaultName => "огненный скакун";
 
         [Constructible]
         public FireSteed() : base(0xBE, 0x3E9E, AIType.AI_Melee)
@@ -45,7 +45,7 @@ namespace Server.Mobiles
             PackItem(new Ruby(Utility.RandomMinMax(16, 30)));
         }
 
-        public override string CorpseName => "a fire steed corpse";
+        public override string CorpseName => "труп огненного скакуна";
         public override FoodType FavoriteFood => FoodType.Meat;
         public override PackInstinct PackInstinct => PackInstinct.Daemon | PackInstinct.Equine;
 

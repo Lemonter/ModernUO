@@ -118,7 +118,7 @@ public partial class Ben : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Ben";
+    public override string DefaultName => "Бен";
 }
 
 [QuesterName("The Ghost of Frederic Smithson")]
@@ -137,7 +137,7 @@ public partial class Frederic : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "The Ghost of Frederic Smithson";
+    public override string DefaultName => "призрак Фредерика Смитсона";
 }
 
 [SerializationGenerator(0, false)]
@@ -163,7 +163,7 @@ public partial class Leon : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Leon";
+    public override string DefaultName => "Леон";
 }
 
 [SerializationGenerator(0, false)]
@@ -192,5 +192,5 @@ public partial class Andros : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Andros";
+    public override string DefaultName => "Андрос";
 }

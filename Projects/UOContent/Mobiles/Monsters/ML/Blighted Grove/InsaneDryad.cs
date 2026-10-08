@@ -22,9 +22,9 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "an insane dryad corpse";
+        public override string CorpseName => "труп безумной дриады";
         public override bool InitialInnocent => false;
 
-        public override string DefaultName => "an insane dryad";
+        public override string DefaultName => "безумная дриада";
     }
 }

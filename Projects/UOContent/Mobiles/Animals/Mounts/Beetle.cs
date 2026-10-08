@@ -8,7 +8,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Beetle : BaseMount
     {
-        public override string DefaultName => "a giant beetle";
+        public override string DefaultName => "гигантский жук";
 
         [Constructible]
         public Beetle() : base( 0x317, 0x3EBC, AIType.AI_Melee)
@@ -51,7 +51,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a giant beetle corpse";
+        public override string CorpseName => "труп гигантского жука";
         public virtual double BoostedSpeed => 0.1;
 
         public override bool SubdueBeforeTame => true; // Must be beaten into submission
@@ -71,7 +71,7 @@ namespace Server.Mobiles
 
         public override void OnHarmfulSpell(Mobile from)
         {
-            if (!Controlled && ControlMaster == null)
+            if (!Controlled)
             {
                 CurrentSpeed = BoostedSpeed;
             }
@@ -79,7 +79,7 @@ namespace Server.Mobiles
 
         public override void OnCombatantChange()
         {
-            if (Combatant == null && !Controlled && ControlMaster == null)
+            if (Combatant == null && !Controlled)
             {
                 CurrentSpeed = PassiveSpeed;
             }

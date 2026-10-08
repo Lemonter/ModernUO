@@ -40,8 +40,8 @@ public partial class Slith : BaseCreature
         // SlithEye / AncientPotteryFragments / TatteredAncientScroll (item classes not yet in ModernUO).
     }
 
-    public override string CorpseName => "a slith corpse";
-    public override string DefaultName => "a slith";
+    public override string CorpseName => "труп слита";
+    public override string DefaultName => "слит";
 
     public override int TreasureMapLevel => 2;
     public override int Meat => 6;

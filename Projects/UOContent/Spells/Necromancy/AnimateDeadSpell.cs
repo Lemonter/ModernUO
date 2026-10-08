@@ -83,15 +83,24 @@ public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
             ]
         ),
         // Default group
+        //
+        // Mahaon: the vanilla ladder skipped straight from a patchwork skeleton to a
+        // skeletal mage and never used the zombie/ghoul/spectre half of the undead
+        // roster at all, even though those creatures exist. Filled the gaps in, and see
+        // PickSummon for why a high-ability caster still sees more than just the top rung.
         new CreatureGroup(
             [],
             [
                 new SummonEntry(18000, typeof(LichLord)),
+                new SummonEntry(12000, typeof(RottingCorpse)),
                 new SummonEntry(10000, typeof(FleshGolem)),
                 new SummonEntry(5000, typeof(Lich)),
+                new SummonEntry(4000, typeof(Spectre), typeof(Wraith), typeof(Shade), typeof(Bogle)),
                 new SummonEntry(3000, typeof(SkeletalKnight), typeof(BoneKnight)),
-                new SummonEntry(2000, typeof(Mummy)),
+                new SummonEntry(2000, typeof(Mummy), typeof(Ghoul)),
                 new SummonEntry(1000, typeof(SkeletalMage), typeof(BoneMagi)),
+                new SummonEntry(600, typeof(Zombie), typeof(RestlessSoul)),
+                new SummonEntry(300, typeof(Skeleton)),
                 new SummonEntry(0, typeof(PatchworkSkeleton))
             ]
         )
@@ -269,26 +278,81 @@ public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
 
         list.Add(summoned);
 
-        if (list.Count > 3)
+        // Mahaon: was a flat 3 for everybody. Now one raised undead per 20 Necromancy,
+        // so a GM necromancer holds five and a dabbler still gets one.
+        var limit = Systems.MahaonCombat.NecromancySummonSystem.GetAnimateLimit(master);
+
+        while (list.Count > limit)
         {
             var toKill = list[0];
             Unregister(master, toKill);
             toKill.Kill();
         }
 
+        // Mahaon: the 1 HP/1650 ms bleed is what actually ends a raised undead's life,
+        // so stretching the tick is what "мастерка держит их дольше" means — up to four
+        // times the vanilla lifetime at 100 Школа призыва.
+        var decay = Systems.MahaonCombat.NecromancySummonSystem.GetDecayInterval(master);
+
         Timer.DelayCall(
-            TimeSpan.FromMilliseconds(1650),
-            TimeSpan.FromMilliseconds(1650),
+            decay,
+            decay,
             Summoned_Damage,
             summoned
         );
     }
 
+    /// <summary>
+    ///     Mahaon: vanilla took the first entry the caster qualified for and stopped, so a
+    ///     GM necromancer raised nothing but lich lords for the rest of their life and the
+    ///     whole middle of the table was dead content. Now the top three rungs the caster
+    ///     qualifies for share the roll — 60/25/15 — which keeps progression (the best
+    ///     thing you can raise still only improves with skill and corpse fame) while
+    ///     actually putting mummies, ghouls and zombies on the field.
+    /// </summary>
+    private static Type PickSummon(CreatureGroup group, int casterAbility)
+    {
+        var entries = group._entries;
+
+        Span<int> qualified = stackalloc int[3];
+        var count = 0;
+
+        for (var i = 0; i < entries.Length && count < 3; ++i)
+        {
+            if (casterAbility >= entries[i]._requirement)
+            {
+                qualified[count++] = i;
+            }
+        }
+
+        if (count == 0)
+        {
+            return null;
+        }
+
+        var roll = Utility.RandomDouble();
+
+        var index = count switch
+        {
+            1 => qualified[0],
+            2 => roll < 0.70 ? qualified[0] : qualified[1],
+            _ => roll < 0.60 ? qualified[0] : roll < 0.85 ? qualified[1] : qualified[2]
+        };
+
+        return entries[index]._toSummon.RandomElement();
+    }
+
     private static void Summoned_Damage(Mobile mob)
     {
-        if (mob.Hits > 0)
+        // Mahaon: the bleed is what ends a raised undead's life, so it has to keep pace
+        // with the shard-wide x4 hit point multiplier — otherwise raising something would
+        // quietly last four times longer than the tuning in NecromancySummonSystem intends,
+        // on top of the mastery's own extension.
+        var perTick = Math.Max(1, (int)Systems.MahaonCombat.CreatureHitsSystem.Scalar);
+
+        if (mob.Hits > perTick)
         {
-            --mob.Hits;
+            mob.Hits -= perTick;
         }
         else
         {
@@ -316,22 +380,7 @@ public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
         var casterAbility = (int)(necromancy * 30) + (int)(spiritSpeak * 70);
         casterAbility = Math.Clamp(casterAbility / 10 * 18, 0, owner.Fame);
 
-        Type toSummon = null;
-        var entries = group._entries;
-
-        for (var i = 0; toSummon == null && i < entries.Length; ++i)
-        {
-            var entry = entries[i];
-
-            if (casterAbility < entry._requirement)
-            {
-                continue;
-            }
-
-            var animates = entry._toSummon;
-
-            toSummon = animates.RandomElement();
-        }
+        var toSummon = PickSummon(group, casterAbility);
 
         if (toSummon == null)
         {
@@ -369,6 +418,12 @@ public class AnimateDeadSpell : NecromancerSpell, ITargetingSpell<Item>
         if (summoned is SkeletalDragon dragon)
         {
             Scale(dragon, 50); // lose 50% hp and strength
+        }
+
+        // Mahaon: Школа призыва makes what you raise tougher, not just cheaper to raise.
+        if (summoned is BaseCreature powered)
+        {
+            Systems.MahaonCombat.NecromancySummonSystem.ApplyMasteryPower(caster, powered);
         }
 
         summoned.Fame = 0;

@@ -40,8 +40,8 @@ namespace Server.Mobiles
             Karma = -6500;
         }
 
-        public override string CorpseName => "a mantra effervescence corpse";
-        public override string DefaultName => "a mantra effervescence";
+        public override string CorpseName => "труп мантры-искры";
+        public override string DefaultName => "мантра-искра";
 
         public override void GenerateLoot()
         {

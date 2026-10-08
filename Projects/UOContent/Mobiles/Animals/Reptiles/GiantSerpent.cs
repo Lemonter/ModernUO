@@ -46,8 +46,8 @@ namespace Server.Mobiles
             // TODO: Body parts
         }
 
-        public override string CorpseName => "a giant serpent corpse";
-        public override string DefaultName => "a giant snake";
+        public override string CorpseName => "труп гигантского змея";
+        public override string DefaultName => "гигантская змея";
 
         public override Poison PoisonImmune => Poison.Greater;
         public override Poison HitPoison => Utility.RandomDouble() < 0.8 ? Poison.Greater : Poison.Deadly;

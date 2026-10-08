@@ -12,7 +12,7 @@ public partial class GabrielPiete : BaseQuester
     {
     }
 
-    public override string DefaultName => "Gabriel Piete";
+    public override string DefaultName => "Габриэль Пиете";
 
     public override void InitBody()
     {

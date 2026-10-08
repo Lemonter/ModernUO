@@ -55,7 +55,7 @@ public abstract partial class BaseChampion : BaseCreature
         return artifact;
     }
 
-    private static PowerScroll CreateRandomPowerScroll()
+    private static PowerScroll CreateRandomPowerScroll(Mobile winner)
     {
         var level = Utility.RandomDouble() switch
         {
@@ -64,7 +64,9 @@ public abstract partial class BaseChampion : BaseCreature
             _      => 10
         };
 
-        return PowerScroll.CreateRandomNoCraft(level, level);
+        // Навык подбирается под получателя: свиток на навык, у которого потолок и так
+        // поднят профессией до предела, наградой не является.
+        return Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(winner, 100 + level, noCraft: true);
     }
 
     public void GivePowerScrolls()
@@ -127,7 +129,7 @@ public abstract partial class BaseChampion : BaseCreature
         {
             var m = toGive[i % toGive.Count];
 
-            var ps = CreateRandomPowerScroll();
+            var ps = CreateRandomPowerScroll(m);
 
             GivePowerScrollTo(m, ps);
         }

@@ -16,6 +16,9 @@ namespace Server.Items;
 [SerializationGenerator(0)]
 public partial class RaffleEntry
 {
+    [DirtyTrackingEntity]
+    private HouseRaffleStone _stone;
+
     [SerializableField(0, setter: "private")]
     private Mobile _from;
 
@@ -25,15 +28,17 @@ public partial class RaffleEntry
     [SerializableField(2, setter: "private")]
     private DateTime _date;
 
-    public RaffleEntry(Mobile from)
+    public RaffleEntry(HouseRaffleStone stone, Mobile from)
     {
+        _stone = stone;
         _from = from;
         _address = from?.NetState?.Address ?? IPAddress.None;
         _date = Core.Now;
     }
 
-    public RaffleEntry()
+    public RaffleEntry(HouseRaffleStone stone)
     {
+        _stone = stone;
         _from = null;
         _address = null;
         _date = Core.Now;
@@ -146,34 +151,24 @@ public partial class HouseRaffleStone : Item
         }
     }
 
-    [SerializableProperty(3)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
-    public Rectangle2D PlotBounds
-    {
-        get => _plotBounds;
-        set
-        {
-            _plotBounds = value;
+    [SerializableField(3, fieldChanged: nameof(OnPlotBoundsChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
+    [InvalidateProperties]
+    private Rectangle2D _plotBounds;
 
-            InvalidateRegion();
-            InvalidateProperties();
-            this.MarkDirty();
-        }
+    private void OnPlotBoundsChanged(Rectangle2D oldValue, Rectangle2D newValue)
+    {
+        InvalidateRegion();
     }
 
-    [SerializableProperty(4)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
-    public Map PlotFacet
-    {
-        get => _plotFacet;
-        set
-        {
-            _plotFacet = value;
+    [SerializableField(4, fieldChanged: nameof(OnPlotFacetChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
+    [InvalidateProperties]
+    private Map _plotFacet;
 
-            InvalidateRegion();
-            InvalidateProperties();
-            this.MarkDirty();
-        }
+    private void OnPlotFacetChanged(Map oldValue, Map newValue)
+    {
+        InvalidateRegion();
     }
 
     [CommandProperty(AccessLevel.GameMaster)]
@@ -190,20 +185,18 @@ public partial class HouseRaffleStone : Item
         }
     }
 
-    [SerializableProperty(6)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
-    public int TicketPrice
+    [SerializableField(6, allowFieldChange: nameof(AllowTicketPriceChange))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Seer)]
+    [InvalidateProperties]
+    private int _ticketPrice;
+
+    private bool AllowTicketPriceChange(ref int value)
     {
-        get => _ticketPrice;
-        set
-        {
-            _ticketPrice = Math.Max(0, value);
-            InvalidateProperties();
-            this.MarkDirty();
-        }
+        value = Math.Max(0, value);
+        return true;
     }
 
-    public override string DefaultName => "a house raffle stone";
+    public override string DefaultName => "камень розыгрыша дома";
 
     public override bool DisplayWeight => false;
 
@@ -466,7 +459,7 @@ public partial class HouseRaffleStone : Item
             if (_ticketPrice == 0 || from.Backpack?.ConsumeTotal(typeof(Gold), _ticketPrice) == true ||
                 Banker.Withdraw(from, _ticketPrice))
             {
-                AddToEntries(new RaffleEntry(from));
+                AddToEntries(new RaffleEntry(this, from));
 
                 from.SendMessage(MessageHue, "You have successfully entered the plot's raffle.");
             }
@@ -551,7 +544,7 @@ public partial class HouseRaffleStone : Item
 
         for (var i = 0; i < entryCount; i++)
         {
-            var entry = new RaffleEntry();
+            var entry = new RaffleEntry(this);
             entry.Deserialize(reader);
 
             if (entry.From == null)

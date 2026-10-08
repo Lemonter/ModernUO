@@ -494,7 +494,7 @@ public class ChangeHairstyleGump : DynamicGump
 
         if (_from.Race == Race.Elf)
         {
-            _from.SendMessage("This isn't implemented for elves yet.  Sorry!");
+            _from.SendMessage("Для эльфов это пока не сделано.");
             return;
         }
 

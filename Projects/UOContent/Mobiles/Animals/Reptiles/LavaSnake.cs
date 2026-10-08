@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackItem(new SulfurousAsh());
         }
 
-        public override string CorpseName => "a lava snake corpse";
-        public override string DefaultName => "a lava snake";
+        public override string CorpseName => "труп лавовой змеи";
+        public override string DefaultName => "лавовая змея";
 
         public override bool DeathAdderCharmable => true;
         public override int Meat => 1;

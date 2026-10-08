@@ -41,8 +41,8 @@ namespace Server.Mobiles
             VirtualArmor = 60;
         }
 
-        public override string CorpseName => "a phoenix corpse";
-        public override string DefaultName => "a phoenix";
+        public override string CorpseName => "труп феникса";
+        public override string DefaultName => "феникс";
 
         public override int Meat => 1;
         public override MeatType MeatType => MeatType.Bird;

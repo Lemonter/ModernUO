@@ -36,9 +36,9 @@ namespace Server.Mobiles
             VirtualArmor = 32;
         }
 
-        public override string CorpseName => "a moloch corpse";
+        public override string CorpseName => "труп молоха";
 
-        public override string DefaultName => "a moloch";
+        public override string DefaultName => "молох";
 
         public override Poison PoisonImmune => Poison.Regular;
 

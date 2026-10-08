@@ -50,7 +50,7 @@ namespace Server.Mobiles
 
         public override bool DeleteCorpseOnDeath => true;
 
-        public override string DefaultName => "a shadow fiend";
+        public override string DefaultName => "теневой бес";
 
         public override bool CanRummageCorpses => true;
 

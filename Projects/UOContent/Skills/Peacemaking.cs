@@ -13,6 +13,10 @@ namespace Server.SkillHandlers
             SkillInfo.Table[(int)SkillName.Peacemaking].Callback = OnUse;
         }
 
+        /// <summary>Whether this mobile is already calmed. Peacemaking keeps no table of its
+        /// own — the state lives on the creature as BardPacified — so this reads that.</summary>
+        public static bool UnderEffects(Mobile m) => m is BaseCreature { BardPacified: true };
+
         public static TimeSpan OnUse(Mobile m)
         {
             m.RevealingAction();
@@ -30,7 +34,7 @@ namespace Server.SkillHandlers
             from.NextSkillTime = Core.TickCount + 30000; // 30s timeout on the targeter
         }
 
-        private class InternalTarget : Target
+        internal class InternalTarget : Target
         {
             private readonly BaseInstrument m_Instrument;
 
@@ -55,11 +59,11 @@ namespace Server.SkillHandlers
                 }
                 else if (from.Region.IsPartOf<SafeZone>())
                 {
-                    from.SendMessage("You may not use peacemaking in this area.");
+                    from.SendMessage("Здесь усмирение не работает.");
                 }
                 else if (targ.Region.IsPartOf<SafeZone>())
                 {
-                    from.SendMessage("You may not use peacemaking there.");
+                    from.SendMessage("Там усмирение не работает.");
                 }
                 else if (!m_Instrument.IsChildOf(from.Backpack))
                 {
@@ -80,7 +84,12 @@ namespace Server.SkillHandlers
                             m_Instrument.PlayInstrumentBadly(from);
                             m_Instrument.ConsumeUse(from);
                         }
-                        else if (!from.CheckSkill(SkillName.Peacemaking, 0.0, 120.0))
+                        else if (!from.CheckSkill(
+                            SkillName.Peacemaking,
+                            0.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
+                                from, Systems.MahaonCombat.BardSpecialization.Peacemaking
+                            ), 120.0
+                        ))
                         {
                             from.SendLocalizedMessage(500613); // You attempt to calm everyone, but fail.
                             m_Instrument.PlayInstrumentBadly(from);
@@ -88,6 +97,10 @@ namespace Server.SkillHandlers
                         }
                         else
                         {
+                            Systems.MahaonCombat.BardSpecializationSystem.Train(
+                                from, Systems.MahaonCombat.BardSpecialization.Peacemaking
+                            );
+
                             from.NextSkillTime = Core.TickCount + 5000;
                             m_Instrument.PlayInstrumentWell(from);
                             m_Instrument.ConsumeUse(from);
@@ -168,7 +181,12 @@ namespace Server.SkillHandlers
                                 diff -= (music - 100.0) * 0.5;
                             }
 
-                            if (!from.CheckTargetSkill(SkillName.Peacemaking, targ, diff - 25.0, diff + 25.0))
+                            if (!from.CheckTargetSkill(
+                                SkillName.Peacemaking, targ,
+                                diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
+                                    from, Systems.MahaonCombat.BardSpecialization.Peacemaking
+                                ), diff + 25.0
+                            ))
                             {
                                 from.SendLocalizedMessage(1049531); // You attempt to calm your target, but fail.
                                 m_Instrument.PlayInstrumentBadly(from);
@@ -176,6 +194,10 @@ namespace Server.SkillHandlers
                             }
                             else
                             {
+                                Systems.MahaonCombat.BardSpecializationSystem.Train(
+                                    from, Systems.MahaonCombat.BardSpecialization.Peacemaking
+                                );
+
                                 m_Instrument.PlayInstrumentWell(from);
                                 m_Instrument.ConsumeUse(from);
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using ModernUO.CodeGeneratedEvents;
@@ -7,6 +7,7 @@ using Server.Collections;
 using Server.ContextMenus;
 using Server.Engines.BuffIcons;
 using Server.Engines.BulkOrders;
+using Server.Systems.MahaonCombat;
 using Server.Engines.CannedEvil;
 using Server.Engines.ConPVP;
 using Server.Engines.Craft;
@@ -62,7 +63,10 @@ namespace Server.Mobiles
         AcceptGuildInvites = 0x00000800,
         DisplayChampionTitle = 0x00001000,
         HasStatReward = 0x00002000,
-        RefuseTrades = 0x00004000
+        RefuseTrades = 0x00004000,
+
+        // ServUO's own value for this flag, kept as-is so a flag dump reads the same on both.
+        AbyssEntry = 0x00400000
     }
 
     public enum NpcGuild
@@ -199,7 +203,7 @@ namespace Server.Mobiles
             VisibilityList = new List<Mobile>();
             PermaFlags = new List<Mobile>();
 
-            BOBFilter = new BOBFilter();
+            BOBFilter = new BOBFilter(this);
 
             m_GameTime = TimeSpan.Zero;
             m_GuildRank = RankDefinition.Lowest;
@@ -229,7 +233,55 @@ namespace Server.Mobiles
 
         public BlockMountType MountBlockReason => _mountBlock?.MountBlockReason ?? BlockMountType.None;
 
-        public override int MaxWeight => (Core.ML && Race == Race.Human ? 100 : 40) + (int)(3.5 * Str);
+        public override int MaxWeight
+        {
+            get
+            {
+                var baseMaxWeight = (Core.ML && Race == Race.Human ? 100 : 40) + (int)(3.5 * Str) +
+                                    // «Крепкая спина» — обычный перк Ремесла, а значит
+                                    // только первичной категории: вторичка теперь даёт
+                                    // лишь сигнатурный перк.
+                                    (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(this, Systems.MahaonProfessions.ProfessionCategory.Craft) ? 100 : 0);
+
+                return baseMaxWeight;
+            }
+        }
+
+        public override int GetResistance(ResistanceType type)
+        {
+            var baseValue = base.GetResistance(type);
+
+            var gemBonus = type switch
+            {
+                ResistanceType.Fire   => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.FireResist),
+                ResistanceType.Cold   => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.ColdResist),
+                ResistanceType.Poison => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.PoisonResist),
+                ResistanceType.Energy => Systems.MahaonGems.GemSocketingSystem.GetResistanceBonus(this, Systems.MahaonGems.GemBonusType.EnergyResist),
+                _                     => 0
+            };
+
+            var leatherBonus = 0;
+            foreach (var item in Items)
+            {
+                if (item is not Items.BaseArmor armor)
+                {
+                    continue;
+                }
+
+                var name = armor.GetType().Name;
+
+                if (type == ResistanceType.Fire && name.Contains("Dragon"))
+                {
+                    leatherBonus += 4; // dragonhide runs hot
+                }
+                else if (type == ResistanceType.Poison && name.Contains("Spined"))
+                {
+                    leatherBonus += 4; // snake/reptile hide — natural venom resistance
+                }
+            }
+
+            return baseValue + gemBonus + leatherBonus;
+        }
 
         public override double ArmorRating
         {
@@ -258,18 +310,14 @@ namespace Server.Mobiles
             SkillName.TasteID
         };
 
-        public override double RacialSkillBonus
-        {
-            get
-            {
-                if (Core.ML && Race == Race.Human)
-                {
-                    return 20.0;
-                }
-
-                return 0;
-            }
-        }
+        // Mahaon: used to give a flat +20 to EVERY skill for any Human, unconditionally —
+        // real OSI's "Bonus Skill" only applies to the one skill a player picks at
+        // character creation, not a blanket bonus to everything. That's what was making
+        // freshly-trained skills look "stuck" well above their real value (18.8 base
+        // showing as 20.0) until they organically grew past the floor — this was a
+        // placeholder, not intended balance, and the shard owner asked for it removed
+        // entirely rather than scoped down to a real per-skill "Bonus Skill" pick.
+        public override double RacialSkillBonus => 0;
 
         public List<Item> EquipSnapshot { get; private set; }
 
@@ -531,6 +579,16 @@ namespace Server.Mobiles
             set => SetFlag(PlayerFlag.RefuseTrades, value);
         }
 
+        /// <summary>Set once the Sacred Quest is done — by the Tripartite Key in the Underworld,
+        /// or by La Insep Om at the Shrine of Singularity once that quest is ported. Read by the
+        /// stone guardians of the Tomb of Kings and by the Underworld's own gates.</summary>
+        [CommandProperty(AccessLevel.GameMaster)]
+        public bool AbyssEntry
+        {
+            get => GetFlag(PlayerFlag.AbyssEntry);
+            set => SetFlag(PlayerFlag.AbyssEntry, value);
+        }
+
         [CommandProperty(AccessLevel.GameMaster)]
         public DateTime AcceleratedStart { get; set; }
 
@@ -566,16 +624,47 @@ namespace Server.Mobiles
                     strBase = RawStr;
                 }
 
-                return strBase / 2 + 50 + strOffs;
+                var baseHits = strBase / 2 + 50 + strOffs + Systems.MahaonGuard.GuardSystem.GetHitsBonus(this);
+
+                // Рукопашный бой: +1% максимума HP за 1.0 навыка Wrestling, плюс +1% за
+                // каждые 10.0 в каждом натренированном стиле рукопашного боя.
+                var wrestlingBonusPercent = Systems.MahaonCombat.WeaponStyleSystem.GetWrestlingHitsBonusPercent(this);
+
+                return baseHits + (int)(baseHits * wrestlingBonusPercent / 100.0);
             }
         }
 
         [CommandProperty(AccessLevel.GameMaster)]
-        public override int StamMax => base.StamMax + AosAttributes.GetValue(this, AosAttribute.BonusStam);
+        public override int StamMax
+        {
+            get
+            {
+                var baseStam = base.StamMax + AosAttributes.GetValue(this, AosAttribute.BonusStam);
+
+                // Mahaon: ArcherStaminaQuestSystem (MonsterHead-based, no NPC front-end)
+                // removed per shard owner's call — Ranger/Питэр's head-turn-in quest is the
+                // one real stamina-bonus source now.
+                return baseStam + Systems.MahaonQuests.RangerSystem.GetStamBonus(this);
+            }
+        }
 
         [CommandProperty(AccessLevel.GameMaster)]
-        public override int ManaMax => base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
-                                       (Core.ML && Race == Race.Elf ? 20 : 0);
+        public override int ManaMax
+        {
+            get
+            {
+                var baseMana = base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
+                               (Core.ML && Race == Race.Elf ? 20 : 0) +
+                               Systems.MahaonQuests.CourtMageSystem.GetManaBonus(this);
+
+                if (this is BotMobile { Archetype: BotArchetype.Mage })
+                {
+                    baseMana *= 3;
+                }
+
+                return baseMana;
+            }
+        }
 
         [CommandProperty(AccessLevel.GameMaster)]
         public override int Str
@@ -760,7 +849,7 @@ namespace Server.Mobiles
                 Animate(61, 10, 1, true, false, 0);
                 Flying = false;
                 RemoveBuff(BuffIcon.Fly);
-                SendMessage("You have landed.");
+                SendMessage("Ты приземлился.");
 
                 BaseMount.Dismount(this);
                 return;
@@ -1107,12 +1196,27 @@ namespace Server.Mobiles
             }
         }
 
+        // Mahaon: every custom specialization/style/school Train() already calls
+        // MahaonSkillTree.NotifyChanged right alongside itself, pushing a fresh tree
+        // snapshot ~250ms after a gain — real VANILLA skills (Tactics, Mining, whatever)
+        // had no equivalent, since they change deep in the engine's own Skill/Skills code,
+        // never through a Mahaon Train() method at all. That asymmetry was the actual
+        // cause of the gump showing a stale value right as the real vanilla "Your skill in
+        // X has increased..." notification already announced the true new one — the gump
+        // had no reason to refresh at all until its own periodic poll caught up, seconds
+        // later. This method already fires for every single vanilla skill change (Skills.
+        // OnSkillChange calls it right alongside NetState.SendSkillChange, the exact same
+        // moment that real notification fires), so hooking in here makes vanilla skills
+        // push exactly like every custom one already does, through the one shared
+        // mechanism, without a second override.
         public override void OnSkillInvalidated(Skill skill)
         {
             if (Core.AOS && skill.SkillName == SkillName.MagicResist)
             {
                 UpdateResistances();
             }
+
+            MahaonSkillTree.NotifyChanged(this);
         }
 
         public override int GetMaxResistance(ResistanceType type)
@@ -1237,6 +1341,31 @@ namespace Server.Mobiles
         [OnEvent(nameof(PlayerLoginEvent))]
         public static void OnLogin(PlayerMobile from)
         {
+            Systems.MahaonSeasons.SeasonSystem.TellCurrentSeason(from);
+            Systems.MahaonWeather.WeatherSystem.SendTo(from.NetState);
+            Systems.MahaonWeather.WindManager.SendTo(from.NetState);
+            Systems.MahaonWorld.StaticOverrideManager.ResendActiveOverridesTo(from);
+
+            if (from.Map != null)
+            {
+                // GetMobilesInRange returns a ref struct enumerable (can't be boxed to
+                // IEnumerable<Mobile>, ResendVisible's parameter type) — materialize it first.
+                var nearby = new List<Mobile>();
+                foreach (var m in from.Map.GetMobilesInRange(from.Location, Core.GlobalMaxUpdateRange))
+                {
+                    nearby.Add(m);
+                }
+
+                Systems.MahaonQuests.QuestMarkerRegistry.ResendVisible(from, nearby);
+            }
+
+            // Always with the player from here on — see MahaonCombatMenuGump's own class
+            // comment for why this is "collapses, never actually closes" rather than a
+            // normal dismissable gump. Starts collapsed so it isn't in the way the moment
+            // someone logs in.
+            from.SendGump(new MahaonCombatMenuGump(from, true));
+            from.SendGump(new MahaonStatusGump(from, true));
+
             if (AccountHandler.LockdownLevel > AccessLevel.Player)
             {
                 string notice;
@@ -1583,6 +1712,7 @@ namespace Server.Mobiles
 
                 pm.SpeechLog = null;
                 pm.ClearQuestArrow();
+                Systems.MahaonQuests.MahaonTreasureCompassSystem.Stop(pm);
                 pm.LastOnline = Core.Now;
             }
 
@@ -1685,6 +1815,9 @@ namespace Server.Mobiles
                 CheckStatTimers();
             }
 
+            Systems.MahaonSoulStones.SoulStoneSocketing.OnEquipChanged(this, item, true);
+            Systems.MahaonGems.GemSocketingSystem.OnEquipChanged(this, item, true);
+
             if (NetState != null)
             {
                 CheckLightLevels(false);
@@ -1699,6 +1832,9 @@ namespace Server.Mobiles
             {
                 CheckStatTimers();
             }
+
+            Systems.MahaonSoulStones.SoulStoneSocketing.OnEquipChanged(this, item, false);
+            Systems.MahaonGems.GemSocketingSystem.OnEquipChanged(this, item, false);
 
             if (NetState != null)
             {
@@ -2346,6 +2482,8 @@ namespace Server.Mobiles
 
         public override void OnDamage(int amount, Mobile from, bool willKill)
         {
+            Systems.MahaonQoL.AutoBandageSystem.TryAutoBandage(this);
+
             int disruptThreshold;
 
             if (!Core.AOS)
@@ -2371,6 +2509,7 @@ namespace Server.Mobiles
             Confidence.StopRegenerating(this);
 
             StaminaSystem.FatigueOnDamage(this, amount);
+            Systems.MahaonQoL.AutoPotionSystem.TryAutoPotion(this);
 
             ReceivedHonorContext?.OnTargetDamaged(from, amount);
             SentHonorContext?.OnSourceDamaged(from, amount);
@@ -2477,8 +2616,31 @@ namespace Server.Mobiles
         [GeneratedEvent(nameof(PlayerDeathEvent))]
         public static partial void PlayerDeathEvent(PlayerMobile m);
 
+        // Mahaon: base Mobile.OnSkillsQuery only sends the vanilla skills.mul-based
+        // update — this ALSO sends the custom martial-arts skill tree (see
+        // Systems.MahaonCombat.MahaonSkillTree) right alongside it, whenever the player
+        // asks to see their own skills. The client redirects the resulting gump-open to
+        // MahaonSkillTreeGump instead of the vanilla Skills window (see PacketHandlers.cs
+        // on the client) — this is what feeds it the data to show.
+        public override void OnSkillsQuery(Mobile from)
+        {
+            base.OnSkillsQuery(from);
+
+            if (from != this || NetState == null)
+            {
+                return;
+            }
+
+            NetState.SendSkillTree(MahaonSkillTree.GetTreeSnapshot(this));
+        }
+
         public override void OnDeath(Container c)
         {
+            if (this is BotMobile deadBotForLoot)
+            {
+                Systems.MahaonBots.GuildBank.OnMemberDeath(deadBotForLoot);
+            }
+
             base.OnDeath(c);
 
             EquipSnapshot = null;
@@ -2590,6 +2752,24 @@ namespace Server.Mobiles
                 }
             }
 
+            Systems.MahaonCombat.MonsterLootingSystem.TryEquipFromCorpse(this, c);
+
+            if (LastKiller is BotMobile { IsPk: true } killerBot)
+            {
+                killerBot.Kills = 0;
+            }
+
+            if (this is BotMobile deadBot)
+            {
+                var killerDesc = LastKiller?.Name ?? "неизвестного противника";
+                Systems.MahaonBots.BotRumors.NotableDeath(deadBot, killerDesc);
+
+                if (LastKiller is PlayerMobile bountyKiller)
+                {
+                    Systems.MahaonQuests.BountyHunterSystem.OnBotKilled(bountyKiller, deadBot);
+                }
+            }
+
             PlayerDeathEvent(this);
         }
 
@@ -2691,9 +2871,90 @@ namespace Server.Mobiles
             }
         }
 
+        public override bool OnEquip(Item item)
+        {
+            if (!base.OnEquip(item))
+            {
+                return false;
+            }
+
+            var profession = Systems.MahaonProfessions.ProfessionSystem.GetProfession(this);
+            if (profession == null)
+            {
+                return true;
+            }
+
+            var category = Systems.MahaonProfessions.ProfessionData.All[profession.Value].Category;
+
+            // Magic professions fight with staves and daggers only, per the real profession
+            // text ("разрешённое оружие — посохи, кинжалы").
+            if (category == Systems.MahaonProfessions.ProfessionCategory.Magic &&
+                item is BaseWeapon and not (BaseStaff or BaseKnife))
+            {
+                SendMessage(0x22, "Магам этого пути позволено только посохи да кинжалы.");
+                return false;
+            }
+
+            if (item is BaseArmor armorItem)
+            {
+                var armorName = armorItem.GetType().Name;
+                var isBone = armorName.Contains("Bone");
+                var isPlate = !isBone && (armorName.Contains("Plate") || armorName.Contains("Dragon"));
+                var isMetal = isPlate || armorName.Contains("Chain") || armorName.Contains("Ring");
+
+                // Plate (and equally heavy dragon) is Warrior/Craft only — nobody else
+                // could wear it at all, per the real profession text. Bone is open to
+                // everyone, no restriction.
+                if (isPlate && category is not (Systems.MahaonProfessions.ProfessionCategory.Warrior or
+                    Systems.MahaonProfessions.ProfessionCategory.Craft))
+                {
+                    SendMessage(0x22, "Такие тяжёлые латы не для твоего пути.");
+                    return false;
+                }
+
+                // Magic professions can't wear metal at all — "доспех в котором нет
+                // металла" — except the Battlemage, who's explicitly called out as the one
+                // exception that can wear ringmail.
+                if (category == Systems.MahaonProfessions.ProfessionCategory.Magic && isMetal)
+                {
+                    var isBattlemage = profession == Systems.MahaonProfessions.MahaonProfession.BattleMage;
+                    if (!isBattlemage || !armorName.Contains("Ring"))
+                    {
+                        SendMessage(0x22, "Металлическая броня рвёт твою связь с магией.");
+                        return false;
+                    }
+                }
+
+                // Thief/Bard/Ranger professions cap out at chain armor — no plate, bone, or
+                // dragon, per "разрешённая броня — до плетенок (chain)". (Plate/bone/dragon
+                // are already blocked above for everyone but Warrior/Craft, so this only
+                // needs to catch anything else heavier than chain, which there isn't — kept
+                // here for clarity that the chain-tier cap is intentional, not accidental.)
+            }
+
+            return true;
+        }
+
         public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false)
         {
+            // Thief bots get a flat 30% chance to dodge an incoming hit entirely — has to be
+            // the very first thing here, before any of the damage-modifier chain below
+            // (combat stance, ring of protection, evil omen, blood oath) even runs, so a
+            // dodge is a true "the hit never landed" with zero side effects, not just zero
+            // final damage. Real players with Thief skill aren't affected — this is
+            // specifically the bot flavor ability requested for them.
+            if (this is BotMobile &&
+                BotMobile.IsProfessionCategory(this, Systems.MahaonProfessions.ProfessionCategory.Thief) &&
+                Utility.RandomDouble() < 0.3)
+            {
+                PublicOverheadMessage(MessageType.Emote, 0x480, false, "*уворачивается*");
+                return;
+            }
+
             var damageBonus = 1.0;
+
+            damageBonus *= Systems.MahaonCombat.CombatStanceSystem.GetDamageTakenScalar(this);
+            damageBonus *= global::Server.Items.MageRingOfProtection.GetDamageTakenScalar(this);
 
             if (EvilOmenSpell.EndEffect(this) && !ignoreEvilOmen)
             {
@@ -2718,7 +2979,18 @@ namespace Server.Mobiles
                 }
             }
 
-            base.Damage((int)(amount * damageBonus), from, informMount);
+            var scaledAmount = (int)(amount * damageBonus);
+
+            // Mahaon: «Стойкость» жила здесь и одновременно в
+            // ProfessionPerkSystem.ApplyResilience — две реализации с разными правилами
+            // срабатывали обе. Осталась одна, в ProfessionPerkSystem, куда перенесён и
+            // здешний триггер «удар снимает половину текущих ХП».
+            if (!Systems.MahaonCombat.MagicDamageFlag.Active && Hits > 0)
+            {
+                scaledAmount = Systems.MahaonProfessions.ProfessionPerkSystem.ApplyResilience(this, scaledAmount);
+            }
+
+            base.Damage(scaledAmount, from, informMount);
 
             // If the blood oath caster will die then damage is not reflected back to the attacker
             if (hasBloodOath && Alive && !Deleted && !IsDeadBondedPet)
@@ -2958,7 +3230,7 @@ namespace Server.Mobiles
                 case 13: // just removed m_PaidInsurance list
                 case 12:
                     {
-                        BOBFilter = new BOBFilter();
+                        BOBFilter = new BOBFilter(this);
                         BOBFilter.Deserialize(reader);
                         goto case 11;
                     }
@@ -3081,7 +3353,7 @@ namespace Server.Mobiles
             }
 
             PermaFlags ??= new List<Mobile>();
-            BOBFilter ??= new BOBFilter();
+            BOBFilter ??= new BOBFilter(this);
 
             // Default to member if going from older version to new version (only time it should be null)
             m_GuildRank ??= RankDefinition.Member;
@@ -3517,7 +3789,7 @@ namespace Server.Mobiles
 
             foreach (var follower in allFollowers)
             {
-                if (follower is not BaseCreature pet || pet.ControlMaster == null)
+                if (follower is not BaseCreature { Controlled: true } pet || pet.ControlMaster == null)
                 {
                     continue;
                 }
@@ -3538,6 +3810,17 @@ namespace Server.Mobiles
                     continue;
                 }
 
+                // Mahaon: a follower that is already off the map has been put away by
+                // something else — the "В мешок" bag (MahaonPetBagItem) internalizes the
+                // creature and keeps it alive inside an item in the owner's pack. Auto-
+                // stabling it anyway meant ClaimAutoStabledPets pulled it straight back
+                // into the world on the next login, so the pet stood next to its owner and
+                // sat in their backpack at the same time.
+                if (pet.Map == Map.Internal || MahaonPetBagItem.IsBagged(pet))
+                {
+                    continue;
+                }
+
                 if (pet is PackLlama or PackHorse or Beetle && pet.Backpack?.Items.Count > 0)
                 {
                     continue;
@@ -3553,7 +3836,6 @@ namespace Server.Mobiles
                 pet.Internalize();
 
                 pet.SetControlMaster(null);
-                pet.SummonMaster = null;
 
                 pet.IsStabled = true;
                 pet.StabledBy = this;
@@ -3589,6 +3871,17 @@ namespace Server.Mobiles
                     continue;
                 }
 
+                // Mahaon: зверь в мешке (MahaonPetBagItem) в мир не выходит — иначе он
+                // окажется рядом с хозяином и в его рюкзаке одновременно. Выпустит его
+                // сам хозяин, двойным щелчком по мешку.
+                if (MahaonPetBagItem.IsBagged(pet))
+                {
+                    pet.IsStabled = false;
+                    pet.StabledBy = null;
+                    Stabled?.Remove(pet);
+                    continue;
+                }
+
                 if (pet.Deleted)
                 {
                     pet.IsStabled = false;
@@ -3601,11 +3894,6 @@ namespace Server.Mobiles
                 if (Followers + pet.ControlSlots <= FollowersMax)
                 {
                     pet.SetControlMaster(this);
-
-                    if (pet.Summoned)
-                    {
-                        pet.SummonMaster = this;
-                    }
 
                     pet.ControlTarget = this;
                     pet.ControlOrder = OrderType.Follow;
@@ -3744,6 +4032,8 @@ namespace Server.Mobiles
                 poison = Poison.IncreaseLevel(poison);
             }
 
+            poison = Systems.MahaonPoison.PoisonToleranceSystem.GetEffectivePoison(this, poison);
+
             var result = base.ApplyPoison(from, poison);
 
             if (from != null && result == ApplyPoisonResult.Poisoned && PoisonTimer is PoisonImpl.PoisonTimer timer)
@@ -3756,6 +4046,31 @@ namespace Server.Mobiles
 
         public override bool CheckPoisonImmunity(Mobile from, Poison poison) =>
             Young && (DuelContext?.Started != true || DuelContext.Finished) || base.CheckPoisonImmunity(from, poison);
+
+        // Strong poison (Deadly/Lethal, level 3+) doesn't fully cure in one shot — a cure
+        // only knocks it down a level, matching the "multi-stage cure" the player recalled.
+        private const int StrongPoisonThreshold = 3;
+
+        public override bool CurePoison(Mobile from)
+        {
+            var currentPoison = Poison;
+
+            if (currentPoison == null || currentPoison.Level < StrongPoisonThreshold || !CheckCure(from))
+            {
+                return base.CurePoison(from);
+            }
+
+            var weaker = Server.Poison.GetPoisonByIndex(currentPoison.Index - 1);
+
+            if (weaker == null || weaker.Level < 0 || weaker.Family != currentPoison.Family)
+            {
+                return base.CurePoison(from);
+            }
+
+            Poison = weaker;
+            SendMessage(0x59, $"Яд ослабевает до уровня «{weaker.Name}» — потребуется ещё лечение.");
+            return false;
+        }
 
         public override void OnPoisonImmunity(Mobile from, Poison poison)
         {
@@ -3840,6 +4155,35 @@ namespace Server.Mobiles
                 }
 
                 Stabled = null;
+            }
+
+            if (_allFollowers?.Count > 0)
+            {
+                // Releasing or deleting a follower removes it from _allFollowers.
+                using var followers = PooledRefQueue<BaseCreature>.Create(_allFollowers.Count);
+
+                foreach (var follower in _allFollowers)
+                {
+                    // Escorts and hirelings notice a deleted master and walk off on their own.
+                    if (follower is BaseCreature bc and not (BaseEscortable or BaseHire))
+                    {
+                        followers.Enqueue(bc);
+                    }
+                }
+
+                while (followers.Count > 0)
+                {
+                    var bc = followers.Dequeue();
+                    if (bc.Summoned || bc.IsBonded || bc.IsDeadPet)
+                    {
+                        bc.Delete();
+                    }
+                    else
+                    {
+                        // An unbonded pet goes wild and despawns on the abandoned-pet timer.
+                        bc.ControlOrder = OrderType.Release;
+                    }
+                }
             }
         }
 
@@ -3990,6 +4334,15 @@ namespace Server.Mobiles
             if (Young || BedrollLogout || TestCenter.Enabled)
             {
                 return TimeSpan.Zero;
+            }
+
+            // Mahaon: a [BecomeBot-possessed character keeps acting after the real client
+            // disconnects — internalizing it on the usual logout timer would yank it off
+            // the map mid-task (the brain stops thinking once its body is in Map.Internal). Effectively
+            // "never" for as long as the AI control stays on.
+            if (Systems.Bots.BotSystem.IsPossessed(this))
+            {
+                return TimeSpan.FromDays(365);
             }
 
             return base.GetLogoutDelay();

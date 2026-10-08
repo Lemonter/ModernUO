@@ -27,7 +27,7 @@ public interface ISlayer
     SlayerName Slayer2 { get; set; }
 }
 
-[SerializationGenerator(10, false)]
+[SerializationGenerator(11, false)]
 public abstract partial class BaseWeapon
     : Item, IWeapon, IFactionItem, ICraftable, ISlayer, IDurability, IAosItem, IIdentifiable
 {
@@ -56,138 +56,126 @@ public abstract partial class BaseWeapon
 
     [InvalidateProperties]
     [SerializableField(0)]
+    [SaveFlag(nameof(ShouldSerializeDamageLevel))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private WeaponDamageLevel _damageLevel;
 
-    [SerializableFieldSaveFlag(0)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeDamageLevel() => _damageLevel != WeaponDamageLevel.Regular;
 
     [InvalidateProperties]
     [SerializableField(5)]
+    [SaveFlag(nameof(ShouldSerializeMaxHitPoints))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _maxHitPoints;
 
-    [SerializableFieldSaveFlag(5)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeMaxHitPoints() => _maxHitPoints != 0;
 
     [InvalidateProperties]
     [SerializableField(6)]
+    [SaveFlag(nameof(ShouldSerializeSlayer))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private SlayerName _slayer;
 
-    [SerializableFieldSaveFlag(6)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeSlayer() => _slayer != SlayerName.None;
 
     [InvalidateProperties]
     [SerializableField(7)]
+    [SaveFlag(nameof(ShouldSerializePoison))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private Poison _poison;
 
-    [SerializableFieldSaveFlag(7)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializePoison() => _poison != null;
 
     [InvalidateProperties]
     [SerializableField(8)]
+    [SaveFlag(nameof(ShouldSerializePoisonCharges))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private int _poisonCharges;
 
-    [SerializableFieldSaveFlag(8)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializePoisonCharges() => _poisonCharges > 0;
 
     [InvalidateProperties]
     [SerializableField(9)]
+    [SaveFlag(nameof(ShouldSerializeCrafter))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private string _crafter;
 
-    [SerializableFieldSaveFlag(9)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeCrafter() => !string.IsNullOrEmpty(_crafter);
 
     [InvalidateProperties]
     [SerializableField(10)]
+    [SaveFlag(nameof(ShouldSerializeIdentified))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private bool _identified;
 
-    [SerializableFieldSaveFlag(10)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeIdentified() => _identified;
 
     [SerializedIgnoreDupe]
     [SerializableField(24, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeAttributes), nameof(AttributesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosAttributes _attributes;
 
-    [SerializableFieldSaveFlag(24)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeAttributes() => !_attributes.IsEmpty;
 
-    [SerializableFieldDefault(24)]
     private AosAttributes AttributesDefaultValue() => new(this);
 
     [SerializedIgnoreDupe]
     [SerializableField(25, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeWeaponAttributes), nameof(WeaponAttributesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosWeaponAttributes _weaponAttributes;
 
-    [SerializableFieldSaveFlag(25)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeWeaponAttributes() => !_weaponAttributes.IsEmpty;
 
-    [SerializableFieldDefault(25)]
     private AosWeaponAttributes WeaponAttributesDefaultValue() => new(this);
 
-    [SerializableField(26)]
-    [SerializedCommandProperty(AccessLevel.GameMaster)]
-    private bool _playerConstructed;
-
-    [SerializableFieldSaveFlag(26)]
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private bool ShouldSerializePlayerConstructed() => _playerConstructed;
-
     [SerializedIgnoreDupe]
-    [SerializableField(27, setter: "private")]
+    [SerializableField(26, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeSkillBonuses), nameof(SkillBonusesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosSkillBonuses _skillBonuses;
 
-    [SerializableFieldSaveFlag(27)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeSkillBonuses() => !_skillBonuses.IsEmpty;
 
-    [SerializableFieldDefault(27)]
     private AosSkillBonuses SkillBonusesDefaultValue() => new(this);
 
     [InvalidateProperties]
-    [SerializableField(28)]
+    [SerializableField(27)]
+    [SaveFlag(nameof(ShouldSerializeSlayer2))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private SlayerName _slayer2;
 
-    [SerializableFieldSaveFlag(28)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeSlayer2() => _slayer2 != SlayerName.None;
 
     [SerializedIgnoreDupe]
-    [SerializableField(29, setter: "private")]
+    [SerializableField(28, setter: "private")]
+    [SaveFlag(nameof(ShouldSerializeElementAttributes), nameof(AosElementAttributesDefaultValue))]
     [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
     private AosElementAttributes _aosElementDamages;
 
-    [SerializableFieldSaveFlag(29)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeElementAttributes() => !_aosElementDamages.IsEmpty;
 
-    [SerializableFieldDefault(29)]
     private AosElementAttributes AosElementAttributesDefaultValue() => new(this);
 
     [InvalidateProperties]
-    [SerializableField(30)]
+    [SerializableField(29)]
+    [SaveFlag(nameof(ShouldSerializeEngravedText))]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private string _engravedText;
 
-    [SerializableFieldSaveFlag(30)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool ShouldSerializeEngravedText() => !string.IsNullOrEmpty(_engravedText);
 
@@ -246,6 +234,7 @@ public abstract partial class BaseWeapon
     public virtual WeaponAbility SecondaryAbility => null;
 
     public virtual int DefMaxRange => 1;
+    public virtual bool IsRangedWeapon => false; // Mahaon: overridden true in BaseRanged
     public virtual int DefHitSound => 0;
     public virtual int DefMissSound => 0;
     public virtual SkillName DefSkill => SkillName.Swords;
@@ -293,7 +282,14 @@ public abstract partial class BaseWeapon
     [CommandProperty(AccessLevel.GameMaster)]
     public bool Consecrated { get; set; }
 
+    /// <summary>Who currently holds a Mysticism Enchant on this weapon, or null. Deliberately
+    /// not serialized — the enchantment is a timed effect that ends with the server, and a
+    /// wielder restored from a save would point at an effect no timer is running.</summary>
+    [CommandProperty(AccessLevel.GameMaster)]
+    public Mobile EnchantedWeilder { get; set; }
+
     [SerializableProperty(1)]
+    [SaveFlag(nameof(ShouldSerializeWeaponAccuracy))]
     [CommandProperty(AccessLevel.GameMaster)]
     public WeaponAccuracyLevel AccuracyLevel
     {
@@ -329,10 +325,10 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(1)]
     private bool ShouldSerializeWeaponAccuracy() => _accuracyLevel != WeaponAccuracyLevel.Regular;
 
     [SerializableProperty(2)]
+    [SaveFlag(nameof(ShouldSerializeDurabilityLevel))]
     [CommandProperty(AccessLevel.GameMaster)]
     public WeaponDurabilityLevel DurabilityLevel
     {
@@ -347,10 +343,10 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(2)]
     private bool ShouldSerializeDurabilityLevel() => _durabilityLevel != WeaponDurabilityLevel.Regular;
 
     [SerializableProperty(3)]
+    [SaveFlag(nameof(ShouldSerializeQuality), nameof(QualityDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public WeaponQuality Quality
     {
@@ -365,13 +361,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(3)]
     private bool ShouldSerializeQuality() => _quality != WeaponQuality.Regular;
 
-    [SerializableFieldDefault(3)]
     private WeaponQuality QualityDefaultValue() => WeaponQuality.Regular;
 
     [SerializableProperty(4)]
+    [SaveFlag(nameof(ShouldSerializeHitPoints))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int HitPoints
     {
@@ -395,10 +390,10 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(4)]
     private bool ShouldSerializeHitPoints() => _hitPoints > 0;
 
     [SerializableProperty(11)]
+    [SaveFlag(nameof(ShouldSerializeStrReq), nameof(StrReqDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int StrRequirement
     {
@@ -411,13 +406,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(11)]
     private bool ShouldSerializeStrReq() => _strRequirement != -1;
 
-    [SerializableFieldDefault(11)]
     private int StrReqDefaultValue() => -1;
 
     [SerializableProperty(12)]
+    [SaveFlag(nameof(ShouldSerializeDexReq), nameof(DexReqDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int DexRequirement
     {
@@ -430,13 +424,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(12)]
     private bool ShouldSerializeDexReq() => _dexRequirement != -1;
 
-    [SerializableFieldDefault(12)]
     private int DexReqDefaultValue() => -1;
 
     [SerializableProperty(13)]
+    [SaveFlag(nameof(ShouldSerializeIntReq), nameof(IntReqDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int IntRequirement
     {
@@ -449,13 +442,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(13)]
     private bool ShouldSerializeIntReq() => _intRequirement != -1;
 
-    [SerializableFieldDefault(13)]
     private int IntReqDefaultValue() => -1;
 
     [SerializableProperty(14)]
+    [SaveFlag(nameof(ShouldSerializeMinDamage), nameof(MinDamageDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int MinDamage
     {
@@ -468,13 +460,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(14)]
     private bool ShouldSerializeMinDamage() => _minDamage != -1;
 
-    [SerializableFieldDefault(14)]
     private int MinDamageDefaultValue() => -1;
 
     [SerializableProperty(15)]
+    [SaveFlag(nameof(ShouldSerializeMaxDamage), nameof(MaxDamageDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int MaxDamage
     {
@@ -487,13 +478,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(15)]
     private bool ShouldSerializeMaxDamage() => _maxDamage != -1;
 
-    [SerializableFieldDefault(15)]
     private int MaxDamageDefaultValue() => -1;
 
     [SerializableProperty(16)]
+    [SaveFlag(nameof(ShouldSerializeHitSound), nameof(HitSoundDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int HitSound
     {
@@ -505,13 +495,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(16)]
     private bool ShouldSerializeHitSound() => _hitSound != -1;
 
-    [SerializableFieldDefault(16)]
     private int HitSoundDefaultValue() => -1;
 
     [SerializableProperty(17)]
+    [SaveFlag(nameof(ShouldSerializeMissSound), nameof(MissSoundDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int MissSound
     {
@@ -523,13 +512,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(17)]
     private bool ShouldSerializeMissSound() => _missSound != -1;
 
-    [SerializableFieldDefault(17)]
     private int MissSoundDefaultValue() => -1;
 
     [SerializableProperty(18)]
+    [SaveFlag(nameof(ShouldSerializeSpeed), nameof(SpeedDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public float Speed
     {
@@ -560,13 +548,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(18)]
     private bool ShouldSerializeSpeed() => _speed != -1;
 
-    [SerializableFieldDefault(18)]
     private float SpeedDefaultValue() => -1;
 
     [SerializableProperty(19)]
+    [SaveFlag(nameof(ShouldSerializeMaxRange), nameof(MaxRangeDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public int MaxRange
     {
@@ -579,13 +566,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(19)]
     private bool ShouldSerializeMaxRange() => _maxRange != -1;
 
-    [SerializableFieldDefault(19)]
     private int MaxRangeDefaultValue() => -1;
 
     [SerializableProperty(20)]
+    [SaveFlag(nameof(ShouldSerializeSkill), nameof(SkillNameDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public SkillName Skill
     {
@@ -598,13 +584,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(20)]
     private bool ShouldSerializeSkill() => _skill != (SkillName)(-1);
 
-    [SerializableFieldDefault(20)]
     private SkillName SkillNameDefaultValue() => (SkillName)(-1);
 
     [SerializableProperty(21)]
+    [SaveFlag(nameof(ShouldSerializeType), nameof(TypeDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public WeaponType Type
     {
@@ -616,13 +601,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(21)]
     private bool ShouldSerializeType() => _type != (WeaponType)(-1);
 
-    [SerializableFieldDefault(21)]
     private WeaponType TypeDefaultValue() => (WeaponType)(-1);
 
     [SerializableProperty(22)]
+    [SaveFlag(nameof(ShouldSerializeAnimation), nameof(AnimationDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public WeaponAnimation Animation
     {
@@ -634,13 +618,12 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(22)]
     private bool ShouldSerializeAnimation() => _animation != (WeaponAnimation)(-1);
 
-    [SerializableFieldDefault(22)]
     private WeaponAnimation AnimationDefaultValue() => (WeaponAnimation)(-1);
 
     [SerializableProperty(23)]
+    [SaveFlag(nameof(ShouldSerializeResource), nameof(ResourceDefaultValue))]
     [CommandProperty(AccessLevel.GameMaster)]
     public CraftResource Resource
     {
@@ -656,10 +639,8 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [SerializableFieldSaveFlag(23)]
     private bool ShouldSerializeResource() => _resource != CraftResource.Iron;
 
-    [SerializableFieldDefault(23)]
     private CraftResource ResourceDefaultValue() => CraftResource.Iron;
 
     public virtual int OnCraft(
@@ -674,7 +655,6 @@ public abstract partial class BaseWeapon
             Crafter = from.RawName;
         }
 
-        PlayerConstructed = true;
         Identified = true;
 
         var resourceType = typeRes ?? craftItem.Resources[0].ItemType;
@@ -1048,7 +1028,7 @@ public abstract partial class BaseWeapon
 
         if (from.Dex < DexRequirement)
         {
-            from.SendMessage("You are not nimble enough to equip that.");
+            from.SendMessage("Тебе не хватает ловкости, чтобы это надеть.");
             return false;
         }
 
@@ -1060,7 +1040,7 @@ public abstract partial class BaseWeapon
 
         if (from.Int < IntRequirement)
         {
-            from.SendMessage("You are not smart enough to equip that.");
+            from.SendMessage("Тебе не хватает ума, чтобы это надеть.");
             return false;
         }
 
@@ -1069,6 +1049,12 @@ public abstract partial class BaseWeapon
 
     public override bool OnEquip(Mobile from)
     {
+        if (!Systems.MahaonMetals.MahaonMetalWearEffects.CanWear(this, from, out var reason))
+        {
+            from.SendMessage(0x22, reason);
+            return false;
+        }
+
         var strBonus = Attributes.BonusStr;
         var dexBonus = Attributes.BonusDex;
         var intBonus = Attributes.BonusInt;
@@ -1130,6 +1116,7 @@ public abstract partial class BaseWeapon
 
             from.CheckStatTimers();
             from.Delta(MobileDelta.WeaponDamage);
+            Systems.MahaonMetals.MahaonMetalWearEffects.OnWorn(this, from);
         }
     }
 
@@ -1145,6 +1132,8 @@ public abstract partial class BaseWeapon
         m.RemoveStatMod($"{serial}Str");
         m.RemoveStatMod($"{serial}Dex");
         m.RemoveStatMod($"{serial}Int");
+
+        Spells.SkillMasteries.SkillMasterySpell.OnWeaponRemoved(m, this);
 
         if (!_enableInstaHit && m.Weapon is BaseWeapon weapon)
         {
@@ -1174,6 +1163,7 @@ public abstract partial class BaseWeapon
         m.CheckStatTimers();
 
         m.Delta(MobileDelta.WeaponDamage);
+        Systems.MahaonMetals.MahaonMetalWearEffects.OnUnworn(this, m);
     }
 
     public virtual SkillName GetUsedSkill(Mobile m, bool checkSkillAttrs)
@@ -1234,6 +1224,13 @@ public abstract partial class BaseWeapon
 
     public virtual bool CheckHit(Mobile attacker, Mobile defender)
     {
+        // Mahaon: Thief profession perk — a clean dodge, resolved before the normal hit-
+        // chance roll so it doesn't interact with any of the AOS bonus/malus math below.
+        if (Systems.MahaonProfessions.ProfessionPerkSystem.TryDodge(defender))
+        {
+            return false;
+        }
+
         var atkWeapon = attacker.Weapon as BaseWeapon;
         var defWeapon = defender.Weapon as BaseWeapon;
 
@@ -1299,6 +1296,7 @@ public abstract partial class BaseWeapon
             ourValue = (atkValue + 20.0) * (100 + bonus);
 
             bonus = AosAttributes.GetValue(defender, AosAttribute.DefendChance);
+            bonus += Spells.SkillMasteries.WhiteTigerFormSpell.GetDciBonus(defender);
 
             var info = ForceArrow.GetInfo(attacker, defender);
 
@@ -1339,10 +1337,12 @@ public abstract partial class BaseWeapon
                 bonus -= discordanceEffect;
             }
 
-            // Defense Chance Increase = 45%
-            if (bonus > 45)
+            // Defense Chance Increase = 45%, +5 while under White Tiger Form.
+            var maxDefendChance = 45 + Spells.SkillMasteries.WhiteTigerFormSpell.GetDefenseCap(defender);
+
+            if (bonus > maxDefendChance)
             {
-                bonus = 45;
+                bonus = maxDefendChance;
             }
 
             theirValue = (defValue + 20.0) * (100 + bonus);
@@ -1362,6 +1362,13 @@ public abstract partial class BaseWeapon
         if (Core.AOS && chance < 0.02)
         {
             chance = 0.02;
+        }
+
+        // White Tiger Form: flat chance to evade the attack outright, on top of (not
+        // instead of) the normal DCI-weighted roll above.
+        if (Spells.SkillMasteries.WhiteTigerFormSpell.CheckEvasion(defender))
+        {
+            return false;
         }
 
         return attacker.CheckSkill(atkSkill.SkillName, chance);
@@ -1512,6 +1519,18 @@ public abstract partial class BaseWeapon
             delayInSeconds = 15000.0 / v;
         }
 
+        delayInSeconds /= Systems.MahaonCombat.CombatStanceSystem.GetSwingSpeedScalar(m);
+
+        // Mahaon: Archery > 90 lets a bow/crossbow fire past its own MaxRange (see
+        // Mobile.CheckCombatTime) — but 40% slower while actually doing so. Reverts to
+        // normal speed the moment the target is back within the weapon's real MaxRange, no
+        // separate toggle needed.
+        if (IsRangedWeapon && m.Combatant != null &&
+            m.Skills[SkillName.Archery].Value > 90.0 && !m.InRange(m.Combatant, MaxRange))
+        {
+            delayInSeconds /= 0.6;
+        }
+
         return TimeSpan.FromSeconds(delayInSeconds);
     }
 
@@ -1552,7 +1571,9 @@ public abstract partial class BaseWeapon
                 chance = chance * (20 + defender.Dex) / 100;
             }
 
-            return defender.CheckSkill(SkillName.Parry, chance);
+            return defender.CheckSkill(
+                SkillName.Parry, chance * Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender)
+            );
         }
 
         if (defender.Weapon is Fists or BaseRanged)
@@ -1591,13 +1612,16 @@ public abstract partial class BaseWeapon
             chance = chance * (20 + defender.Dex) / 100;
         }
 
+        // «Стальная воля» — обычный перк категории Бусидо.
+        var perk = Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender);
+
         if (chance > aosChance)
         {
-            return defender.CheckSkill(SkillName.Parry, chance);
+            return defender.CheckSkill(SkillName.Parry, chance * perk);
         }
 
         // Only skillcheck if wielding a shield & there's no effect from Bushido
-        return aosChance > Utility.RandomDouble();
+        return aosChance * perk > Utility.RandomDouble();
     }
 
     public virtual int AbsorbDamageAOS(Mobile attacker, Mobile defender, int damage)
@@ -1608,10 +1632,20 @@ public abstract partial class BaseWeapon
         {
             blocked = CheckParry(defender);
 
+            // House rule: parrying an arrow/bolt takes an actual shield — a sword alone
+            // doesn't cut it against something already in flight.
+            if (blocked && this is BaseRanged && defender.FindItemOnLayer<BaseShield>(Layer.TwoHanded) == null)
+            {
+                blocked = false;
+            }
+
             if (blocked)
             {
                 defender.FixedEffect(0x37B9, 10, 16);
                 damage = 0;
+
+                Spells.SkillMasteries.SkillMasterySpell.OnParried(attacker, defender);
+                Systems.MahaonCombat.CombatLogSystem.LogParry(attacker, defender);
 
                 // Successful block removes the Honorable Execution penalty.
                 HonorableExecution.RemovePenalty(defender);
@@ -1664,7 +1698,9 @@ public abstract partial class BaseWeapon
             }
         }
 
-        return damage;
+        // Mahaon: Warrior profession perk — flat toughness knocked off whatever damage
+        // survived parry/armor.
+        return Systems.MahaonProfessions.ProfessionPerkSystem.ApplyResilience(defender, damage);
     }
 
     public virtual int AbsorbDamage(Mobile attacker, Mobile defender, int damage)
@@ -1725,12 +1761,12 @@ public abstract partial class BaseWeapon
             return 0;
         }
 
-        if (attacker is not BaseCreature bc || bc.PackInstinct == PackInstinct.None || !bc.Controlled && !bc.Summoned)
+        if (attacker is not BaseCreature bc || bc.PackInstinct == PackInstinct.None)
         {
             return 0;
         }
 
-        var master = bc.ControlMaster ?? bc.SummonMaster;
+        var master = bc.GetMaster();
 
         if (master == null)
         {
@@ -1740,8 +1776,7 @@ public abstract partial class BaseWeapon
         var inPack = 1;
         foreach (var m in defender.GetMobilesInRange<BaseCreature>(1))
         {
-            if (m != attacker && (m.PackInstinct & bc.PackInstinct) != 0 && (m.Controlled || m.Summoned) &&
-                master == (m.ControlMaster ?? m.SummonMaster) && m.Combatant == defender)
+            if (m != attacker && (m.PackInstinct & bc.PackInstinct) != 0 && master == m.GetMaster() && m.Combatant == defender)
             {
                 inPack++;
             }
@@ -1763,7 +1798,7 @@ public abstract partial class BaseWeapon
         {
             foreach (var m in defender.GetMobilesInRange<Clone>(4))
             {
-                if (m?.Summoned == true && m.SummonMaster == defender)
+                if (m?.SummonMaster == defender)
                 {
                     // Your attack has been diverted to a nearby mirror image of your target!
                     attacker.SendLocalizedMessage(1063141);
@@ -1807,11 +1842,44 @@ public abstract partial class BaseWeapon
         if (move != null)
         {
             percentageBonus += (int)(move.GetDamageScalar(attacker, defender) * 100) - 100;
+            percentageBonus += Systems.MahaonCombat.MartialTechniqueSystem.OnTechniqueLanded(attacker, move);
         }
 
         percentageBonus += (int)(ForceOfNature.GetDamageScalar(attacker, defender) * 100) - 100;
 
         percentageBonus += (int)(damageBonus * 100) - 100;
+
+        percentageBonus += (int)(Systems.MahaonCombat.CombatStanceSystem.GetDamageDealtScalar(attacker) * 100) - 100;
+
+        percentageBonus += Systems.MahaonCombat.HitLocationSystem.ConsumeHitBonus(attacker, defender);
+
+        percentageBonus += Systems.MahaonCombat.WeaponEnchantment.GetDamageBonus(this);
+
+        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetDamageBonus(this, attacker, defender);
+        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetArmorDefenseBonus(defender, attacker);
+
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDamageBonus(attacker, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetAmbushBonus(attacker, defender, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDistanceBonus(attacker, defender, this);
+        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetLocationSynergyBonus(attacker, defender, this);
+
+        if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(attacker, Systems.MahaonCombat.FractureLocation.Arms))
+        {
+            percentageBonus -= 30;
+        }
+
+        // Mahaon: теперь через ProfessionBonuses — с учётом первичной/вторичной категории
+        // и без прежних +100 (см. комментарий к ProfessionBonuses).
+        percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.MeleeDamageBonus(attacker);
+
+        if (this is BaseRanged)
+        {
+            percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.RangedDamageBonus(attacker);
+        }
+
+        // Звание охотника («убийца орков» и прочие) — прибавка за собственные заслуги, не за
+        // оружие. Скромная рядом со слееровым +100 ниже: 5% за ступень, максимум 15%.
+        percentageBonus += Systems.MahaonSlayer.MahaonSlayerTitles.DamageBonus(attacker, defender);
 
         var cs = CheckSlayers(attacker, defender);
 
@@ -1913,6 +1981,8 @@ public abstract partial class BaseWeapon
         }
 
         AddBlood(attacker, defender, damage);
+
+        Systems.MahaonCombat.WeaponEnchantment.TryLightningProc(this, attacker, defender);
 
         GetDamageTypes(
             attacker,
@@ -2018,6 +2088,8 @@ public abstract partial class BaseWeapon
                           Bladeweave.BladeWeaving(attacker, out var bladeweavingAbi) &&
                           bladeweavingAbi is ArmorIgnore;
 
+        Spells.SkillMasteries.SkillMasterySpell.OnHit(attacker, defender, ref damage);
+
         var damageGiven = AOS.Damage(
             defender,
             attacker,
@@ -2031,11 +2103,32 @@ public abstract partial class BaseWeapon
             chaos,
             direct,
             false,
-            this is BaseRanged
+            this is BaseRanged,
+            damageType: this is BaseRanged ? Spells.SkillMasteries.DamageType.Ranged : Spells.SkillMasteries.DamageType.Melee
         );
 
         if (damageGiven > 0)
         {
+            // A real called shot already has a location; a plain hit gets a cosmetic
+            // random one purely so the log always says where it landed ("куда попал").
+            var location = Systems.MahaonCombat.HitLocationSystem.GetLastConsumedLocation(attacker)
+                ?? Systems.MahaonCombat.HitLocationSystem.RandomDisplayLocation();
+
+            var armorPiece = Systems.MahaonCombat.HitLocationSystem.GetArmorAt(defender, location);
+
+            Systems.MahaonCombat.CombatLogSystem.LogMeleeHit(
+                attacker, defender, damageGiven, LocationRuForLog(location), armorPiece?.Name ?? armorPiece?.GetType().Name
+            );
+            Systems.MahaonCombat.WeaponStyleSystem.OnAfterHit(attacker, defender, this);
+            Systems.MahaonMetals.MahaonMetalCombatEffects.OnAfterHit(this, attacker, defender);
+            Systems.MahaonCombat.WeaponStyleSystem.OnSuccessfulHit(attacker, this, damageGiven);
+            Systems.MahaonCombat.WeaponPoisonSystem.OnWeaponHit(attacker, defender, this, a);
+
+            // Чем больше урона нанесено, тем больше бонус к приросту навыка — оружейный
+            // навык и Тактика оба задействованы в этом ударе.
+            Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(attacker, DefSkill, damageGiven);
+            Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(attacker, SkillName.Tactics, damageGiven);
+
             var propertyBonus = move?.GetPropertyBonus(attacker) ?? 1.0;
 
             // Leech abilities
@@ -2094,7 +2187,11 @@ public abstract partial class BaseWeapon
                 defender is Slime or AcidElemental;
 
             // Stratics says 50% chance, seems more like 4%..
-            if (isAcidMonster || Utility.Random(25) == 0)
+            // Mahaon: Arms Lore lets the wielder spare the weapon - up to half of these
+            // rolls are cancelled outright at GM. Acid blood eats through regardless: that
+            // is the monster damaging the weapon, not ordinary use.
+            if (isAcidMonster ||
+                Utility.Random(25) == 0 && !SkillHandlers.MahaonArmsLore.TryPreventWear(attacker))
             {
                 if (isAcidMonster)
                 {
@@ -2127,15 +2224,11 @@ public abstract partial class BaseWeapon
 
             if (attacker is VampireBatFamiliar bc)
             {
-                var caster = bc.ControlMaster ?? bc.SummonMaster;
+                var caster = bc.GetMaster();
 
-                if (caster != null && caster.Map == bc.Map && caster.InRange(bc, 2))
+                if (caster != null && caster.Map == bc.Map)
                 {
                     caster.Hits += damage;
-                }
-                else
-                {
-                    bc.Hits += damage;
                 }
             }
 
@@ -2345,6 +2438,17 @@ public abstract partial class BaseWeapon
         return CheckSlayerResult.None;
     }
 
+    private static string LocationRuForLog(Systems.MahaonCombat.HitLocation? location) => location switch
+    {
+        Systems.MahaonCombat.HitLocation.Chest => "грудь",
+        Systems.MahaonCombat.HitLocation.Arms  => "руку",
+        Systems.MahaonCombat.HitLocation.Legs  => "ногу",
+        Systems.MahaonCombat.HitLocation.Hands => "кисть",
+        Systems.MahaonCombat.HitLocation.Back  => "спину",
+        Systems.MahaonCombat.HitLocation.Neck  => "шею",
+        _                                       => null
+    };
+
     public virtual void AddBlood(Mobile attacker, Mobile defender, int damage)
     {
         if (damage <= 0)
@@ -2450,6 +2554,8 @@ public abstract partial class BaseWeapon
 
         WeaponAbility.GetCurrentAbility(attacker)?.OnMiss(attacker, defender);
         SpecialMove.GetCurrentMove(attacker)?.OnMiss(attacker, defender);
+        Spells.SkillMasteries.SkillMasterySpell.OnMiss(attacker, defender);
+        Systems.MahaonCombat.CombatLogSystem.LogMiss(attacker, defender);
 
         if (defender is IHonorTarget target)
         {
@@ -2942,6 +3048,13 @@ public abstract partial class BaseWeapon
     public override void GetProperties(IPropertyList list)
     {
         base.GetProperties(list);
+
+        // Mahaon: every weapon states what it is made of now — standard resources and
+        // dyed items included. See Systems.MahaonMetals.MaterialLineSystem.
+        list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
+
+        Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+        Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
 
         if (_crafter != null)
         {
@@ -3580,236 +3693,6 @@ public abstract partial class BaseWeapon
         }
     }
 
-    private static bool GetSaveFlag(OldSaveFlag flags, OldSaveFlag toGet) => (flags & toGet) != 0;
-
-    private void Deserialize(IGenericReader reader, int version)
-    {
-        var flags = (OldSaveFlag)reader.ReadInt();
-
-        if (GetSaveFlag(flags, OldSaveFlag.DamageLevel))
-        {
-            _damageLevel = (WeaponDamageLevel)reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.AccuracyLevel))
-        {
-            _accuracyLevel = (WeaponAccuracyLevel)reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.DurabilityLevel))
-        {
-            _durabilityLevel = (WeaponDurabilityLevel)reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Quality))
-        {
-            _quality = (WeaponQuality)reader.ReadInt();
-        }
-        else
-        {
-            _quality = WeaponQuality.Regular;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Hits))
-        {
-            _hitPoints = reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.MaxHits))
-        {
-            _maxHitPoints = reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Slayer))
-        {
-            _slayer = (SlayerName)reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Poison))
-        {
-            _poison = reader.ReadPoison();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.PoisonCharges))
-        {
-            _poisonCharges = reader.ReadInt();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Crafter))
-        {
-            Timer.DelayCall(crafter => _crafter = crafter?.RawName, reader.ReadEntity<Mobile>());
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Identified))
-        {
-            _identified = version >= 6 || reader.ReadBool();
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.StrReq))
-        {
-            _strRequirement = reader.ReadInt();
-        }
-        else
-        {
-            _strRequirement = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.DexReq))
-        {
-            _dexRequirement = reader.ReadInt();
-        }
-        else
-        {
-            _dexRequirement = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.IntReq))
-        {
-            _intRequirement = reader.ReadInt();
-        }
-        else
-        {
-            _intRequirement = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.MinDamage))
-        {
-            _minDamage = reader.ReadInt();
-        }
-        else
-        {
-            _minDamage = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.MaxDamage))
-        {
-            _maxDamage = reader.ReadInt();
-        }
-        else
-        {
-            _maxDamage = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.HitSound))
-        {
-            _hitSound = reader.ReadInt();
-        }
-        else
-        {
-            _hitSound = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.MissSound))
-        {
-            _missSound = reader.ReadInt();
-        }
-        else
-        {
-            _missSound = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Speed))
-        {
-            if (version < 9)
-            {
-                _speed = reader.ReadInt();
-            }
-            else
-            {
-                _speed = reader.ReadFloat();
-            }
-        }
-        else
-        {
-            _speed = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.MaxRange))
-        {
-            _maxRange = reader.ReadInt();
-        }
-        else
-        {
-            _maxRange = -1;
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Skill))
-        {
-            _skill = (SkillName)reader.ReadInt();
-        }
-        else
-        {
-            _skill = (SkillName)(-1);
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Type))
-        {
-            _type = (WeaponType)reader.ReadInt();
-        }
-        else
-        {
-            _type = (WeaponType)(-1);
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Animation))
-        {
-            _animation = (WeaponAnimation)reader.ReadInt();
-        }
-        else
-        {
-            _animation = (WeaponAnimation)(-1);
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Resource))
-        {
-            _resource = (CraftResource)reader.ReadInt();
-        }
-        else
-        {
-            _resource = CraftResource.Iron;
-        }
-
-        Attributes = new AosAttributes(this);
-
-        if (GetSaveFlag(flags, OldSaveFlag.Attributes))
-        {
-            Attributes.Deserialize(reader);
-        }
-
-        WeaponAttributes = new AosWeaponAttributes(this);
-
-        if (GetSaveFlag(flags, OldSaveFlag.WeaponAttributes))
-        {
-            WeaponAttributes.Deserialize(reader);
-        }
-
-        PlayerConstructed = GetSaveFlag(flags, OldSaveFlag.PlayerConstructed);
-
-        SkillBonuses = new AosSkillBonuses(this);
-
-        if (GetSaveFlag(flags, OldSaveFlag.SkillBonuses))
-        {
-            SkillBonuses.Deserialize(reader);
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.Slayer2))
-        {
-            _slayer2 = (SlayerName)reader.ReadInt();
-        }
-
-        AosElementDamages = new AosElementAttributes(this);
-
-        if (GetSaveFlag(flags, OldSaveFlag.ElementalDamages))
-        {
-            AosElementDamages.Deserialize(reader);
-        }
-
-        if (GetSaveFlag(flags, OldSaveFlag.EngravedText))
-        {
-            _engravedText = reader.ReadString();
-        }
-    }
-
     [AfterDeserialization]
     private void AfterDeserialization()
     {
@@ -3875,42 +3758,6 @@ public abstract partial class BaseWeapon
         }
     }
 
-    [Flags]
-    private enum OldSaveFlag
-    {
-        None = 0x00000000,
-        DamageLevel = 0x00000001,
-        AccuracyLevel = 0x00000002,
-        DurabilityLevel = 0x00000004,
-        Quality = 0x00000008,
-        Hits = 0x00000010,
-        MaxHits = 0x00000020,
-        Slayer = 0x00000040,
-        Poison = 0x00000080,
-        PoisonCharges = 0x00000100,
-        Crafter = 0x00000200,
-        Identified = 0x00000400,
-        StrReq = 0x00000800,
-        DexReq = 0x00001000,
-        IntReq = 0x00002000,
-        MinDamage = 0x00004000,
-        MaxDamage = 0x00008000,
-        HitSound = 0x00010000,
-        MissSound = 0x00020000,
-        Speed = 0x00040000,
-        MaxRange = 0x00080000,
-        Skill = 0x00100000,
-        Type = 0x00200000,
-        Animation = 0x00400000,
-        Resource = 0x00800000,
-        Attributes = 0x01000000,
-        WeaponAttributes = 0x02000000,
-        PlayerConstructed = 0x04000000,
-        SkillBonuses = 0x08000000,
-        Slayer2 = 0x10000000,
-        ElementalDamages = 0x20000000,
-        EngravedText = 0x40000000
-    }
 }
 
 public enum CheckSlayerResult

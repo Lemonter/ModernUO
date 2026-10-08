@@ -39,8 +39,8 @@ namespace Server.Mobiles
             VirtualArmor = 12;
         }
 
-        public override string CorpseName => "a skittering hopper corpse";
-        public override string DefaultName => "a skittering hopper";
+        public override string CorpseName => "труп скачущего прыгуна";
+        public override string DefaultName => "скачущий прыгун";
 
         public override int TreasureMapLevel => 1;
 

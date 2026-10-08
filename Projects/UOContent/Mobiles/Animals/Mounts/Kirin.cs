@@ -7,7 +7,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Kirin : BaseMount
     {
-        public override string DefaultName => "a ki-rin";
+        public override string DefaultName => "ки-рин";
 
         [Constructible]
         public Kirin() : base(132, 0x3EAD, AIType.AI_Mage, FightMode.Evil)
@@ -49,7 +49,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a ki-rin corpse";
+        public override string CorpseName => "труп ки-рина";
         public override bool AllowFemaleRider => false;
         public override bool AllowFemaleTamer => false;
 

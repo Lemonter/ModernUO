@@ -99,7 +99,21 @@ namespace Server.SkillHandlers
                     (Core.AOS ? 60.0 : 80.0) + armorRating * 2
                 ))
                 {
-                    m.AllowedStealthSteps = Math.Max((int)(m.Skills.Stealth.Value / (Core.AOS ? 5.0 : 10.0)), 1);
+                    Systems.MahaonCombat.ThievingSpecializationSystem.Train(
+                        m, Systems.MahaonCombat.ThievingSpecialization.Shadow
+                    );
+
+                    var extraSteps = Systems.MahaonCombat.ThievingSpecializationSystem.GetExtraStealthSteps(m);
+
+                    // «Бесшумный шаг» — обычный перк категории Ниндзя: пять лишних шагов
+                    // в тени сверх того, что даёт сам навык.
+                    if (Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+                            m, Systems.MahaonProfessions.ProfessionCategory.Ninjitsu
+                        ))
+                    {
+                        extraSteps += 5;
+                    }
+                    m.AllowedStealthSteps = Math.Max((int)(m.Skills.Stealth.Value / (Core.AOS ? 5.0 : 10.0)), 1) + extraSteps;
 
                     if (m is PlayerMobile pm)
                     {
@@ -108,7 +122,7 @@ namespace Server.SkillHandlers
 
                     m.SendLocalizedMessage(502730); // You begin to move quietly.
 
-                    return TimeSpan.FromSeconds(10.0);
+                    return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
                 }
                 else
                 {
@@ -117,7 +131,7 @@ namespace Server.SkillHandlers
                 }
             }
 
-            return TimeSpan.FromSeconds(10.0);
+            return TimeSpan.Zero; // Mahaon: skill-reuse delay removed
         }
     }
 #pragma warning restore CA1052 // Static holder types should be Static or NotInheritable

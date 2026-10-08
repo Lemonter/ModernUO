@@ -40,8 +40,8 @@ namespace Server.Mobiles
             // TODO: Body parts
         }
 
-        public override string CorpseName => "a horde minion corpse";
-        public override string DefaultName => "a horde minion";
+        public override string CorpseName => "труп отродья орды";
+        public override string DefaultName => "отродье орды";
 
         public override int GetIdleSound() => 338;
 

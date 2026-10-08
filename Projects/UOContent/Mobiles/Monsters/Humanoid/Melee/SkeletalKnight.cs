@@ -64,8 +64,9 @@ namespace Server.Mobiles
             PackItem(new WoodenShield());
         }
 
-        public override string CorpseName => "a skeletal corpse";
-        public override string DefaultName => "a skeletal knight";
+        public override string CorpseName => "труп скелета";
+        public override string DefaultName => "скелет-рыцарь";
+        public override bool IsUndead => true;
 
         public override bool BleedImmune => true;
 

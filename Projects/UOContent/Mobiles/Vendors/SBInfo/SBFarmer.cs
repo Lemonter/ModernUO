@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Server.Items;
+using Server.Systems.MahaonSeasons;
+using Server.Systems.MahaonWorld;
 
 namespace Server.Mobiles
 {
@@ -35,6 +37,51 @@ namespace Server.Mobiles
                 Add(new GenericBuyInfo(typeof(Grapes), 3, 20, 0x9D1, 0));
                 Add(new GenericBuyInfo(typeof(Apple), 3, 20, 0x9D0, 0));
                 Add(new GenericBuyInfo(typeof(SheafOfHay), 2, 20, 0xF36, 0));
+                // Buy-list name has to stay Latin1/English here — the vendor buy-list
+                // packet (0x74, OutgoingVendorBuyPackets.SendVendorBuyList) writes this
+                // field via WriteLatin1Null, which can't represent Cyrillic at all (silently
+                // becomes "?????" on the wire). Same fix as MahaonLibrarian's
+                // SakuroBlueprintBuyInfo — the seed's own real item name stays Russian
+                // wherever it's shown elsewhere (MahaonCropSeed's own DefaultName), this is
+                // only the shop-window label.
+                // Плуг — им готовят землю под посев: вспаханная грядка даёт вдвое больше.
+                Add(new GenericBuyInfo("Plough", typeof(MahaonPlough), 120, 10, 0x1500, 0));
+
+                Add(new GenericBuyInfo("Onion Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Onion }));
+                Add(new GenericBuyInfo("Garlic Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Garlic }));
+                Add(new GenericBuyInfo("Wheat Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Wheat }));
+                Add(new GenericBuyInfo("Cotton Seeds", typeof(MahaonCropSeed), 12, 20, 0x0DCF, 0, new object[] { MahaonCropType.Cotton }));
+                Add(new GenericBuyInfo("Flax Seeds", typeof(MahaonCropSeed), 12, 20, 0x0DCF, 0, new object[] { MahaonCropType.Flax }));
+                Add(new GenericBuyInfo("Cabbage Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Cabbage }));
+                Add(new GenericBuyInfo("Carrot Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Carrot }));
+                Add(new GenericBuyInfo("Lettuce Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Lettuce }));
+                Add(new GenericBuyInfo("Pumpkin Seeds", typeof(MahaonCropSeed), 10, 20, 0x0DCF, 0, new object[] { MahaonCropType.Pumpkin }));
+                Add(new GenericBuyInfo("Turnip Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Turnip }));
+                Add(new GenericBuyInfo("Corn Seeds", typeof(MahaonCropSeed), 10, 20, 0x0DCF, 0, new object[] { MahaonCropType.Corn }));
+                // Женьшень — реагент, а не еда, поэтому и семена дороже прочих вчетверо.
+                Add(new GenericBuyInfo("Ginseng Seeds", typeof(MahaonCropSeed), 32, 20, 0x0DCF, 0, new object[] { MahaonCropType.Ginseng }));
+
+                Add(new GenericBuyInfo("Watermelon Seeds", typeof(MahaonCropSeed), 10, 20, 0x0DCF, 0, new object[] { MahaonCropType.Watermelon }));
+                Add(new GenericBuyInfo("Honeydew Seeds", typeof(MahaonCropSeed), 10, 20, 0x0DCF, 0, new object[] { MahaonCropType.HoneydewMelon }));
+                Add(new GenericBuyInfo("Canteloupe Seeds", typeof(MahaonCropSeed), 10, 20, 0x0DCF, 0, new object[] { MahaonCropType.Cantaloupe }));
+                Add(new GenericBuyInfo("Squash Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.Squash }));
+                Add(new GenericBuyInfo("Yellow Gourd Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.YellowGourd }));
+                Add(new GenericBuyInfo("Green Gourd Seeds", typeof(MahaonCropSeed), 8, 20, 0x0DCF, 0, new object[] { MahaonCropType.GreenGourd }));
+                Add(new GenericBuyInfo("Grape Seeds", typeof(MahaonCropSeed), 14, 20, 0x0DCF, 0, new object[] { MahaonCropType.Grapes }));
+
+                // Мандрагора и паслён — реагенты; ценник как у женьшеня.
+                Add(new GenericBuyInfo("Mandrake Seeds", typeof(MahaonCropSeed), 32, 20, 0x0DCF, 0, new object[] { MahaonCropType.Mandrake }));
+                Add(new GenericBuyInfo("Nightshade Seeds", typeof(MahaonCropSeed), 32, 20, 0x0DCF, 0, new object[] { MahaonCropType.Nightshade }));
+
+                // Саженцы. Плодовые дороже: с них потом снимают урожай каждую осень, а дуб
+                // с орехом — это только брёвна.
+                Add(new GenericBuyInfo("Apple Sapling", typeof(MahaonSapling), 250, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Apple }));
+                Add(new GenericBuyInfo("Peach Sapling", typeof(MahaonSapling), 250, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Peach }));
+                Add(new GenericBuyInfo("Pear Sapling", typeof(MahaonSapling), 250, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Pear }));
+                Add(new GenericBuyInfo("Oak Sapling", typeof(MahaonSapling), 150, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Oak1 }));
+                Add(new GenericBuyInfo("Great Oak Sapling", typeof(MahaonSapling), 150, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Oak2 }));
+                Add(new GenericBuyInfo("Walnut Sapling", typeof(MahaonSapling), 150, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Walnut1 }));
+                Add(new GenericBuyInfo("Great Walnut Sapling", typeof(MahaonSapling), 150, 10, 0x0CE9, 0, new object[] { MahaonTreeSpecies.Walnut2 }));
             }
         }
 
@@ -42,6 +89,9 @@ namespace Server.Mobiles
         {
             public InternalSellInfo()
             {
+                Add(typeof(MahaonPlough), 60);
+                Add(typeof(MahaonCropSeed), 4);
+                Add(typeof(MahaonSapling), 60);
                 Add(typeof(Pitcher), 5);
                 Add(typeof(Eggs), 1);
                 Add(typeof(Apple), 1);

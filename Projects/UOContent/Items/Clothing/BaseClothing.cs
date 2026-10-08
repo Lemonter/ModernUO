@@ -22,90 +22,78 @@ namespace Server.Items
         int MaxArcaneCharges { get; set; }
     }
 
-    [SerializationGenerator(7, false)]
+    [SerializationGenerator(8, false)]
     public abstract partial class BaseClothing
         : Item, IDyable, IScissorable, IFactionItem, ICraftable, IWearableDurability, IAosItem
     {
-        [SerializableFieldSaveFlag(0)]
         private bool ShouldSerializeResource() => _resource != DefaultResource;
 
         [SerializedIgnoreDupe]
         [SerializableField(1, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeAttributes), nameof(AttributesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosAttributes _attributes;
 
-        [SerializableFieldSaveFlag(1)]
         private bool ShouldSerializeAttributes() => !_attributes.IsEmpty;
 
-        [SerializableFieldDefault(1)]
         private AosAttributes AttributesDefaultValue() => new(this);
 
         [SerializedIgnoreDupe]
         [SerializableField(2, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeClothingAttributes), nameof(ClothingAttributesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosArmorAttributes _clothingAttributes;
 
-        [SerializableFieldSaveFlag(2)]
         private bool ShouldSerializeClothingAttributes() => !_clothingAttributes.IsEmpty;
 
-        [SerializableFieldDefault(2)]
         private AosArmorAttributes ClothingAttributesDefaultValue() => new(this);
 
         [SerializedIgnoreDupe]
         [SerializableField(3, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeSkillBonuses), nameof(SkillBonusesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosSkillBonuses _skillBonuses;
 
-        [SerializableFieldSaveFlag(3)]
         private bool ShouldSerializeSkillBonuses() => !_skillBonuses.IsEmpty;
 
-        [SerializableFieldDefault(3)]
         private AosSkillBonuses SkillBonusesDefaultValue() => new(this);
 
         [SerializedIgnoreDupe]
         [SerializableField(4, setter: "private")]
+        [SaveFlag(nameof(ShouldSerializeResistances), nameof(ResistancesDefaultValue))]
         [SerializedCommandProperty(AccessLevel.GameMaster, canModify: true)]
         private AosElementAttributes _resistances;
 
-        [SerializableFieldSaveFlag(4)]
         private bool ShouldSerializeResistances() => !_resistances.IsEmpty;
 
-        [SerializableFieldDefault(4)]
         private AosElementAttributes ResistancesDefaultValue() => new(this);
 
         [EncodedInt]
         [InvalidateProperties]
         [SerializableField(5)]
+        [SaveFlag(nameof(ShouldSerializeMaxHitPoints))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private int _maxHitPoints;
 
-        [SerializableFieldSaveFlag(5)]
         private bool ShouldSerializeMaxHitPoints() => _maxHitPoints != 0;
 
-        [SerializableField(7)]
-        [SerializedCommandProperty(AccessLevel.GameMaster)]
-        private bool _playerConstructed;
-
-        [SerializableFieldSaveFlag(7)]
-        private bool ShouldSerializePlayerConstructed() => _playerConstructed;
-
         [InvalidateProperties]
-        [SerializableField(8)]
+        [SerializableField(7)]
+        [SaveFlag(nameof(ShouldSerializeCrafter))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private string _crafter;
 
-        [SerializableFieldSaveFlag(8)]
         private bool ShouldSerializeCrafter() => !string.IsNullOrEmpty(_crafter);
 
         [InvalidateProperties]
-        [SerializableField(9)]
+        [SerializableField(8)]
+        [SaveFlag(nameof(ShouldSerializeQuality))]
         [SerializedCommandProperty(AccessLevel.GameMaster)]
         private ClothingQuality _quality = ClothingQuality.Regular;
 
-        [SerializableFieldSaveFlag(9)]
         private bool ShouldSerializeQuality() => _quality != ClothingQuality.Regular;
 
-        // Field 10
+        // Field 9
         private int _strReq = -1;
 
         private FactionItem _factionState;
@@ -125,21 +113,19 @@ namespace Server.Items
             Resistances = new AosElementAttributes(this);
         }
 
-        [SerializableProperty(0)]
-        [CommandProperty(AccessLevel.GameMaster)]
-        public CraftResource Resource
+        [SerializableField(0, fieldChanged: nameof(OnResourceChanged))]
+        [SaveFlag(nameof(ShouldSerializeResource))]
+        [SerializedCommandProperty(AccessLevel.GameMaster)]
+        [InvalidateProperties]
+        private CraftResource _resource;
+
+        private void OnResourceChanged(CraftResource oldValue, CraftResource newValue)
         {
-            get => _resource;
-            set
-            {
-                _resource = value;
-                Hue = CraftResources.GetHue(_resource);
-                InvalidateProperties();
-                this.MarkDirty();
-            }
+            Hue = CraftResources.GetHue(_resource);
         }
 
-        [SerializableProperty(10, useField: nameof(_strReq))]
+        [SerializableProperty(9, useField: nameof(_strReq))]
+        [SaveFlag(nameof(ShouldSerializeStrReq))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int StrRequirement
         {
@@ -152,7 +138,6 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(10)]
         private bool ShouldSerializeStrReq() => _strReq != -1;
 
         public virtual CraftResource DefaultResource => CraftResource.None;
@@ -206,8 +191,6 @@ namespace Server.Items
             {
                 Hue = resHue;
             }
-
-            PlayerConstructed = true;
 
             var context = craftSystem.GetContext(from);
 
@@ -308,6 +291,7 @@ namespace Server.Items
 
         [EncodedInt]
         [SerializableProperty(6)]
+        [SaveFlag(nameof(ShouldSerializeHitPoints))]
         [CommandProperty(AccessLevel.GameMaster)]
         public int HitPoints
         {
@@ -333,7 +317,6 @@ namespace Server.Items
             }
         }
 
-        [SerializableFieldSaveFlag(6)]
         private bool ShouldSerializeHitPoints() => _hitPoints != 0;
 
         public virtual int InitMinHits => 0;
@@ -461,7 +444,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -475,7 +458,7 @@ namespace Server.Items
                 }
                 else
                 {
-                    from.SendMessage("You may not wear this.");
+                    from.SendMessage("Тебе это не надеть.");
                 }
 
                 return false;
@@ -571,7 +554,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(clothing);
@@ -584,7 +567,7 @@ namespace Server.Items
                         }
                         else
                         {
-                            m.SendMessage("You may not wear this.");
+                            m.SendMessage("Тебе это не надеть.");
                         }
 
                         m.AddToBackpack(clothing);
@@ -719,6 +702,16 @@ namespace Server.Items
         public override void GetProperties(IPropertyList list)
         {
             base.GetProperties(list);
+
+            // Одежда принимает инкрустацию наравне с бронёй — значит, и показывать
+            // вставленное должна так же.
+            Systems.MahaonGems.GemSocketingSystem.AddPropertyLines(this, list);
+            Systems.MahaonSoulStones.SoulStoneSocketing.AddPropertyLines(this, list);
+
+            // Mahaon: clothing never stated what it was made of. Dye only changes Hue, so a
+            // dyed robe was a coloured item with no material anywhere on it. See
+            // Systems.MahaonMetals.MaterialLineSystem.
+            list.Add(Systems.MahaonMetals.MaterialLineSystem.Describe(this));
 
             if (_crafter != null)
             {
@@ -889,8 +882,6 @@ namespace Server.Items
             InvalidateProperties();
         }
 
-        private static bool GetSaveFlag(OldSaveFlag flags, OldSaveFlag toGet) => (flags & toGet) != 0;
-
         [AfterDeserialization]
         private void AfterDeserialization()
         {
@@ -911,21 +902,5 @@ namespace Server.Items
             }
         }
 
-        [Flags]
-        private enum OldSaveFlag
-        {
-            None = 0x00000000,
-            Resource = 0x00000001,
-            Attributes = 0x00000002,
-            ClothingAttributes = 0x00000004,
-            SkillBonuses = 0x00000008,
-            Resistances = 0x00000010,
-            MaxHitPoints = 0x00000020,
-            HitPoints = 0x00000040,
-            PlayerConstructed = 0x00000080,
-            Crafter = 0x00000100,
-            Quality = 0x00000200,
-            StrReq = 0x00000400
-        }
     }
 }

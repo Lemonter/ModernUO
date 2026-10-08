@@ -457,10 +457,15 @@ public class Skills
     private readonly Skill[] m_Skills;
     private Skill m_Highest;
 
+    // Shard-wide: no total skill cap. 999999 (= 99999.9) is comfortably above any
+    // realistic sum of every skill (including masteries) at max, so it behaves as
+    // effectively unlimited without risking overflow in downstream math/UI.
+    public const int NoSkillCap = 999999;
+
     public Skills(Mobile owner)
     {
         Owner = owner;
-        Cap = 7000;
+        Cap = NoSkillCap;
 
         var info = SkillInfo.Table;
 
@@ -486,7 +491,7 @@ public class Skills
                 {
                     if (version < 2)
                     {
-                        Cap = 7000;
+                        Cap = NoSkillCap;
                     }
 
                     /*m_Total =*/

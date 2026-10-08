@@ -60,7 +60,7 @@ public partial class SummonedAntLion : BaseTalismanSummon
         BaseSoundID = 1006;
     }
 
-    public override string DefaultName => "an ant lion";
+    public override string DefaultName => "муравьиный лев";
 }
 
 
@@ -74,7 +74,7 @@ public partial class SummonedArcticOgreLord : BaseTalismanSummon
         BaseSoundID = 427;
     }
 
-    public override string DefaultName => "an arctic ogre lord";
+    public override string DefaultName => "арктический лорд-огр";
 }
 
 [SerializationGenerator(0)]
@@ -87,7 +87,7 @@ public partial class SummonedBakeKitsune : BaseTalismanSummon
         BaseSoundID = 0x4DD;
     }
 
-    public override string DefaultName => "a bake kitsune";
+    public override string DefaultName => "бакэ-кицунэ";
 }
 
 [SerializationGenerator(0)]
@@ -100,7 +100,7 @@ public partial class SummonedBogling : BaseTalismanSummon
         BaseSoundID = 422;
     }
 
-    public override string DefaultName => "a bogling";
+    public override string DefaultName => "болотник";
 }
 
 [SerializationGenerator(0)]
@@ -114,7 +114,7 @@ public partial class SummonedBullFrog : BaseTalismanSummon
         BaseSoundID = 0x266;
     }
 
-    public override string DefaultName => "a bull frog";
+    public override string DefaultName => "жаба";
 }
 
 [SerializationGenerator(0)]
@@ -127,7 +127,7 @@ public partial class SummonedChicken : BaseTalismanSummon
         BaseSoundID = 0x6E;
     }
 
-    public override string DefaultName => "a chicken";
+    public override string DefaultName => "курица";
 }
 
 [SerializationGenerator(0)]
@@ -140,7 +140,7 @@ public partial class SummonedCow : BaseTalismanSummon
         BaseSoundID = 0x78;
     }
 
-    public override string DefaultName => "a cow";
+    public override string DefaultName => "корова";
 }
 
 [SerializationGenerator(0)]
@@ -153,7 +153,7 @@ public partial class SummonedDoppleganger : BaseTalismanSummon
         BaseSoundID = 0x451;
     }
 
-    public override string DefaultName => "a doppleganger";
+    public override string DefaultName => "двойник";
 }
 
 [SerializationGenerator(0)]
@@ -166,7 +166,7 @@ public partial class SummonedFrostSpider : BaseTalismanSummon
         BaseSoundID = 0x388;
     }
 
-    public override string DefaultName => "a frost spider";
+    public override string DefaultName => "морозный паук";
 }
 
 [SerializationGenerator(0)]
@@ -179,7 +179,7 @@ public partial class SummonedGreatHart : BaseTalismanSummon
         BaseSoundID = 0x82;
     }
 
-    public override string DefaultName => "a great hart";
+    public override string DefaultName => "благородный олень";
 }
 
 [SerializationGenerator(0)]
@@ -192,7 +192,7 @@ public partial class SummonedLavaSerpent : BaseTalismanSummon
         BaseSoundID = 219;
     }
 
-    public override string DefaultName => "a lava serpent";
+    public override string DefaultName => "лавовый змей";
 
     public override void OnThink()
     {
@@ -249,7 +249,7 @@ public partial class SummonedOrcBrute : BaseTalismanSummon
         BaseSoundID = 0x45A;
     }
 
-    public override string DefaultName => "an orc brute";
+    public override string DefaultName => "орк-громила";
 }
 
 [SerializationGenerator(0)]
@@ -263,7 +263,7 @@ public partial class SummonedPanther : BaseTalismanSummon
         BaseSoundID = 0x462;
     }
 
-    public override string DefaultName => "a panther";
+    public override string DefaultName => "пантера";
 }
 
 [SerializationGenerator(0)]
@@ -276,7 +276,7 @@ public partial class SummonedSheep : BaseTalismanSummon
         BaseSoundID = 0xD6;
     }
 
-    public override string DefaultName => "a sheep";
+    public override string DefaultName => "овца";
 }
 
 [SerializationGenerator(0)]
@@ -289,7 +289,7 @@ public partial class SummonedSkeletalKnight : BaseTalismanSummon
         BaseSoundID = 451;
     }
 
-    public override string DefaultName => "a skeletal knight";
+    public override string DefaultName => "скелет-рыцарь";
 }
 
 [SerializationGenerator(0)]
@@ -305,7 +305,7 @@ public partial class SummonedVorpalBunny : BaseTalismanSummon
         Timer.StartTimer(TimeSpan.FromMinutes(30.0), BeginTunnel);
     }
 
-    public override string DefaultName => "a vorpal bunny";
+    public override string DefaultName => "вострозубый кролик";
 
     public virtual void BeginTunnel()
     {
@@ -335,5 +335,5 @@ public partial class SummonedWailingBanshee : BaseTalismanSummon
         BaseSoundID = 0x482;
     }
 
-    public override string DefaultName => "a wailing banshee";
+    public override string DefaultName => "воющая банши";
 }

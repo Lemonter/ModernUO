@@ -46,9 +46,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a gargoyle corpse";
+        public override string CorpseName => "труп гаргульи";
 
-        public override string DefaultName => "a gargoyle enforcer";
+        public override string DefaultName => "гаргулья-каратель";
 
         public override bool CanFly => true;
 

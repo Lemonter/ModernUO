@@ -594,16 +594,19 @@ public class DefCarpentry : CraftSystem
         MarkOption = true;
         Repair = Core.AOS;
 
-        SetSubRes(typeof(Log), 1072643);
+        SetSubRes(typeof(Log), "Обычное");
 
         // Add every material you want the player to be able to choose from
         // This will override the overridable material	TODO: Verify the required skill amount
-        AddSubRes(typeof(Log), 1072643, 00.0, 1044041, 1072652);
-        AddSubRes(typeof(OakLog), 1072644, 65.0, 1044041, 1072652);
-        AddSubRes(typeof(AshLog), 1072645, 80.0, 1044041, 1072652);
-        AddSubRes(typeof(YewLog), 1072646, 95.0, 1044041, 1072652);
-        AddSubRes(typeof(HeartwoodLog), 1072647, 100.0, 1044041, 1072652);
-        AddSubRes(typeof(BloodwoodLog), 1072648, 100.0, 1044041, 1072652);
-        AddSubRes(typeof(FrostwoodLog), 1072649, 100.0, 1044041, 1072652);
+        AddSubRes(typeof(Log), "Обычное", 00.0, 1044041, 1072652);
+        AddSubRes(typeof(OakLog), "Дубовое", 65.0, 1044041, 1072652);
+        AddSubRes(typeof(AshLog), "Ясеневое", 80.0, 1044041, 1072652);
+        AddSubRes(typeof(YewLog), "Тисовое", 95.0, 1044041, 1072652);
+        AddSubRes(typeof(HeartwoodLog), "Сердцевинное", 100.0, 1044041, 1072652);
+        AddSubRes(typeof(BloodwoodLog), "Кровавое", 100.0, 1044041, 1072652);
+        AddSubRes(typeof(FrostwoodLog), "Морозное", 100.0, 1044041, 1072652);
+        AddSubRes(typeof(BananaLog), "Банановое", 100.0, 1044041, 1072652);
+        AddSubRes(typeof(CoconutLog), "Кокосовое", 100.0, 1044041, 1072652);
+        AddSubRes(typeof(PalmLog), "Пальмовое", 100.0, 1044041, 1072652);
     }
 }

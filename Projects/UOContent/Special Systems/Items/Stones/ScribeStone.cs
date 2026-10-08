@@ -12,7 +12,7 @@ public partial class ScribeStone : Item
         Hue = 0x105;
     }
 
-    public override string DefaultName => "a Scribe Supply Stone";
+    public override string DefaultName => "камень припасов писца";
 
     public override void OnDoubleClick(Mobile from)
     {

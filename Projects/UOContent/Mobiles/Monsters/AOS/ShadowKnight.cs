@@ -50,7 +50,7 @@ namespace Server.Mobiles
             VirtualArmor = 54;
         }
 
-        public override string CorpseName => "a shadow knight corpse";
+        public override string CorpseName => "труп теневого рыцаря";
 
         public override bool IgnoreYoungProtection => Core.ML;
 

@@ -67,7 +67,7 @@ public partial class Rikktor : BaseChampion
         MonsterStatuetteType.OphidianWarrior
     };
 
-    public override string DefaultName => "Rikktor";
+    public override string DefaultName => "Рикктор";
 
     public override Poison PoisonImmune => Poison.Lethal;
     public override ScaleType ScaleType => ScaleType.All;

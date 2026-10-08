@@ -216,7 +216,7 @@ namespace Server.Misc
 
         private static void KickMessage(Mobile from)
         {
-            from.SendMessage("You will be reminded of this again.");
+            from.SendMessage("Тебе напомнят об этом ещё раз.");
 
             if (_invalidClientResponse == InvalidClientResponse.LenientKick)
             {

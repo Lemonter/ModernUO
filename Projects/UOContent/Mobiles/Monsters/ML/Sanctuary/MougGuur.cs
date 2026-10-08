@@ -32,7 +32,7 @@ namespace Server.Mobiles
             Karma = -3000;
         }
 
-        public override string CorpseName => "a Moug-Guur corpse";
-        public override string DefaultName => "Moug-Guur";
+        public override string CorpseName => "труп Мауг-Гуура";
+        public override string DefaultName => "Мауг-Гуур";
     }
 }

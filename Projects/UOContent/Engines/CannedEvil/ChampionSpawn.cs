@@ -18,6 +18,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ModernUO.Serialization;
+using Server.Collections;
 using Server.Engines.Virtues;
 using Server.Gumps;
 using Server.Items;
@@ -27,16 +28,44 @@ using Server.Logging;
 
 namespace Server.Engines.CannedEvil;
 
-[SerializationGenerator(10, false)]
+[SerializationGenerator(11, false)]
 public partial class ChampionSpawn : Item
 {
+    private void MigrateFrom(V10Content content)
+    {
+        _level = content.Level;
+        _activatedByProximity = content.ActivatedByProximity;
+        _nextProximityTime = content.NextProximityTime;
+        _maxLevel = content.MaxLevel;
+        _activatedByValor = content.ActivatedByValor;
+        _damageEntries = content.DamageEntries;
+        _confinedRoaming = content.ConfinedRoaming;
+        _idol = content.Idol;
+        _hasBeenAdvanced = content.HasBeenAdvanced;
+        _spawnArea = content.SpawnArea;
+        _randomizeType = content.RandomizeType;
+        _kills = content.Kills;
+        _active = content.Active;
+        _type = content.Type;
+        _creatures = content.Creatures;
+        _redSkulls = content.RedSkulls;
+        _whiteSkulls = content.WhiteSkulls;
+        _platform = content.Platform;
+        _altar = content.Altar;
+        _expireDelay = content.ExpireDelay;
+        _expireTime = content.ExpireTime;
+        _champion = content.Champion;
+        _restartDelay = content.RestartDelay;
+        _restartTime = content.RestartTime;
+    }
+
     private static readonly ILogger logger = LogFactory.GetLogger(typeof(ChampionSpawn));
 
     [SerializableField(1)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private bool _activatedByProximity;
 
-    [DeltaDateTime]
+    [AnchoredDateTime]
     [SerializableField(2)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private DateTime _nextProximityTime;
@@ -96,7 +125,7 @@ public partial class ChampionSpawn : Item
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private TimeSpan _expireDelay;
 
-    [DeltaDateTime]
+    [AnchoredDateTime]
     [SerializableField(20)]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private DateTime _expireTime;
@@ -109,7 +138,7 @@ public partial class ChampionSpawn : Item
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private TimeSpan _restartDelay;
 
-    [DeltaDateTime]
+    [AnchoredDateTime]
     [SerializableField(23, setter: "private")]
     [SerializedCommandProperty(AccessLevel.GameMaster)]
     private DateTime _restartTime;
@@ -203,47 +232,38 @@ public partial class ChampionSpawn : Item
         }
     }
 
-    [SerializableProperty(3)]
-    [CommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
-    public int MaxLevel
+    [SerializableField(3, allowFieldChange: nameof(AllowMaxLevelChange))]
+    [SerializedCommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
+    private int _maxLevel;
+
+    private bool AllowMaxLevelChange(ref int value)
     {
-        get => _maxLevel;
-        set => _maxLevel = Math.Clamp(value, 0, 18);
+        value = Math.Clamp(value, 0, 18);
+        return true;
     }
 
-    [SerializableProperty(9)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public Rectangle2D SpawnArea
+    [SerializableField(9, fieldChanged: nameof(OnSpawnAreaChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private Rectangle2D _spawnArea;
+
+    private void OnSpawnAreaChanged(Rectangle2D oldValue, Rectangle2D newValue)
     {
-        get => _spawnArea;
-        set
-        {
-            _spawnArea = value;
-            this.MarkDirty();
-            InvalidateProperties();
-            UpdateRegion();
-        }
+        UpdateRegion();
     }
 
-    [SerializableProperty(11)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public int Kills
+    [SerializableField(11, fieldChanged: nameof(OnKillsChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private int _kills;
+
+    private void OnKillsChanged(int oldValue, int newValue)
     {
-        get => _kills;
-        set
+        var n = _kills / (double)MaxKills;
+        var p = (int)(n * 100);
+        if (p < 90)
         {
-            _kills = value;
-            this.MarkDirty();
-
-            var n = _kills / (double)MaxKills;
-            var p = (int)(n * 100);
-
-            if (p < 90)
-            {
-                SetWhiteSkullCount(p / 20);
-            }
-
-            InvalidateProperties();
+            SetWhiteSkullCount(p / 20);
         }
     }
 
@@ -418,7 +438,8 @@ public partial class ChampionSpawn : Item
         return ScrollofTranscendence.CreateRandom(min, max);
     }
 
-    private static PowerScroll CreateRandomPS() => PowerScroll.CreateRandomNoCraft(5, 5);
+    private static PowerScroll CreateRandomPS(Mobile winner) =>
+        Systems.MahaonScrolls.MahaonScrollPicker.CreatePowerScrollFor(winner, 105, noCraft: true);
 
     public static void GiveScrollTo(Mobile killer, SpecialScroll scroll, bool isFelucca = true)
     {
@@ -621,7 +642,7 @@ public partial class ChampionSpawn : Item
             }
             else
             {
-                GiveScrollTo(pm, CreateRandomPS());
+                GiveScrollTo(pm, CreateRandomPS(pm));
             }
         }
 
@@ -1162,11 +1183,6 @@ public partial class ChampionSpawn : Item
 
         foreach (var de in m.DamageEntries)
         {
-            if (de.HasExpired)
-            {
-                continue;
-            }
-
             var damager = de.Damager;
             var master = damager.GetDamageMaster(m);
 
@@ -1423,13 +1439,13 @@ public class ChampionSpawnRegion : BaseRegion
 
         if (((PlayerMobile)m).Young)
         {
-            m.SendMessage("You decide against going here because of the danger.");
+            m.SendMessage("Ты решаешь не соваться туда — слишком опасно.");
             return false;
         }
 
         if (!m.Alive)
         {
-            m.SendMessage("A magical force prevents ghosts from entering this region.");
+            m.SendMessage("Магическая сила не пускает призраков в эту область.");
             return false;
         }
 
@@ -1445,7 +1461,7 @@ public class ChampionSpawnRegion : BaseRegion
 
         if (m.Player) //Give them 5 minutes to resurrect, then they are booted.
         {
-            m.SendMessage("A magical force encompasses you, attempting to force you out of the area.");
+            m.SendMessage("Магическая сила окутывает тебя, пытаясь вытолкнуть за пределы области.");
             new EjectTimer(m, this).Start();
         }
 
@@ -1476,7 +1492,7 @@ public class ChampionSpawnRegion : BaseRegion
                 if (m_From.Region.IsPartOf(m_Region))
                 {
                     m_From.MoveToWorld(m_Region.Spawn.EjectLocation, m_Region.Spawn.EjectMap);
-                    m_From.SendMessage("A magical force forces you out of the area.");
+                    m_From.SendMessage("Магическая сила выталкивает тебя за пределы области.");
                 }
             }
             else if (Find(m_From.LogoutLocation, m_From.LogoutMap).IsPartOf(m_Region))
@@ -1494,7 +1510,7 @@ public partial class IdolOfTheChampion : Item
     [SerializableField(0)]
     private ChampionSpawn _spawn;
 
-    public override string DefaultName => "Idol of the Champion";
+    public override string DefaultName => "идол чемпиона";
 
     public IdolOfTheChampion(ChampionSpawn spawn): base(0x1F18)
     {

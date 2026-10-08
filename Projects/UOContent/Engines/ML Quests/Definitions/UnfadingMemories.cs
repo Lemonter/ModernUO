@@ -106,7 +106,7 @@ public partial class Emilio : BaseCreature
         AddItem(new BodySash(0x1C));
     }
 
-    public override string DefaultName => "Emilio";
+    public override string DefaultName => "Эмилио";
     public override bool IsInvulnerable => true;
 }
 
@@ -133,6 +133,6 @@ public partial class Thalia : BaseCreature
         AddItem(new FancyDress(0x8FD));
     }
 
-    public override string DefaultName => "Thalia";
+    public override string DefaultName => "Талия";
     public override bool IsInvulnerable => true;
 }

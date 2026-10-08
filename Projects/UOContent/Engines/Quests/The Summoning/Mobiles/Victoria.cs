@@ -17,7 +17,7 @@ public partial class Victoria : BaseQuester
     }
 
     public override int TalkNumber => 6159; // Ask about Chyloth
-    public override string DefaultName => "Victoria";
+    public override string DefaultName => "Виктория";
     public override bool ClickTitle => true;
     public override bool IsActiveVendor => true;
     public override bool DisallowAllMoves => false;

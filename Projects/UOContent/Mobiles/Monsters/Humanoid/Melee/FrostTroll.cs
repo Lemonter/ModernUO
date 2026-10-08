@@ -40,8 +40,8 @@ namespace Server.Mobiles
             PackItem(new DoubleAxe()); // TODO: Weapon??
         }
 
-        public override string CorpseName => "a frost troll corpse";
-        public override string DefaultName => "a frost troll";
+        public override string CorpseName => "труп морозного тролля";
+        public override string DefaultName => "морозный тролль";
 
         public override int Meat => 2;
         public override int TreasureMapLevel => 1;

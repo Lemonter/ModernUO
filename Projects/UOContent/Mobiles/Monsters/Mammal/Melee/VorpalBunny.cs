@@ -47,8 +47,8 @@ namespace Server.Mobiles
             DelayBeginTunnel();
         }
 
-        public override string CorpseName => "a vorpal bunny corpse";
-        public override string DefaultName => "a vorpal bunny";
+        public override string CorpseName => "труп вострозубого кролика";
+        public override string DefaultName => "вострозубый кролик";
 
         public override int Meat => 1;
         public override int Hides => 1;
@@ -100,7 +100,7 @@ namespace Server.Mobiles
                 Timer.StartTimer(TimeSpan.FromSeconds(40.0), Delete);
             }
 
-            public override string DefaultName => "a mysterious rabbit hole";
+            public override string DefaultName => "загадочная кроличья нора";
 
             public override bool SkipSerialization => true;
         }

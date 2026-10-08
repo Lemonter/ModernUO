@@ -7,7 +7,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class Unicorn : BaseMount
     {
-        public override string DefaultName => "a unicorn";
+        public override string DefaultName => "единорог";
 
         [Constructible]
         public Unicorn() : base(0x7A, 0x3EB4, AIType.AI_Mage, FightMode.Evil)
@@ -47,7 +47,7 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a unicorn corpse";
+        public override string CorpseName => "труп единорога";
         public override bool AllowMaleRider => false;
         public override bool AllowMaleTamer => false;
 

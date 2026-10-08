@@ -37,7 +37,7 @@ public partial class Acid : Item
         Timer.StartTimer(TimeSpan.Zero, tickRate, OnTick, out _timerToken);
     }
 
-    public override string DefaultName => "a pool of acid";
+    public override string DefaultName => "лужа кислоты";
 
     public override bool SkipSerialization => true;
 

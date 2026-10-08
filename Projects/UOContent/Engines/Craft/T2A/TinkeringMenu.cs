@@ -324,7 +324,7 @@ public class TinkeringMenu : ItemListMenu
             var menu = new TinkeringMenu(from, _tool, childCategory, _selectedResourceType);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything in that category.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 
@@ -355,7 +355,7 @@ public class TinkeringMenu : ItemListMenu
                 ctx.PendingGemCount = 0;
             }
 
-            from.SendAsciiMessage("Target the gemstone you wish to use.");
+            from.SendAsciiMessage("Укажи самоцвет.");
             from.Target = new GemSelectTarget(from, _tool, itemType, _selectedResourceType);
             return;
         }
@@ -388,7 +388,7 @@ public class TinkeringMenu : ItemListMenu
             return;
         }
 
-        from.SendAsciiMessage("Select the resource you wish to use (wood or ingots).");
+        from.SendAsciiMessage("Выбери материал: дерево или слитки.");
         from.Target = new ResourceSelectTarget(from, tool);
     }
 
@@ -399,7 +399,7 @@ public class TinkeringMenu : ItemListMenu
             var menu = new TinkeringMenu(from, tool, Category.Wood, typeof(Log));
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                 return true;
             }
 
@@ -412,7 +412,7 @@ public class TinkeringMenu : ItemListMenu
             var menu = new TinkeringMenu(from, tool, Category.Main, targeted.GetType());
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                 return true;
             }
 
@@ -425,7 +425,7 @@ public class TinkeringMenu : ItemListMenu
             var menu = new TinkeringMenu(from, tool, Category.Keg, typeof(Keg));
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("You lack the skill and materials to craft anything.");
+                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                 return true;
             }
 
@@ -454,7 +454,7 @@ public class TinkeringMenu : ItemListMenu
                 return;
             }
 
-            from.SendAsciiMessage("That is not a valid resource. Please select wood or ingots.");
+            from.SendAsciiMessage("Не тот материал. Выбери дерево или слитки.");
             from.Target = new ResourceSelectTarget(_from, _tool);
         }
     }
@@ -479,21 +479,21 @@ public class TinkeringMenu : ItemListMenu
         {
             if (targeted is not Item gemItem)
             {
-                from.SendAsciiMessage("That is not a gemstone.");
+                from.SendAsciiMessage("Это не самоцвет.");
                 return;
             }
 
             var gemType = BaseJewel.GetGemType(gemItem);
             if (gemType == GemType.None)
             {
-                from.SendAsciiMessage("That is not a gemstone.");
+                from.SendAsciiMessage("Это не самоцвет.");
                 return;
             }
 
             var amount = gemItem.Amount;
             if (amount < 1)
             {
-                from.SendAsciiMessage("That gemstone stack is empty.");
+                from.SendAsciiMessage("Самоцветов в стопке не осталось.");
                 return;
             }
 

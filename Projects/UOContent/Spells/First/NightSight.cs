@@ -52,11 +52,11 @@ public class NightSightSpell : MagerySpell, ITargetingSpell<Mobile>
             }
             else if (m == Caster)
             {
-                m.SendMessage("You already have nightsight.");
+                m.SendMessage("Ночное зрение у тебя уже есть.");
             }
             else
             {
-                m.SendMessage("They already have nightsight.");
+                m.SendMessage("Ночное зрение у них уже есть.");
             }
         }
     }

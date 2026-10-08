@@ -57,11 +57,11 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a minion's corpse";
+        public override string CorpseName => "труп прислужника";
         public override bool IsScaredOfScaryThings => false;
         public override bool IsScaryToPets => true;
 
-        public override string DefaultName => "an exodus minion";
+        public override string DefaultName => "прислужник Исхода";
 
         public override bool AutoDispel => true;
         public override bool BardImmune => !Core.AOS;

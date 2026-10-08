@@ -28,22 +28,14 @@ public partial class Log : Item, ICommodity, IAxe
 
     public override double DefaultWeight => 2.0;
 
-    [SerializableProperty(0)]
-    [CommandProperty(AccessLevel.GameMaster)]
-    public CraftResource Resource
-    {
-        get => _resource;
-        set
-        {
-            if (_resource != value)
-            {
-                _resource = value;
-                Hue = CraftResources.GetHue(value);
+    [SerializableField(0, fieldChanged: nameof(OnResourceChanged))]
+    [SerializedCommandProperty(AccessLevel.GameMaster)]
+    [InvalidateProperties]
+    private CraftResource _resource;
 
-                InvalidateProperties();
-                this.MarkDirty();
-            }
-        }
+    private void OnResourceChanged(CraftResource oldValue, CraftResource newValue)
+    {
+        Hue = CraftResources.GetHue(newValue);
     }
 
     public virtual bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 0, new Board());
@@ -166,4 +158,40 @@ public partial class YewLog : Log
     }
 
     public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 95, new YewBoard());
+}
+
+// Mahaon: 3 new top-tier wood species, minSkill 102/105/107 in
+// MahaonResourceTiers.WoodTable — between Bloodwood(100) and Frostwood(110). The
+// TryCreateBoards skill gate below matches those same thresholds one-for-one.
+[SerializationGenerator(0, false)]
+public partial class BananaLog : Log
+{
+    [Constructible]
+    public BananaLog(int amount = 1) : base(CraftResource.BananaWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 102, new BananaBoard());
+}
+
+[SerializationGenerator(0, false)]
+public partial class CoconutLog : Log
+{
+    [Constructible]
+    public CoconutLog(int amount = 1) : base(CraftResource.CoconutWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 105, new CoconutBoard());
+}
+
+[SerializationGenerator(0, false)]
+public partial class PalmLog : Log
+{
+    [Constructible]
+    public PalmLog(int amount = 1) : base(CraftResource.PalmWood, amount)
+    {
+    }
+
+    public override bool Axe(Mobile from, BaseAxe axe) => TryCreateBoards(from, 107, new PalmBoard());
 }

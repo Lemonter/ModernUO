@@ -17,7 +17,7 @@ public partial class GamblingStone : Item
         Hue = 0x56;
     }
 
-    public override string DefaultName => "a gambling stone";
+    public override string DefaultName => "камень ставок";
 
     public override void GetProperties(IPropertyList list)
     {
@@ -62,27 +62,27 @@ public partial class GamblingStone : Item
             }
             else if (roll <= 20) // Chance for a regbag
             {
-                from.SendMessage(0x35, "You win a bag of reagents!");
+                from.SendMessage(0x35, "Ты выигрываешь мешок реагентов!");
                 from.AddToBackpack(new BagOfReagents());
             }
             else if (roll <= 40) // Chance for gold
             {
-                from.SendMessage(0x35, "You win 1500gp!");
+                from.SendMessage(0x35, "Ты выигрываешь 1500 золота!");
                 from.AddToBackpack(new BankCheck(1500));
             }
             else if (roll <= 100) // Another chance for gold
             {
-                from.SendMessage(0x35, "You win 1000gp!");
+                from.SendMessage(0x35, "Ты выигрываешь 1000 золота!");
                 from.AddToBackpack(new BankCheck(1000));
             }
             else // Loser!
             {
-                from.SendMessage(0x22, "You lose!");
+                from.SendMessage(0x22, "Ты проиграл!");
             }
         }
         else
         {
-            from.SendMessage(0x22, "You need at least 250gp in your backpack to use this.");
+            from.SendMessage(0x22, "Нужно минимум 250 золота в рюкзаке.");
         }
     }
 }

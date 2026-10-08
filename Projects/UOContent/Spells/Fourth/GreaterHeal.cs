@@ -51,6 +51,8 @@ namespace Server.Spells.Fourth
                 var toHeal = (int)(Caster.Skills.Magery.Value * 0.4);
                 toHeal += Utility.Random(1, 10);
 
+                Spellweaving.ArcaneEmpowermentSpell.AddHealBonus(Caster, ref toHeal);
+
                 // m.Heal( toHeal, Caster );
                 SpellHelper.Heal(toHeal, m, Caster);
 
@@ -63,7 +65,7 @@ namespace Server.Spells.Fourth
         {
             if (DuelContext.CheckSuddenDeath(Caster))
             {
-                Caster.SendMessage(0x22, "You cannot cast this spell when in sudden death.");
+                Caster.SendMessage(0x22, "Во внезапной смерти это заклинание недоступно.");
                 return false;
             }
 

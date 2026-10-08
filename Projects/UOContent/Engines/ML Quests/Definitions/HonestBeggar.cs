@@ -77,7 +77,7 @@ public partial class Evan : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Evan";
+    public override string DefaultName => "Эван";
 }
 
 [SerializationGenerator(0, false)]
@@ -103,5 +103,5 @@ public partial class Regina : BaseCreature
     }
 
     public override bool IsInvulnerable => true;
-    public override string DefaultName => "Regina";
+    public override string DefaultName => "Регина";
 }

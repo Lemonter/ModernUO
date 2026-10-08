@@ -51,19 +51,20 @@ namespace Server.Mobiles
             ControlSlots = Core.SE ? 2 : 1;
         }
 
-        public override string CorpseName => "an energy vortex corpse";
+        public override string CorpseName => "труп энергетического вихря";
         public override bool DeleteCorpseOnDeath => Summoned;
         public override bool AlwaysMurderer => true; // Or Llama vortices will appear gray.
 
         public override double DispelDifficulty => 80.0;
         public override double DispelFocus => 20.0;
 
-        public override string DefaultName => "an energy vortex";
+        public override string DefaultName => "энергетический вихрь";
 
         public override bool BleedImmune => true;
         public override Poison PoisonImmune => Poison.Lethal;
 
-        public override bool FollowsAcquireRules => Core.AOS || !Summoned || SummonMaster?.Player != true || Map != Map.Felucca;
+        public override bool FollowsAcquireRules => Core.AOS || SummonMaster?.Player != true ||
+                                                    (Map?.Rules & MapRules.HarmfulRestrictions) != 0;
 
         public override double GetFightModeRanking(Mobile m, FightMode acqType, bool bPlayerOnly) =>
             (m.Int + m.Skills.Magery.Value) / Math.Max(this.GetDistanceToSqrt(m), 1.0);

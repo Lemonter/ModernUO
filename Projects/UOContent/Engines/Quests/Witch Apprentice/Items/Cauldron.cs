@@ -12,5 +12,5 @@ public partial class Cauldron : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "a cauldron";
+    public override string DefaultName => "котёл";
 }

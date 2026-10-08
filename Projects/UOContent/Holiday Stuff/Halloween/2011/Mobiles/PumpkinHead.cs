@@ -49,12 +49,12 @@ namespace Server.Mobiles
             VirtualArmor = 49;
         }
 
-        public override string CorpseName => "a killer pumpkin corpse";
+        public override string CorpseName => "труп тыквы-убийцы";
         public override bool AutoDispel => true;
         public override bool BardImmune => true;
         public override bool Unprovokable => true;
         public override bool AreaPeaceImmune => true;
-        public override string DefaultName => "a killer pumpkin";
+        public override string DefaultName => "тыква-убийца";
 
         public override void GenerateLoot()
         {

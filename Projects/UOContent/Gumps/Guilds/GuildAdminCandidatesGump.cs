@@ -92,7 +92,7 @@ namespace Server.Gumps
                                     {
                                         // OSI does this quite strangely, so we'll just do it this way
                                         from.SendMessage(
-                                            "That person is quitting their faction and so you may not recruit them."
+                                            "Этот человек выходит из фракции, завербовать его нельзя."
                                         );
                                         break;
                                     }

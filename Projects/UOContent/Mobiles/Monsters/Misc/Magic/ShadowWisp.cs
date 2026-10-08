@@ -54,8 +54,8 @@ namespace Server.Mobiles
             );
         }
 
-        public override string CorpseName => "a wisp corpse";
-        public override string DefaultName => "a shadow wisp";
+        public override string CorpseName => "труп огонька";
+        public override string DefaultName => "теневой огонёк";
 
         public override OppositionGroup OppositionGroup => OppositionGroup.FeyAndUndead;
     }

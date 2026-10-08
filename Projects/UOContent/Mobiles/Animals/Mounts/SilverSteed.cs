@@ -5,7 +5,7 @@ namespace Server.Mobiles
     [SerializationGenerator(0, false)]
     public partial class SilverSteed : BaseMount
     {
-        public override string DefaultName => "a silver steed";
+        public override string DefaultName => "серебряный скакун";
 
         [Constructible]
         public SilverSteed() : base(0x75, 0x3EA8, AIType.AI_Animal, FightMode.Aggressor)
@@ -21,6 +21,6 @@ namespace Server.Mobiles
         }
 
         public override int StepsMax => 4480;
-        public override string CorpseName => "a silver steed corpse";
+        public override string CorpseName => "труп серебряного скакуна";
     }
 }

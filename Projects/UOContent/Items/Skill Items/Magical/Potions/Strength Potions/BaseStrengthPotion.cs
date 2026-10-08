@@ -1,5 +1,7 @@
 using System;
 using ModernUO.Serialization;
+using Server.Engines.BuffIcons;
+using Server.Mobiles;
 using Server.Spells;
 
 namespace Server.Items;
@@ -21,12 +23,16 @@ public abstract partial class BaseStrengthPotion : BasePotion
             return false;
         }
 
+        var offset = Scale(from, StrOffset);
+
         // TODO: Verify scaled; is it offset, duration, or both?
-        if (!SpellHelper.AddStatOffset(from, StatType.Str, Scale(from, StrOffset), Duration))
+        if (!SpellHelper.AddStatOffset(from, StatType.Str, offset, Duration))
         {
             from.SendLocalizedMessage(502173); // You are already under a similar effect.
             return false;
         }
+
+        (from as PlayerMobile)?.AddBuff(new BuffInfo(BuffIcon.Strength, 1075845, Duration, offset.ToString()));
 
         from.FixedEffect(0x375A, 10, 15);
         from.PlaySound(0x1E7);

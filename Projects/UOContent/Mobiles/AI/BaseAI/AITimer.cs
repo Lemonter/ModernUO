@@ -17,26 +17,116 @@ using System;
 
 namespace Server.Mobiles;
 
+/// <summary>
+/// Drives an AI on two clocks: decisions at <see cref="BaseCreature.CurrentSpeed"/>, plus
+/// move-only wakes at <see cref="BaseAI.NextMove"/> while a pursuit is live. Each tick
+/// schedules the earlier of the two deadlines.
+/// </summary>
 public sealed class AITimer : Timer
 {
     private readonly BaseAI _owner;
+    private long _nextThink;
+    private long _nextWake; // when the pending wheel entry fires
+    private bool _inTick;
     private int _detectHiddenMinDelay;
     private int _detectHiddenMaxDelay;
 
-    public AITimer(BaseAI owner) : base(TimeSpan.FromMilliseconds(Utility.Random(3000)),
-        TimeSpan.FromSeconds(owner.Mobile.CurrentSpeed))
+    // The initial delay is irrelevant: Activate is the only start path and sets its own.
+    public AITimer(BaseAI owner) : base(TimeSpan.Zero, TimeSpan.FromSeconds(owner.Mobile.CurrentSpeed))
     {
         _owner = owner;
         _owner._nextDetectHidden = Core.TickCount;
+        _nextThink = Core.TickCount;
     }
 
     public void Activate()
     {
-        Interval = TimeSpan.FromSeconds(_owner.Mobile.CurrentSpeed);
+        _nextThink = Core.TickCount;
+
+        if (Running)
+        {
+            return;
+        }
+
+        // Short random spread: the creature responds within a think while a sector's
+        // worth of timers avoids a same-tick burst; the idle think jitter keeps the
+        // cohort apart from there.
+        Delay = TimeSpan.FromMilliseconds(Utility.Random(256));
         Start();
+        _nextWake = Core.TickCount + (long)Delay.TotalMilliseconds;
+    }
+
+    // Think now. A think grants no action: steps, swings, casts, and abilities keep their own gates.
+    public void Prod()
+    {
+        _nextThink = Core.TickCount;
+
+        if (Running)
+        {
+            Reschedule();
+            return;
+        }
+
+        Delay = TimeSpan.Zero;
+        Start();
+        _nextWake = Core.TickCount + (long)Delay.TotalMilliseconds;
+    }
+
+    // A speed-up must not wait out a stale, longer think deadline.
+    public void OnSpeedChanged()
+    {
+        var candidate = Core.TickCount + (long)(_owner.Mobile.CurrentSpeed * 1000);
+
+        if (candidate - _nextThink < 0)
+        {
+            _nextThink = candidate;
+            Reschedule();
+        }
+    }
+
+    // Moves the pending wake earlier. Interval is only read after the next fire,
+    // so this needs Stop, Delay = remaining, Start.
+    private void Reschedule()
+    {
+        if (_inTick || !Running)
+        {
+            return; // ScheduleNext handles it at tick end
+        }
+
+        var now = Core.TickCount;
+        var deadline = _nextThink;
+
+        if (_owner.TryGetMoveWake(out var nextMove) && nextMove - now > 0 && nextMove - deadline < 0)
+        {
+            deadline = nextMove;
+        }
+
+        if (deadline - _nextWake >= 0)
+        {
+            return; // pending wake is already early enough
+        }
+
+        Stop();
+        Delay = TimeSpan.FromMilliseconds(Math.Max(0, deadline - now));
+        Start();
+        _nextWake = now + (long)Delay.TotalMilliseconds;
     }
 
     protected override void OnTick()
+    {
+        _inTick = true;
+
+        try
+        {
+            OnTickCore();
+        }
+        finally
+        {
+            _inTick = false;
+        }
+    }
+
+    private void OnTickCore()
     {
         if (ShouldStop())
         {
@@ -44,23 +134,64 @@ public sealed class AITimer : Timer
             return;
         }
 
-        _owner.Mobile.OnThink();
-
-        if (ShouldStop())
+        if (Core.TickCount - _nextThink >= 0)
         {
-            Stop();
-            return;
+            _owner.Mobile.OnThink();
+
+            if (ShouldStop())
+            {
+                Stop();
+                return;
+            }
+
+            HandleBardEffects();
+
+            if (_owner.Mobile.Controlled ? _owner.Obey() : _owner.Think())
+            {
+                HandleDetectHidden();
+            }
+
+            // Cadence from the post-decision speed (decisions may flip active/passive).
+            var period = (long)(_owner.Mobile.CurrentSpeed * 1000);
+            _nextThink = Core.TickCount + period;
+
+            // Idle cadence drifts: a zero-mean jitter random-walks think phases apart, so
+            // creatures spawned or woken together cannot stay in lock-step (a one-shot
+            // spread can collide and identical periods never separate). Engaged cadence
+            // stays exact — pursuit timing anchors to real step times.
+            if (_owner.Mobile.CurrentSpeed == _owner.Mobile.PassiveSpeed)
+            {
+                var jitter = (int)(period >> 3);
+                _nextThink += Utility.RandomMinMax(-jitter, jitter);
+            }
+        }
+        else
+        {
+            _owner.ContinueMove();
         }
 
-        Interval = TimeSpan.FromSeconds(_owner.Mobile.CurrentSpeed);
-        HandleBardEffects();
+        ScheduleNext();
+    }
 
-        if (_owner.Mobile.Controlled ? !_owner.Obey() : !_owner.Think())
+    private void ScheduleNext()
+    {
+        var now = Core.TickCount;
+        var delay = _nextThink - now;
+
+        if (_owner.TryGetMoveWake(out var nextMove))
         {
-            return;
+            var moveDelay = nextMove - now;
+
+            // Only a future budget is a wake — a blocked creature must not spin the timer.
+            if (moveDelay > 0 && moveDelay < delay)
+            {
+                delay = moveDelay;
+            }
         }
 
-        HandleDetectHidden();
+        // The wheel rounds up to its 8ms resolution; a non-positive delay becomes one turn.
+        Interval = TimeSpan.FromMilliseconds(delay);
+        _nextWake = now + (long)Interval.TotalMilliseconds;
     }
 
     private bool ShouldStop()
@@ -94,7 +225,7 @@ public sealed class AITimer : Timer
 
     private void CacheDetectHiddenDelays()
     {
-        var delay = Math.Min(30000 / _owner.Mobile.Int, 120);
+        var delay = Math.Min(30000 / Math.Max(1, _owner.Mobile.Int), 120);
         _detectHiddenMinDelay = delay * 900;  // 26s to 108s
         _detectHiddenMaxDelay = delay * 1100; // 32s to 132s
     }

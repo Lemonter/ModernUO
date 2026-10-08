@@ -89,6 +89,12 @@ public class DefAlchemy : CraftSystem
 
     public override void InitCraftList()
     {
+        // Наложение чар — Порошок закрепления
+        AddCraft(
+            typeof(PowderOfFortifying), "Наложение чар", "порошок закрепления", 60.0, 110.0,
+            typeof(SulfurousAsh), "серный пепел", 5, "Тебе не хватает серного пепла."
+        );
+
         // Refresh Potion
         var index = AddCraft(typeof(RefreshPotion), 1044530, 1044538, -25, 25.0, typeof(BlackPearl), 1044353, 1, 1044361);
         AddRes(index, typeof(Bottle), 1044529, 1, 500315);

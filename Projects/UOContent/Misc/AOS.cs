@@ -7,6 +7,7 @@ using Server.Spells;
 using Server.Spells.Fifth;
 using Server.Spells.Ninjitsu;
 using Server.Spells.Seventh;
+using Server.Spells.SkillMasteries;
 
 namespace Server
 {
@@ -36,8 +37,8 @@ namespace Server
 
         public static int Damage(
             Mobile m, Mobile from, int damage, int phys, int fire, int cold, int pois, int nrgy,
-            int chaos
-        ) => Damage(m, from, damage, false, phys, fire, cold, pois, nrgy, chaos);
+            int chaos, DamageType damageType = DamageType.Other
+        ) => Damage(m, from, damage, false, phys, fire, cold, pois, nrgy, chaos, damageType: damageType);
 
         public static int Damage(
             Mobile m, Mobile from, int damage, int phys, int fire, int cold, int pois, int nrgy,
@@ -46,7 +47,8 @@ namespace Server
 
         public static int Damage(
             Mobile m, Mobile from, int damage, bool ignoreArmor, int phys, int fire, int cold, int pois,
-            int nrgy, int chaos = 0, int direct = 0, bool keepAlive = false, bool archer = false, bool deathStrike = false
+            int nrgy, int chaos = 0, int direct = 0, bool keepAlive = false, bool archer = false, bool deathStrike = false,
+            DamageType damageType = DamageType.Other
         )
         {
             if (m?.Deleted != false || !m.Alive || damage <= 0)
@@ -234,7 +236,13 @@ namespace Server
             if (from != null) // sanity check
             {
                 SpellHelper.DoLeech(totalDamage, from, m);
+                SkillMasterySpell.OnDamage(m, from, damageType, ref totalDamage);
             }
+
+            // Mysticism's Sleep breaks on any damage taken, and Purge Magic's backlash curse
+            // pays out early for the same reason.
+            Spells.Mysticism.SleepSpell.OnDamage(m);
+            Spells.Mysticism.PurgeMagicSpell.OnDamage(m);
 
             m.Damage(totalDamage, from);
             return totalDamage;
@@ -707,6 +715,8 @@ namespace Server
                 }
             }
 
+            // Temporary mobile-level bonuses (see Misc/Enhancement.cs) stack on top of gear.
+            value += Enhancement.GetValue(m, attribute);
             return value;
         }
 
@@ -1007,6 +1017,8 @@ namespace Server
                 }
             }
 
+            // Temporary mobile-level bonuses (see Misc/Enhancement.cs) stack on top of gear.
+            value += Enhancement.GetValue(m, attribute);
             return value;
         }
 
@@ -1195,6 +1207,8 @@ namespace Server
                 }
             }
 
+            // Temporary mobile-level bonuses (see Misc/Enhancement.cs) stack on top of gear.
+            value += Enhancement.GetValue(m, attribute);
             return value;
         }
 

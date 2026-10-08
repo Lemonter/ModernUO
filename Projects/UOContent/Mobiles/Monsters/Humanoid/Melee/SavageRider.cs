@@ -55,7 +55,7 @@ namespace Server.Mobiles
             new SavageRidgeback().Rider = this;
         }
 
-        public override string CorpseName => "a savage corpse";
+        public override string CorpseName => "труп дикаря";
 
         public override int Meat => 1;
         public override bool AlwaysMurderer => true;

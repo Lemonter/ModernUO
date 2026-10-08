@@ -53,8 +53,8 @@ namespace Server.Mobiles
             PackReg(8);
         }
 
-        public override string CorpseName => "a Master Jonath corpse";
-        public override string DefaultName => "Master Jonath";
+        public override string CorpseName => "труп мастера Джоната";
+        public override string DefaultName => "мастер Джонат";
 
         // TODO: Special move?
 

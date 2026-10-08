@@ -5,7 +5,7 @@ namespace Server.Mobiles;
 [SerializationGenerator(0, false)]
 public partial class GrizzledMare : HellSteed
 {
-    public override string DefaultName => "a grizzled mare";
+    public override string DefaultName => "седая кобыла";
 
     [Constructible]
     public GrizzledMare()

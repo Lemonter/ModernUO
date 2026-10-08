@@ -19,7 +19,7 @@ namespace Server.Mobiles
             0xCC, 0x3EA2
         };
 
-        public override string DefaultName => "a horse";
+        public override string DefaultName => "лошадь";
 
         [Constructible]
         public Horse() : base(0xE2, 0x3EA0, AIType.AI_Animal, FightMode.Aggressor)
@@ -55,7 +55,7 @@ namespace Server.Mobiles
             MinTameSkill = 29.1;
         }
 
-        public override string CorpseName => "a horse corpse";
+        public override string CorpseName => "труп лошади";
 
         public override int Meat => 3;
         public override int Hides => 10;

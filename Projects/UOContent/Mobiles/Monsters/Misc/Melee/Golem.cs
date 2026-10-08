@@ -7,7 +7,7 @@ namespace Server.Mobiles
     public partial class Golem : BaseCreature
     {
         [Constructible]
-        public Golem(bool summoned = false, double scalar = 1.0) : base(AIType.AI_Melee)
+        public Golem(bool summoned = false, double scalar = 1.0) : base(AIType.AI_Mage)
         {
             Body = 752;
 
@@ -41,6 +41,13 @@ namespace Server.Mobiles
             SetResistance(ResistanceType.Poison, (int)(10 * scalar), (int)(25 * scalar));
             SetResistance(ResistanceType.Energy, (int)(30 * scalar), (int)(40 * scalar));
 
+            // Mahaon: was AI_Melee. Every elemental and golem casts now; the spell
+            // circle is held to 5 by Systems.MahaonCombat.ElementalMagerySystem, so
+            // the Magery here is set for reliable casting, not to limit the circle.
+            // Scaled like every other skill on this creature — a poorly built clockwork
+            // golem should be a poorer caster too, not a full-strength one.
+            SetSkill(SkillName.Magery, 70.1 * scalar, 90.0 * scalar);
+            SetSkill(SkillName.EvalInt, 60.1 * scalar, 80.0 * scalar);
             SetSkill(SkillName.MagicResist, 150.1 * scalar, 190.0 * scalar);
             SetSkill(SkillName.Tactics, 60.1 * scalar, 100.0 * scalar);
             SetSkill(SkillName.Wrestling, 60.1 * scalar, 100.0 * scalar);
@@ -84,7 +91,7 @@ namespace Server.Mobiles
             ControlSlots = 3;
         }
 
-        public override string CorpseName => "a golem corpse";
+        public override string CorpseName => "труп голема";
 
         public override bool IsScaredOfScaryThings => false;
         public override bool IsScaryToPets => true;
@@ -93,9 +100,7 @@ namespace Server.Mobiles
 
         public override FoodType FavoriteFood => FoodType.None;
 
-        public override bool CanBeDistracted => false;
-
-        public override string DefaultName => "a golem";
+        public override string DefaultName => "голем";
 
         public override bool DeleteOnRelease => true;
 
@@ -144,22 +149,17 @@ namespace Server.Mobiles
 
         public override void OnDamage(int amount, Mobile from, bool willKill)
         {
-            if (Controlled || Summoned)
+            if (GetMaster() is { Player: true } master && master.Map == Map && master.InRange(Location, 20))
             {
-                var master = ControlMaster ?? SummonMaster;
-
-                if (master?.Player == true && master.Map == Map && master.InRange(Location, 20))
+                if (master.Mana >= amount)
                 {
-                    if (master.Mana >= amount)
-                    {
-                        master.Mana -= amount;
-                    }
-                    else
-                    {
-                        amount -= master.Mana;
-                        master.Mana = 0;
-                        master.Damage(amount);
-                    }
+                    master.Mana -= amount;
+                }
+                else
+                {
+                    amount -= master.Mana;
+                    master.Mana = 0;
+                    master.Damage(amount);
                 }
             }
 

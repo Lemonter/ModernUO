@@ -266,7 +266,7 @@ namespace Server.Mobiles
         public override bool DisallowAllMoves => true;
         public override bool ClickTitle => true;
         public override bool CanTeach => false;
-        public override string DefaultName => "Ihara Soko";
+        public override string DefaultName => "Ихара Соко";
         protected override List<SBInfo> SBInfos => m_SBInfos;
 
         public override void InitSBInfo()

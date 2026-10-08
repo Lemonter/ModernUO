@@ -94,7 +94,7 @@ public partial class ArcherGuard : BaseGuard
 
                 if (oldFocus?.Alive == false)
                 {
-                    Say("Thou hast suffered thy punishment, scoundrel.");
+                    Say("Ты понёс наказание, негодяй.");
                 }
 
                 if (value != null)
@@ -158,7 +158,7 @@ public partial class ArcherGuard : BaseGuard
             {
                 if (UseSkill(SkillName.DetectHidden))
                 {
-                    Say("Reveal!");
+                    Say("Явись!");
                 }
             }
             else if (!Move(GetDirectionTo(target) | Direction.Running) && OutOfMaxDistance(target))

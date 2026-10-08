@@ -13,6 +13,8 @@ namespace Server.Items
     [SerializationGenerator(4, false)]
     public partial class Aquarium : BaseAddonContainer
     {
+        public override bool ContentsDecay => false; // fish and decorations are part of the aquarium
+
         public static readonly TimeSpan EvaluationInterval = TimeSpan.FromDays(1);
 
         private static readonly Type[] m_Decorations =
@@ -31,9 +33,9 @@ namespace Server.Items
         private bool m_EvaluateDay;
 
         [SerializableField(0, setter: "private")]
+        [DeserializeTimer(nameof(DeserializeEvaluateTimer), wallClock: true)]
         private Timer _evaluateTimer;
 
-        [DeserializeTimerField(0)]
         private void DeserializeEvaluateTimer(TimeSpan delay)
         {
             _evaluateTimer = Timer.DelayCall(delay, EvaluationInterval, Evaluate);

@@ -38,8 +38,8 @@ namespace Server.Mobiles
             VirtualArmor = 48;
         }
 
-        public override string CorpseName => "a cyclopean corpse";
-        public override string DefaultName => "a cyclopean warrior";
+        public override string CorpseName => "труп циклопа";
+        public override string DefaultName => "циклоп-воин";
 
         public override int Meat => 4;
         public override int TreasureMapLevel => 3;

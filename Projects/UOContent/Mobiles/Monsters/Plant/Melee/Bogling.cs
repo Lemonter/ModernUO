@@ -42,8 +42,8 @@ namespace Server.Mobiles
             PackItem(new Seed());
         }
 
-        public override string CorpseName => "a plant corpse";
-        public override string DefaultName => "a bogling";
+        public override string CorpseName => "труп растения";
+        public override string DefaultName => "болотник";
 
         public override int Hides => 6;
         public override int Meat => 1;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ModernUO.Serialization;
 using Server.Collections;
 using Server.ContextMenus;
 using Server.Engines.BulkOrders;
@@ -24,7 +25,8 @@ namespace Server.Mobiles
         ThighBoots
     }
 
-    public abstract class BaseVendor : BaseCreature, IVendor
+    [SerializationGenerator(2, false)]
+    public abstract partial class BaseVendor : BaseCreature, IVendor
     {
         private static readonly ILogger logger = LogFactory.GetLogger(typeof(BaseVendor));
         private const int MaxSell = 500;
@@ -119,6 +121,8 @@ namespace Server.Mobiles
 
         public virtual bool IsTokunoVendor => Map == Map.Tokuno;
 
+        public virtual bool IsTerMurVendor => Map == Map.TerMur;
+
         public virtual VendorShoeType ShoeType => VendorShoeType.Shoes;
 
         public DateTime LastRestock { get; set; }
@@ -159,6 +163,7 @@ namespace Server.Mobiles
 
             var info = GetSellInfo();
             var totalCost = 0;
+            var resaleCost = 0; // goods players sold here, priced without the scalar
             var validBuy = new List<BuyItemResponse>(list.Count);
             var fromBank = false;
             var fullPurchase = true;
@@ -203,7 +208,9 @@ namespace Server.Mobiles
                         {
                             if (ssi.IsSellable(item) && ssi.IsResellable(item))
                             {
-                                totalCost += ssi.GetBuyPriceFor(item) * amount;
+                                var resale = ssi.GetBuyPriceFor(item) * amount;
+                                totalCost += resale;
+                                resaleCost += resale;
                                 validBuy.Add(buy);
                                 break;
                             }
@@ -276,6 +283,11 @@ namespace Server.Mobiles
             }
 
             buyer.PlaySound(0x32);
+
+            if (buyer.AccessLevel < AccessLevel.GameMaster)
+            {
+                CollectCityTax(totalCost - resaleCost);
+            }
 
             cont = buyer.Backpack ?? buyer.BankBox;
 
@@ -849,7 +861,7 @@ namespace Server.Mobiles
 
             if (!ContentFeatureFlags.VendorPurchase)
             {
-                from.SendMessage(0x22, "Vendor purchases are temporarily disabled.");
+                from.SendMessage(0x22, "Покупка у торговцев временно отключена.");
                 return;
             }
 
@@ -1021,7 +1033,7 @@ namespace Server.Mobiles
 
             if (!ContentFeatureFlags.VendorSell)
             {
-                from.SendMessage(0x22, "Vendor sales are temporarily disabled.");
+                from.SendMessage(0x22, "Продажа торговцам временно отключена.");
                 return;
             }
 
@@ -1071,7 +1083,7 @@ namespace Server.Mobiles
             }
             else
             {
-                Say(true, "You have nothing I would be interested in.");
+                Say(true, "У тебя нет ничего, что меня заинтересует.");
             }
         }
 
@@ -1297,106 +1309,25 @@ namespace Server.Mobiles
             Region.GetRegion<GuardedRegion>()?.CheckVendorAccess(this, from) != false ||
             Region != from.Region && from.Region.GetRegion<GuardedRegion>()?.CheckVendorAccess(this, from) != false;
 
-        public override void Serialize(IGenericWriter writer)
+        [AfterDeserialization]
+        private void AfterDeserialization()
         {
-            base.Serialize(writer);
-
-            writer.Write(1); // version
-
-            var sbInfos = SBInfos;
-
-            for (var i = 0; i < sbInfos?.Count; ++i)
-            {
-                var sbInfo = sbInfos[i];
-                var buyInfo = sbInfo.BuyInfo;
-
-                for (var j = 0; j < buyInfo?.Count; ++j)
-                {
-                    var gbi = buyInfo[j];
-
-                    var maxAmount = gbi.MaxAmount;
-
-                    var doubled = maxAmount switch
-                    {
-                        40  => 1,
-                        80  => 2,
-                        160 => 3,
-                        320 => 4,
-                        640 => 5,
-                        999 => 6,
-                        _   => 0
-                    };
-
-                    if (doubled > 0)
-                    {
-                        writer.WriteEncodedInt(1 + j * sbInfos.Count + i);
-                        writer.WriteEncodedInt(doubled);
-                    }
-                }
-            }
-
-            writer.WriteEncodedInt(0);
-        }
-
-        public override void Deserialize(IGenericReader reader)
-        {
-            base.Deserialize(reader);
-
-            var version = reader.ReadInt();
-
             LoadSBInfo();
-
-            var sbInfos = SBInfos;
-
-            switch (version)
-            {
-                case 1:
-                    {
-                        int index;
-
-                        while ((index = reader.ReadEncodedInt()) > 0)
-                        {
-                            var doubled = reader.ReadEncodedInt();
-
-                            if (sbInfos != null)
-                            {
-                                index -= 1;
-                                var sbInfoIndex = index % sbInfos.Count;
-                                var buyInfoIndex = index / sbInfos.Count;
-
-                                if (sbInfoIndex >= 0 && sbInfoIndex < sbInfos.Count)
-                                {
-                                    var sbInfo = sbInfos[sbInfoIndex];
-                                    var buyInfo = sbInfo.BuyInfo;
-
-                                    if (buyInfo != null && buyInfoIndex >= 0 && buyInfoIndex < buyInfo.Count)
-                                    {
-                                        var gbi = buyInfo[buyInfoIndex];
-
-                                        var amount = doubled switch
-                                        {
-                                            1 => 40,
-                                            2 => 80,
-                                            3 => 160,
-                                            4 => 320,
-                                            5 => 640,
-                                            6 => 999,
-                                            _ => 20
-                                        };
-
-                                        gbi.Amount = gbi.MaxAmount = amount;
-                                    }
-                                }
-                            }
-                        }
-
-                        break;
-                    }
-            }
 
             if (IsParagon)
             {
                 IsParagon = false;
+            }
+        }
+
+        // Version 1 persisted which buy entries had grown restock amounts, packed by index into
+        // the live SBInfos tables. Restock is transient now: it rebuilds from SBInfos on load, so
+        // the pairs are read and discarded.
+        private void Deserialize(IGenericReader reader, int version)
+        {
+            while (reader.ReadEncodedInt() > 0)
+            {
+                reader.ReadEncodedInt();
             }
         }
 
@@ -1427,7 +1358,22 @@ namespace Server.Mobiles
 
         public virtual IBuyItemInfo[] GetBuyInfo() => _buyInfo.ToArray();
 
-        public virtual int GetPriceScalar() => 100 + Town.FromRegion(Region)?.Tax ?? 0;
+        // A guild holding the city taxes the goods sold here, on top of a faction town's tax.
+        public virtual int GetPriceScalar() =>
+            100 + (Town.FromRegion(Region)?.Tax ?? 0) + Systems.MahaonCities.CityControlSystem.TaxIn(
+                Systems.MahaonCities.CityControlSystem.CityAt(this)
+            );
+
+        // The share of a scaled price that is the holding guild's tax.
+        private void CollectCityTax(int scaledCost)
+        {
+            var city = Systems.MahaonCities.CityControlSystem.CityAt(this);
+            var tax = Systems.MahaonCities.CityControlSystem.TaxIn(city);
+            if (tax > 0 && scaledCost > 0)
+            {
+                Systems.MahaonCities.CityControlSystem.CollectTax(city, (long)scaledCost * tax / GetPriceScalar());
+            }
+        }
 
         public void UpdateBuyInfo()
         {
@@ -1488,7 +1434,7 @@ namespace Server.Mobiles
                     else
                     {
                         // An offer may be available in about ~1_hours~ hours.
-                        vendor.SayTo(vendor, 1049039, $"{Math.Ceiling(totalSeconds / 3600):F0}");
+                        vendor.SayTo(from, 1049039, $"{Math.Ceiling(totalSeconds / 3600):F0}");
                     }
 
                     vendor.SpeechHue = oldSpeechHue;

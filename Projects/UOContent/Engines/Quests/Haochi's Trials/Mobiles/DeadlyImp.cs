@@ -39,7 +39,7 @@ public partial class DeadlyImp : BaseCreature
         CantWalk = true;
     }
 
-    public override string DefaultName => "a deadly imp";
+    public override string DefaultName => "смертоносный имп";
 
     public override void AggressiveAction(Mobile aggressor, bool criminal)
     {

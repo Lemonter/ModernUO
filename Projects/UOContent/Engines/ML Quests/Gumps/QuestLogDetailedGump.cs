@@ -70,7 +70,7 @@ namespace Server.Engines.MLQuests.Gumps
                     {
                         // TODO: Custom reward loss protection? OSI doesn't have this
                         // if (_instance.ClaimReward)
-                        // pm.SendMessage( "You cannot cancel a quest with rewards pending." );
+                        // pm.SendMessage( "Нельзя отменить задание, пока не получена награда." );
                         // else
 
                         QuestCancelConfirmGump.DisplayTo(sender.Mobile, _instance, _closeGumps);

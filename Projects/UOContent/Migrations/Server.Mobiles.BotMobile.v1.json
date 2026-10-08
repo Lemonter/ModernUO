@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "type": "Server.Mobiles.BotMobile",
+  "properties": [
+    {
+      "name": "Archetype",
+      "type": "Server.Mobiles.BotArchetype",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "IsPk",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "Brain",
+      "type": "Server.Systems.Bots.BotBrain",
+      "usesSaveFlag": true,
+      "rule": "RawSerializableMigrationRule",
+      "ruleArguments": [
+        "DeserializationRequiresParent"
+      ]
+    }
+  ]
+}

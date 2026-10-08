@@ -14,7 +14,7 @@ public partial class Blackheart : BaseQuester
     {
     }
 
-    public override string DefaultName => "Captain Blackheart";
+    public override string DefaultName => "капитан Чёрное Сердце";
 
     public override void InitBody()
     {

@@ -36,7 +36,7 @@ namespace Server.Mobiles
             Karma = -24000;
         }
 
-        public override string CorpseName => "a Szavetra corpse";
-        public override string DefaultName => "Szavetra";
+        public override string CorpseName => "труп Сзаветры";
+        public override string DefaultName => "Сзаветра";
     }
 }

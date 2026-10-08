@@ -28,7 +28,17 @@ namespace Server;
 
 public interface IGenericEntityPersistence
 {
+    string Name { get; }
+
+    int EntityCount { get; }
+
     void DeserializeIndexes(string savePath, Dictionary<ulong, string> typesDb);
+
+    /// <summary>
+    /// Enumerates the live entities. Diagnostics only: the dictionary must not be mutated while
+    /// enumerating, so callers snapshot the sequence before doing anything that can add or delete.
+    /// </summary>
+    IEnumerable<ISerializable> EnumerateEntities();
 }
 
 public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPersistence, ISlotRangeSource
@@ -85,6 +95,16 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
 
     public Dictionary<Serial, T> EntitiesBySerial { get; } = new();
 
+    public int EntityCount => EntitiesBySerial.Count;
+
+    public IEnumerable<ISerializable> EnumerateEntities()
+    {
+        foreach (var entity in EntitiesBySerial.Values)
+        {
+            yield return entity;
+        }
+    }
+
     public GenericEntityPersistence(string name, int priority, uint minSerial, uint maxSerial) : this(
         name,
         priority,
@@ -114,9 +134,10 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
         using var binFs = new FileStream(
             Path.Combine(dir, $"{Name}.bin"), FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024
         );
-        // v4 records are fixed-width 26 bytes; the header carries the type table
-        // (name lengths vary — 64 bytes per entry is a staging hint, not a contract).
-        var expectedIdxSize = 12 + 26L * EntitiesBySerial.Count + 64L * _typeTable.Count;
+        // v4 records are fixed-width 26 bytes; the v5 header carries the save-start anchor
+        // and the type table (name lengths vary — 64 bytes per entry is a staging hint, not
+        // a contract).
+        var expectedIdxSize = 20 + 26L * EntitiesBySerial.Count + 64L * _typeTable.Count;
         using var idx = new FileBufferWriter(Path.Combine(dir, $"{Name}.idx"), expectedIdxSize);
 
         var binPosition = 0L;
@@ -137,12 +158,16 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
                     _selfPosition,
                     _selfLength
                 );
+                throw;
             }
 
             binPosition += _selfLength;
         }
 
-        idx.Write(4); // Version
+        idx.Write(5); // Version
+
+        // One anchor for the whole save: the world is frozen from the moment it is stamped.
+        idx.Write(World.SaveStartTime.Ticks);
 
         // The type table is fully known at freeze (AddEntity diverts to the pending
         // queues while saving) and is written before the records so the loader can
@@ -181,6 +206,7 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
                 }
                 catch (Exception error)
                 {
+                    // Never publish a partial snapshot: entities missing from the idx are deleted on load.
                     logger.Error(
                         error,
                         "Error writing segment: (Thread: {Thread} - {Start}, {Records} records)",
@@ -188,6 +214,7 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
                         segment.HeapStart,
                         segment.RecordCount
                     );
+                    throw;
                 }
             }
         }
@@ -294,9 +321,7 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
     private ushort GetTypeIndex(T entity)
     {
         // Every path into EntitiesBySerial registers the type first, so this cannot fire.
-        // If it ever does, the segment-level catch in WriteSnapshot logs it and moves on —
-        // the failed segment's records are dropped from the idx while binPosition rewinds,
-        // so treat any occurrence as a serious bug in an insertion path, not a bad entity.
+        // If it does, the save fails; treat it as a bug in an insertion path, not a bad entity.
         if (!_typeIndexes.TryGetValue(entity.GetType(), out var typeIndex))
         {
             throw new InvalidOperationException(
@@ -494,6 +519,18 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
 
         var version = dataReader.ReadInt();
 
+        if (version >= 5)
+        {
+            // Re-base anchored timestamps by the elapsed time since the save started.
+            var anchor = new DateTime(dataReader.ReadLong(), DateTimeKind.Utc);
+            var shift = Core.Now - anchor;
+            _anchoredTimeShift = anchor.Ticks > 0 && shift > TimeSpan.Zero ? shift : TimeSpan.Zero;
+
+            // The whole save shares one anchor. Publish it so payloads without their own
+            // (GenericPersistence bins) can shift too; indexes load before any of them.
+            World.LoadTimeShift = _anchoredTimeShift;
+        }
+
         if (version >= 4)
         {
             DeserializeIndexesV4(dataReader, entities);
@@ -660,6 +697,9 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
 
     private static List<T> _toDelete;
 
+    // From the loaded idx (v5+); zero when the save predates the anchor.
+    private TimeSpan _anchoredTimeShift;
+
     private unsafe void InternalDeserialize(string filePath, int index, Dictionary<ulong, string> typesDb)
     {
         using var mmf = MemoryMappedFile.CreateFromFile(filePath, FileMode.Open);
@@ -667,7 +707,10 @@ public class GenericEntityPersistence<T> : GenericPersistence, IGenericEntityPer
 
         byte* ptr = null;
         accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-        var dataReader = new UnmanagedDataReader(ptr, accessor.Length, typesDb);
+        var dataReader = new UnmanagedDataReader(ptr, accessor.Length, typesDb)
+        {
+            AnchoredTimeShift = _anchoredTimeShift
+        };
 
         Deserialize(dataReader);
 

@@ -45,7 +45,7 @@ public class Recipe
     private static void LearnAllRecipes_OnCommand(CommandEventArgs e)
     {
         var m = e.Mobile;
-        m.SendMessage("Target a player to teach them all of the recipes.");
+        m.SendMessage("Укажи игрока, которого обучить всем рецептам.");
 
         m.BeginTarget(
             -1,
@@ -60,11 +60,11 @@ public class Recipe
                         mobile.AcquireRecipe(kvp.Key);
                     }
 
-                    from.SendMessage("You teach them all of the recipes.");
+                    from.SendMessage("Ты обучаешь их всем рецептам.");
                 }
                 else
                 {
-                    from.SendMessage("That is not a player!");
+                    from.SendMessage("Это не игрок!");
                 }
             }
         );
@@ -74,7 +74,7 @@ public class Recipe
     private static void ForgetAllRecipes_OnCommand(CommandEventArgs e)
     {
         var m = e.Mobile;
-        m.SendMessage("Target a player to have them forget all of the recipes they've learned.");
+        m.SendMessage("Укажи игрока, который должен забыть все выученные рецепты.");
 
         m.BeginTarget(
             -1,
@@ -86,11 +86,11 @@ public class Recipe
                 {
                     mobile.ResetRecipes();
 
-                    from.SendMessage("They forget all their recipes.");
+                    from.SendMessage("Они забывают все свои рецепты.");
                 }
                 else
                 {
-                    from.SendMessage("That is not a player!");
+                    from.SendMessage("Это не игрок!");
                 }
             }
         );

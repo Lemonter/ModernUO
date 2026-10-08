@@ -12,7 +12,7 @@ public partial class Bottle : Item, ICommodity
         Amount = amount;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: empty bottles are weightless
 
     int ICommodity.DescriptionNumber => LabelNumber;
     bool ICommodity.IsDeedable => Core.ML;

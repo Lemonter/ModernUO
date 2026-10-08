@@ -33,6 +33,8 @@ namespace Server
         public static readonly Type OfTimeSpan = typeof(TimeSpan);
         public static readonly Type OfPoint3D = typeof(Point3D);
         public static readonly Type OfPoint2D = typeof(Point2D);
+        public static readonly Type OfIPoint3D = typeof(IPoint3D);
+        public static readonly Type OfIPoint2D = typeof(IPoint2D);
         public static readonly Type OfEnum = typeof(Enum);
         public static readonly Type OfType = typeof(Type);
 
@@ -192,6 +194,35 @@ namespace Server
             return false;
         }
 
+        // @"..." is the literal text inside, for values the bare text would be read as something
+        // else. See dev-docs/generic-commands.md.
+        private static bool TryGetQuotedLiteral(string value, out string literal)
+        {
+            if (value?.Length >= 3 && value[0] == '@' && value[1] == '"' && value[^1] == '"')
+            {
+                literal = value[2..^1];
+                return true;
+            }
+
+            literal = null;
+            return false;
+        }
+
+        /// <summary>
+        /// <see cref="TryParse" /> for callers with nowhere to put an error string.
+        /// </summary>
+        public static object ParseOrThrow(Type type, string value)
+        {
+            var error = TryParse(type, value, out var constructed);
+
+            if (error != null)
+            {
+                throw new InvalidOperationException(error);
+            }
+
+            return constructed;
+        }
+
         // Do not use this in "Parse" methods, it may cause a stack overflow
         public static string TryParse(Type type, string value, out object constructed)
         {
@@ -244,8 +275,26 @@ namespace Server
 
             if (IsType(type, OfString))
             {
-                constructed = value;
+                // Decodes what InternalGetValue writes, so [get output pastes back into [set.
+                constructed = TryGetQuotedLiteral(value, out var literal) ? literal : value;
                 return null;
+            }
+
+            if (type == OfIPoint3D || type == OfIPoint2D)
+            {
+                if (Point3D.TryParse(value, null, out var p3))
+                {
+                    constructed = p3;
+                    return null;
+                }
+
+                if (type == OfIPoint2D && Point2D.TryParse(value, null, out var p2))
+                {
+                    constructed = p2;
+                    return null;
+                }
+
+                return "That is not properly formatted.";
             }
 
             if (IsType(type, OfBool))

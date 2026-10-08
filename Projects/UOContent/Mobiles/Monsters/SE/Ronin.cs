@@ -92,9 +92,9 @@ namespace Server.Mobiles
             Utility.AssignRandomHair(this);
         }
 
-        public override string CorpseName => "a ronin corpse";
+        public override string CorpseName => "труп ронина";
         public override bool ClickTitle => false;
-        public override string DefaultName => "a ronin";
+        public override string DefaultName => "ронин";
 
         public override bool AlwaysMurderer => true;
         public override bool BardImmune => true;

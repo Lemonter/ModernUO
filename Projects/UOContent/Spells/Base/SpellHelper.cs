@@ -375,9 +375,26 @@ namespace Server.Spells
             return true;
         }
 
+        /// <summary>
+        ///     Длительность полезных чар (Сила, Ловкость, Разум, Благословение).
+        ///
+        ///     Раньше здесь и в GetHarmfulDuration числа стояли наоборот: баф держался
+        ///     ванильные две минуты, а проклятие — тридцать секунд на очко Оценки магии,
+        ///     то есть под час на сотне. Своё усиление и должно жить долго, а чужое
+        ///     проклятие — быть тем, что переживают, а не носят полдня.
+        /// </summary>
         public static TimeSpan GetDuration(Mobile caster, Mobile target) =>
-            // TODO: Is this accurate for Curse? Sources say it is magery. Should confirm at least for newest era.
-            TimeSpan.FromSeconds(6 * (Core.AOS ? caster.Skills.EvalInt.Value : caster.Skills.Magery.Value) / 5.0);
+            TimeSpan.FromSeconds(30 * (Core.AOS ? caster.Skills.EvalInt.Value : caster.Skills.Magery.Value));
+
+        /// <summary>Проклятия и ослабления: ванильная короткая длительность, которую
+        /// Сопротивление магии цели режет ещё сильнее — поверх отдельного броска
+        /// CheckResisted, способного не пустить их вовсе.</summary>
+        public static TimeSpan GetHarmfulDuration(Mobile caster, Mobile target)
+        {
+            var baseSeconds = 6 * (Core.AOS ? caster.Skills.EvalInt.Value : caster.Skills.Magery.Value) / 5.0;
+            var resistReduction = System.Math.Clamp(target.Skills.MagicResist.Value / 150.0, 0.0, 0.8);
+            return TimeSpan.FromSeconds(baseSeconds * (1.0 - resistReduction));
+        }
 
         public static double GetOffsetScalar(Mobile caster, Mobile target, bool curse)
         {
@@ -407,32 +424,8 @@ namespace Server.Spells
             };
         }
 
-        public static Guild GetGuildFor(Mobile m)
-        {
-            var g = m.Guild as Guild;
-
-            if (g == null && m is BaseCreature c)
-            {
-                m = c.ControlMaster;
-
-                if (m != null)
-                {
-                    g = m.Guild as Guild;
-                }
-
-                if (g == null)
-                {
-                    m = c.SummonMaster;
-
-                    if (m != null)
-                    {
-                        g = m.Guild as Guild;
-                    }
-                }
-            }
-
-            return g;
-        }
+        public static Guild GetGuildFor(Mobile m) =>
+            m.Guild as Guild ?? (m as BaseCreature)?.GetMaster()?.Guild as Guild;
 
         public static bool ValidIndirectTarget(Mobile from, Mobile to)
         {
@@ -473,29 +466,17 @@ namespace Server.Spells
                 return false;
             }
 
-            if (bcTarg != null && (bcTarg.Controlled || bcTarg.Summoned))
+            if (bcTarg?.GetMaster() is { } targMaster)
             {
-                if (bcTarg.ControlMaster == from || bcTarg.SummonMaster == from)
-                {
-                    return false;
-                }
-
-                if (p != null && (p.Contains(bcTarg.ControlMaster) || p.Contains(bcTarg.SummonMaster)))
+                if (targMaster == from || p?.Contains(targMaster) == true)
                 {
                     return false;
                 }
             }
 
-            if (bcFrom != null && (bcFrom.Controlled || bcFrom.Summoned))
+            if (bcFrom?.GetMaster() is { } fromMaster)
             {
-                if (bcFrom.ControlMaster == to || bcFrom.SummonMaster == to)
-                {
-                    return false;
-                }
-
-                p = Party.Get(to);
-
-                if (p != null && (p.Contains(bcFrom.ControlMaster) || p.Contains(bcFrom.SummonMaster)))
+                if (fromMaster == to || Party.Get(to)?.Contains(fromMaster) == true)
                 {
                     return false;
                 }
@@ -1034,8 +1015,28 @@ namespace Server.Spells
 
                 StaminaSystem.DFA = dfa;
 
-                var damageGiven = AOS.Damage(target, from, dmg, phys, fire, cold, pois, nrgy, chaos);
+                if (spell != null && from != null)
+                {
+                    var isFireDominant = fire >= phys && fire >= cold && fire >= pois && fire >= nrgy && fire >= chaos && fire > 0;
+                    dmg = (int)(dmg * Systems.MahaonCombat.MagerySchoolSystem.GetDamageScalar(from, spell, isFireDominant));
+                    dmg = (int)(dmg * Systems.MahaonCombat.NecromancySchoolSystem.GetDamageScalar(from, spell));
+                    dmg = (int)(dmg * Systems.MahaonCombat.SpellweavingSchoolSystem.GetDamageScalar(from, spell));
+                    dmg = (int)(dmg * Systems.MahaonCombat.MysticismSchoolSystem.GetDamageScalar(from, spell));
+
+                    Systems.MahaonCombat.PreferredElementSystem.ApplyConversion(from, ref fire, ref cold, ref pois, ref nrgy);
+                }
+
+                var damageGiven = AOS.Damage(
+                    target, from, dmg, phys, fire, cold, pois, nrgy, chaos,
+                    SkillMasteries.DamageType.Spell
+                );
                 Mysticism.SpellPlagueSpell.OnMobileDamaged(target);
+
+                if (spell != null && from != null && damageGiven > 0)
+                {
+                    Systems.MahaonCombat.CombatLogSystem.LogSpellHit(from, target, spell.Name, damageGiven);
+                    Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(from, spell.DamageSkill, damageGiven);
+                }
 
                 StaminaSystem.DFA = DFAlgorithm.Standard;
 
@@ -1080,6 +1081,10 @@ namespace Server.Spells
         public static void Heal(int amount, Mobile target, Mobile from, bool message = true)
         {
             // TODO: All Healing *spells* go through ArcaneEmpowerment
+
+            // «Длань света» — сигнатурный перк категории Вера.
+            amount = (int)(amount * Systems.MahaonProfessions.ProfessionBonuses.HealingScalar(from));
+
             target.Heal(amount, from, message);
         }
 
@@ -1340,12 +1345,7 @@ namespace Server.Spells
             context.Spell.RemoveEffect(m);
         }
 
-        public static TransformContext GetContext(Mobile m)
-        {
-            _table.TryGetValue(m, out var context);
-
-            return context;
-        }
+        public static TransformContext GetContext(Mobile m) => _table.GetValueOrDefault(m);
 
         public static bool UnderTransformation(Mobile m) => GetContext(m) != null;
 

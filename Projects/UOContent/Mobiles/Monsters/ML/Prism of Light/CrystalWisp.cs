@@ -13,6 +13,6 @@ namespace Server.Mobiles
             PackArcaneScroll(0, 1);
         }
 
-        public override string DefaultName => "a crystal wisp";
+        public override string DefaultName => "кристаллический огонёк";
     }
 }

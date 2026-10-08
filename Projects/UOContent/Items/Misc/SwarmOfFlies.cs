@@ -12,5 +12,5 @@ public partial class SwarmOfFlies : Item
         Movable = false;
     }
 
-    public override string DefaultName => "a swarm of flies";
+    public override string DefaultName => "рой мух";
 }

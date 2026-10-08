@@ -56,8 +56,8 @@ namespace Server.Mobiles
          *  85: 51/17/17 -> 28 + 8 + 5 = 41
          */
 
-        public override string CorpseName => "an oni corpse";
-        public override string DefaultName => "an oni";
+        public override string CorpseName => "труп они";
+        public override string DefaultName => "они";
 
         public override bool CanRummageCorpses => true;
         public override int TreasureMapLevel => 4;

@@ -60,7 +60,8 @@ public class CorpseSkinSpell : NecromancerSpell, ITargetingSpell<Mobile>
                 m.SendLocalizedMessage(1061689); // Your skin turns dry and corpselike.
             }
 
-            m.Spell?.OnCasterHurt();
+            // Mahaon: no longer disturbs the target's own cast — enemy spells don't fizzle
+            // casting anymore (see Spell.OnCasterHurt's doc comment).
 
             m.FixedParticles(0x373A, 1, 15, 9913, 67, 7, EffectLayer.Head);
             m.PlaySound(0x1BB);

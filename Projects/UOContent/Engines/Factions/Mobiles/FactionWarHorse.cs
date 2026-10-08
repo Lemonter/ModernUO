@@ -8,7 +8,7 @@ namespace Server.Factions
         public const int GoldPrice = 3000;
         private Faction m_Faction;
 
-        public override string DefaultName => "a war horse";
+        public override string DefaultName => "боевой конь";
 
         [Constructible]
         public FactionWarHorse(Faction faction = null) : base(0xE2, 0x3EA0, AIType.AI_Melee, FightMode.Aggressor)
@@ -50,7 +50,7 @@ namespace Server.Factions
         }
 
         public override int StepsMax => 6400;
-        public override string CorpseName => "a war horse corpse";
+        public override string CorpseName => "труп боевого коня";
 
         [CommandProperty(AccessLevel.GameMaster, AccessLevel.Administrator)]
         public Faction Faction

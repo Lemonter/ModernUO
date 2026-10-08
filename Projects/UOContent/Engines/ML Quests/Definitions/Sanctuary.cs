@@ -792,7 +792,7 @@ public partial class Beotham : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Beotham";
+    public override string DefaultName => "Беотам";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -839,7 +839,7 @@ public partial class Danoel : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Danoel";
+    public override string DefaultName => "Даноэль";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -876,7 +876,7 @@ public partial class Tallinin : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Tallinin";
+    public override string DefaultName => "Таллинин";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -931,7 +931,7 @@ public partial class Tiana : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Tiana";
+    public override string DefaultName => "Тиана";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -978,7 +978,7 @@ public partial class LorekeeperOolua : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Lorekeeper Oolua";
+    public override string DefaultName => "хранитель знаний Оолуа";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1021,7 +1021,7 @@ public partial class LorekeeperRollarn : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Lorekeeper Rollarn";
+    public override string DefaultName => "хранитель знаний Ролларн";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1067,7 +1067,7 @@ public partial class Dallid : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Dallid";
+    public override string DefaultName => "Даллид";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1112,7 +1112,7 @@ public partial class Canir : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Canir";
+    public override string DefaultName => "Канир";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)
@@ -1152,7 +1152,7 @@ public partial class Yellienir : BaseCreature
         AddItem(new Cloak(0x3B2));
     }
 
-    public override string DefaultName => "Yellienir";
+    public override string DefaultName => "Йеллиенир";
     public override bool IsInvulnerable => true;
 }
 
@@ -1184,7 +1184,7 @@ public partial class ElderOnallan : BaseCreature
 
     public override bool IsInvulnerable => true;
     public override bool CanTeach => true;
-    public override string DefaultName => "Elder Onallan";
+    public override string DefaultName => "старейшина Оналлан";
     public override bool CanShout => true;
 
     public override void Shout(PlayerMobile pm)

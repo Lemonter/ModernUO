@@ -96,7 +96,12 @@ public abstract partial class LockableContainer : TrappableContainer, ILockable,
         Locked = false;
         Picker = from;
 
-        if (_trapOnLockpick && ExecuteTrap(from))
+        Server.Systems.MahaonCombat.ThievingSpecializationSystem.Train(
+            from, Server.Systems.MahaonCombat.ThievingSpecialization.Locksmith
+        );
+
+        if (_trapOnLockpick && !Server.Systems.MahaonCombat.ThievingSpecializationSystem.TryBypassTrap(from) &&
+            ExecuteTrap(from))
         {
             _trapOnLockpick = false;
         }
@@ -229,6 +234,18 @@ public abstract partial class LockableContainer : TrappableContainer, ILockable,
         if (_isShipwreckedItem)
         {
             LabelTo(from, 1041645); // recovered from a shipwreck
+        }
+
+        var lockMetal = Systems.MahaonMetals.MahaonMetalTracker.GetMetal(this);
+
+        if (lockMetal != null)
+        {
+            var info = Systems.MahaonMetals.MahaonMetalTable.Get(lockMetal.Value);
+
+            if (from.Skills[SkillName.Mining].Value >= info.MiningSkillRequired)
+            {
+                from.SendMessage(0x59, $"Ты узнаёшь металл замка: {info.RuName}.");
+            }
         }
     }
 }

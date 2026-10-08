@@ -47,8 +47,9 @@ namespace Server.Mobiles
             }
         }
 
-        public override string CorpseName => "a dragon corpse";
-        public override string DefaultName => "a serpentine dragon";
+        public override string CorpseName => "труп дракона";
+        public override string DefaultName => "змеиный дракон";
+        public override bool IsDragonKind => true;
         public override bool ReacquireOnMovement => true;
         public override double BonusPetDamageScalar => Core.SE ? 3.0 : 1.0;
 
@@ -86,9 +87,7 @@ namespace Server.Mobiles
             if (!Core.SE && Utility.RandomDouble() < 0.2 && attacker is BaseCreature c && c.Controlled &&
                 c.ControlMaster != null)
             {
-                c.ControlTarget = c.ControlMaster;
-                c.ControlOrder = OrderType.Attack;
-                c.Combatant = c.ControlMaster;
+                c.IssueOrder(OrderType.Attack, null, c.ControlMaster);
             }
         }
     }

@@ -12,7 +12,7 @@ public abstract partial class BaseAmbitiousSolenQueen : BaseQuester
     }
 
     public abstract bool RedSolen { get; }
-    public override string DefaultName => "an ambitious solen queen";
+    public override string DefaultName => "честолюбивая королева соленов";
     public override bool DisallowAllMoves => false;
 
     public override void InitBody()

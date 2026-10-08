@@ -46,8 +46,8 @@ namespace Server.Mobiles
             PackItem(new SulfurousAsh(Utility.Random(4, 10)));
         }
 
-        public override string CorpseName => "a lava lizard corpse";
-        public override string DefaultName => "a lava lizard";
+        public override string CorpseName => "труп лавовой ящерицы";
+        public override string DefaultName => "лавовая ящерица";
         public override int Hides => 12;
         public override HideType HideType => HideType.Spined;
         public override FoodType FavoriteFood => FoodType.Metal | FoodType.Gold;

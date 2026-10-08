@@ -76,8 +76,8 @@ namespace Server.Mobiles
             m_NextAbilityTime = Core.Now + TimeSpan.FromSeconds(Utility.RandomMinMax(2, 5));
         }
 
-        public override string CorpseName => "a jukan corpse";
-        public override string DefaultName => "a juka mage";
+        public override string CorpseName => "труп джукана";
+        public override string DefaultName => "маг джука";
 
         public override bool AlwaysMurderer => true;
         public override bool CanRummageCorpses => true;
@@ -119,12 +119,16 @@ namespace Server.Mobiles
                     {
                         m_NextAbilityTime = Core.Now + TimeSpan.FromSeconds(Utility.RandomMinMax(30, 60));
 
-                        toBuff.Say(true, "Give me the power to destroy my enemies!");
-                        Say(true, "Fight well my lord!");
+                        toBuff.Say(true, "Дай мне силу сокрушить врагов!");
+                        Say(true, "Сражайся достойно, мой лорд!");
 
                         DoBeneficial(toBuff);
 
                         SpellHelper.Turn(this, toBuff);
+
+                        var maxHits = toBuff.HitsMaxSeed;
+                        var rawStr = toBuff.RawStr;
+                        var rawDex = toBuff.RawDex;
 
                         var toScale = toBuff.HitsMaxSeed;
 
@@ -154,9 +158,6 @@ namespace Server.Mobiles
 
                         toBuff.FixedParticles(0x375A, 10, 15, 5017, EffectLayer.Waist);
                         toBuff.PlaySound(0x1EE);
-                        var maxHits = toBuff.HitsMaxSeed;
-                        var rawStr = toBuff.RawStr;
-                        var rawDex = toBuff.RawDex;
 
                         Timer.StartTimer(
                             TimeSpan.FromSeconds(20.0),

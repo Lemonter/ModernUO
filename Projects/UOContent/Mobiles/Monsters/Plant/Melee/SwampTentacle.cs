@@ -41,8 +41,8 @@ namespace Server.Mobiles
             PackReg(3);
         }
 
-        public override string CorpseName => "a swamp tentacle corpse";
-        public override string DefaultName => "a swamp tentacle";
+        public override string CorpseName => "труп болотного щупальца";
+        public override string DefaultName => "болотное щупальце";
 
         public override Poison PoisonImmune => Poison.Greater;
 

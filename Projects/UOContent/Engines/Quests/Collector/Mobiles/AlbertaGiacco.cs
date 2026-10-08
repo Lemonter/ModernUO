@@ -12,7 +12,7 @@ public partial class AlbertaGiacco : BaseQuester
     {
     }
 
-    public override string DefaultName => "Alberta Giacco";
+    public override string DefaultName => "Альберта Джакко";
 
     public override void InitBody()
     {

@@ -80,7 +80,7 @@ public partial class RawRibs : CookableFood
         Amount = amount;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: weightless
 
     public override Food Cook() => new Ribs();
 }
@@ -94,6 +94,8 @@ public partial class RawLambLeg : CookableFood
         Stackable = true;
         Amount = amount;
     }
+
+    public override double DefaultWeight => 0; // Mahaon: weightless
 
     public override Food Cook() => new LambLeg();
 }
@@ -122,7 +124,7 @@ public partial class RawBird : CookableFood
         Amount = amount;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: weightless
 
     public override Food Cook() => new CookedBird();
 }
@@ -273,7 +275,7 @@ public partial class BrightlyColoredEggs : CookableFood
     }
 
     public override double DefaultWeight => 0.5;
-    public override string DefaultName => "brightly colored eggs";
+    public override string DefaultName => "ярко раскрашенные яйца";
     public override Food Cook() => new FriedEggs();
 }
 

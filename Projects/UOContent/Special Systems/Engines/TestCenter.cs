@@ -175,7 +175,7 @@ namespace Server.Misc
 
                     if (skill.Owner.Total - oldFixedPoint + newFixedPoint > skill.Owner.Cap)
                     {
-                        from.SendMessage("You can not exceed the skill cap.  Try setting another skill lower first.");
+                        from.SendMessage("Предел навыков превышен. Сначала опусти другой навык.");
                     }
                     else
                     {

@@ -272,7 +272,7 @@ public class FinanceGump : FactionGump
                         }
                         else if (BaseBoat.FindBoatAt(m_From.Location, m_From.Map) != null)
                         {
-                            m_From.SendMessage("You cannot place a vendor here");
+                            m_From.SendMessage("Здесь нельзя поставить торговца");
                         }
                         else if (m_Town.Silver >= vendorList.Definition.Price)
                         {

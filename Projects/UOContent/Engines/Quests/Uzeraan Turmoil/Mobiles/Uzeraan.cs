@@ -13,7 +13,7 @@ public partial class Uzeraan : BaseQuester
     {
     }
 
-    public override string DefaultName => "Uzeraan";
+    public override string DefaultName => "Узераан";
 
     public override void InitBody()
     {

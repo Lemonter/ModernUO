@@ -11,6 +11,6 @@ namespace Server.Items
         {
         }
 
-        public override string DefaultName => "Ruined Tapestry ";
+        public override string DefaultName => "истлевший гобелен";
     }
 }

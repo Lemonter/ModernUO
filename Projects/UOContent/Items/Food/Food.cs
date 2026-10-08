@@ -69,6 +69,11 @@ public abstract partial class Food : Item
 
             if (Poison != null)
             {
+                if (Systems.MahaonProfessions.ProfessionSystem.TouchesCategory(from, Systems.MahaonProfessions.ProfessionCategory.Bard))
+                {
+                    from.SendMessage(0x22, "Ты чувствуешь, что эта еда была отравлена!");
+                }
+
                 from.ApplyPoison(Poisoner, Poison);
             }
 
@@ -293,7 +298,7 @@ public partial class Ribs : Food
         FillFactor = 5;
     }
 
-    public override double DefaultWeight => 1.0;
+    public override double DefaultWeight => 0; // Mahaon: weightless
 }
 
 [SerializationGenerator(0, false)]

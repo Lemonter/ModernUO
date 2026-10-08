@@ -9,7 +9,8 @@ public partial class GervisSatchel : Backpack
     public GervisSatchel()
     {
         Hue = Utility.RandomBrightHue();
-        DropItem(new IronIngot(10));
+        // Наш слиток — см. CharacterCreation, причина та же.
+        DropItem(new MahaonIngot(Systems.MahaonMetals.MahaonMetal.Iron, 10));
         DropItem(new SmithHammer());
     }
 }

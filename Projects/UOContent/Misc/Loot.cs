@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using Server.Items;
 
@@ -157,6 +157,15 @@ namespace Server
             typeof(BlackPearl), typeof(Bloodmoss), typeof(Garlic),
             typeof(Ginseng), typeof(MandrakeRoot), typeof(Nightshade),
             typeof(SulfurousAsh), typeof(SpidersSilk)
+        };
+
+        /// <summary>The eleven virtue essences of Ter Mur — see Items/Resources/Essences.cs.</summary>
+        public static Type[] ImbuingEssenceTypes { get; } =
+        {
+            typeof(EssencePrecision), typeof(EssenceAchievement), typeof(EssenceBalance),
+            typeof(EssenceControl), typeof(EssenceDiligence), typeof(EssenceDirection),
+            typeof(EssenceFeeling), typeof(EssenceOrder), typeof(EssencePassion),
+            typeof(EssencePersistence), typeof(EssenceSingularity)
         };
 
         public static Type[] NecroRegTypes { get; } =
@@ -696,6 +705,8 @@ namespace Server
 
         public static Item RandomReagent() => Construct(RegTypes);
 
+        public static Item RandomEssence() => Construct(ImbuingEssenceTypes);
+
         public static Item RandomNecromancyReagent() => Construct(NecroRegTypes);
 
         private static readonly Type[][] _regOrNecroRegTypes = [RegTypes, NecroRegTypes];
@@ -738,7 +749,7 @@ namespace Server
         {
             var talisman = new BaseTalisman(BaseTalisman.GetRandomItemID());
 
-            talisman.Summoner = BaseTalisman.GetRandomSummoner();
+            talisman.Summoner = BaseTalisman.GetRandomSummoner(talisman);
 
             if (talisman.Summoner.IsEmpty)
             {
@@ -758,8 +769,8 @@ namespace Server
 
             talisman.Blessed = BaseTalisman.GetRandomBlessed();
             talisman.Slayer = BaseTalisman.GetRandomSlayer();
-            talisman.Protection = BaseTalisman.GetRandomProtection();
-            talisman.Killer = BaseTalisman.GetRandomKiller();
+            talisman.Protection = BaseTalisman.GetRandomProtection(talisman);
+            talisman.Killer = BaseTalisman.GetRandomKiller(talisman);
             talisman.Skill = BaseTalisman.GetRandomSkill();
             talisman.ExceptionalBonus = BaseTalisman.GetRandomExceptional();
             talisman.SuccessBonus = BaseTalisman.GetRandomSuccessful();

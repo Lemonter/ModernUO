@@ -107,9 +107,15 @@ public partial class MapItem : Item, ICraftable
     {
         var ns = from.NetState;
 
+        // A bot reads maps too, and has no client to draw one on.
+        if (ns == null)
+        {
+            return;
+        }
+
         if (!ns.NewCharacterList && _facet != null && _facet != Map.Felucca && _facet != Map.Trammel)
         {
-            from.SendMessage("You must have client 7.0.13.0 or higher to display this map.");
+            from.SendMessage("Для показа этой карты нужен клиент 7.0.13.0 или новее.");
             return;
         }
 

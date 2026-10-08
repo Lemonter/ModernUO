@@ -39,9 +39,32 @@ public abstract class MysticSpell : Spell
      * Players can use EITHER their Focus skill or Imbuing skill.
      * Evaluate Intelligence no longer has any effect on a Mystic’s spell power.
      */
-    public override double GetDamageSkill(Mobile m) => Math.Max(m.Skills.Imbuing.Value, m.Skills.Focus.Value);
+    /// <summary>
+    ///     «Стихийный круг» — сигнатурный перк категории Мистицизм.
+    ///
+    ///     По умолчанию сила чар мистика идёт не от самой Мистики, а от Вкладывания или
+    ///     Сосредоточения: без второго навыка мистик кастует заклинания в полную силу, а
+    ///     бьёт ими как новичок. Мистику второй навык не нужен — круг стихий он замыкает
+    ///     сам, и его собственная Мистика идёт в счёт наравне с ними.
+    /// </summary>
+    private static bool ClosesTheCircle(Mobile m) =>
+        Systems.MahaonProfessions.ProfessionSystem.HasSignature(
+            m, Systems.MahaonProfessions.ProfessionCategory.Mysticism
+        );
 
-    public override int GetDamageFixed(Mobile m) => Math.Max(m.Skills.Imbuing.Fixed, m.Skills.Focus.Fixed);
+    public override double GetDamageSkill(Mobile m)
+    {
+        var skill = Math.Max(m.Skills.Imbuing.Value, m.Skills.Focus.Value);
+
+        return ClosesTheCircle(m) ? Math.Max(skill, m.Skills.Mysticism.Value) : skill;
+    }
+
+    public override int GetDamageFixed(Mobile m)
+    {
+        var skill = Math.Max(m.Skills.Imbuing.Fixed, m.Skills.Focus.Fixed);
+
+        return ClosesTheCircle(m) ? Math.Max(skill, m.Skills.Mysticism.Fixed) : skill;
+    }
 
     public override void GetCastSkills(out double min, out double max)
     {
@@ -135,5 +158,16 @@ public abstract class MysticSpell : Spell
         return (firstPercent > secondPercent ? firstPercent : secondPercent) / 2.0;
     }
 
-    public virtual double GetResistPercent(Mobile target) => GetResistPercentForCircle(target, Circle);
+    /// <summary>
+    ///     «Неодолимые чары» — обычный перк категории Мистицизм: от его заклинаний
+    ///     отмахнуться на четверть труднее.
+    /// </summary>
+    public virtual double GetResistPercent(Mobile target)
+    {
+        var percent = GetResistPercentForCircle(target, Circle);
+
+        return Systems.MahaonProfessions.ProfessionSystem.HasFullKit(
+            Caster, Systems.MahaonProfessions.ProfessionCategory.Mysticism
+        ) ? percent * 0.75 : percent;
+    }
 }

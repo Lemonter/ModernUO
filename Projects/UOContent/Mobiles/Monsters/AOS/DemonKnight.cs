@@ -1,6 +1,7 @@
 using ModernUO.Serialization;
 using System;
 using Server.Items;
+using Server.Systems.MahaonWorld;
 
 namespace Server.Mobiles
 {
@@ -55,7 +56,7 @@ namespace Server.Mobiles
             VirtualArmor = 64;
         }
 
-        public override string CorpseName => "a demon knight corpse";
+        public override string CorpseName => "труп демона-рыцаря";
         public override bool IgnoreYoungProtection => Core.ML;
 
         public static Type[] ArtifactRarity10 { get; } =
@@ -224,6 +225,13 @@ namespace Server.Mobiles
         {
             AddLoot(LootPack.SuperBoss, 2);
             AddLoot(LootPack.HighScrolls, Utility.RandomMinMax(6, 60));
+        }
+
+        public override void OnCarve(Mobile from, Corpse corpse, Item with)
+        {
+            base.OnCarve(from, corpse, with);
+            MahaonCarvedBoneSystem.TryDropDemonBone(from, corpse);
+            corpse.Carved = true;
         }
 
         public override void OnDamage(int amount, Mobile from, bool willKill)

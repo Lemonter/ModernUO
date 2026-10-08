@@ -32,7 +32,8 @@ namespace Server.Spells.Fourth
 
                 SpellHelper.CheckReflect((int)Circle, Caster, ref m);
 
-                m.Spell?.OnCasterHurt();
+                // Mahaon: no longer disturbs the target's own cast — enemy spells don't
+                // fizzle casting anymore (see Spell.OnCasterHurt's doc comment).
 
                 m.Paralyzed = false;
 

@@ -44,8 +44,8 @@ namespace Server.Mobiles
             PackReg(3);
         }
 
-        public override string CorpseName => "a drake corpse";
-        public override string DefaultName => "a drake";
+        public override string CorpseName => "труп дрейка";
+        public override string DefaultName => "дрейк";
 
         public override bool ReacquireOnMovement => true;
         public override int TreasureMapLevel => 2;

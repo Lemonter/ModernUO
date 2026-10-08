@@ -64,7 +64,7 @@ public partial class ClothingBlessDeed : Item // Create the item class which is 
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "a clothing bless deed";
+    public override string DefaultName => "грамота благословения одежды";
 
     public override bool DisplayLootType => false;
 

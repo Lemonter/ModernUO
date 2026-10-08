@@ -39,11 +39,11 @@ public partial class ArcaneFiend : BaseCreature
         ControlSlots = 1;
     }
 
-    public override string CorpseName => "an imp corpse";
+    public override string CorpseName => "труп импа";
     public override double DispelDifficulty => 70.0;
     public override double DispelFocus => 20.0;
 
     public override PackInstinct PackInstinct => PackInstinct.Daemon;
     public override bool BleedImmune => true; // TODO: Verify on OSI.  Guide says this.
-    public override string DefaultName => "an imp";
+    public override string DefaultName => "имп";
 }

@@ -24,7 +24,7 @@ public abstract partial class BaseSolenMatriarch : BaseQuester
     }
 
     public abstract bool RedSolen { get; }
-    public override string DefaultName => "the solen matriarch";
+    public override string DefaultName => "матриарх соленов";
     public override bool DisallowAllMoves => false;
 
     public override int GetIdleSound() => 0x10D;

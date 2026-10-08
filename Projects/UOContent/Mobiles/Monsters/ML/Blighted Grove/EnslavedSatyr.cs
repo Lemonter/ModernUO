@@ -21,7 +21,7 @@ namespace Server.Mobiles
         }
         */
 
-        public override string CorpseName => "an enslaved satyr corpse";
-        public override string DefaultName => "an enslaved satyr";
+        public override string CorpseName => "труп порабощённого сатира";
+        public override string DefaultName => "порабощённый сатир";
     }
 }

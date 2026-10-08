@@ -17,7 +17,7 @@ public partial class ArcaneGem : Item
 
     public override double DefaultWeight => 1.0;
 
-    public override string DefaultName => "arcane gem";
+    public override string DefaultName => "тайный самоцвет";
 
     public override void OnDoubleClick(Mobile from)
     {
@@ -28,7 +28,7 @@ public partial class ArcaneGem : Item
         else
         {
             from.BeginTarget(2, false, TargetFlags.None, OnTarget);
-            from.SendMessage("What do you wish to use the gem on?");
+            from.SendMessage("На что применить самоцвет?");
         }
     }
 
@@ -59,7 +59,7 @@ public partial class ArcaneGem : Item
             if (item.LootType == LootType.Blessed)
             {
                 from.SendMessage(
-                    "You can only use this on exceptionally crafted robes, thigh boots, cloaks, or leather gloves."
+                    "Это годится только для робы, сапог, плаща или кожаных перчаток превосходной работы."
                 );
                 return;
             }
@@ -76,7 +76,7 @@ public partial class ArcaneGem : Item
             {
                 if (eq.CurArcaneCharges >= eq.MaxArcaneCharges)
                 {
-                    from.SendMessage("That item is already fully charged.");
+                    from.SendMessage("Заряд уже полный.");
                 }
                 else
                 {
@@ -94,7 +94,7 @@ public partial class ArcaneGem : Item
                         eq.CurArcaneCharges += charges;
                     }
 
-                    from.SendMessage("You recharge the item.");
+                    from.SendMessage("Ты перезаряжаешь вещь.");
                     if (Amount <= 1)
                     {
                         Delete();
@@ -137,7 +137,7 @@ public partial class ArcaneGem : Item
 
                     item.Hue = DefaultArcaneHue;
 
-                    from.SendMessage("You enhance the item with your gem.");
+                    from.SendMessage("Ты улучшаешь вещь самоцветом.");
                     if (Amount <= 1)
                     {
                         Delete();
@@ -149,18 +149,18 @@ public partial class ArcaneGem : Item
                 }
                 else
                 {
-                    from.SendMessage("Only exceptional items can be enhanced with the gem.");
+                    from.SendMessage("Самоцветом можно улучшить только вещь превосходной работы.");
                 }
             }
             else
             {
-                from.SendMessage("You do not have enough skill in tailoring to enhance the item.");
+                from.SendMessage("Не хватает портняжного мастерства, чтобы улучшить вещь.");
             }
         }
         else
         {
             from.SendMessage(
-                "You can only use this on exceptionally crafted robes, thigh boots, cloaks, or leather gloves."
+                "Это годится только для робы, сапог, плаща или кожаных перчаток превосходной работы."
             );
         }
     }
