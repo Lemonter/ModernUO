@@ -50,29 +50,37 @@ public class CityGuardUpkeepTests
             CityGuardUpkeep.Run(city, guild);
             Assert.Equal(5, CityControlSystem.SwordGuardsIn(city));
 
-            // With gold in the bank and potions at auction: wages paid, the deserter replaced,
-            // every guard handed its potions.
+            // With gold in the bank and supplies at auction: wages paid, the deserter replaced for a
+            // little gold, every guard handed bandages and potions, sword guards their scrolls.
             GuildBank.DepositGold(guild.Name, 100_000);
+            AuctionHouseSystem.CreateListing(seller, new Bandage(200), 400, "Jhelom");
             AuctionHouseSystem.CreateListing(seller, new GreaterHealPotion { Amount = 30 }, 600, "Jhelom");
             AuctionHouseSystem.CreateListing(seller, new GreaterCurePotion { Amount = 10 }, 300, "Jhelom");
+            AuctionHouseSystem.CreateListing(seller, new LightningScroll { Amount = 40 }, 400, "Jhelom");
+            var before = GuildBank.GetGoldValue(guild.Name);
             CityGuardUpkeep.Run(city, guild);
             Assert.Equal(6, CityControlSystem.SwordGuardsIn(city));
+            Assert.Equal(CityGuardUpkeep.ReplaceCost(0) + 5 * CityGuardUpkeep.WagePerHour(0) + 400 + 600 + 300 + 400,
+                before - GuildBank.GetGoldValue(guild.Name));
+
             foreach (var guard in CityGuard.Of(city))
             {
+                Assert.Equal(20, guard.Backpack.GetAmount(typeof(Bandage)));
                 Assert.Equal(3, guard.Backpack.GetAmount(typeof(GreaterHealPotion)));
                 Assert.Equal(1, guard.Backpack.GetAmount(typeof(GreaterCurePotion)));
+                Assert.Equal(5, guard.Backpack.GetAmount(typeof(LightningScroll)));
             }
 
-            // A hurt guard drinks one.
+            // A hurt guard drinks a potion and ties a bandage.
             var drinker = new List<CityGuard>(CityGuard.Of(city))[0];
             drinker.Hits = drinker.HitsMax / 4;
             drinker.OnThink();
             Assert.Equal(2, drinker.Backpack.GetAmount(typeof(GreaterHealPotion)));
+            Assert.Equal(19, drinker.Backpack.GetAmount(typeof(Bandage)));
 
-            // A battle mage gets scrolls and burns one per spell; without the scroll it can't cast.
+            // A battle mage gets no scrolls and casts without them.
             Assert.True(CityControlSystem.HireMage(city, guild));
-            AuctionHouseSystem.CreateListing(seller, new MagicArrowScroll { Amount = 20 }, 200, "Jhelom");
-            CityGuardUpkeep.Run(city, guild);
+            CityGuardUpkeep.Maintain(city, guild);
             CityMageGuard mage = null;
             foreach (var guard in CityGuard.Of(city))
             {
@@ -80,25 +88,13 @@ public class CityGuardUpkeepTests
             }
 
             Assert.NotNull(mage);
-            Assert.Equal(5, mage.Backpack.GetAmount(typeof(MagicArrowScroll)));
-            Assert.True(mage.CheckSpellCast(new MagicArrowSpell(mage)));
-            Assert.Equal(4, mage.Backpack.GetAmount(typeof(MagicArrowScroll)));
-            Assert.False(mage.CheckSpellCast(new FireballSpell(mage)));
+            Assert.Equal(0, mage.Backpack.GetAmount(typeof(LightningScroll)));
+            Assert.True(mage.CheckSpellCast(new FireballSpell(mage)));
 
-            // A fallen mage is replaced too.
+            // A fallen mage is replaced too, for gold alone.
             mage.Delete();
-            CityGuardUpkeep.Run(city, guild);
+            CityGuardUpkeep.Maintain(city, guild);
             Assert.Equal(1, CityControlSystem.MagesIn(city));
-
-            // At a metal level the replacement needs ingots, bought at the auction when the bank has none.
-            GuildBank.DepositGold(guild.Name, 50_000);
-            leader.Backpack.DropItem(new MahaonIngot(MahaonMetal.Iron, 1000));
-            GuildBank.Deposit(guild.Name, leader.Backpack.FindItemByType<MahaonIngot>());
-            Assert.True(CityControlSystem.UpgradeGuards(city, guild));
-            AuctionHouseSystem.CreateListing(seller, new MahaonIngot(MahaonMetal.Iron, 60), 300, "Jhelom");
-            new List<CityGuard>(CityGuard.Of(city))[0].Delete();
-            CityGuardUpkeep.Run(city, guild);
-            Assert.Equal(6, CityControlSystem.SwordGuardsIn(city));
             Assert.True(seller.BankBox.GetAmount(typeof(Gold)) > 0);
         }
         finally

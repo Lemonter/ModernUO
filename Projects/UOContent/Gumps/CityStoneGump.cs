@@ -124,10 +124,9 @@ public class CityStoneGump : DynamicGump
         }
 
         var level = CityControlSystem.GetGuardLevel(city);
-        var (replaceGold, replaceIngots) = CityGuardUpkeep.ReplaceCost(level);
         builder.AddHtml(
             20, 275, Width - 40, 40,
-            $"Жалованье: {CityGuardUpkeep.WagePerHour(level)} золота в час на стражника. Замена павшего: {replaceGold} золота и {replaceIngots} слитков."
+            $"Жалованье: {CityGuardUpkeep.WagePerHour(level)} золота в час на стражника. Замена павшего: {CityGuardUpkeep.ReplaceCost(level)} золота."
         );
 
         builder.AddHtml(20, 320, Width - 40, 20, $"Учителя для стражи, {CityControlSystem.TeacherCost(city)} золота каждый:");

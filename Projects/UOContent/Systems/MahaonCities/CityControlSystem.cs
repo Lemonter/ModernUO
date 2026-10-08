@@ -531,7 +531,7 @@ public class CityControlSystem : GenericPersistence
         }
     }
 
-    /// <summary>The cursor that puts a pile of gold or ingots from the pack into the guild bank.</summary>
+    /// <summary>The cursor that puts a pile from the pack into the guild bank.</summary>
     public sealed class GuildDepositTarget : Server.Targeting.Target
     {
         public GuildDepositTarget() : base(2, false, Server.Targeting.TargetFlags.None)
@@ -554,7 +554,7 @@ public class CityControlSystem : GenericPersistence
             var amount = item.Amount;
             if (!MahaonBots.GuildBank.Deposit(guild.Name, item))
             {
-                from.SendMessage("Казна принимает только золото и слитки.");
+                from.SendMessage("Казна принимает только золото, слитки, бинты, зелья и свитки.");
                 return;
             }
 

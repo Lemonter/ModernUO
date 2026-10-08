@@ -245,8 +245,8 @@ public static class GuildBank
         return total;
     }
 
-    /// <summary>What the guild bank takes: gold, ingots, and the potions and scrolls its city guard uses.</summary>
-    public static bool Accepts(Item item) => item is Gold or MahaonIngot or BasePotion or SpellScroll;
+    /// <summary>What the guild bank takes: gold, ingots, and the bandages, potions and scrolls its city guard uses.</summary>
+    public static bool Accepts(Item item) => item is Gold or MahaonIngot or Bandage or BasePotion or SpellScroll;
 
     /// <summary>Puts a pile into the guild bank, merging it with a like pile already there.</summary>
     public static bool Deposit(string guildName, Item item)

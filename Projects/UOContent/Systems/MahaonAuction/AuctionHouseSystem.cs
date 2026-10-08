@@ -201,6 +201,7 @@ public class AuctionHouseSystem : GenericPersistence
     public static bool TryBuyForGuild(string guildName, AuctionListing listing)
     {
         if (listing == null || !Listings.ContainsKey(listing.Id) || listing.Price is <= 0 or > int.MaxValue ||
+            !Systems.MahaonBots.GuildBank.Accepts(listing.Item) ||
             listing.Seller?.Guild?.Name == guildName ||
             !Systems.MahaonBots.GuildBank.TrySpend(guildName, listing.Price, Systems.MahaonMetals.MahaonMetal.Iron, 0))
         {

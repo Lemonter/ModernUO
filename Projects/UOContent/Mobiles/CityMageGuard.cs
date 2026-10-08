@@ -18,33 +18,6 @@ public partial class CityMageGuard : CityGuard
 
     protected override string Title => "боевой маг";
 
-    // A battle mage reads its spells off scrolls its guild keeps it stocked with: no scroll of a
-    // spell, no casting it, and every cast burns one.
-    public override bool CheckSpellCast(ISpell spell)
-    {
-        if (!base.CheckSpellCast(spell))
-        {
-            return false;
-        }
-
-        var id = Spells.SpellRegistry.GetRegistryNumber(spell);
-        if (Backpack is not { } pack || id < 0)
-        {
-            return false;
-        }
-
-        foreach (var scroll in pack.FindItemsByType<SpellScroll>())
-        {
-            if (scroll.SpellID == id)
-            {
-                scroll.Consume();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // Bone armour, dyed with the metal of the city's guard level like the others' plate.
     protected override void Outfit()
     {

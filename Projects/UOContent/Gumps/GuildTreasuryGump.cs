@@ -9,7 +9,7 @@ namespace Server.Gumps;
 
 /// <summary>
 /// A guild's bank as its members see it, at a banker: the gold and the ingots of each metal in it.
-/// Any member puts gold or ingots in; the leader also takes gold out.
+/// Any member puts gold, ingots and guard supplies in; the leader also takes gold out.
 /// </summary>
 public class GuildTreasuryGump : DynamicGump
 {
@@ -70,7 +70,7 @@ public class GuildTreasuryGump : DynamicGump
 
         y += 10;
         builder.AddButton(20, y, 4005, 4007, 1);
-        builder.AddHtml(55, y, Width - 75, 20, "Внести золото или слитки");
+        builder.AddHtml(55, y, Width - 75, 20, "Внести золото, слитки, бинты, зелья или свитки");
         y += 30;
 
         if (leader)
@@ -94,7 +94,7 @@ public class GuildTreasuryGump : DynamicGump
         {
             case 1:
                 {
-                    from.SendMessage("Что положить в казну гильдии? (золото или слитки)");
+                    from.SendMessage("Что положить в казну гильдии?");
                     from.Target = new CityControlSystem.GuildDepositTarget();
                     break;
                 }

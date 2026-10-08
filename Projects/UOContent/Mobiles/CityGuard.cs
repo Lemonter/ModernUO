@@ -132,6 +132,10 @@ public partial class CityGuard : BaseCreature
         SetSkill(SkillName.Tactics, Math.Min(120, 80.0 + level * 2), Math.Min(120, 100.0 + level * 2));
         SetSkill(SkillName.MagicResist, Math.Min(120, 60.0 + level * 4), Math.Min(120, 80.0 + level * 4));
 
+        // Enough to read their scrolls and tie their bandages; teachers take them further.
+        SetSkill(SkillName.Magery, Math.Min(100, 40.0 + level * 2), Math.Min(100, 50.0 + level * 2));
+        SetSkill(SkillName.Healing, Math.Min(100, 40.0 + level * 2), Math.Min(100, 50.0 + level * 2));
+
         ApplyTeachers(level);
         ForgeGear(level);
         Hits = HitsMax;
@@ -230,6 +234,79 @@ public partial class CityGuard : BaseCreature
         }
     }
 
+    // A spell a sword guard reads off a scroll asks for its target once cast; this is who.
+    private Mobile _scrollTarget;
+    private long _nextScroll;
+    private long _nextBandage;
+
+    private const long ScrollDelayMs = 6000;
+    private const long BandageDelayMs = 2000;
+
+    /// <summary>
+    /// Bandages and scrolls the guild keeps the guard stocked with: a bandage when hurt, and for a
+    /// sword guard a scroll — a cure when poisoned, a greater heal when badly hurt, lightning at a
+    /// foe out of reach of its blade. Read as a player reads a scroll, on its Magery.
+    /// </summary>
+    private void UseSupplies()
+    {
+        if (Backpack is not { } pack)
+        {
+            return;
+        }
+
+        if (_scrollTarget != null && Target is { } cursor)
+        {
+            if (_scrollTarget is { Deleted: false, Alive: true })
+            {
+                cursor.Invoke(this, _scrollTarget);
+            }
+
+            _scrollTarget = null;
+            return;
+        }
+
+        if (Spell != null)
+        {
+            return;
+        }
+
+        var now = Core.TickCount;
+        if (now - _nextBandage >= 0 && Hits < HitsMax * 0.8 && BandageContext.GetContext(this) == null &&
+            pack.FindItemByType<Bandage>() is { } bandage && BandageContext.BeginHeal(this, this) != null)
+        {
+            bandage.Consume();
+            _nextBandage = now + BandageDelayMs;
+        }
+
+        if (this is CityMageGuard || now - _nextScroll < 0)
+        {
+            return;
+        }
+
+        Spells.Spell spell = null;
+        Mobile target = null;
+
+        if (Poisoned && pack.FindItemByType<CureScroll>() is { } cure)
+        {
+            (spell, target) = (new Spells.Second.CureSpell(this, cure), this);
+        }
+        else if (Hits < HitsMax * 0.6 && pack.FindItemByType<GreaterHealScroll>() is { } heal)
+        {
+            (spell, target) = (new Spells.Fourth.GreaterHealSpell(this, heal), this);
+        }
+        else if (Combatant is { Alive: true } foe && !InRange(foe, 1) && InRange(foe, 10) && InLOS(foe) &&
+                 pack.FindItemByType<LightningScroll>() is { } bolt)
+        {
+            (spell, target) = (new Spells.Fourth.LightningSpell(this, bolt), foe);
+        }
+
+        if (spell?.Cast() == true)
+        {
+            _scrollTarget = target;
+            _nextScroll = now + ScrollDelayMs;
+        }
+    }
+
     public override bool AlwaysMurderer => false;
 
     public override bool IsEnemy(Mobile m) =>
@@ -281,6 +358,7 @@ public partial class CityGuard : BaseCreature
         base.OnThink();
 
         DrinkIfHurt();
+        UseSupplies();
 
         // Only bother scanning for trouble on an occasional think tick, not every single
         // one — cheap and still looks natural. Wandering/patrolling itself is handled
