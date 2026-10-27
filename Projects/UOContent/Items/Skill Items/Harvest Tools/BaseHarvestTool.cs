@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using ModernUO.Serialization;
 using Server.Collections;
 using Server.ContextMenus;
@@ -51,6 +51,12 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
 
     public abstract HarvestSystem HarvestSystem { get; }
 
+    /// <summary>
+    ///     Инструмент берёт не только руду, но и саму землю: лопатой копают ямы, рвы и пруды
+    ///     (Systems.MahaonMapEdits.MahaonExcavation). У кирки этого нет — скала киркой, земля лопатой.
+    /// </summary>
+    public virtual bool CanExcavate => false;
+
     public int OnCraft(
         int quality, bool makersMark, Mobile from, CraftSystem craftSystem, Type typeRes, BaseTool tool,
         CraftItem craftItem, int resHue
@@ -99,6 +105,12 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
         }
 
         list.Add(1060584, _usesRemaining); // uses remaining: ~1_val~
+
+        if (CanExcavate)
+        {
+            list.Add("Копает землю: яма, ров, пруд");
+            list.Add("Режим — в меню предмета (Alt-клик)");
+        }
     }
 
     public virtual void DisplayDurabilityTo(Mobile m)
@@ -149,6 +161,18 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
             return;
         }
 
+        // У лопаты своё меню: не «руда или камень», а «добыча или земляные работы».
+        // Выбор принадлежит игроку, не инструменту — как и выбор руды у кирки.
+        if (item is BaseHarvestTool { CanExcavate: true })
+        {
+            var mode = Systems.MahaonMapEdits.MahaonDigMode.Of(pm);
+
+            list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Harvest, mode != Systems.MahaonMapEdits.DigMode.Harvest, 6163));
+            list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Terraform, mode != Systems.MahaonMapEdits.DigMode.Terraform, 6164));
+
+            return;
+        }
+
         list.Add(new ContextMenuEntry(pm.ToggleMiningStone ? 6179 : 6178)
         {
             Color = 0x421F
@@ -174,6 +198,34 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
                 },
                 this,
                 crafter
+            );
+        }
+    }
+
+    /// <summary>
+    ///     «Добыча» / «Изменение ландшафта» в меню лопаты. Номера 6163 и 6164 — пустые
+    ///     строки в клилоке рядом с остальными пунктами меню (3006163, 3006164); текст им
+    ///     задан в нашей русской поставке клилока.
+    /// </summary>
+    private class DigModeEntry : ContextMenuEntry
+    {
+        private readonly Systems.MahaonMapEdits.DigMode _mode;
+
+        public DigModeEntry(Systems.MahaonMapEdits.DigMode mode, bool enabled, int number) : base(number)
+        {
+            _mode = mode;
+            Enabled = enabled;
+        }
+
+        public override void OnClick(Mobile from, IEntity target)
+        {
+            Systems.MahaonMapEdits.MahaonDigMode.Set(from, _mode);
+
+            from.SendMessage(
+                0x59,
+                _mode == Systems.MahaonMapEdits.DigMode.Harvest
+                    ? "Лопата для добычи: копаешь песок, не меняя глубину."
+                    : "Лопата для земляных работ: копаешь яму и засыпаешь её."
             );
         }
     }

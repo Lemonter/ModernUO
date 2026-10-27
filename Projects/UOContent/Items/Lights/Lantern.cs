@@ -14,7 +14,10 @@ public partial class Lantern : BaseEquipableLight
         Duration = Burnout ? FullDuration : TimeSpan.Zero;
 
         Burning = false;
-        Light = LightType.Circle300;
+
+        // Парный с тайлдатой: на земле номер берётся отсюда, в руке — из tiledata.mul.
+        // Поменял одно — меняй другое, см. MahaonLights.
+        Light = MahaonLights.LanternFar;
     }
 
     public override double DefaultWeight => 2.0;

@@ -4,31 +4,33 @@ using ModernUO.Serialization;
 namespace Server.Items;
 
 /// <summary>
-///     A rain puddle — purely decorative, self-deletes via its own timer (or immediately
-///     when PuddleSystem clears everything on weather change). Persists like any other
-///     Item across a save/restart is fine — its lifespan timer just resumes counting down
-///     the moment it deserializes back in, same as any other DelayCall-driven item.
+///     Дождевая лужа. Живёт, пока идёт дождь, и высыхает через минуту после него — этим
+///     распоряжается PuddleSystem, поэтому своего срока у лужи нет.
+///
+///     Почему предмет, а не правка карты: лужа временная, а журнал правок (MahaonMapEdits)
+///     вечный и append-only. Каждая гроза дописывала бы в него тысячи записей, которые
+///     назавтра уже ничего не значат. Предмет исчезает бесследно.
+///
+///     Графика взята проходимая (см. PuddleSystem), так что по луже ходят, а не спотыкаются
+///     об неё.
 /// </summary>
 [SerializationGenerator(0, false)]
 public partial class MahaonPuddle : Item
 {
-    public MahaonPuddle(int itemId, TimeSpan lifespan) : base(itemId)
+    public MahaonPuddle(int itemId) : base(itemId)
     {
         Movable = false;
-        Visible = true;
-
-        Timer.DelayCall(lifespan, Delete);
+        Name = "лужа";
     }
 
-    // The lifespan timer above only gets armed on original creation, not on deserializing
-    // back after a restart (timers don't survive that, only the item's raw state does) —
-    // catch that case and clean it up shortly after load instead of leaving a stray puddle
-    // sitting around forever.
+    // Перезапуск сервера лужи не переживают: дождь после загрузки — уже другой дождь, а
+    // учёт PuddleSystem живёт в памяти и про эти лужи ничего не знает. Поэтому старые
+    // убираем вскоре после загрузки, вместо того чтобы оставлять их лежать навсегда.
     [AfterDeserialization]
     private void AfterDeserialization()
     {
         Timer.DelayCall(TimeSpan.FromMinutes(1), Delete);
     }
 
-    public override bool OnMoveOver(Mobile m) => true; // never blocks — decorative only
+    public override bool OnMoveOver(Mobile m) => true;
 }

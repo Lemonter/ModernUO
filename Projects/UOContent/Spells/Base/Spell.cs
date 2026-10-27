@@ -283,8 +283,19 @@ namespace Server.Spells
             return damage / 100;
         }
 
+        // Исключение для ботов (Caster is Mobiles.BotMobile) отсюда убрано.
+        //
+        // Из-за него заклинания ботам не стоили ничего, и половина системы жила впустую:
+        // BotMobile выдаёт каждому боту сумку реагентов при создании, SupplyGoal следит за
+        // запасом и докупает по сорок штук, когда остаётся меньше пятнадцати, — а тратить
+        // их было нечем. Заодно это ломало сравнение заклинаний: выбирая удар, бот не имел
+        // причины считаться с расходом, которого не происходило.
+        //
+        // Теперь реагенты настоящие. Перед выбором заклинания бот смотрит, есть ли они
+        // (BotSpellbook.HasReagents), а если нет — бьёт тем, что не требует реагентов, или
+        // идёт в ближний бой. Пустым он не останется: сумка плюс снабжение.
         public virtual bool ConsumeReagents() =>
-            Scroll != null || !Caster.Player || Caster is Mobiles.BotMobile ||
+            Scroll != null || !Caster.Player ||
             AosAttributes.GetValue(Caster, AosAttribute.LowerRegCost) > Utility.Random(100) ||
             DuelContext.IsFreeConsume(Caster) || Caster.Backpack?.ConsumeTotal(Info.Reagents, Info.Amounts) == -1;
 

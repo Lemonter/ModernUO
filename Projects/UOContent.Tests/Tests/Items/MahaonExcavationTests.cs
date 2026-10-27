@@ -73,20 +73,20 @@ public class MahaonExcavationTests
     }
 
     /// <summary>
-    ///     На последней лопате яма обязана стать водой — это и есть пруд, ради которого всё
-    ///     затевалось. Раньше — только вскопанная земля.
+    ///     Сама копка воду не наливает — никогда, на любой глубине. Вода приходит только
+    ///     по рельефу из настоящего источника (MahaonWaterFlow), и это главное отличие от
+    ///     первых двух версий: там пруд ПОЯВЛЯЛСЯ на дне, хоть посреди сухого луга.
     /// </summary>
     [Fact]
-    public void Dig_FloodsAtMaxDepth()
+    public void Dig_NeverMakesWaterByItself()
     {
         Reset();
 
-        for (var i = 1; i < MahaonExcavation.MaxDepth; i++)
+        for (var i = 0; i < MahaonExcavation.MaxDepth; i++)
         {
             Assert.Equal(MahaonExcavation.DigResult.Dug, MahaonExcavation.Dig(Facet, X, Y, "копка"));
+            Assert.False(MahaonExcavation.IsWater(Facet, X, Y));
         }
-
-        Assert.Equal(MahaonExcavation.DigResult.Flooded, MahaonExcavation.Dig(Facet, X, Y, "копка"));
 
         Reset();
     }
@@ -167,4 +167,35 @@ public class MahaonExcavationTests
     // бы по неверной причине, а такой хуже отсутствующего — проверяется вживую, лопатой у
     // банка. Сама же ветка общая с подрывом (MahaonDemolition.IsDestructibleArea), и её
     // логика закреплена в MahaonDemolitionTests.
+
+    /// <summary>
+    ///     Поворот лопаты. Режимов у неё нет: направление берётся из журнала, и потому
+    ///     важно, что цикл замкнут — копаем до воды, бьём ещё раз и начинаем засыпать, а
+    ///     засыпав до исходной высоты, снова копаем.
+    /// </summary>
+    [Fact]
+    public void FillsNext_TurnsAroundAtWaterAndBackAtOriginalHeight()
+    {
+        Reset();
+
+        Assert.False(MahaonExcavation.FillsNext(Facet, X, Y)); // целина — копаем
+
+        for (var i = 1; i < MahaonExcavation.MaxDepth; i++)
+        {
+            MahaonExcavation.Dig(Facet, X, Y, "копка: тест");
+            Assert.False(MahaonExcavation.FillsNext(Facet, X, Y)); // яма ещё не полна
+        }
+
+        MahaonExcavation.Dig(Facet, X, Y, "копка: тест"); // набрала воду
+        Assert.True(MahaonExcavation.FillsNext(Facet, X, Y));
+
+        for (var i = 1; i < MahaonExcavation.MaxDepth; i++)
+        {
+            Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка: тест"));
+            Assert.True(MahaonExcavation.FillsNext(Facet, X, Y)); // начал засыпать — засыпай
+        }
+
+        Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка: тест")); // вернулись на исходную
+        Assert.False(MahaonExcavation.FillsNext(Facet, X, Y));           // и снова копаем
+    }
 }

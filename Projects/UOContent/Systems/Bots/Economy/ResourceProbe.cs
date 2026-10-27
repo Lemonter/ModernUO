@@ -32,7 +32,21 @@ public static class ResourceProbe
 
     /// <summary>The nearest target within <see cref="Reach"/>: its location and, for statics,
     /// the tile graphic (0 for land).</summary>
-    public static bool TryFind(Map map, Point3D from, ResourceKind kind, out Point3D target, out int graphic)
+    public static bool TryFind(Map map, Point3D from, ResourceKind kind, out Point3D target, out int graphic) =>
+        TryFind(map, from, kind, Reach, out target, out graphic);
+
+    /// <summary>
+    ///     То же, но на заданном радиусе — чтобы можно было посмотреть ДАЛЬШЕ вытянутой руки.
+    ///
+    ///     Понадобилось из-за леса. Reach равен двум, то есть «до чего дотянусь»; срубив
+    ///     соседнее дерево, бот в этом радиусе не находил больше ничего и заканчивал работу,
+    ///     хотя стоял в лесу. Широкий радиус нужен не для замаха, а чтобы знать, куда сделать
+    ///     несколько шагов (см. GatherAction).
+    ///
+    ///     Цена честная: радиус 12 — это 625 клеток с перебором статики на каждой. Поэтому
+    ///     широкий поиск запускается только когда вблизи пусто, а не каждый тик.
+    /// </summary>
+    public static bool TryFind(Map map, Point3D from, ResourceKind kind, int radius, out Point3D target, out int graphic)
     {
         target = Point3D.Zero;
         graphic = 0;
@@ -45,9 +59,9 @@ public static class ResourceProbe
         var treeTiles = kind == ResourceKind.Wood ? Lumberjacking.System.GetDefinition()?.StaticTiles : null;
         var bestDist = int.MaxValue;
 
-        for (var dy = -Reach; dy <= Reach; dy++)
+        for (var dy = -radius; dy <= radius; dy++)
         {
-            for (var dx = -Reach; dx <= Reach; dx++)
+            for (var dx = -radius; dx <= radius; dx++)
             {
                 if (dx == 0 && dy == 0 && kind != ResourceKind.Fish)
                 {

@@ -41,6 +41,13 @@ public static class StaticOverrideManager
     // typical UO client view range with a little slack.
     private const int NotifyRange = 24;
 
+    // Таймеры ModernUO держат не больше 2^38 мс (около 8,7 года) и на более долгий срок пишут
+    // ошибку в лог. Подмена на такой срок — это «навсегда» (мебель городских домов прячется
+    // на сто лет), и таймер истечения ей не нужен: снимают её явно (RemoveOverride), а
+    // рестарт сервера она всё равно не переживает — постоянные подмены заново ставит загрузка
+    // мира (MahaonCityHouseSystem.ReapplyAllFurnitureHiding).
+    private static readonly TimeSpan MaxExpiryTimer = TimeSpan.FromDays(3000);
+
     public static uint AddOverride(Point3D location, Map map, ushort originalGraphic, ushort replacementGraphic, TimeSpan duration)
     {
         var id = _nextId++;
@@ -51,7 +58,10 @@ public static class StaticOverrideManager
 
         NotifyNearbyPlayers(entry, StaticOverrideAction.Add);
 
-        Timer.DelayCall(duration, () => ExpireOverride(id));
+        if (duration < MaxExpiryTimer)
+        {
+            Timer.DelayCall(duration, () => ExpireOverride(id));
+        }
 
         return id;
     }

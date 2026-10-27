@@ -11,6 +11,10 @@ public partial class MahaonReagentPouch : Bag
         ItemID = 0x0E76;
         Name = "мешочек с реагентами";
 
+        // Bloodmoss тут не было, а он один из восьми магических реагентов. Пока заклинания
+        // боту ничего не стоили, это не вылезало; теперь вылезет — без него не накладываются
+        // Bless, Agility, Strength, Teleport и Recall, то есть вся полезная половина книги.
+        DropItem(new Bloodmoss(20));
         DropItem(new Garlic(20));
         DropItem(new Ginseng(20));
         DropItem(new MandrakeRoot(20));

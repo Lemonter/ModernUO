@@ -53,6 +53,48 @@ public static class MahaonHouseFenceSystem
 
     public static int GetCost(int radius) => CostByRadius.TryGetValue(radius, out var cost) ? cost : 0;
 
+    /// <summary>
+    ///     Fences built before the iron one — ThinStoneWall pieces with a wooden gate, gaps at
+    ///     three corners out of four — are rebuilt in iron once the world is loaded: same house,
+    ///     same radius, free of charge (it was paid for already).
+    /// </summary>
+    public static void Initialize()
+    {
+        var stale = new Dictionary<BaseHouse, int>();
+        var staleGates = new HashSet<BaseHouse>();
+        var radii = new Dictionary<BaseHouse, int>();
+
+        foreach (var item in World.Items.Values)
+        {
+            if (item is MahaonHouseFence { Deleted: false, OwnerHouse.Deleted: false } fence)
+            {
+                radii[fence.OwnerHouse] = fence.Radius;
+
+                if (fence.IsLegacy)
+                {
+                    stale[fence.OwnerHouse] = fence.Radius;
+                }
+            }
+            else if (item is MahaonHouseFenceGate { Deleted: false, OwnerHouse.Deleted: false, IsLegacy: true } gate)
+            {
+                staleGates.Add(gate.OwnerHouse);
+            }
+        }
+
+        foreach (var house in staleGates)
+        {
+            if (!stale.ContainsKey(house) && radii.TryGetValue(house, out var radius))
+            {
+                stale[house] = radius;
+            }
+        }
+
+        foreach (var (house, radius) in stale)
+        {
+            Construct(house, radius);
+        }
+    }
+
     private sealed class Territory
     {
         public int Radius;
@@ -352,22 +394,28 @@ public static class MahaonHouseFenceSystem
             ringSet.Add(ToWorld(house, mcl, pad, x, y));
         }
 
+        // Fence art stands on a tile's south or east edge (see MahaonFenceKind), so a piece
+        // joins its tile to the WEST or NORTH neighbour: the fence line runs through the
+        // south-east corners of the ring tiles and closes at every corner, convex or concave.
+        // A tile with neither neighbour (the north-west corner of a run) gets no piece — the
+        // lines of its neighbours already meet at its corner, as on the original map; a
+        // diagonal step through it stays shut, since a diagonal move needs both sides free.
         var ringPlacements = new List<(Point2D pos, MahaonFenceKind kind)>();
         foreach (var (x, y) in current)
         {
             var pos = ToWorld(house, mcl, pad, x, y);
 
             var north = ringSet.Contains(new Point2D(pos.X, pos.Y - 1));
-            var south = ringSet.Contains(new Point2D(pos.X, pos.Y + 1));
-            var east = ringSet.Contains(new Point2D(pos.X + 1, pos.Y));
             var west = ringSet.Contains(new Point2D(pos.X - 1, pos.Y));
 
-            var vertical = north || south;
-            var horizontal = east || west;
+            if (!north && !west)
+            {
+                continue;
+            }
 
-            var kind = vertical && !horizontal ? MahaonFenceKind.WallY
-                : horizontal && !vertical ? MahaonFenceKind.WallX
-                : MahaonFenceKind.Post; // corner, junction, or isolated cell — post either way
+            var kind = north && west ? MahaonFenceKind.Corner
+                : west ? MahaonFenceKind.WallX
+                : MahaonFenceKind.WallY;
 
             ringPlacements.Add((pos, kind));
         }
@@ -410,6 +458,12 @@ public static class MahaonHouseFenceSystem
 
         foreach (var entry in ring)
         {
+            // A gate only fits a straight run — there's no corner gate graphic.
+            if (entry.kind == MahaonFenceKind.Corner)
+            {
+                continue;
+            }
+
             var dx = entry.pos.X - doorLoc.X;
             var dy = entry.pos.Y - doorLoc.Y;
             var d = (long)dx * dx + (long)dy * dy;
@@ -430,11 +484,19 @@ public static class MahaonHouseFenceSystem
         // смотрела внутрь двора вместо улицы. Отсюда и «калитка смотрит в другую сторону».
         //
         // Сторону определяем по положению относительно центра дома.
+        //
+        // И пара направлений для прогона была перепутана: West/East — створки ГОРИЗОНТАЛЬНОГО
+        // прогона (вдоль X), South/North — вертикального. Так стоят железные калитки в
+        // декорациях ModernUO (Мунглоу: WestCW/EastCCW рядом по X; кладбище Веспера:
+        // SouthCW/NorthCCW рядом по Y), и так их закрытая графика ложится в линию ограды.
+        // Внутри пары выбирается та, чья створка уходит НАРУЖУ (BaseDoor.GetOffset):
+        // линия ограды идёт по южному и восточному краю клеток кольца, поэтому северный и
+        // западный ряды стоят снаружи линии, а южный и восточный — внутри.
         var vertical = best.kind == MahaonFenceKind.WallY;
 
         var facing = vertical
-            ? best.pos.X < house.X ? DoorFacing.WestCW : DoorFacing.EastCCW
-            : best.pos.Y < house.Y ? DoorFacing.NorthCCW : DoorFacing.SouthCW;
+            ? best.pos.X < house.X ? DoorFacing.NorthCW : DoorFacing.SouthCW
+            : best.pos.Y < house.Y ? DoorFacing.EastCW : DoorFacing.WestCW;
 
         return (best.pos, facing);
     }

@@ -1,55 +1,94 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Server.Items;
 using Server.Mobiles;
 using Server.Regions;
+using Server.Systems.MahaonMapEdits;
+
+// MahaonMapEdits — и пространство имён, и класс в нём; без псевдонима имя разрешается
+// в пространство.
+using MapEdits = Server.Systems.MahaonMapEdits.MahaonMapEdits;
 
 namespace Server.Systems.MahaonWeather;
 
 /// <summary>
-///     Spawns decorative puddles near online players while it's raining — only on
-///     passable outdoor ground (not indoors, not in a dungeon/cave), same rules a real
-///     rain-fx script would check. Two graphic pools ("A" and "B" per the request); every
-///     puddle picks one pool, then one graphic from it, at random.
+///     Дождевая вода: во что дождь наливается и как потом высыхает.
+///
+///     ---- Что тут изменилось и почему ----
+///
+///     Раньше это была чистая декорация: во время дождя рядом с игроками рассыпались
+///     кляксы «куда попало». Причём из КРОВАВЫХ ПЯТЕН — потому что вся водяная графика
+///     клиента помечена Impassable, об неё спотыкаешься, а перекрашенная в синее кровь
+///     хотя бы проходима.
+///
+///     Оба решения теперь не нужны.
+///
+///     Во-первых, у земли появился рельеф: лопата роет ямы, и вода в мире стоит на своём
+///     уровне (MahaonWaterFlow). Значит дождь обязан наливаться ТУДА, КУДА ВОДА И ТЕЧЁТ —
+///     в низины. Лужа посреди бугра выглядит ошибкой, потому что ошибкой и является.
+///
+///     Во-вторых, проходимая водяная графика в клиенте всё-таки есть: 0x1FA3..0x1FCA,
+///     «wave» — Translucent|Wet|Animation, высота 0, Impassable НЕ стоит. Прошлый перебор
+///     её не нашёл, потому что искал по слову water в названии. Это настоящая анимированная
+///     вода, по которой можно ходить, — ровно то, чем мелкая лужа и должна быть.
+///
+///     ---- Правила ----
+///
+///     Наливается только в котловину: тайл, у которого ВСЕ соседи вокруг выше. Дно ямы
+///     заливается целиком, борта — нет. Ровное поле котловиной не считается, иначе лужи
+///     расползлись бы по всему лугу.
+///
+///     Дождевая вода ВРЕМЕННАЯ: кончился дождь — через минуту её нет. Рыбы в ней нет тоже
+///     (см. HarvestTarget): это лужа, а не пруд. Настоящий пруд получается иначе — копкой
+///     канавы к реке, и он остаётся.
 /// </summary>
 public static class PuddleSystem
 {
-    // ---- Почему лужи сделаны из кровавых пятен --------------------------------------
-    //
-    // Раньше здесь стояли водяные статики 0x1559 и 0x1796..0x17A8 — по названию как раз
-    // «water», выбор напрашивающийся. Беда в том, что ВСЕ они помечены в tiledata флагом
-    // Impassable: об такую лужу игрок спотыкается. OnMoveOver у MahaonPuddle это не
-    // лечит — непроходимость решается раньше, на проверке проходимости тайла, и до
-    // OnMoveOver дело просто не доходит.
-    //
-    // Проходимой водяной графики в клиенте нет вовсе: проверено перебором tiledata, среди
-    // тайлов со словом water в названии проходимых нет ни одного.
-    //
-    // Зато есть кровавые пятна: проходимые, плоские, неправильной формы. Перекрашенные в
-    // синий они читаются именно как лужи. Приём на шардах известный, новой графики не
-    // требует, а главное — по ним можно ходить.
-    //
-    // Два набора оставлены: A — крупные разливы, B — мелкие брызги. Смешиваясь, они дают
-    // лужам разный размер, ради чего пулы и заводились.
+    /// <summary>
+    ///     Проходимая анимированная вода. Единственный такой набор в нашей тайлдате:
+    ///     Translucent|Wet|Animation без Impassable.
+    ///
+    ///     Если на глаз покажется слишком «морской пеной» — рядом есть ещё два проходимых
+    ///     мокрых набора: болотная рябь 0x320D..0x324A и всплеск 0x5675. Подменяется
+    ///     здесь, одной строкой.
+    /// </summary>
+    private static readonly int[] RainwaterGraphics =
+    {
+        0x1FA3, 0x1FA4, 0x1FA5, 0x1FA6, 0x1FA7, 0x1FA8, 0x1FA9, 0x1FAA, 0x1FAB, 0x1FAC,
+        0x1FAD, 0x1FAE, 0x1FAF, 0x1FB0, 0x1FB1, 0x1FB2, 0x1FB3, 0x1FB4, 0x1FB5, 0x1FB6,
+        0x1FB7, 0x1FB8, 0x1FB9, 0x1FBA, 0x1FBB, 0x1FBC, 0x1FBD, 0x1FBE, 0x1FBF, 0x1FC0,
+        0x1FC1, 0x1FC2, 0x1FC3, 0x1FC4, 0x1FC5, 0x1FC6, 0x1FC7, 0x1FC8, 0x1FC9, 0x1FCA
+    };
 
-    // Крупные разливы.
-    private static readonly int[] PoolA = { 0x122A, 0x122D };
-
-    // Мелкие брызги и потёки.
-    private static readonly int[] PoolB = { 0x122B, 0x122C, 0x122E };
-
-    /// <summary>Синева воды. Чистая косметика — правится на глаз.</summary>
-    private const int WaterHue = 0x481;
+    /// <summary>Дождевая ли это графика. Нужно рыбалке: в луже рыбы нет.</summary>
+    public static bool IsRainwater(int graphic) => Array.IndexOf(RainwaterGraphics, graphic) >= 0;
 
     private static readonly TimeSpan SpawnTick = TimeSpan.FromSeconds(6);
-    private static readonly TimeSpan PuddleLifespan = TimeSpan.FromMinutes(3);
 
-    private const int SpawnRadius = 10; // roll a spot within this many tiles of a player
-    private const int MaxAttemptsPerPlayer = 4; // give up on this player's roll after this many bad spots
-    private const double SpawnChancePerTick = 0.35; // per eligible player, per tick
+    /// <summary>Сколько держится вода после того, как дождь кончился.</summary>
+    public static readonly TimeSpan DryingDelay = TimeSpan.FromMinutes(1);
+
+    private const int SpawnRadius = 12;        // где ищем низину вокруг игрока
+    private const int MaxAttemptsPerPlayer = 6; // столько мест пробуем за такт
+    private const double SpawnChancePerTick = 0.5;
+
+    /// <summary>Сколько тайлов дна мы согласны считать одной лужей. Больше — это уже
+    /// равнина, а не котловина, и заливать её не надо.</summary>
+    private const int MaxBasin = 40;
+
+    /// <summary>Предохранитель на весь мир.</summary>
+    private const int MaxPuddles = 600;
 
     private static readonly List<MahaonPuddle> ActivePuddles = new();
+    private static readonly HashSet<(int Map, int X, int Y)> Taken = new();
+
     private static Timer _spawnTimer;
+
+    /// <summary>Номер текущей «погодной эпохи»: по нему отложенное высыхание понимает,
+    /// что дождь успел начаться заново, и отменяет себя само.</summary>
+    private static int _epoch;
+
+    public static int Count => ActivePuddles.Count;
 
     public static void Configure()
     {
@@ -59,7 +98,7 @@ public static class PuddleSystem
     }
 
     /// <summary>
-    ///     Ругается, если в наборах оказалась непроходимая графика.
+    ///     Ругается, если в наборе оказалась непроходимая графика.
     ///
     ///     Это не паранойя, а память о конкретной ошибке: здесь стояли водяные статики —
     ///     выбор по названию очевидный, — и все они помечены Impassable. Игроки
@@ -69,44 +108,55 @@ public static class PuddleSystem
     /// </summary>
     private static void WarnAboutImpassableGraphics()
     {
-        foreach (var graphic in PoolA)
-        {
-            Complain(graphic);
-        }
-
-        foreach (var graphic in PoolB)
-        {
-            Complain(graphic);
-        }
-
-        static void Complain(int graphic)
+        foreach (var graphic in RainwaterGraphics)
         {
             if ((TileData.ItemTable[graphic & TileData.MaxItemValue].Flags & TileFlag.Impassable) == 0)
             {
-                return;
+                continue;
             }
 
             Utility.PushColor(ConsoleColor.Red);
             Console.WriteLine(
-                $"[Puddles] графика {graphic:X4} непроходима — об такую лужу игроки будут спотыкаться."
+                $"[Дождь] графика {graphic:X4} непроходима — об такую лужу игроки будут спотыкаться."
             );
             Utility.PopColor();
         }
     }
 
+    private static bool Raining(MahaonWeather weather) =>
+        weather is MahaonWeather.Rain or MahaonWeather.Storm;
+
     private static void OnWeatherChanged(MahaonWeather weather)
     {
-        if (weather == MahaonWeather.Rain)
+        _epoch++;
+
+        if (Raining(weather))
         {
             _spawnTimer ??= Timer.DelayCall(SpawnTick, SpawnTick, SpawnTick_OnTick);
             return;
         }
 
-        // Rain stopped (or it's snowing/storming/clear) — no more puddles, and clear out
-        // whatever's already down instead of leaving them to melt away on their own timers.
         _spawnTimer?.Stop();
         _spawnTimer = null;
 
+        // Не сразу: вода уходит в землю не мгновенно. Если за эту минуту дождь пойдёт
+        // снова, эпоха сменится и высыхание отменится само.
+        var epoch = _epoch;
+
+        Timer.DelayCall(
+            DryingDelay,
+            () =>
+            {
+                if (epoch == _epoch)
+                {
+                    DryEverything();
+                }
+            }
+        );
+    }
+
+    public static void DryEverything()
+    {
         foreach (var puddle in ActivePuddles)
         {
             if (!puddle.Deleted)
@@ -116,11 +166,17 @@ public static class PuddleSystem
         }
 
         ActivePuddles.Clear();
+        Taken.Clear();
     }
 
     private static void SpawnTick_OnTick()
     {
         ActivePuddles.RemoveAll(p => p.Deleted);
+
+        if (ActivePuddles.Count >= MaxPuddles)
+        {
+            return;
+        }
 
         foreach (var player in World.Mobiles.Values)
         {
@@ -144,43 +200,24 @@ public static class PuddleSystem
 
         for (var attempt = 0; attempt < MaxAttemptsPerPlayer; attempt++)
         {
-            var centerX = player.X + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
-            var centerY = player.Y + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
+            var x = player.X + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
+            var y = player.Y + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
 
-            if (!IsValidPuddleSpot(map, centerX, centerY, out _))
+            if (!TryFindBasin(map, x, y, out var floor, out var level))
             {
                 continue;
             }
 
-            // A single tile read as a speck, not a puddle — lay down a small cluster
-            // instead, either 2x2 (4 tiles) or 3x3 (9 tiles), picked randomly per puddle
-            // for a bit of size variety. Every tile in the cluster is checked on its own —
-            // a cell that fails the outdoor/passable/dungeon check is just skipped, not a
-            // reason to abort the whole cluster (edges of a valid area shouldn't block the
-            // rest of it from getting puddles).
-            var clusterSize = Utility.RandomBool() ? 2 : 3;
             var placed = 0;
 
-            for (var dx = 0; dx < clusterSize; dx++)
+            foreach (var (bx, by) in floor)
             {
-                for (var dy = 0; dy < clusterSize; dy++)
-                {
-                    var x = centerX + dx;
-                    var y = centerY + dy;
+                var puddle = new MahaonPuddle(RainwaterGraphics.RandomElement());
+                puddle.MoveToWorld(new Point3D(bx, by, level), map);
 
-                    if (!IsValidPuddleSpot(map, x, y, out var z))
-                    {
-                        continue;
-                    }
-
-                    var pool = Utility.RandomBool() ? PoolA : PoolB;
-                    var graphic = pool.RandomElement();
-
-                    var puddle = new MahaonPuddle(graphic, PuddleLifespan) { Hue = WaterHue };
-                    puddle.MoveToWorld(new Point3D(x, y, z), map);
-                    ActivePuddles.Add(puddle);
-                    placed++;
-                }
+                ActivePuddles.Add(puddle);
+                Taken.Add((map.MapID, bx, by));
+                placed++;
             }
 
             if (placed > 0)
@@ -190,40 +227,122 @@ public static class PuddleSystem
         }
     }
 
-    /// <summary>Passable, outdoor (clear line of sight straight up — no roof), and not
-    /// inside a dungeon/cave region.</summary>
-    private static bool IsValidPuddleSpot(Map map, int x, int y, out int z)
+    /// <summary>
+    ///     Котловина ли тут, и если да — какое у неё дно.
+    ///
+    ///     Разливаемся по соседям РОВНО ТОЙ ЖЕ высоты: это плоское дно ямы. Наткнулись на
+    ///     соседа ниже — значит мы не на дне, настоящее дно где-то там, и эта попытка не
+    ///     наша. Дно разрослось больше MaxBasin — значит это не яма, а равнина.
+    /// </summary>
+    private static bool TryFindBasin(Map map, int x, int y, out List<(int X, int Y)> floor, out int level)
     {
-        z = 0;
+        floor = null;
+        level = 0;
 
-        if (map == null || map == Map.Internal)
+        if (map == null || map == Map.Internal || x < 0 || y < 0 || x >= map.Width || y >= map.Height)
         {
             return false;
         }
 
-        var landTile = map.Tiles.GetLandTile(x, y);
-        var flags = TileData.LandTable[landTile.ID & TileData.MaxLandValue].Flags;
-
-        if ((flags & TileFlag.Impassable) != 0)
+        if (!IsOpenGround(map, x, y))
         {
-            return false; // not walkable ground
+            return false;
         }
 
-        z = map.GetAverageZ(x, y);
+        level = MahaonExcavation.GroundZ(map, x, y);
+
+        var found = new List<(int X, int Y)>();
+        var seen = new HashSet<(int X, int Y)> { (x, y) };
+        var queue = new Queue<(int X, int Y)>();
+        var walled = false;
+
+        queue.Enqueue((x, y));
+
+        while (queue.Count > 0)
+        {
+            var (cx, cy) = queue.Dequeue();
+            found.Add((cx, cy));
+
+            if (found.Count > MaxBasin)
+            {
+                return false; // равнина, а не яма
+            }
+
+            Span<(int X, int Y)> around = [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)];
+
+            foreach (var (nx, ny) in around)
+            {
+                if (nx < 0 || ny < 0 || nx >= map.Width || ny >= map.Height || !seen.Add((nx, ny)))
+                {
+                    continue;
+                }
+
+                var nz = MahaonExcavation.GroundZ(map, nx, ny);
+
+                if (nz < level)
+                {
+                    return false; // ниже нас — значит дно не здесь
+                }
+
+                if (nz > level)
+                {
+                    walled = true; // борт ямы
+                    continue;
+                }
+
+                if (!IsOpenGround(map, nx, ny))
+                {
+                    return false; // дно упирается в крышу или в чужую стройку — не наша лужа
+                }
+
+                queue.Enqueue((nx, ny));
+            }
+        }
+
+        if (!walled)
+        {
+            return false;
+        }
+
+        floor = found;
+        return true;
+    }
+
+    /// <summary>Проходимая земля под открытым небом, без своей воды и без чужого добра.</summary>
+    private static bool IsOpenGround(Map map, int x, int y)
+    {
+        if (Taken.Contains((map.MapID, x, y)))
+        {
+            return false;
+        }
+
+        // Настоящая вода уже стоит — доливать нечего.
+        if (MahaonWaterFlow.IsFlooded(map, x, y))
+        {
+            return false;
+        }
+
+        var land = MapEdits.LandAt(map, x, y);
+
+        if ((TileData.LandTable[land.Graphic & TileData.MaxLandValue].Flags & TileFlag.Impassable) != 0)
+        {
+            return false;
+        }
+
+        var z = land.Z;
         var loc = new Point3D(x, y, z);
 
         if (!map.CanFit(x, y, z, 16))
         {
-            return false; // something's already occupying this spot
+            return false;
         }
 
         if (Region.Find(loc, map).IsPartOf<DungeonRegion>())
         {
-            return false; // dungeon/cave
+            return false; // под землёй дождя нет
         }
 
-        // No roof overhead — a blocked line of sight straight up means something (a house
-        // roof, a cave ceiling, whatever) is covering this tile.
+        // Крыша над головой — значит не льёт.
         return map.LineOfSight(new Point3D(x, y, z + 1), new Point3D(x, y, z + 200));
     }
 }

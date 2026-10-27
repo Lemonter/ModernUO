@@ -129,7 +129,16 @@ public class XmlQuestNPC : TalkingBaseCreature
         AddItem(feet);
         Container pack = new Backpack();
 
-        pack.DropItem(new Gold(0, 50));
+        // Ноль золота — это «денег нет», а не пачка в ноль монет: Item.Amount ниже единицы
+        // не опускается и ругается в лог целым стеком вызовов. BaseCreature.PackGold это
+        // как раз проверяет, но здесь предмет создаётся напрямую, мимо него, — и один
+        // бросок из пятидесяти одного давал нулевую пачку.
+        var gold = Utility.RandomMinMax(0, 50);
+
+        if (gold > 0)
+        {
+            pack.DropItem(new Gold(gold));
+        }
 
         pack.Movable = false;
 

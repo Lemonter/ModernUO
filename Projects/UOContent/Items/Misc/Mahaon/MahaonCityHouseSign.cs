@@ -25,6 +25,14 @@ public partial class MahaonCityHouseSign : Item
             : $"{House?.Label} — дом {House.Owner.Name}";
     }
 
+    // Свой кронштейн уходит вместе с табличкой (кронштейн карты, если табличка висела на нём,
+    // не трогается — у него другое имя).
+    public override void OnDelete()
+    {
+        Systems.MahaonWorld.MahaonCityHouseSignPlacement.RemovePost(Map, Location);
+        base.OnDelete();
+    }
+
     public override void OnDoubleClick(Mobile from)
     {
         if (House?.Deleted != false)

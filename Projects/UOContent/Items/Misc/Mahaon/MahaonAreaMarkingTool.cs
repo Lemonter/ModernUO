@@ -153,11 +153,40 @@ public class MahaonAreaMenuGump : StaticGump<MahaonAreaMenuGump>
             house.ApplyFurnitureHiding();
 
             var sign = new MahaonCityHouseSign(house);
-            sign.MoveToWorld(loc, _map);
+
+            // Цель — дверь дома: табличка вешается на стену у неё, как у сгенерированных домов
+            // (MahaonCityHouseSignPlacement); дом — с той стороны двери, где размеченный пол.
+            if (targeted is BaseDoor door && TryRoomSide(door, _tiles, out var roomDx, out var roomDy))
+            {
+                Systems.MahaonWorld.MahaonCityHouseSignPlacement.Place(sign, door, roomDx, roomDy);
+            }
+            else
+            {
+                sign.MoveToWorld(loc, _map);
+            }
 
             Systems.MahaonWorld.MahaonCityHouseSystem.Register(house);
 
             from.SendMessage(0x59, $"«{label}» отмечен ({_tiles.Count} тайлов) — вывеска стоит здесь, дом пока свободен. Мебель внутри скрыта и стала проходимой.");
+        }
+
+        private static bool TryRoomSide(BaseDoor door, System.Collections.Generic.List<Point3D> tiles, out int dx, out int dy)
+        {
+            foreach (var (sx, sy) in new[] { (0, 1), (0, -1), (1, 0), (-1, 0) })
+            {
+                foreach (var t in tiles)
+                {
+                    if (t.X == door.X + sx && t.Y == door.Y + sy)
+                    {
+                        dx = sx;
+                        dy = sy;
+                        return true;
+                    }
+                }
+            }
+
+            dx = dy = 0;
+            return false;
         }
     }
 }

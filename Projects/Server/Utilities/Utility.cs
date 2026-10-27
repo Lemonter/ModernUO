@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Globalization;
@@ -404,13 +404,30 @@ public static partial class Utility
             ? b
             : value.InsensitiveEquals("enabled") || value.InsensitiveEquals("on");
 
+    /// <summary>
+    ///     Разбирает дробное число из строки, набранной человеком: аргумент команды, поле
+    ///     гампа.
+    ///
+    ///     Инвариантная культура ПЕРВОЙ, и это главное. Раньше здесь стоял
+    ///     double.TryParse(value, out var d) без провайдера, то есть по культуре машины. На
+    ///     локали с запятой в роли десятичного разделителя "0.5" не разбирался вовсе, а
+    ///     метод при провале НИЧЕГО не сообщает — возвращает d, оставшееся нулём. То есть
+    ///     [SetSkill Magery 95.5 молча выставлял ноль, и команда [Wind 90 1.5 0.5 обнуляла
+    ///     все три параметра, не сказав ни слова.
+    ///
+    ///     Культура машины оставлена запасным вариантом: если GM с русской раскладкой
+    ///     набрал "0,5", понять его мы всё равно можем, и отказываться из принципа глупо.
+    ///     Порядок именно такой, потому что точка — то, что набирают в игре, а запятая —
+    ///     местная привычка.
+    /// </summary>
     public static double ToDouble(string value)
     {
-#pragma warning disable CA1806 // Do not ignore method results
-        double.TryParse(value, out var d);
-#pragma warning restore CA1806 // Do not ignore method results
+        if (double.TryParse(value, CultureInfo.InvariantCulture, out var d))
+        {
+            return d;
+        }
 
-        return d;
+        return double.TryParse(value, CultureInfo.CurrentCulture, out d) ? d : 0.0;
     }
 
     public static TimeSpan ToTimeSpan(string value)

@@ -107,10 +107,25 @@ public sealed class GatherAction : BotAction
             }
         }
 
+        // Дошагать до следующего узла, а не заканчивать работу.
+        //
+        // Здесь и была та самая картина: «срубили одно дерево и оба стоят в лесу среди
+        // деревьев». ResourceProbe смотрит на два тайла — это «до чего дотянусь», — и стоило
+        // соседнему дереву кончиться, как действие завершалось. Дальше цель перепланировалась,
+        // атлас возвращал ту же точку (её только что пометили удачной), бот приходил на неё
+        // снова, снова ничего не находил, и так по кругу. Лес в десяти шагах его не касался.
+        //
+        // Теперь, не найдя ничего вблизи, он ищет в радиусе RelocateRange и идёт туда. Работа
+        // кончается только когда во всём этом радиусе живых узлов нет — тогда уходить и правда
+        // пора, и цель отправит его в другое место.
         if (!ResourceProbe.TryFind(bot.Map, bot.Location, _kind, out var target, out var graphic))
         {
-            return Gathered > 0 ? BotActionResult.Done() : BotActionResult.Failed();
+            return Relocate(brain);
         }
+
+        // Дошли до намеченного узла — переход больше не нужен.
+        _walk?.Stop(brain);
+        _walk = null;
 
         var tool = FindTool(bot, _kind);
         if (tool == null)
@@ -148,9 +163,71 @@ public sealed class GatherAction : BotAction
         return BotActionResult.Running(1800);
     }
 
+    /// <summary>Насколько далеко бот готов отойти за следующим узлом, не бросая работу.</summary>
+    private const int RelocateRange = 12;
+
+    /// <summary>Сколько переходов подряд без единого узла значит, что место выработано.</summary>
+    private const int MaxRelocates = 6;
+
+    private GoToAction _walk;
+    private int _relocates;
+
+    /// <summary>
+    ///     Шаги к ближайшему живому узлу в радиусе RelocateRange.
+    ///
+    ///     Счётчик переходов нужен, чтобы бот не ходил по выработанной роще вечно: узел может
+    ///     оказаться недостижимым (за водой, в скале), и тогда переход завершится неудачей, а
+    ///     поиск снова укажет на него же. Шесть попыток — и уходим насовсем.
+    /// </summary>
+    private BotActionResult Relocate(BotBrain brain)
+    {
+        var bot = brain.Bot;
+
+        if (_walk != null)
+        {
+            var step = _walk.Tick(brain);
+
+            if (step.Status == BotActionStatus.Running)
+            {
+                return BotActionResult.Running(step.DelayMs);
+            }
+
+            _walk.Stop(brain);
+            _walk = null;
+
+            // Пришёл — следующий тик найдёт узел вблизи и ударит. Не дошёл — считаем попытку.
+            if (step.Status == BotActionStatus.Failed && ++_relocates >= MaxRelocates)
+            {
+                return Gathered > 0 ? BotActionResult.Done() : BotActionResult.Failed();
+            }
+
+            return BotActionResult.Running(400);
+        }
+
+        if (_relocates >= MaxRelocates ||
+            !ResourceProbe.TryFind(bot.Map, bot.Location, _kind, RelocateRange, out var far, out _))
+        {
+            return Gathered > 0 ? BotActionResult.Done() : BotActionResult.Failed();
+        }
+
+        _relocates++;
+
+        // Подходим на расстояние вытянутой руки, а не в саму клетку: дерево и скала
+        // непроходимы, встать в них нельзя.
+        _walk = new GoToAction(bot.Map, far, ResourceProbe.Reach, "к следующему узлу");
+        _walk.Start(brain);
+
+        return BotActionResult.Running(400);
+    }
+
     private static bool IsOverloaded(Mobile bot) => Mobile.BodyWeight + bot.TotalWeight >= bot.MaxWeight - 10;
 
-    public override void Stop(BotBrain brain) => brain.Bot.EndAction(SwingLock(_kind));
+    public override void Stop(BotBrain brain)
+    {
+        _walk?.Stop(brain);
+        _walk = null;
+        brain.Bot.EndAction(SwingLock(_kind));
+    }
 
     public override string Describe(BotBrain brain) => _kind switch
     {

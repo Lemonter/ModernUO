@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Server.Accounting;
+using Server.Logging;
 using Server.Mobiles;
 using Server.Items;
 
@@ -7,6 +8,8 @@ namespace Server.Systems.MahaonWorld;
 
 public static class MahaonCityHouseSystem
 {
+    private static readonly ILogger logger = LogFactory.GetLogger(typeof(MahaonCityHouseSystem));
+
     private static readonly List<MahaonCityHouse> Houses = new();
 
     // Every marked floor column, for the movement hot path and for finding a house by spot.
@@ -35,6 +38,47 @@ public static class MahaonCityHouseSystem
             {
                 house.ApplyFurnitureHiding();
             }
+        }
+
+        // Перестройка — на первом тике после загрузки, а не в WorldLoad: WorldLoad приходит до
+        // PostDeserialize, а только там загруженные предметы встают в секторы карты. Раньше
+        // GetItemsAt/CanFit пусты — дверь у таблички не находится, люк не проверить на место.
+        Timer.DelayCall(MigrateLegacyFixtures);
+    }
+
+    private static void MigrateLegacyFixtures()
+    {
+        var basements = 0;
+        var withCellar = 0;
+        foreach (var house in All())
+        {
+            if (house.Deleted)
+            {
+                continue;
+            }
+
+            if (house.HasBasement)
+            {
+                withCellar++;
+            }
+
+            // Подвалы, выкопанные до октября 2026: ступени-«люк» в полу, выход под люком,
+            // стены по всему периметру — перестраиваются по-новому один раз.
+            if (house.RefreshBasementFixtures())
+            {
+                basements++;
+            }
+        }
+
+        // Таблички, поставленные на землю перед дверью прежним генератором, — на стену.
+        var (moved, orphaned) = MahaonCityHouseSignPlacement.MigrateAll();
+
+        if (basements > 0 || moved > 0 || orphaned > 0)
+        {
+            logger.Information(
+                "City houses: {Rebuilt} of {WithCellar} cellars rebuilt, {Moved} signs hung on walls, {Orphaned} signs left (no door beside)",
+                basements, withCellar, moved, orphaned
+            );
         }
     }
 
@@ -337,16 +381,37 @@ public static class MahaonCityHouseSystem
         into.Price = price;
     }
 
+    /// <summary>
+    ///     Сперва собрать, потом удалять.
+    ///
+    ///     GetItemsInRange перебирает списки секторов карты лениво, а Delete из этих же
+    ///     списков предмет вынимает — перебор рвётся с «Collection was modified after the
+    ///     enumerator was instantiated». Точно так же падал MahaonCityHouseGenerator, и там
+    ///     симптом был тот же: падение не на пустом месте, а ровно когда нашлось что менять.
+    ///
+    ///     HashSet, а не List: дом занимает много тайлов, радиус поиска восемь, и одна и та
+    ///     же табличка попадает в выборку с нескольких тайлов сразу.
+    /// </summary>
     private static void DeleteSigns(MahaonCityHouse house)
     {
+        var toDelete = new HashSet<MahaonCityHouseSign>();
+
         foreach (var tile in house.Tiles)
         {
             foreach (var item in house.AreaMap.GetItemsInRange<MahaonCityHouseSign>(tile, 8))
             {
                 if (item.House == house)
                 {
-                    item.Delete();
+                    toDelete.Add(item);
                 }
+            }
+        }
+
+        foreach (var sign in toDelete)
+        {
+            if (!sign.Deleted)
+            {
+                sign.Delete();
             }
         }
     }

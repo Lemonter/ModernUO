@@ -244,7 +244,47 @@ public sealed class MahaonMapEdits : GenericPersistence
             Apply(map, state, entry, key);
         }
 
-        BlockChanged?.Invoke(entry.MapId, key.Item2);
+        if (_batch != null)
+        {
+            _batch.Add((entry.MapId, key.Item2));
+        }
+        else
+        {
+            BlockChanged?.Invoke(entry.MapId, key.Item2);
+        }
+    }
+
+    // ---- Пачка правок ------------------------------------------------------------------
+
+    private static HashSet<(int MapId, int BlockId)> _batch;
+
+    /// <summary>
+    ///     Начинает пачку: событие о задетых блоках уйдёт один раз в EndBatch, а не на
+    ///     каждую правку.
+    ///
+    ///     Нужно земляным работам. Одна копка сглаживает борта ямы и двигает до сотни
+    ///     тайлов; без пачки каждый такой тайл рассылал бы всем вокруг целый блок, а
+    ///     клиент на каждый пакет пересобирал бы девять кусков карты.
+    ///
+    ///     Вкладывать пачки нельзя: внутренний EndBatch разошлёт и то, что набрал внешний.
+    ///     Вызывать строго парой, EndBatch в finally.
+    /// </summary>
+    public static void BeginBatch() => _batch ??= new HashSet<(int, int)>();
+
+    public static void EndBatch()
+    {
+        var batch = _batch;
+        _batch = null;
+
+        if (batch == null)
+        {
+            return;
+        }
+
+        foreach (var (mapId, blockId) in batch)
+        {
+            BlockChanged?.Invoke(mapId, blockId);
+        }
     }
 
     /// <summary>Состояние блока «как было» — отправная точка для проигрывания правок.</summary>

@@ -474,10 +474,28 @@ public class BitmapAStarAlgorithm : PathAlgorithm
             }
 
             var itemId = item.ItemID & TileData.MaxItemValue;
-            if (_currentMobileIgnoreDoors
-                && (itemData.Door
-                    || itemId is 0x692 or 0x846 or 0x873
-                    || itemId >= 0x6F5 && itemId <= 0x6F6))
+
+            // «Не замечать двери» означает «я её открою», а не «я пройду сквозь створку».
+            //
+            // Раньше условие пропускало любой предмет с флагом Door, и ОТКРЫТУЮ створку тоже:
+            // в tiledata флаг несут обе половины пары (проверено по файлу — 0x675/0x676,
+            // 0x6A5/0x6A6 и далее, у всех Door и Impassable). Получалось, что поиск строит
+            // путь прямо через распахнутое полотно, а настоящий шаг в эту клетку отказывает:
+            // AlwaysIgnoreDoors живёт только внутри поиска и к моменту движения уже сброшен.
+            // План и ходьба расходились, и ходок бился в створку, пока маршрут не рассыпется.
+            // Закрытую дверь пропускать по-прежнему верно: её откроют и проём освободится
+            // (NavFollower.TryOpenDoor, BaseAI у обычных мобов).
+            //
+            // Открытая створка — честное препятствие: её никто не уберёт, и обойти её надо
+            // на этапе планирования. Игрок сквозь неё тоже не ходит.
+            if (_currentMobileIgnoreDoors && item is Items.BaseDoor { Open: true })
+            {
+                // не пропускаем — пусть считается стеной
+            }
+            else if (_currentMobileIgnoreDoors
+                     && (itemData.Door
+                         || itemId is 0x692 or 0x846 or 0x873
+                         || itemId >= 0x6F5 && itemId <= 0x6F6))
             {
                 continue;
             }

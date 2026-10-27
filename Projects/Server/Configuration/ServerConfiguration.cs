@@ -1,4 +1,4 @@
-/*************************************************************************
+﻿/*************************************************************************
  * ModernUO                                                              *
  * Copyright 2019-2026 - ModernUO Development Team                       *
  * Email: hi@modernuo.com                                                *
@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using Server.Json;
@@ -76,10 +77,22 @@ public static class ServerConfiguration
         return Enum.TryParse(strValue, out T value) ? value : defaultValue;
     }
 
+    /// <summary>
+    ///     Инвариантная культура, а не культура машины.
+    ///
+    ///     modernuo.json — файл конфигурации, а не ввод по локали пользователя: число в нём
+    ///     записано через точку. Раньше чтение шло без провайдера, и на локали с запятой
+    ///     "0.1" не разбирался — TryParse отдавал false, и сервер МОЛЧА брал значение по
+    ///     умолчанию, игнорируя то, что в файле. Поменяй такую настройку в файле, и она
+    ///     просто не применится, без единого сообщения.
+    ///
+    ///     Запись (SetSetting ниже) приведена к той же культуре, иначе конфиг, записанный на
+    ///     одной машине, не читался бы на другой.
+    /// </summary>
     public static double GetSetting(string key, double defaultValue)
     {
         _settings.Settings.TryGetValue(key, out var strValue);
-        return double.TryParse(strValue, out var value) ? value : defaultValue;
+        return double.TryParse(strValue, CultureInfo.InvariantCulture, out var value) ? value : defaultValue;
     }
 
     public static T? GetSetting<T>(string key) where T : struct, Enum
@@ -189,17 +202,21 @@ public static class ServerConfiguration
 
         if (_settings.Settings.TryGetValue(key, out var strValue))
         {
-            value = double.TryParse(strValue, out value) ? value : defaultValue;
+            value = double.TryParse(strValue, CultureInfo.InvariantCulture, out value) ? value : defaultValue;
         }
         else
         {
-            SetSetting(key, (value = defaultValue).ToString());
+            SetSetting(key, value = defaultValue);
         }
 
         return value;
     }
 
-    public static void SetSetting(string key, double value) => SetSetting(key, value.ToString());
+    // Инвариантная культура — см. GetSetting(string, double). ToString() без провайдера
+    // писал бы в конфиг "0,1" на русской локали, и такой файл не прочитался бы ни на другой
+    // машине, ни этим же сервером после правки локали.
+    public static void SetSetting(string key, double value) =>
+        SetSetting(key, value.ToString(CultureInfo.InvariantCulture));
 
     public static void SetSetting(string key, TimeSpan value) => SetSetting(key, value.ToString());
 

@@ -55,10 +55,28 @@ public static class MahaonCityHouseGenerator
         logger.Information("City houses: {Count} rooms found in towns and put up for sale", made);
     }
 
+    /// <summary>
+    ///     Два прохода, а не один, и это не стилистика.
+    ///
+    ///     Map.GetItemsInBounds перебирает предметы секторов карты ЛЕНИВО, прямо по живым
+    ///     спискам. А TryMake в случае успеха доходит до Create, который ставит в мир
+    ///     табличку (sign.MoveToWorld) — то есть добавляет предмет в сектор ровно той
+    ///     карты, которую мы в этот момент перебираем. Перебор от этого рвётся:
+    ///
+    ///         Collection was modified after the enumerator was instantiated.
+    ///
+    ///     Причём падало не всегда и не сразу, а на первом же городе, где нашёлся
+    ///     подходящий дом, — поэтому на пустой карте проблема не видна вовсе.
+    ///
+    ///     Поэтому сперва собираем все двери списком и только потом строим. Дверь хранится
+    ///     вместе со своим городом: TryMake нужен город, а по самой двери его уже не
+    ///     восстановить.
+    /// </summary>
     public static int GenerateAll()
     {
         var made = 0;
         var seenDoors = new HashSet<Item>();
+        var found = new List<(TownRegion Town, BaseDoor Door)>();
 
         foreach (var region in Region.Regions)
         {
@@ -72,11 +90,26 @@ public static class MahaonCityHouseGenerator
                 var rect = new Rectangle2D(area.Start.X, area.Start.Y, area.End.X - area.Start.X, area.End.Y - area.Start.Y);
                 foreach (var door in town.Map.GetItemsInBounds<BaseDoor>(rect))
                 {
-                    if (seenDoors.Add(door) && TryMake(town, door))
+                    if (seenDoors.Add(door))
                     {
-                        made++;
+                        found.Add((town, door));
                     }
                 }
+            }
+        }
+
+        foreach (var (town, door) in found)
+        {
+            // Дверь могли удалить между проходами — сами мы её не трогаем, но проход
+            // длинный, а мир живой.
+            if (door.Deleted)
+            {
+                continue;
+            }
+
+            if (TryMake(town, door))
+            {
+                made++;
             }
         }
 
@@ -113,8 +146,7 @@ public static class MahaonCityHouseGenerator
                     continue;
                 }
 
-                var outside = new Point3D(door.X - dx, door.Y - dy, map.GetAverageZ(door.X - dx, door.Y - dy));
-                Create(town, map, room, outside);
+                Create(town, map, room, door, dx, dy);
                 return true;
             }
         }
@@ -303,7 +335,7 @@ public static class MahaonCityHouseGenerator
         return true;
     }
 
-    private static void Create(TownRegion town, Map map, List<Point3D> room, Point3D signSpot)
+    private static void Create(TownRegion town, Map map, List<Point3D> room, BaseDoor door, int roomDx, int roomDy)
     {
         var number = 1;
         foreach (var existing in MahaonCityHouseSystem.All())
@@ -318,7 +350,8 @@ public static class MahaonCityHouseGenerator
         house.ApplyFurnitureHiding();
         MahaonCityHouseSystem.Register(house);
 
+        // Табличка — на стене у двери, на кронштейне (MahaonCityHouseSignPlacement).
         var sign = new MahaonCityHouseSign(house);
-        sign.MoveToWorld(signSpot, map);
+        MahaonCityHouseSignPlacement.Place(sign, door, roomDx, roomDy);
     }
 }

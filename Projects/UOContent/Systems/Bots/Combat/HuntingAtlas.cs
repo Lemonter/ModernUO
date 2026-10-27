@@ -30,6 +30,45 @@ public sealed class HuntSpot
 
     /// <summary>Type names of the prey spawned here, for a quest that wants one kind.</summary>
     public HashSet<string> Prey { get; }
+
+    // ---- Сколько ботов уже топчется на этом месте -----------------------------------
+    //
+    // Нужно, чтобы охотники расходились. Выбор места (Pick) учитывал только расстояние и
+    // «немного шума» — дрожание в тридцать процентов, — а расстояние его перебивает. Поэтому
+    // все, кто стоял рядом с одним и тем же спавнером, выбирали его же: тридцать ботов на
+    // десять зомби, и каждому достаётся по трети зомби.
+    //
+    // Счёт кэшируется на несколько секунд: место выбирают редко, а перебирать мобов на
+    // каждом кандидате каждый раз — дорого.
+    private const long CrowdCacheMs = 5_000;
+
+    private int _crowd;
+    private long _crowdTick;
+
+    /// <summary>Сколько ботов сейчас в пределах места.</summary>
+    public int Crowd()
+    {
+        var now = Core.TickCount;
+
+        if (_crowdTick != 0 && now - _crowdTick < CrowdCacheMs)
+        {
+            return _crowd;
+        }
+
+        var count = 0;
+
+        foreach (var m in Map.GetMobilesInRange<BotMobile>(Center, Math.Max(8, Range)))
+        {
+            if (m.Alive && !m.Deleted)
+            {
+                count++;
+            }
+        }
+
+        _crowd = count;
+        _crowdTick = now;
+        return count;
+    }
 }
 
 /// <summary>
@@ -205,6 +244,21 @@ public static class HuntingAtlas
             {
                 score *= 0.3;
             }
+
+            // Занятость места. Шума в тридцать процентов для разведения охотников не хватало
+            // совсем: расстояние его перебивает, и все, кто рядом с одним спавнером, шли туда
+            // же. Отсюда тридцать ботов на десять зомби.
+            //
+            // Штраф растёт быстрее, чем линейно: один-два соседа почти не мешают (вместе и
+            // веселее), а на пятом месте становится заметно хуже любого другого, даже вдвое
+            // более далёкого. Так и поступает живой игрок — видит выбитый спавн и уходит.
+            var crowd = spot.Crowd();
+
+            if (crowd > 0)
+            {
+                score *= 1.0 + crowd * crowd * 0.25;
+            }
+
             if (score < bestScore)
             {
                 bestScore = score;

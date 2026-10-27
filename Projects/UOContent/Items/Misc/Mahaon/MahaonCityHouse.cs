@@ -117,10 +117,20 @@ public partial class MahaonCityHouse : Item
     /// <summary>A cellar costs half what the ground floor above it does.</summary>
     public int BasementPrice => GroundTiles().Count * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile / 2;
 
+    // Люк в полу первого этажа (корабельный люк — поверхность, по нему ходят) и каменные
+    // ступени выхода в углу подвала.
+    private const int HatchGraphic = 0x3EAE;
+    private const int ExitStepsGraphic = 0x079E;
+
+    // Тонкая каменная стена — те же детали, что у старой ограды: «\» идёт вдоль X, «/» вдоль Y.
+    private const int WallAlongX = 0x001C;
+    private const int WallAlongY = 0x001B;
+
     /// <summary>
     /// Digs the cellar: a floor under the whole ground floor <see cref="BasementDepth"/> Z down,
-    /// walls round it, a hatch in the ground floor and a ladder back up. The cellar's tiles join
-    /// the house, so its region, lockdowns and furniture work down there too.
+    /// walls along its north and west sides, a hatch in the ground floor and steps back up in a
+    /// corner. The cellar's tiles join the house, so its region, lockdowns and furniture work
+    /// down there too.
     /// </summary>
     public bool BuildBasement()
     {
@@ -149,27 +159,42 @@ public partial class MahaonCityHouse : Item
             cellar.Add(new Point3D(t.X, t.Y, z));
         }
 
-        // Walls on the cells around the floor that nothing else stands in.
+        BuildFixtures(ground, columns, z);
+
+        HasBasement = true;
+        AddTiles(cellar);
+        return true;
+    }
+
+    /// <summary>
+    /// Стены, люк и ступени подвала поверх готового пола.
+    ///
+    /// Стены — только северная и западная. Каменная стена UO стоит на ЮЖНОМ или ВОСТОЧНОМ
+    /// ребре своей клетки, поэтому северную стену пола несут клетки к северу от него («\»), а
+    /// западную — клетки к западу («/»); в северо-западном углу линии сходятся сами, без
+    /// столбика. Южную и восточную стены камера видит спереди, и они закрывали бы подвал —
+    /// их нет, а уйти с пола всё равно некуда: земля в пятидесяти единицах выше.
+    ///
+    /// Люк — в полу первого этажа, по нему ходят; двойной щелчок — вниз, к ступеням. Ступени
+    /// стоят в северо-западном углу подвала, а не под люком: под люком игрок появляется сам,
+    /// и щёлкнуть по ступеням у себя под ногами было нельзя — щелчок попадал в персонажа.
+    /// </summary>
+    private void BuildFixtures(List<Point3D> ground, HashSet<Point2D> columns, int z)
+    {
         foreach (var c in columns)
         {
-            for (var dx = -1; dx <= 1; dx++)
+            if (!columns.Contains(new Point2D(c.X, c.Y - 1)))
             {
-                for (var dy = -1; dy <= 1; dy++)
-                {
-                    var n = new Point2D(c.X + dx, c.Y + dy);
-                    if (columns.Contains(n) || HasItemAt(n, z))
-                    {
-                        continue;
-                    }
+                AddWall(WallAlongX, c.X, c.Y - 1, z);
+            }
 
-                    var wall = new Static(WallFor(columns, n));
-                    wall.MoveToWorld(new Point3D(n.X, n.Y, z), AreaMap);
-                    Basement.Add(wall);
-                }
+            if (!columns.Contains(new Point2D(c.X - 1, c.Y)))
+            {
+                AddWall(WallAlongY, c.X - 1, c.Y, z);
             }
         }
 
-        // The hatch on a free ground-floor cell away from the walls, the ladder below it.
+        // Люк — на свободной клетке первого этажа подальше от стен.
         var spot = ground[ground.Count / 2];
         foreach (var t in ground)
         {
@@ -180,15 +205,109 @@ public partial class MahaonCityHouse : Item
             }
         }
 
-        var down = new MahaonBasementHatch(this, new Point3D(spot.X, spot.Y, z), "люк в подвал");
+        // Ступени — в северо-западном углу, игрок появляется рядом с ними.
+        var corner = default(Point2D);
+        var best = int.MaxValue;
+        foreach (var c in columns)
+        {
+            if (c.X + c.Y < best || c.X + c.Y == best && c.X < corner.X)
+            {
+                best = c.X + c.Y;
+                corner = c;
+            }
+        }
+
+        var arrival = new Point3D(corner.X, corner.Y, z);
+        foreach (var (dx, dy) in new[] { (1, 0), (0, 1), (1, 1) })
+        {
+            if (columns.Contains(new Point2D(corner.X + dx, corner.Y + dy)))
+            {
+                arrival = new Point3D(corner.X + dx, corner.Y + dy, z);
+                break;
+            }
+        }
+
+        var down = new MahaonBasementHatch(this, arrival, "люк в подвал", HatchGraphic);
         down.MoveToWorld(spot, AreaMap);
-        var up = new MahaonBasementHatch(this, spot, "лестница наверх");
-        up.MoveToWorld(new Point3D(spot.X, spot.Y, z), AreaMap);
+        var up = new MahaonBasementHatch(this, spot, "ступени наверх", ExitStepsGraphic);
+        up.MoveToWorld(new Point3D(corner.X, corner.Y, z), AreaMap);
         Basement.Add(down);
         Basement.Add(up);
+    }
 
-        HasBasement = true;
-        AddTiles(cellar);
+    private void AddWall(int graphic, int x, int y, int z)
+    {
+        var wall = new Static(graphic);
+        wall.MoveToWorld(new Point3D(x, y, z), AreaMap);
+        Basement.Add(wall);
+    }
+
+    /// <summary>
+    /// Подвал, выкопанный до октября 2026 (стены по всему периметру с углами-столбиками,
+    /// ступени вместо люка, выход под самим люком), перестраивается по-новому: пол остаётся,
+    /// стены, люк и ступени ставятся заново. Узнаётся по люку — у старого он был ступенями.
+    /// Зовётся при загрузке мира; у нового подвала ничего не делает. Возвращает, перестроен ли.
+    /// </summary>
+    public bool RefreshBasementFixtures()
+    {
+        if (!HasBasement || AreaMap == null)
+        {
+            return false;
+        }
+
+        var legacy = false;
+        var floorZ = int.MinValue;
+
+        foreach (var item in Basement)
+        {
+            if (item is MahaonBasementHatch { Deleted: false } hatch && hatch.Destination.Z < hatch.Z &&
+                hatch.ItemID != HatchGraphic)
+            {
+                legacy = true;
+            }
+
+            if (item is Static { Deleted: false } floor && floor.ItemID == BasementFloorId)
+            {
+                floorZ = floor.Z;
+            }
+        }
+
+        if (!legacy || floorZ == int.MinValue)
+        {
+            return false;
+        }
+
+        var keep = new List<Item>();
+        foreach (var item in Basement)
+        {
+            if (item is Static { ItemID: BasementFloorId })
+            {
+                keep.Add(item);
+            }
+            else
+            {
+                item?.Delete();
+            }
+        }
+
+        Basement.Clear();
+        foreach (var item in keep)
+        {
+            Basement.Add(item);
+        }
+
+        var columns = new HashSet<Point2D>();
+        foreach (var floor in keep)
+        {
+            columns.Add(new Point2D(floor.X, floor.Y));
+        }
+
+        var ground = GroundTiles();
+        if (ground.Count > 0 && columns.Count > 0)
+        {
+            BuildFixtures(ground, columns, floorZ);
+        }
+
         return true;
     }
 
@@ -220,18 +339,6 @@ public partial class MahaonCityHouse : Item
         }
 
         return count;
-    }
-
-    // The thin stone wall pieces the yard fences use: a run along the floor's edge, a post where
-    // two runs meet.
-    private static int WallFor(HashSet<Point2D> floor, Point2D p)
-    {
-        var northSouth = floor.Contains(new Point2D(p.X, p.Y - 1)) || floor.Contains(new Point2D(p.X, p.Y + 1));
-        var eastWest = floor.Contains(new Point2D(p.X - 1, p.Y)) || floor.Contains(new Point2D(p.X + 1, p.Y));
-
-        var type = northSouth && !eastWest ? ThinStoneWallTypes.SouthWall :
-            eastWest && !northSouth ? ThinStoneWallTypes.EastWall : ThinStoneWallTypes.CornerPost;
-        return 0x001A + (int)type;
     }
 
     private void DeleteBasement()

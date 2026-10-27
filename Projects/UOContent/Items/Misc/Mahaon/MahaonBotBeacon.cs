@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Gumps;
 using Server.Mobiles;
+using Server.Systems.Bots;
 
 namespace Server.Items;
 
@@ -202,17 +203,39 @@ public partial class MahaonBotBeacon : Item
         }
     }
 
+    /// <summary>
+    ///     Бот, которого маяк потерял: он ещё не удалён, но мир его уже не держит, а
+    ///     планировщик снял с учёта — значит думать он больше не будет никогда.
+    ///
+    ///     Откуда такие берутся. BotBrain.Think отдаёт −1, когда бот оказался вне мира
+    ///     (Map == null или Map.Internal), а BotScheduler на −1 делает
+    ///     BotSystem.Unregister. Из учёта бот при этом выходит, из МИРА — нет, и маяку
+    ///     никто не сообщает. Получается сирота: невидим, не думает, и держит слот вечно.
+    ///
+    ///     Чем это кончается, видно на живом шарде: маяк насчитал 481 своего бота из 600 и
+    ///     встал намертво, все архетипы «заполнены», новых не появляется — а [BotStats
+    ///     показывает ноль, потому что в учёте системы нет ни одного. Два счёта разошлись и
+    ///     сойтись сами уже не могли.
+    ///
+    ///     Поэтому слот считается занятым только тем, кто действительно в игре. Сироты
+    ///     освобождают места, и маяк оживает без вмешательства руками.
+    /// </summary>
+    private static bool IsLost(PlayerMobile bot) =>
+        bot.Deleted || bot.Map == null || bot.Map == Map.Internal ||
+        bot is BotMobile && bot.GetBrain() is not { Registered: true };
+
     /// <summary>Total bots this beacon currently owns — alive or waiting to respawn. The
-    /// limit counts both, so a dead bot still holds its slot until it's actually gone.</summary>
+    /// limit counts both, so a dead bot still holds its slot until it's actually gone.
+    /// A bot the world has lost (see IsLost) holds nothing.</summary>
     public int OwnedCount()
     {
-        _ownedBots.RemoveAll(b => b.Deleted);
+        _ownedBots.RemoveAll(IsLost);
         return _ownedBots.Count;
     }
 
     public int OwnedCount(BotArchetype archetype)
     {
-        _ownedBots.RemoveAll(b => b.Deleted);
+        _ownedBots.RemoveAll(IsLost);
         var count = 0;
 
         foreach (var bot in _ownedBots)
@@ -231,7 +254,7 @@ public partial class MahaonBotBeacon : Item
     /// OwnedCount(BotArchetype.Trader) counts.</summary>
     public int OwnedThiefCount()
     {
-        _ownedBots.RemoveAll(b => b.Deleted);
+        _ownedBots.RemoveAll(IsLost);
         var count = 0;
 
         foreach (var bot in _ownedBots)

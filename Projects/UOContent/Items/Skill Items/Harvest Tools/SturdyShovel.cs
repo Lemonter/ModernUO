@@ -12,4 +12,7 @@ public partial class SturdyShovel : BaseHarvestTool
     public override double DefaultWeight => 5.0;
     public override int LabelNumber => 1045125; // sturdy shovel
     public override HarvestSystem HarvestSystem => Mining.System;
+
+    /// <summary>Лопатой копают землю, а не только руду в скале.</summary>
+    public override bool CanExcavate => true;
 }

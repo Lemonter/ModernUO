@@ -30,6 +30,52 @@ namespace Server.Engines.Harvest
                 }
             }
 
+            // Лопата руду не добывает — это дело кирки. Решаем это ОДНОЙ развилкой тут, а
+            // не оговоркой в каждой ветке ниже: именно размазанные оговорки и давали руду
+            // то из ромашки, то из берега, потому что каждая ветка решала по-своему.
+            //
+            // Лопате остаются земляные работы, а из добычи — только могилы и клад: там
+            // копают, а не рубят камень.
+            if (m_System is Mining mining && m_Tool is BaseHarvestTool { CanExcavate: true } && !IsSpadeWork(targeted))
+            {
+                if (targeted is MineRockWall or MineFloorTile)
+                {
+                    from.SendMessage("Тут камень — это работа для шахтёрской кирки, а не для лопаты.");
+                    return;
+                }
+
+                // Режим добычи: песок просеивается, глубина не меняется. Руда сюда не
+                // попадает намеренно — из всей добычи лопате оставлен только песок.
+                if (Systems.MahaonMapEdits.MahaonDigMode.Of(from) == Systems.MahaonMapEdits.DigMode.Harvest)
+                {
+                    if (mining.GetHarvestDetails(from, m_Tool, targeted, out var tileId, out _, out _, out var isLand) &&
+                        mining.Sand.Validate(tileId, isLand))
+                    {
+                        mining.StartHarvesting(from, m_Tool, targeted);
+                    }
+                    else
+                    {
+                        from.SendMessage("Тут нечего просеивать: лопате из добычи оставлен только песок.");
+                    }
+
+                    return;
+                }
+
+                if (targeted is not IPoint3D spot)
+                {
+                    return;
+                }
+
+                if (!from.InRange(new Point3D(spot.X, spot.Y, spot.Z), 2))
+                {
+                    from.SendMessage("Слишком далеко.");
+                    return;
+                }
+
+                Systems.MahaonMapEdits.MahaonExcavation.Swing(from, m_Tool, from.Map, spot.X, spot.Y);
+                return;
+            }
+
             if (m_System is Mining && targeted is MineRockWall wall)
             {
                 if (!from.InRange(wall.GetWorldLocation(), 2))
@@ -71,7 +117,15 @@ namespace Server.Engines.Harvest
                 }
 
                 var tileFlags = TileData.LandTable[landTarget.TileID & TileData.MaxLandValue].Flags;
-                if ((tileFlags & TileFlag.Impassable) == 0)
+
+                // Руда есть только в скале. Вода тоже помечена Impassable, но скалой от
+                // этого не становится — а раньше становилась: стоило вырытой яме набрать
+                // воду, и удар лопатой по собственному пруду начинал добывать из него руду.
+                var rock = (tileFlags & TileFlag.Impassable) != 0 && (tileFlags & TileFlag.Wet) == 0;
+
+                // Лопата сюда уже не доходит — её развилка выше. Остаётся кирка, а ей в
+                // земле и воде делать нечего.
+                if (!rock)
                 {
                     from.SendMessage("Здесь нечего копать — это не гора.");
                     return;
@@ -167,6 +221,19 @@ namespace Server.Engines.Harvest
                 return;
             }
 
+            // Дождевая лужа мокрая по тайлдате, а рыбалка у нас принимает всё мокрое —
+            // значит без этой ветки удочка работала бы в луже глубиной в ноль. Ветка стоит
+            // ПЕРЕД обеими рыбными: и когда кликнули по самой луже-предмету, и когда по
+            // её графике.
+            if (m_System is Fishing &&
+                (targeted is Items.MahaonPuddle ||
+                 targeted is StaticTarget puddleTile &&
+                 Systems.MahaonWeather.PuddleSystem.IsRainwater(puddleTile.ItemID)))
+            {
+                from.SendMessage("Это дождевая лужа — рыбы в ней нет.");
+                return;
+            }
+
             if (m_System is Fishing && targeted is LandTarget fishLand)
             {
                 var loc = new Point3D(fishLand.X, fishLand.Y, fishLand.Z);
@@ -247,6 +314,15 @@ namespace Server.Engines.Harvest
                 m_System.StartHarvesting(from, m_Tool, targeted);
             }
         }
+
+        /// <summary>
+        ///     Работа, которая лопатой делается и без руды: могила и клад. Их разбирают
+        ///     ветки ниже, своими системами, и перехватывать их земляными работами нельзя.
+        /// </summary>
+        private static bool IsSpadeWork(object targeted) =>
+            targeted is TreasureMap ||
+            targeted is StaticTarget grave &&
+            Array.IndexOf(Systems.MahaonGraves.GraveDigging.GraveTiles, grave.ItemID) >= 0;
 
         private void DestroyFurniture(Mobile from, Item item)
         {

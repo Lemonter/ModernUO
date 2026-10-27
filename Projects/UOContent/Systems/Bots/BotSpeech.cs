@@ -130,5 +130,95 @@ public static class BotSpeech
         Say(bot, BotTopic.SmallTalk, listener);
     }
 
-    public static void Forget(Mobile bot) => _lastSpoke.Remove(bot);
+    // ---- Обычная болтовня ------------------------------------------------------------
+    //
+    // Почему понадобилась отдельно. Реплики были развешаны только по особым поводам: смерть,
+    // воскрешение, банк, захват города, разговор по цели «Общение». Из-за этого боты молчали
+    // ровно там, где за ними смотрят:
+    //
+    //   - В бою план не выполняется вовсе — BotCombat.Think перехватывает управление и
+    //     возвращается раньше, чем дело дойдёт до действий. Реплика угрозы при этом
+    //     произносилась только по игрокам, не по монстрам. Значит толпа на кладбище молчит
+    //     по устройству.
+    //   - Цель «Общение» целиком помножена на одиночество (SocializeGoal.Score), а оно
+    //     копится часами. В обычный день до неё почти не доходит.
+    //
+    // Поэтому болтовня здесь не цель и не событие, а фон: редкая реплика на обычном думанье,
+    // со своим долгим счётчиком. Долгим нарочно — предыдущая версия, по твоим словам,
+    // болтала слишком много, и возвращаться к этому незачем.
+
+    private const long AmbientMinMs = 45_000;
+    private const long AmbientMaxMs = 150_000;
+
+    /// <summary>На сколько тайлов вокруг есть кому слушать.</summary>
+    private const int Earshot = 10;
+
+    private static readonly Dictionary<Mobile, long> _nextAmbient = new();
+
+    /// <summary>
+    ///     Фоновая реплика — если пришло время и есть кому слушать.
+    ///
+    ///     Проверка слушателя не ради приличия, а по делу: речь в пустом лесу никто не
+    ///     увидит, а счётчик она потратит, и к моменту встречи боту будет нечего сказать.
+    /// </summary>
+    public static void Ambient(BotBrain brain)
+    {
+        var bot = brain?.Bot;
+
+        if (bot?.Map == null || bot.Deleted || !bot.Alive || bot.Hidden)
+        {
+            return;
+        }
+
+        var now = Core.TickCount;
+
+        if (_nextAmbient.TryGetValue(bot, out var next) && now - next < 0)
+        {
+            return;
+        }
+
+        if (!HasListener(bot))
+        {
+            return;
+        }
+
+        _nextAmbient[bot] = now + Utility.RandomMinMax((int)AmbientMinMs, (int)AmbientMaxMs);
+
+        // В драке — боевой выкрик, и редко: бот занят.
+        if (brain.Combat?.Opponent is { Deleted: false, Alive: true })
+        {
+            Say(bot, BotTopic.Threat, brain.Combat.Opponent, 0.35);
+            return;
+        }
+
+        // За работой он говорит о работе — у каждой цели свои строки (BotGoal.News).
+        var news = brain.Goal?.News;
+
+        if (news is { Length: > 0 } && Utility.RandomDouble() < 0.45)
+        {
+            SayText(bot, news[Utility.Random(news.Length)]);
+            return;
+        }
+
+        Say(bot, Utility.RandomBool() ? BotTopic.SmallTalk : BotTopic.Idle);
+    }
+
+    private static bool HasListener(Mobile bot)
+    {
+        foreach (var m in bot.Map.GetMobilesInRange<Mobiles.PlayerMobile>(bot.Location, Earshot))
+        {
+            if (m != bot && m.Alive && !m.Hidden)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void Forget(Mobile bot)
+    {
+        _lastSpoke.Remove(bot);
+        _nextAmbient.Remove(bot);
+    }
 }

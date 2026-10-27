@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using Server.Commands.Generic;
@@ -244,18 +245,29 @@ public static class AdvancedSearchConditions
 
         // A float property parses its value as a float first, so the widened constant carries the
         // same rounding the property's own value does.
+        //
+        // InvariantCulture, и это не придирка. Здесь стоял null как провайдер формата, а null
+        // означает ТЕКУЩУЮ культуру машины. На русской локали десятичный разделитель —
+        // запятая, поэтому "0.3" не разбирался вовсе: TryParse возвращал false, лист
+        // становился «не совпало», и любой поиск по дробному полю молча ничего не находил.
+        // Падал на этом AdvancedSearchConditionsTests.FloatingPointUsesEpsilon, но только на
+        // машине с нерусской... точнее, с не-точечной локалью — на en-US тест проходит.
+        //
+        // Синтаксис поиска — язык запросов, который GM набирает в гампе, а не ввод числа по
+        // локали пользователя: точка в нём десятичный разделитель всегда. К тому же сервер
+        // обязан вести себя одинаково независимо от настроек машины, на которой запущен.
         double parsed;
 
         if (property.Type == typeof(float))
         {
-            if (!float.TryParse(value, null, out var f))
+            if (!float.TryParse(value, CultureInfo.InvariantCulture, out var f))
             {
                 return null;
             }
 
             parsed = f;
         }
-        else if (!double.TryParse(value, null, out parsed))
+        else if (!double.TryParse(value, CultureInfo.InvariantCulture, out parsed))
         {
             return null;
         }

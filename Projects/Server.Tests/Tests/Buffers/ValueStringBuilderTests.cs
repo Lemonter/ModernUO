@@ -1,3 +1,4 @@
+using System.Globalization;
 using Server.Text;
 using Xunit;
 
@@ -227,28 +228,69 @@ public class ValueStringBuilderTests
         sb.Dispose();
     }
 
+    /// <summary>
+    /// Культура фиксируется, потому что ожидание записано с ТОЧКОЙ в "pi=3.14".
+    ///
+    /// Форматирование числа идёт через текущую культуру машины (ValueStringBuilder.Append
+    /// передаёт TryFormat провайдер default, то есть null), и на любой локали с запятой в
+    /// роли десятичного разделителя — ru, de, fr, fi — выходило "pi=3,14", а тест падал.
+    /// Проверяет он при этом не культуру, а механизм: что спецификатор формата доезжает
+    /// через handler до AppendFormatted. Поэтому культура тут не предмет проверки, а
+    /// условие, и его надо задать явно, а не наследовать от машины.
+    ///
+    /// Приём тот же, что в CrowdSecReporterTests.FormatTimestamp_IsIso8601_RegardlessOfCulture.
+    /// Класс помечен [Collection("Sequential Server Tests")], так что подмена культуры
+    /// потоку другим тестам не мешает.
+    /// </summary>
     [Fact]
     public void Interpolation_FormatSpecifiers()
     {
-        // Format specifiers in interpolation holes.
-        // Validates: AppendFormatted<T> with format string works through handler.
-        var sb = new ValueStringBuilder(stackalloc char[64]);
-        sb.Append($"pi={3.14159:F2}, hex={255:X4}, date={new System.DateTime(2025, 1, 15):yyyy-MM-dd}");
+        var previous = CultureInfo.CurrentCulture;
 
-        Assert.Equal("pi=3.14, hex=00FF, date=2025-01-15", sb.ToString());
-        sb.Dispose();
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+            // Format specifiers in interpolation holes.
+            // Validates: AppendFormatted<T> with format string works through handler.
+            var sb = new ValueStringBuilder(stackalloc char[64]);
+            sb.Append($"pi={3.14159:F2}, hex={255:X4}, date={new System.DateTime(2025, 1, 15):yyyy-MM-dd}");
+
+            Assert.Equal("pi=3.14, hex=00FF, date=2025-01-15", sb.ToString());
+            sb.Dispose();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
+    /// <summary>
+    /// Та же причина, что у Interpolation_FormatSpecifiers: ожидание "423.14True" записано с
+    /// точкой, а double форматируется по культуре машины — на ru-RU выходило "423,14True".
+    /// Проверяется здесь не разделитель, а что int, double и bool уходят через TryFormat.
+    /// </summary>
     [Fact]
     public void Interpolation_SpanFormattableTypes()
     {
-        // Various ISpanFormattable types.
-        // Validates: int, double, DateTime all format directly via TryFormat (no ToString allocation).
-        var sb = new ValueStringBuilder(stackalloc char[64]);
-        sb.Append($"{42}{3.14}{true}");
+        var previous = CultureInfo.CurrentCulture;
 
-        Assert.Equal("423.14True", sb.ToString());
-        sb.Dispose();
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+
+            // Various ISpanFormattable types.
+            // Validates: int, double, DateTime all format directly via TryFormat (no ToString allocation).
+            var sb = new ValueStringBuilder(stackalloc char[64]);
+            sb.Append($"{42}{3.14}{true}");
+
+            Assert.Equal("423.14True", sb.ToString());
+            sb.Dispose();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 
     [Fact]

@@ -21,7 +21,12 @@ public partial class MahaonBasementHatch : Item
     private Point3D _destination;
 
     [Constructible]
-    public MahaonBasementHatch(MahaonCityHouse house, Point3D destination, string name) : base(Graphic)
+    public MahaonBasementHatch(MahaonCityHouse house, Point3D destination, string name) : this(house, destination, name, Graphic)
+    {
+    }
+
+    // Своя графика: люк в полу первого этажа и ступени выхода в подвале выглядят по-разному.
+    public MahaonBasementHatch(MahaonCityHouse house, Point3D destination, string name, int graphic) : base(graphic)
     {
         Movable = false;
         _house = house;

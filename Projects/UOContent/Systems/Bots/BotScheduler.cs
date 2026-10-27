@@ -99,7 +99,29 @@ public static class BotScheduler
 
             if (delay < 0)
             {
-                BotSystem.Unregister(brain.Bot);
+                // −1 значит «этого бота больше не планировать»: Think отдаёт его, когда бот
+                // уже удалён или оказался ВНЕ МИРА (Map == null либо Map.Internal).
+                //
+                // Раньше дело тут и заканчивалось: из учёта системы бот выходил, а в мире
+                // оставался. Получалась сирота — невидимая, не думающая и, что хуже всего,
+                // вечно занимающая слот у своего маяка, потому что тот считает занятым
+                // любого неудалённого. На живом шарде это выело весь маяк: 481 слот из 600
+                // держали сироты, свободных архетипов не осталось, новые боты не
+                // появлялись, а [BotStats показывал ноль — два счёта разошлись навсегда.
+                //
+                // Поэтому потерянного бота теперь убираем насовсем. Удалять не страшно: за
+                // BotMobile нет живого игрока, слот освободится, и маяк заведёт нового со
+                // следующим тиком. Одержимого игрока (BotPossession) это не касается — он
+                // не BotMobile, с него только снимают управление.
+                var lost = brain.Bot;
+                BotSystem.Unregister(lost);
+
+                if (lost is Mobiles.BotMobile { Deleted: false } orphan &&
+                    (orphan.Map == null || orphan.Map == Map.Internal))
+                {
+                    logger.Warning("Bot {Bot} fell out of the world; deleting so its beacon slot is freed", orphan);
+                    orphan.Delete();
+                }
             }
             else if (brain.Registered)
             {

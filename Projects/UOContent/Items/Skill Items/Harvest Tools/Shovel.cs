@@ -15,6 +15,9 @@ public partial class Shovel : BaseHarvestTool
 
     public override HarvestSystem HarvestSystem => Mining.System;
 
+    /// <summary>Лопатой копают землю, а не только руду в скале.</summary>
+    public override bool CanExcavate => true;
+
     public override void OnDoubleClick(Mobile from)
     {
         if (Systems.MahaonWorld.MahaonGraveyardDigSystem.IsGraveyard(from))
