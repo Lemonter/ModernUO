@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// converted to a chance-based OnDeath drop (see WolfSpider.cs). CanStealth/OnDamagedBySpell
 /// fixed the same way as TrapdoorSpider.cs.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a kepetch corpse")]
 public partial class KepetchAmbusher : BaseCreature, ICarvable
 {
     [SerializableField(0)]
@@ -49,6 +48,7 @@ public partial class KepetchAmbusher : BaseCreature, ICarvable
         Karma = -2500;
     }
 
+    public override string CorpseName => "труп кепетча";
     public override string DefaultName => "кепетч-засадник";
 
     public override void OnDamage(int amount, Mobile from, bool willKill)

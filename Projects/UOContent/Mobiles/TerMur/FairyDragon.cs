@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// dropped — neither item exists anywhere in this codebase. HitPoisonChance confirmed to
 /// exist on BaseCreature.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a fairy dragon corpse")]
 public partial class FairyDragon : BaseCreature
 {
     public override bool AutoDispel => !Controlled;
@@ -51,6 +50,7 @@ public partial class FairyDragon : BaseCreature
         Karma = -15000;
     }
 
+    public override string CorpseName => "труп дракончика-феи";
     public override string DefaultName => "дракончик-фея";
 
     public override void GenerateLoot()

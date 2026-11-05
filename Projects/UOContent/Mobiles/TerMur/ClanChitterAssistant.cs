@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -9,7 +9,6 @@ namespace Server.Mobiles;
 /// Arrow(amount) rather than the chance-roll pattern used elsewhere (see WolfSpider.cs);
 /// Arrow's int-amount constructor confirmed to exist.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clan chitter assistant corpse")]
 public partial class ClanChitterAssistant : BaseCreature
 {
     [Constructible]
@@ -46,6 +45,7 @@ public partial class ClanChitterAssistant : BaseCreature
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп помощника клана Стрекот";
     public override string DefaultName => "помощник клана Стрекот";
 
     public override bool CanRummageCorpses => true;

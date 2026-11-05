@@ -41,15 +41,32 @@ public static class ItemIdentification
 
             if (o is Item item)
             {
-                if (item is IIdentifiable identifiable && from.CheckTargetSkill(
-                    SkillName.ItemID, item,
-                    0 - Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(from, Systems.MahaonCombat.MinorSkill.ItemID),
-                    100
-                ))
+                if (item is IIdentifiable identifiable && from.CheckTargetSkill(SkillName.ItemID, item, 0, 100))
                 {
                     Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(from, Systems.MahaonCombat.MinorSkill.ItemID);
                     identifiable.Identified = true;
                     identified = true;
+
+                    // Оценщик: с шансом опознаёт заодно всё остальное в той же сумке.
+                    if (item.Parent is Container bag &&
+                        Systems.MahaonCombat.MinorSkillSpecializationSystem.RollExtra(from, Systems.MahaonCombat.MinorSkill.ItemID))
+                    {
+                        var more = 0;
+
+                        foreach (var other in bag.Items)
+                        {
+                            if (other != item && other is IIdentifiable { Identified: false } next)
+                            {
+                                next.Identified = true;
+                                more++;
+                            }
+                        }
+
+                        if (more > 0)
+                        {
+                            from.SendMessage(0x59, $"Намётанный глаз: опознано ещё {more} в той же сумке.");
+                        }
+                    }
                 }
 
                 if (!Core.AOS)

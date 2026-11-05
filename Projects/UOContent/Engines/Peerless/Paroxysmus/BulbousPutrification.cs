@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -45,7 +45,7 @@ public partial class BulbousPutrification : BaseCreature
         SetSkill(SkillName.Poisoning, 80.0);
     }
 
-    public override string CorpseName => "a bulbous putrification corpse";
+    public override string CorpseName => "труп вздутой гнили";
 
     public override Poison PoisonImmune => Poison.Lethal;
     public override Poison HitPoison => Poison.Lethal;

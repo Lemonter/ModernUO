@@ -60,7 +60,11 @@ public static class Snooping
         if (from.AccessLevel == AccessLevel.Player)
         {
             var snooping = from.Skills.Snooping.Value;
-            if (root != null && snooping < 100.0 && snooping < Utility.RandomDouble() * 100)
+            // Ищейка: тише — с шансом тебя не замечают, даже если навык подвёл.
+            if (root != null && snooping < 100.0 && snooping < Utility.RandomDouble() * 100 &&
+                !Server.Systems.MahaonCombat.ThievingSpecializationSystem.StaysUnnoticed(
+                    from, Server.Systems.MahaonCombat.ThievingSpecialization.Snoop
+                ))
             {
                 var map = from.Map;
 
@@ -81,11 +85,7 @@ public static class Snooping
             Titles.AwardKarma(from, -4, true);
         }
 
-        var windowBonus = Server.Systems.MahaonCombat.ThievingSpecializationSystem.GetSkillWindowBonus(
-            from, Server.Systems.MahaonCombat.ThievingSpecialization.Snoop
-        );
-
-        if (from.AccessLevel > AccessLevel.Player || from.CheckTargetSkill(SkillName.Snooping, cont, 0.0 - windowBonus, 100.0))
+        if (from.AccessLevel > AccessLevel.Player || from.CheckTargetSkill(SkillName.Snooping, cont, 0.0, 100.0))
         {
             Server.Systems.MahaonCombat.ThievingSpecializationSystem.Train(
                 from, Server.Systems.MahaonCombat.ThievingSpecialization.Snoop

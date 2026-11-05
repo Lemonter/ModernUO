@@ -69,11 +69,11 @@ public partial class HireRanger : BaseHire
                 }
         }
 
-        EquipItem(new StuddedChest());
-        EquipItem(new StuddedArms());
-        EquipItem(new StuddedGloves());
-        EquipItem(new StuddedLegs());
-        EquipItem(new StuddedGorget());
+        EquipItem(new StuddedChest { Hue = 0x59C });
+        EquipItem(new StuddedArms { Hue = 0x59C });
+        EquipItem(new StuddedGloves { Hue = 0x59C });
+        EquipItem(new StuddedLegs { Hue = 0x59C });
+        EquipItem(new StuddedGorget { Hue = 0x59C });
     }
 
     public override void GenerateLoot()

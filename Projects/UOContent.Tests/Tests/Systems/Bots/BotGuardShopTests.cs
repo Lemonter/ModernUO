@@ -64,11 +64,9 @@ public class BotGuardShopTests
                 bot,
                 Server.Systems.MahaonProfessions.MahaonProfession.Grandmaster
             );
-            var values = (System.Collections.Generic.Dictionary<Mobile, double>)typeof(
-                    Server.Systems.MahaonCombat.InscriptionSpecializationSystem
-                ).GetField("Value", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
-                .GetValue(null);
-            values![bot] = 100.0;
+            // Вся прокачка поверх навыков лежит в одном хранилище, так что выставить ветку можно
+            // прямо по имени дорожки — без рефлексии в приватное поле системы, как было раньше.
+            Server.Systems.MahaonCombat.MahaonProgress.Set(bot, "branch:inscription", 100.0);
 
             Assert.Equal(105, BotScrolls.WantedMasteryScroll(bot.Brain));
             var mastery = new MahaonMasteryScroll(105.0);
@@ -82,7 +80,7 @@ public class BotGuardShopTests
                     Server.Systems.MahaonCombat.InscriptionSpecializationSystem.RuSpecializationName
                 )
             );
-            values.Remove(bot);
+            Server.Systems.MahaonCombat.MahaonProgress.Set(bot, "branch:inscription", 0.0);
         }
         finally
         {

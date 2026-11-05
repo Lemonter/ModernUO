@@ -3,9 +3,8 @@ using ModernUO.Serialization;
 namespace Server.Mobiles;
 
 // Ported from real OSI/ServUO content (Scripts/Quests/Eodon/Valley of One Quest/Creatures.cs).
-// SetSpecialAbility(SpecialAbility.DragonBreath) dropped — that creature special-move
-// framework doesn't exist in this codebase (see Mobiles/Monsters/Reptile/Eodon/Dinosaurs.cs
-// header for the general explanation).
+// ServUO's SetSpecialAbility(SpecialAbility.DragonBreath) comes through GetMonsterAbilities as
+// MonsterAbilities.FireBreath.
 [SerializationGenerator(0, false)]
 public partial class VolcanoElemental : BaseCreature
 {
@@ -49,6 +48,10 @@ public partial class VolcanoElemental : BaseCreature
     }
 
     public override string CorpseName => "дымящиеся останки";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.FireBreath];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override int GetIdleSound() => 1549;
     public override int GetAngerSound() => 1546;

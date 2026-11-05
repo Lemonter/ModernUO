@@ -1,13 +1,12 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/FireDaemon.cs). IAuraCreature (doesn't
-/// exist here) dropped in favor of BaseCreature's own built-in aura mechanism (HasAura/
-/// AuraFireDamage/AuraEffect — confirmed present in BaseCreature.cs and functionally
-/// equivalent). SetSpecialAbility/SetAreaEffect dropped (no such API here).</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/FireDaemon.cs). ServUO's IAuraCreature /
+/// <c>SetAreaEffect(AreaEffect.AuraDamage)</c> is BaseCreature's own built-in aura mechanism
+/// (HasAura/AuraFireDamage/AuraEffect), and <c>SetSpecialAbility(DragonBreath)</c> comes through
+/// <see cref="GetMonsterAbilities" /> as <see cref="MonsterAbilities.FireBreath" />.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a fire daemon corpse")]
 public partial class FireDaemon : BaseCreature
 {
     [Constructible]
@@ -47,7 +46,12 @@ public partial class FireDaemon : BaseCreature
         Karma = -15000;
     }
 
+    public override string CorpseName => "труп огненного демона";
     public override string DefaultName => "огненный демон";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.FireBreath];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override bool CanRummageCorpses => true;
     public override Poison PoisonImmune => Poison.Regular;

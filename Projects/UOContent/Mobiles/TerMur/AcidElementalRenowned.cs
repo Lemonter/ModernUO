@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -10,7 +10,6 @@ namespace Server.Mobiles;
 /// LootPack.LootItem&lt;T&gt; doesn't exist — Nightshade/LesserPoisonPotion converted to
 /// always-on OnDeath drops (both items confirmed to exist).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Acid Elemental [Renowned] corpse")]
 public partial class AcidElementalRenowned : BaseRenowned
 {
     [Constructible]
@@ -48,6 +47,7 @@ public partial class AcidElementalRenowned : BaseRenowned
         Karma = -12500;
     }
 
+    public override string CorpseName => "труп знаменитого кислотного элементаля";
     public override string DefaultName => "кислотный элементаль";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

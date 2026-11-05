@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Items;
@@ -15,7 +15,8 @@ namespace Server.Mobiles;
 /// TokenOfHolyFavor). SetWeaponAbility
 /// called twice in the original (Bladeweave then TalonStrike) has no equivalent for a
 /// GetWeaponAbility() override that can only return one value — kept Bladeweave, documented.
-/// SetSpecialAbility dropped (see Rotworm.cs). StygianDragonHead (guaranteed OnDeath drop)
+/// <c>SetSpecialAbility(DragonBreath)</c> comes through <see cref="GetMonsterAbilities" /> as
+/// <see cref="MonsterAbilities.FireBreath" />. StygianDragonHead (guaranteed OnDeath drop)
 /// doesn't exist anywhere in this codebase — dropped, kept the ParagonChest roll (Paragon/
 /// ParagonChest both confirmed to exist with matching signatures). The three combat
 /// mechanics (Crimson Meteor rain, Fire Column, Stygian Fireball) are reimplemented with
@@ -27,7 +28,6 @@ namespace Server.Mobiles;
 /// ScreenLightFlash don't exist here — both dropped (the former only nudged effect Z-height
 /// to ground level; the latter was a pure screen-flash cosmetic).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a stygian dragon corpse")]
 public partial class StygianDragon : BaseCreature
 {
     private DateTime _delay;
@@ -71,7 +71,12 @@ public partial class StygianDragon : BaseCreature
         Tamable = false;
     }
 
+    public override string CorpseName => "труп стигийского дракона";
     public override string DefaultName => "стигийский дракон";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.FireBreath];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override WeaponAbility GetWeaponAbility() => WeaponAbility.Bladeweave;
 

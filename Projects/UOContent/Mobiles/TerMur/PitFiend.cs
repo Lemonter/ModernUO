@@ -1,10 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/PitFiend.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a pit fiend corpse")]
 public partial class PitFiend : BaseCreature
 {
     [Constructible]
@@ -38,6 +37,7 @@ public partial class PitFiend : BaseCreature
         Karma = -18000;
     }
 
+    public override string CorpseName => "труп беса из бездны";
     public override string DefaultName => "бес из бездны";
 
     public override double DispelDifficulty => 125.0;

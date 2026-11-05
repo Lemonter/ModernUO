@@ -108,7 +108,7 @@ public partial class Travesty : BasePeerless
         _clonedItems = new List<Item>();
     }
 
-    public override string CorpseName => "a travesty corpse";
+    public override string CorpseName => "труп Травести";
 
     public override bool ShowFameTitle => false;
     public override bool AlwaysAttackable => true;

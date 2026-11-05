@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Spells;
@@ -11,16 +11,15 @@ namespace Server.Mobiles;
 /// Its signature move is the blink: spell it from across the room and half the time it simply
 /// appears on top of the caster and turns on them.
 ///
-/// Dropped: the four SetSpecialAbility / SetWeaponAbility registrations (AngryFire, ManaDrain,
-/// TrueFear, Paralyzing Blow) — that is ServUO's pet-training ability table, which isn't part
-/// of this codebase; the weapon ability comes back through GetWeaponAbility, the three special
-/// abilities have no equivalent here (same simplification as Rotworm.cs).
+/// Dropped: three of the four SetSpecialAbility / SetWeaponAbility registrations (AngryFire,
+/// ManaDrain, TrueFear) — the monster-ability framework (<see cref="GetMonsterAbilities" />) has
+/// no counterpart for a fire damage-over-time, a mana drain or a fear effect. The fourth,
+/// Paralyzing Blow, comes back through GetWeaponAbility.
 ///
 /// Both artifact lists are empty: none of the thirteen artifacts the original names exist in
 /// this codebase yet. Its fire ring is kept — note the original leaves the call site that
 /// would trigger it commented out, so it never actually fires there either.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a slasher of veils corpse")]
 public partial class SlasherOfVeils : BaseSABoss
 {
     private static readonly int[] _north = [-1, -1, 1, -1, -1, 2, 1, 2];
@@ -66,6 +65,7 @@ public partial class SlasherOfVeils : BaseSABoss
         Karma = -35000;
     }
 
+    public override string CorpseName => "труп Разрывателя Завес";
     public override string DefaultName => "Разрыватель Завес";
 
     public override Type[] UniqueSAList => Type.EmptyTypes;

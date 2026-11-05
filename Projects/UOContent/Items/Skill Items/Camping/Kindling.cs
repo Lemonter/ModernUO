@@ -35,11 +35,7 @@ public partial class Kindling : Item
         {
             from.SendLocalizedMessage(501695); // There is not a spot nearby to place your campfire.
         }
-        else if (!from.CheckSkill(
-            SkillName.Camping, 0.0 - Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
-                from, Systems.MahaonCombat.MinorSkill.Camping
-            ), 100.0
-        ))
+        else if (!from.CheckSkill(SkillName.Camping, 0.0, 100.0))
         {
             from.SendLocalizedMessage(501696); // You fail to ignite the campfire.
         }
@@ -54,7 +50,9 @@ public partial class Kindling : Item
                 from.PlaceInBackpack(this);
             }
 
-            new Campfire().MoveToWorld(fireLocation, from.Map);
+            // Кострожог: костёр горит дольше (ветка — эффект при успехе, не шанс).
+            new Campfire { LifetimeScale = Systems.MahaonCombat.MinorSkillSpecializationSystem.CampfireScale(from) }
+                .MoveToWorld(fireLocation, from.Map);
         }
     }
 

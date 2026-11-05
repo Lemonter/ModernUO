@@ -3,42 +3,11 @@ using System.Collections.Generic;
 
 namespace Server.Systems.MahaonMapEdits;
 
-/// <summary>Один статик в блоке 8x8. Координаты — смещение внутри блока, как в файле.</summary>
+/// <summary>Один статик карты. Координаты — внутри блока, 0..7.</summary>
 public readonly record struct MapStatic(ushort Graphic, byte X, byte Y, sbyte Z, short Hue);
 
 /// <summary>Один тайл земли.</summary>
 public readonly record struct MapLand(ushort Graphic, sbyte Z);
-
-public enum MapEditKind
-{
-    RemoveStatic,
-    AddStatic,
-    SetLand
-}
-
-/// <summary>
-///     Одна правка карты. Неизменяемая запись в журнале — вся суть отката в том, что
-///     правки не изменяют друг друга, а только накапливаются.
-/// </summary>
-public sealed class MapEditEntry
-{
-    public int Id;
-    public DateTime When;
-    public int MapId;
-    public int X;
-    public int Y;
-    public int Z;
-    public int Graphic;
-    public int Hue;
-    public MapEditKind Kind;
-
-    /// <summary>Откуда взялась правка: «осада Британии», «бот взорвал дом», «рука ГМ».
-    /// По этой строке правки и откатываются пачкой.</summary>
-    public string Reason = "";
-
-    public override string ToString() =>
-        $"#{Id} {Kind} ({X}, {Y}, {Z}) гр.{Graphic:X4} — {Reason}";
-}
 
 /// <summary>
 ///     Изменения карты: снос статики, постройка мостов, рытьё рвов.
@@ -49,21 +18,38 @@ public sealed class MapEditEntry
 ///     нарисованный в карте — нельзя ничем: клиент берёт статику из своих файлов и сервера
 ///     об этом не спрашивает.
 ///
-///     ---- Почему журнал, а не «текущее состояние» ----
+///     ---- Два мира, а не журнал ----
 ///
-///     Первая версия хранила желаемое состояние блока: список того, что в нём должно быть.
-///     Работало, но откатить позволяло только блок целиком — а блок это 8x8, и в него
-///     запросто попадают и снесённая стена, и чужой мост, поставленный неделей раньше.
+///     Хранится ровно две вещи, и обе — состояния, а не история:
 ///
-///     Теперь источник истины — журнал правок, а состояние блока из него ВЫВОДИТСЯ:
-///     берём слепок «как было» и проигрываем правки по порядку. Отсюда бесплатно получаются
-///     три вещи: откат любой отдельной правки, откат всего, что сделало одно событие (по
-///     Reason), и возможность посмотреть, кто вообще это натворил.
+///         ИСХОДНЫЙ мир — слепок блока «как было», снимается при первом касании. Нужен для
+///         сброса и для того, чтобы запекание не удвоилось.
 ///
-///     Слепок снимается при первом касании блока и с ЖИВОЙ карты, то есть уже с заплатами
-///     EA — так их правки сохраняются сами собой. И он же не даёт запеканию удвоиться:
-///     после первого запекания живая карта уже содержит наши правки, и считай мы состояние
-///     от неё, второе запекание наложило бы всё повторно.
+///         ИЗМЕНЁННЫЙ мир — то, что в блоке сейчас.
+///
+///     Раньше источником истины был append-only журнал правок, а состояние блока из него
+///     выводилось. Замысел был в тонком откате: отменить одну правку, отменить всё, что
+///     натворило одно событие. На деле это не окупилось ни разу, зато цена росла сама.
+///
+///     Цену видно на земляных работах. Борта ямы тянутся волной во всю её глубину, так что
+///     ОДИН взмах на глубине d переписывает порядка (2d+1)² тайлов — и каждый ложился в
+///     журнал отдельной записью. Яма на сорок вниз — под сотню тысяч записей, канава —
+///     миллионы. При этом девять десятых из них бессмысленны: десятая правка одного тайла
+///     делает девять предыдущих неотличимыми от мусора, для состояния мира важна только
+///     последняя. Журнал же хранил их вечно, сохранение пухло, а разливу воды приходилось
+///     проходить его целиком на каждый взмах — то есть копка тормозила тем сильнее, чем
+///     больше уже выкопано.
+///
+///     Два состояния не растут вовсе: сколько ни копай один тайл, он остаётся одним тайлом.
+///
+///     Что потеряно вместе с журналом: откат отдельной правки и откат по событию. Что
+///     осталось: сброс блока и сброс всего мира к исходному — а это и есть то, ради чего
+///     откат звали на самом деле.
+///
+///     Слепок снимается с ЖИВОЙ карты, то есть уже с заплатами EA — так их правки
+///     сохраняются сами собой. И он же не даёт запеканию удвоиться: после первого запекания
+///     живая карта уже содержит наши правки, и считай мы исходное состояние от неё, второе
+///     запекание наложило бы всё повторно.
 /// </summary>
 public sealed class MahaonMapEdits : GenericPersistence
 {
@@ -75,183 +61,156 @@ public sealed class MahaonMapEdits : GenericPersistence
 
     public static void Configure() => _instance = new MahaonMapEdits();
 
-    /// <summary>Журнал. Порядок = порядок применения.</summary>
-    private static readonly List<MapEditEntry> Journal = new();
-
-    private static int _nextId = 1;
-
-    /// <summary>Слепки «как было», по (карта, блок). Снимаются один раз и живут вечно:
-    /// без них откат не к чему возвращать.</summary>
+    /// <summary>Исходный мир: статика блока «как было».</summary>
     private static readonly Dictionary<(int MapId, int BlockId), List<MapStatic>> OriginalStatics = new();
 
+    /// <summary>Исходный мир: земля блока «как была».</summary>
     private static readonly Dictionary<(int MapId, int BlockId), MapLand[]> OriginalLand = new();
 
-    /// <summary>Выведенное состояние. Сбрасывается при любой правке и откате.</summary>
-    private static Dictionary<(int MapId, int BlockId), BlockState> _derived;
+    /// <summary>Изменённый мир. Блока тут нет — значит он не тронут.</summary>
+    private static readonly Dictionary<(int MapId, int BlockId), BlockState> Changed = new();
 
+    /// <summary>
+    ///     Состояние одного блока. Статика и земля заводятся по отдельности и только при
+    ///     первом касании: блок, где копали землю, про статику ничего не знает, и выдавать
+    ///     его пустой список за «статики здесь нет» нельзя.
+    /// </summary>
     public sealed class BlockState
     {
         public List<MapStatic> Statics;
         public MapLand[] Land;
-        public bool StaticsTouched;
+
+        public bool StaticsTouched => Statics != null;
         public bool LandTouched => Land != null;
     }
 
-    public static IReadOnlyList<MapEditEntry> Entries => Journal;
+    /// <summary>Изменённый мир целиком. Читают живой слой и запекание.</summary>
+    public static IReadOnlyDictionary<(int MapId, int BlockId), BlockState> Current => Changed;
+
+    public static int ChangedBlocks => Changed.Count;
 
     /// <summary>
     ///     Сообщает, что состояние блока изменилось: (карта, блок). На это подписан живой
     ///     слой — он и переносит изменение в TileMatrix и к игрокам.
     ///
-    ///     Событие обязано вызываться и при откате, причём даже когда блок из правок
-    ///     ушёл совсем: иначе отменённый снос остался бы снесённым у всех, кто уже стоит
-    ///     рядом, — а это ровно то, ради чего откат и делался.
+    ///     Событие обязано вызываться и при сбросе, причём даже когда блок из изменённых
+    ///     ушёл совсем: иначе снесённое осталось бы снесённым у всех, кто уже стоит рядом.
     /// </summary>
     public static event Action<int, int> BlockChanged;
 
     public static int BlockIdFor(Map map, int x, int y) => (x >> 3) * (map.Height >> 3) + (y >> 3);
 
-    /// <summary>Слепок «как было» — нужен живому слою, чтобы возвращать блок при откате.</summary>
     public static bool TryGetOriginalStatics(int mapId, int blockId, out List<MapStatic> tiles) =>
         OriginalStatics.TryGetValue((mapId, blockId), out tiles);
 
     public static bool TryGetOriginalLand(int mapId, int blockId, out MapLand[] land) =>
         OriginalLand.TryGetValue((mapId, blockId), out land);
 
-    private static void NotifyBlocks(IEnumerable<(int MapId, int BlockId)> blocks)
-    {
-        if (BlockChanged == null)
-        {
-            return;
-        }
-
-        foreach (var (mapId, blockId) in blocks)
-        {
-            BlockChanged(mapId, blockId);
-        }
-    }
-
-    /// <summary>Блоки, которых касаются эти записи журнала.</summary>
-    private static HashSet<(int, int)> BlocksOf(IEnumerable<MapEditEntry> entries)
-    {
-        var set = new HashSet<(int, int)>();
-
-        foreach (var e in entries)
-        {
-            var map = Map.Maps[e.MapId];
-
-            if (map != null)
-            {
-                set.Add((e.MapId, BlockIdFor(map, e.X, e.Y)));
-            }
-        }
-
-        return set;
-    }
-
-    // ---- Запись правок ----------------------------------------------------------------
+    // ---- Правка ---------------------------------------------------------------------------
 
     /// <summary>Убирает статику карты в точке. graphic = null — всю, что там есть.</summary>
-    public static int RemoveStatics(Map map, int x, int y, int? graphic, string reason)
+    public static int RemoveStatics(Map map, int x, int y, int? graphic)
     {
-        EnsureSnapshot(map, x, y);
-
-        var present = StaticsAt(map, x, y);
+        var state = TouchStatics(map, x, y);
+        var ox = (byte)(x & 7);
+        var oy = (byte)(y & 7);
         var removed = 0;
 
-        foreach (var s in present)
+        for (var i = state.Statics.Count - 1; i >= 0; i--)
         {
-            if (graphic != null && s.Graphic != graphic.Value)
+            var s = state.Statics[i];
+
+            if (s.X != ox || s.Y != oy || graphic != null && s.Graphic != graphic.Value)
             {
                 continue;
             }
 
-            Append(
-                new MapEditEntry
-                {
-                    MapId = map.MapID, X = x, Y = y, Z = s.Z,
-                    Graphic = s.Graphic, Kind = MapEditKind.RemoveStatic, Reason = reason
-                }
-            );
-
+            state.Statics.RemoveAt(i);
             removed++;
+        }
+
+        if (removed > 0)
+        {
+            Touched(map, x, y);
         }
 
         return removed;
     }
 
-    public static void AddStatic(Map map, int x, int y, int z, int graphic, int hue, string reason)
+    public static void AddStatic(Map map, int x, int y, int z, int graphic, int hue)
     {
-        EnsureSnapshot(map, x, y);
+        var state = TouchStatics(map, x, y);
 
-        Append(
-            new MapEditEntry
-            {
-                MapId = map.MapID, X = x, Y = y, Z = z,
-                Graphic = graphic, Hue = hue, Kind = MapEditKind.AddStatic, Reason = reason
-            }
-        );
+        state.Statics.Add(new MapStatic((ushort)graphic, (byte)(x & 7), (byte)(y & 7), (sbyte)z, (short)hue));
+
+        Touched(map, x, y);
     }
 
-    public static void SetLand(Map map, int x, int y, int graphic, int z, string reason)
+    public static void SetLand(Map map, int x, int y, int graphic, int z)
     {
+        var state = TouchLand(map, x, y);
+
+        // Порядок тайлов в блоке земли построчный: индекс = y*8 + x.
+        state.Land[(y & 7) * 8 + (x & 7)] = new MapLand((ushort)graphic, (sbyte)z);
+
+        Touched(map, x, y);
+    }
+
+    /// <summary>Состояние блока, готовое принять правку статики. Заодно снимает слепок.</summary>
+    private static BlockState TouchStatics(Map map, int x, int y)
+    {
+        var key = (map.MapID, BlockIdFor(map, x, y));
+        var state = StateFor(key);
+
+        if (state.Statics != null)
+        {
+            return state;
+        }
+
+        EnsureSnapshotStatics(map, x, y);
+        state.Statics = new List<MapStatic>(OriginalStatics[key]);
+
+        return state;
+    }
+
+    /// <summary>То же для земли.</summary>
+    private static BlockState TouchLand(Map map, int x, int y)
+    {
+        var key = (map.MapID, BlockIdFor(map, x, y));
+        var state = StateFor(key);
+
+        if (state.Land != null)
+        {
+            return state;
+        }
+
         EnsureSnapshotLand(map, x, y);
+        state.Land = (MapLand[])OriginalLand[key].Clone();
 
-        Append(
-            new MapEditEntry
-            {
-                MapId = map.MapID, X = x, Y = y, Z = z,
-                Graphic = graphic, Kind = MapEditKind.SetLand, Reason = reason
-            }
-        );
+        return state;
     }
 
-    private static void Append(MapEditEntry entry)
+    private static BlockState StateFor((int MapId, int BlockId) key)
     {
-        entry.Id = _nextId++;
-        entry.When = Core.Now;
-
-        Journal.Add(entry);
-
-        var map = Map.Maps[entry.MapId];
-
-        if (map == null)
+        if (!Changed.TryGetValue(key, out var state))
         {
-            _derived = null;
-            return;
+            Changed[key] = state = new BlockState();
         }
 
-        var key = (entry.MapId, BlockIdFor(map, entry.X, entry.Y));
+        return state;
+    }
 
-        // Новую правку накладываем на уже посчитанное состояние, а не пересчитываем всё.
-        //
-        // Раньше здесь было _derived = null, и это дорого обходилось: следующее же
-        // обращение проигрывало ВЕСЬ журнал заново. Один подрыв на полтора десятка тайлов
-        // при журнале в тысячи записей — столько же полных проигрываний подряд, и чем
-        // дольше живёт сервер, тем медленнее каждый удар киркой. Добавление правки по
-        // своей природе наращивающее, так что и считать его надо наращиванием.
-        //
-        // Откат — другое дело: он выдёргивает запись из середины, и там пересчёт
-        // неизбежен. Но откат редок, а правки идут потоком.
-        if (_derived != null)
-        {
-            if (!_derived.TryGetValue(key, out var state))
-            {
-                state = NewBlockState(key);
-                _derived[key] = state;
-            }
-
-            Apply(map, state, entry, key);
-        }
+    private static void Touched(Map map, int x, int y)
+    {
+        var blockId = BlockIdFor(map, x, y);
 
         if (_batch != null)
         {
-            _batch.Add((entry.MapId, key.Item2));
+            _batch.Add((map.MapID, blockId));
+            return;
         }
-        else
-        {
-            BlockChanged?.Invoke(entry.MapId, key.Item2);
-        }
+
+        BlockChanged?.Invoke(map.MapID, blockId);
     }
 
     // ---- Пачка правок ------------------------------------------------------------------
@@ -287,129 +246,58 @@ public sealed class MahaonMapEdits : GenericPersistence
         }
     }
 
-    /// <summary>Состояние блока «как было» — отправная точка для проигрывания правок.</summary>
-    private static BlockState NewBlockState((int MapId, int BlockId) key) =>
-        new()
-        {
-            Statics = OriginalStatics.TryGetValue(key, out var snapshot)
-                ? new List<MapStatic>(snapshot)
-                : new List<MapStatic>()
-        };
+    // ---- Сброс ---------------------------------------------------------------------------
 
-    /// <summary>
-    ///     Пересчитать выведенное состояние с нуля. Обычно не нужно — наращивание и откат
-    ///     держат его в порядке сами, — но это дешёвая страховка, если однажды покажется,
-    ///     что состояние разъехалось с журналом.
-    /// </summary>
-    public static void Rebuild() => _derived = null;
-
-    // ---- Откат -------------------------------------------------------------------------
-
-    /// <summary>Откатывает одну правку по номеру.</summary>
-    public static bool Undo(int id)
+    /// <summary>Возвращает блок к исходному виду. Слепок остаётся — он и есть исходная карта.</summary>
+    public static bool ResetBlock(Map map, int x, int y)
     {
-        for (var i = 0; i < Journal.Count; i++)
+        var key = (map.MapID, BlockIdFor(map, x, y));
+
+        if (!Changed.Remove(key))
         {
-            if (Journal[i].Id != id)
-            {
-                continue;
-            }
-
-            var removed = Journal[i];
-
-            Journal.RemoveAt(i);
-            _derived = null;
-
-            NotifyBlocks(BlocksOf(new[] { removed }));
-
-            return true;
+            return false;
         }
 
-        return false;
+        BlockChanged?.Invoke(key.Item1, key.Item2);
+
+        return true;
     }
 
-    /// <summary>Откатывает все правки одного события — «отменить всю осаду».</summary>
-    public static int UndoByReason(string reason)
+    /// <summary>Возвращает к исходному виду весь мир. Отвечает числом блоков.</summary>
+    public static int ResetAll()
     {
-        var doomed = Journal.FindAll(e => e.Reason.Equals(reason, StringComparison.OrdinalIgnoreCase));
+        var blocks = new List<(int MapId, int BlockId)>(Changed.Keys);
 
-        if (doomed.Count == 0)
+        Changed.Clear();
+
+        foreach (var (mapId, blockId) in blocks)
         {
-            return 0;
+            BlockChanged?.Invoke(mapId, blockId);
         }
 
-        var blocks = BlocksOf(doomed);
-
-        Journal.RemoveAll(e => e.Reason.Equals(reason, StringComparison.OrdinalIgnoreCase));
-        _derived = null;
-
-        NotifyBlocks(blocks);
-
-        return doomed.Count;
-    }
-
-    /// <summary>Откатывает последние N правок.</summary>
-    public static int UndoLast(int count)
-    {
-        var doomed = new List<MapEditEntry>();
-
-        while (doomed.Count < count && Journal.Count > 0)
-        {
-            doomed.Add(Journal[^1]);
-            Journal.RemoveAt(Journal.Count - 1);
-        }
-
-        if (doomed.Count == 0)
-        {
-            return 0;
-        }
-
-        _derived = null;
-        NotifyBlocks(BlocksOf(doomed));
-
-        return doomed.Count;
-    }
-
-    /// <summary>Откатывает всё. Слепки остаются — они и есть исходная карта.</summary>
-    public static int UndoAll()
-    {
-        var count = Journal.Count;
-        var blocks = BlocksOf(Journal);
-
-        Journal.Clear();
-        _derived = null;
-
-        NotifyBlocks(blocks);
-
-        return count;
+        return blocks.Count;
     }
 
     /// <summary>
-    ///     Закрепляет запечённое: текущее состояние становится новым «как было», а журнал
-    ///     очищается.
+    ///     Закрепляет запечённое: изменённый мир становится новым исходным.
     ///
     ///     Это недостающее звено всего замысла. Запекание кладёт правки в файлы карты, но
-    ///     из журнала их не убирает — и без этого шага список растёт вечно, а каждому
-    ///     входящему шлётся то, что у него уже лежит в собственных stadif/mapdif. Закрепив,
-    ///     мы возвращаем живой слой к тому, ради чего он задуман: в нём остаётся только
-    ///     свежее, ещё не разошедшееся по игрокам.
+    ///     из живого слоя их не убирает — и без этого шага каждому входящему шлётся то, что
+    ///     у него уже лежит в собственных stadif/mapdif.
     ///
     ///     Делается ОТДЕЛЬНОЙ командой, а не автоматически после запекания, и причина
     ///     важная: между «запекли» и «у всех новые файлы» проходит время. Закрепив раньше,
     ///     мы перестанем слать правки тем, кто файлы ещё не получил, и они увидят старый
     ///     мир, пока сервер будет уверен в новом.
     ///
-    ///     После закрепления откат этих правок невозможен: снимок «как было» перезаписан.
-    ///     Вернуть можно только новой правкой.
+    ///     После закрепления сброс этих правок невозможен: исходный мир перезаписан.
     /// </summary>
     public static int Commit()
     {
-        var affected = new HashSet<(int, int)>();
+        var affected = new List<(int MapId, int BlockId)>(Changed.Count);
 
-        foreach (var ((mapId, blockId), state) in Derived)
+        foreach (var (key, state) in Changed)
         {
-            var key = (mapId, blockId);
-
             if (state.StaticsTouched)
             {
                 OriginalStatics[key] = new List<MapStatic>(state.Statics);
@@ -423,135 +311,34 @@ public sealed class MahaonMapEdits : GenericPersistence
             affected.Add(key);
         }
 
-        var count = Journal.Count;
-
-        Journal.Clear();
-        _derived = null;
+        Changed.Clear();
 
         // Оповещаем: живой слой должен перестать считать эти блоки изменёнными. Само
         // состояние при этом не меняется — новый слепок равен тому, что и так стояло.
-        NotifyBlocks(affected);
-
-        return count;
-    }
-
-    /// <summary>Правки, задевшие этот блок, — чтобы было что показать перед откатом.</summary>
-    public static List<MapEditEntry> EntriesInBlock(Map map, int x, int y)
-    {
-        var blockId = BlockIdFor(map, x, y);
-        var list = new List<MapEditEntry>();
-
-        foreach (var e in Journal)
+        foreach (var (mapId, blockId) in affected)
         {
-            if (e.MapId == map.MapID && BlockIdFor(map, e.X, e.Y) == blockId)
-            {
-                list.Add(e);
-            }
+            BlockChanged?.Invoke(mapId, blockId);
         }
 
-        return list;
+        return affected.Count;
     }
 
-    // ---- Выведенное состояние -----------------------------------------------------------
-
-    /// <summary>Состояние всех задетых блоков после проигрывания журнала.</summary>
-    public static Dictionary<(int MapId, int BlockId), BlockState> Derived
-    {
-        get
-        {
-            if (_derived != null)
-            {
-                return _derived;
-            }
-
-            _derived = new Dictionary<(int, int), BlockState>();
-
-            // Начинаем со слепков — но только тех блоков, которых журнал ещё касается.
-            // Иначе откаченный блок остался бы в выводе и попал в запекание без нужды.
-            foreach (var e in Journal)
-            {
-                var map = Map.Maps[e.MapId];
-
-                if (map == null)
-                {
-                    continue;
-                }
-
-                var key = (e.MapId, BlockIdFor(map, e.X, e.Y));
-
-                if (!_derived.TryGetValue(key, out var state))
-                {
-                    state = NewBlockState(key);
-                    _derived[key] = state;
-                }
-
-                Apply(map, state, e, key);
-            }
-
-            return _derived;
-        }
-    }
-
-    private static void Apply(
-        Map map, BlockState state, MapEditEntry e, (int MapId, int BlockId) key
-    )
-    {
-        var ox = (byte)(e.X & 7);
-        var oy = (byte)(e.Y & 7);
-
-        switch (e.Kind)
-        {
-            case MapEditKind.RemoveStatic:
-                for (var i = state.Statics.Count - 1; i >= 0; i--)
-                {
-                    var s = state.Statics[i];
-
-                    if (s.X == ox && s.Y == oy && s.Graphic == e.Graphic && s.Z == e.Z)
-                    {
-                        state.Statics.RemoveAt(i);
-                        state.StaticsTouched = true;
-
-                        break; // одна правка убирает один тайл
-                    }
-                }
-
-                break;
-
-            case MapEditKind.AddStatic:
-                state.Statics.Add(new MapStatic((ushort)e.Graphic, ox, oy, (sbyte)e.Z, (short)e.Hue));
-                state.StaticsTouched = true;
-
-                break;
-
-            case MapEditKind.SetLand:
-                if (state.Land == null)
-                {
-                    state.Land = OriginalLand.TryGetValue(key, out var snapshot)
-                        ? (MapLand[])snapshot.Clone()
-                        : new MapLand[64];
-                }
-
-                // Порядок тайлов в блоке земли построчный: индекс = y*8 + x.
-                state.Land[oy * 8 + ox] = new MapLand((ushort)e.Graphic, (sbyte)e.Z);
-
-                break;
-        }
-    }
+    // ---- Чтение ----------------------------------------------------------------------------
 
     /// <summary>
     ///     Земля в этой точке с учётом правок.
     ///
     ///     Читать её из живой карты нельзя: живой слой можно выключить (mapEdits.live), и
-    ///     тогда TileMatrix остаётся нетронутым, а журнал — нет. Всё, что рассуждает о
-    ///     текущем состоянии земли (например, глубина ямы), обязано спрашивать здесь, иначе
-    ///     при выключенном живом слое копка перестанет накапливаться: каждый удар будет
-    ///     читать исходную высоту заново.
+    ///     тогда TileMatrix остаётся нетронутым, а изменённый мир — нет. Всё, что рассуждает
+    ///     о текущем состоянии земли (например, глубина ямы), обязано спрашивать здесь,
+    ///     иначе при выключенном живом слое копка перестанет накапливаться: каждый удар
+    ///     будет читать исходную высоту заново.
     /// </summary>
     public static MapLand LandAt(Map map, int x, int y)
     {
         var key = (map.MapID, BlockIdFor(map, x, y));
 
-        if (Derived.TryGetValue(key, out var state) && state.LandTouched)
+        if (Changed.TryGetValue(key, out var state) && state.LandTouched)
         {
             return state.Land[(y & 7) * 8 + (x & 7)];
         }
@@ -561,7 +348,21 @@ public sealed class MahaonMapEdits : GenericPersistence
         return new MapLand((ushort)tile.ID, (sbyte)tile.Z);
     }
 
-    /// <summary>Что сейчас лежит в этой точке с точки зрения наших правок.</summary>
+    /// <summary>
+    ///     Что сейчас лежит в этой точке — с учётом наших правок, а где правок не было, то
+    ///     что лежит в самой карте.
+    ///
+    ///     ---- Чем это было ----
+    ///
+    ///     Здесь возвращался ПУСТОЙ список, если блока нет среди изменённых. То есть «мы
+    ///     блок не трогали» молча означало «статики в нём нет вовсе» — а это почти весь мир.
+    ///
+    ///     Цена была велика и не видна. Вся вода шарда у берегов нарисована статикой поверх
+    ///     песка, и MahaonWaterFlow искал её именно отсюда. Значит воды для него не
+    ///     существовало нигде, кроме блоков, где кто-то уже ставил или сносил статику:
+    ///     игрок стоял по пояс в море, а сервер отвечал «воды в 24 тайлах нет». Тем же
+    ///     слепым местом страдали источники света и решётка занятости.
+    /// </summary>
     public static List<MapStatic> StaticsAt(Map map, int x, int y)
     {
         var key = (map.MapID, BlockIdFor(map, x, y));
@@ -569,18 +370,33 @@ public sealed class MahaonMapEdits : GenericPersistence
         var oy = (byte)(y & 7);
         var result = new List<MapStatic>();
 
-        var source = Derived.TryGetValue(key, out var state)
-            ? state.Statics
-            : OriginalStatics.TryGetValue(key, out var snapshot)
-                ? snapshot
-                : null;
-
-        if (source == null)
+        if (!Changed.TryGetValue(key, out var state) || !state.StaticsTouched)
         {
+            // Слепок, если он есть, и ТОЛЬКО потом карта. После закрепления (Commit)
+            // слепок и есть текущее состояние: блок ушёл из изменённых, но вернуться к
+            // файлу он уже не может.
+            if (OriginalStatics.TryGetValue(key, out var snapshot))
+            {
+                foreach (var s in snapshot)
+                {
+                    if (s.X == ox && s.Y == oy)
+                    {
+                        result.Add(s);
+                    }
+                }
+
+                return result;
+            }
+
+            foreach (var t in map.Tiles.GetStaticTiles(x, y))
+            {
+                result.Add(new MapStatic((ushort)t.ID, ox, oy, (sbyte)t.Z, (short)t.Hue));
+            }
+
             return result;
         }
 
-        foreach (var s in source)
+        foreach (var s in state.Statics)
         {
             if (s.X == ox && s.Y == oy)
             {
@@ -591,9 +407,13 @@ public sealed class MahaonMapEdits : GenericPersistence
         return result;
     }
 
+    /// <summary>Была ли тут вообще правка. Дешевле, чем сравнивать состояния.</summary>
+    public static bool IsChanged(Map map, int x, int y) =>
+        Changed.ContainsKey((map.MapID, BlockIdFor(map, x, y)));
+
     // ---- Слепки --------------------------------------------------------------------------
 
-    private static void EnsureSnapshot(Map map, int x, int y)
+    private static void EnsureSnapshotStatics(Map map, int x, int y)
     {
         var key = (map.MapID, BlockIdFor(map, x, y));
 
@@ -651,30 +471,214 @@ public sealed class MahaonMapEdits : GenericPersistence
 
     // ---- Сохранение ----------------------------------------------------------------------
 
+    private const int Version = 1;
+
     public override void Serialize(IGenericWriter writer)
     {
-        writer.WriteEncodedInt(0); // version
-        writer.WriteEncodedInt(_nextId);
+        writer.WriteEncodedInt(Version);
 
-        writer.WriteEncodedInt(Journal.Count);
+        WriteStatics(writer, OriginalStatics);
+        WriteLand(writer, OriginalLand);
 
-        foreach (var e in Journal)
+        writer.WriteEncodedInt(Changed.Count);
+
+        foreach (var ((mapId, blockId), state) in Changed)
         {
-            writer.WriteEncodedInt(e.Id);
-            writer.Write(e.When);
-            writer.WriteEncodedInt(e.MapId);
-            writer.WriteEncodedInt(e.X);
-            writer.WriteEncodedInt(e.Y);
-            writer.WriteEncodedInt(e.Z);
-            writer.WriteEncodedInt(e.Graphic);
-            writer.WriteEncodedInt(e.Hue);
-            writer.WriteEncodedInt((int)e.Kind);
-            writer.Write(e.Reason);
+            writer.WriteEncodedInt(mapId);
+            writer.WriteEncodedInt(blockId);
+
+            writer.Write(state.StaticsTouched);
+
+            if (state.StaticsTouched)
+            {
+                writer.WriteEncodedInt(state.Statics.Count);
+
+                foreach (var s in state.Statics)
+                {
+                    WriteStatic(writer, s);
+                }
+            }
+
+            writer.Write(state.LandTouched);
+
+            if (state.LandTouched)
+            {
+                for (var i = 0; i < 64; i++)
+                {
+                    writer.Write(state.Land[i].Graphic);
+                    writer.Write(state.Land[i].Z);
+                }
+            }
+        }
+    }
+
+    public override void Deserialize(IGenericReader reader)
+    {
+        var version = reader.ReadEncodedInt();
+
+        if (version == 0)
+        {
+            ReadOldJournalFormat(reader);
+            return;
         }
 
-        writer.WriteEncodedInt(OriginalStatics.Count);
+        ReadStatics(reader, OriginalStatics);
+        ReadLand(reader, OriginalLand);
 
-        foreach (var ((mapId, blockId), tiles) in OriginalStatics)
+        var blocks = reader.ReadEncodedInt();
+
+        for (var i = 0; i < blocks; i++)
+        {
+            var mapId = reader.ReadEncodedInt();
+            var blockId = reader.ReadEncodedInt();
+            var state = new BlockState();
+
+            if (reader.ReadBool())
+            {
+                var count = reader.ReadEncodedInt();
+                state.Statics = new List<MapStatic>(count);
+
+                for (var t = 0; t < count; t++)
+                {
+                    state.Statics.Add(ReadStatic(reader));
+                }
+            }
+
+            if (reader.ReadBool())
+            {
+                state.Land = new MapLand[64];
+
+                for (var t = 0; t < 64; t++)
+                {
+                    state.Land[t] = new MapLand(reader.ReadUShort(), reader.ReadSByte());
+                }
+            }
+
+            Changed[(mapId, blockId)] = state;
+        }
+    }
+
+    /// <summary>
+    ///     Разбирает сохранение с журналом и сворачивает его в изменённый мир.
+    ///
+    ///     Выполняется один раз: следующее сохранение уйдёт уже новым форматом, и журнала
+    ///     в мире не останется. Проигрывать правки надо В ТОМ ЖЕ ПОРЯДКЕ, в каком они
+    ///     ложились, — иначе снос и постройка на одном тайле поменяются местами.
+    /// </summary>
+    private static void ReadOldJournalFormat(IGenericReader reader)
+    {
+        reader.ReadEncodedInt(); // бывший счётчик номеров
+
+        var entries = reader.ReadEncodedInt();
+        var journal = new List<(int MapId, int X, int Y, int Z, int Graphic, int Hue, int Kind)>(entries);
+
+        for (var i = 0; i < entries; i++)
+        {
+            reader.ReadEncodedInt();  // Id
+            reader.ReadDateTime();    // When
+            var mapId = reader.ReadEncodedInt();
+            var x = reader.ReadEncodedInt();
+            var y = reader.ReadEncodedInt();
+            var z = reader.ReadEncodedInt();
+            var graphic = reader.ReadEncodedInt();
+            var hue = reader.ReadEncodedInt();
+            var kind = reader.ReadEncodedInt();
+            reader.ReadString();      // Reason
+
+            journal.Add((mapId, x, y, z, graphic, hue, kind));
+        }
+
+        // Слепки в старом формате лежат ПОСЛЕ журнала, а проигрывать правки без них
+        // нельзя: состояние блока начинается именно со слепка.
+        ReadStatics(reader, OriginalStatics);
+        ReadLand(reader, OriginalLand);
+
+        var replayed = 0;
+
+        foreach (var (mapId, x, y, z, graphic, hue, kind) in journal)
+        {
+            var map = Map.Maps[mapId];
+
+            if (map == null)
+            {
+                continue;
+            }
+
+            switch (kind)
+            {
+                case 0: // RemoveStatic — снималась ровно одна плитка с такой графикой и высотой
+                {
+                    var state = TouchStatics(map, x, y);
+                    var ox = (byte)(x & 7);
+                    var oy = (byte)(y & 7);
+
+                    for (var i = state.Statics.Count - 1; i >= 0; i--)
+                    {
+                        var s = state.Statics[i];
+
+                        if (s.X == ox && s.Y == oy && s.Graphic == graphic && s.Z == z)
+                        {
+                            state.Statics.RemoveAt(i);
+                            break;
+                        }
+                    }
+
+                    break;
+                }
+
+                case 1: // AddStatic
+                {
+                    var state = TouchStatics(map, x, y);
+                    state.Statics.Add(
+                        new MapStatic((ushort)graphic, (byte)(x & 7), (byte)(y & 7), (sbyte)z, (short)hue)
+                    );
+
+                    break;
+                }
+
+                case 2: // SetLand
+                {
+                    var state = TouchLand(map, x, y);
+                    state.Land[(y & 7) * 8 + (x & 7)] = new MapLand((ushort)graphic, (sbyte)z);
+
+                    break;
+                }
+            }
+
+            replayed++;
+        }
+
+        if (replayed > 0)
+        {
+            Utility.PushColor(ConsoleColor.Green);
+            Console.WriteLine(
+                $"[MapEdits] журнал свёрнут: {replayed} записей -> {Changed.Count} изменённых блоков."
+            );
+            Utility.PopColor();
+        }
+    }
+
+    // ---- Мелочи записи --------------------------------------------------------------------
+
+    private static void WriteStatic(IGenericWriter writer, MapStatic s)
+    {
+        writer.Write(s.Graphic);
+        writer.Write(s.X);
+        writer.Write(s.Y);
+        writer.Write(s.Z);
+        writer.Write(s.Hue);
+    }
+
+    private static MapStatic ReadStatic(IGenericReader reader) =>
+        new(reader.ReadUShort(), reader.ReadByte(), reader.ReadByte(), reader.ReadSByte(), reader.ReadShort());
+
+    private static void WriteStatics(
+        IGenericWriter writer, Dictionary<(int MapId, int BlockId), List<MapStatic>> source
+    )
+    {
+        writer.WriteEncodedInt(source.Count);
+
+        foreach (var ((mapId, blockId), tiles) in source)
         {
             writer.WriteEncodedInt(mapId);
             writer.WriteEncodedInt(blockId);
@@ -682,17 +686,40 @@ public sealed class MahaonMapEdits : GenericPersistence
 
             foreach (var s in tiles)
             {
-                writer.Write(s.Graphic);
-                writer.Write(s.X);
-                writer.Write(s.Y);
-                writer.Write(s.Z);
-                writer.Write(s.Hue);
+                WriteStatic(writer, s);
             }
         }
+    }
 
-        writer.WriteEncodedInt(OriginalLand.Count);
+    private static void ReadStatics(
+        IGenericReader reader, Dictionary<(int MapId, int BlockId), List<MapStatic>> target
+    )
+    {
+        var blocks = reader.ReadEncodedInt();
 
-        foreach (var ((mapId, blockId), land) in OriginalLand)
+        for (var i = 0; i < blocks; i++)
+        {
+            var mapId = reader.ReadEncodedInt();
+            var blockId = reader.ReadEncodedInt();
+            var count = reader.ReadEncodedInt();
+            var tiles = new List<MapStatic>(count);
+
+            for (var t = 0; t < count; t++)
+            {
+                tiles.Add(ReadStatic(reader));
+            }
+
+            target[(mapId, blockId)] = tiles;
+        }
+    }
+
+    private static void WriteLand(
+        IGenericWriter writer, Dictionary<(int MapId, int BlockId), MapLand[]> source
+    )
+    {
+        writer.WriteEncodedInt(source.Count);
+
+        foreach (var ((mapId, blockId), land) in source)
         {
             writer.WriteEncodedInt(mapId);
             writer.WriteEncodedInt(blockId);
@@ -705,57 +732,13 @@ public sealed class MahaonMapEdits : GenericPersistence
         }
     }
 
-    public override void Deserialize(IGenericReader reader)
+    private static void ReadLand(
+        IGenericReader reader, Dictionary<(int MapId, int BlockId), MapLand[]> target
+    )
     {
-        reader.ReadEncodedInt(); // version
-        _nextId = reader.ReadEncodedInt();
+        var blocks = reader.ReadEncodedInt();
 
-        var entries = reader.ReadEncodedInt();
-
-        for (var i = 0; i < entries; i++)
-        {
-            Journal.Add(
-                new MapEditEntry
-                {
-                    Id = reader.ReadEncodedInt(),
-                    When = reader.ReadDateTime(),
-                    MapId = reader.ReadEncodedInt(),
-                    X = reader.ReadEncodedInt(),
-                    Y = reader.ReadEncodedInt(),
-                    Z = reader.ReadEncodedInt(),
-                    Graphic = reader.ReadEncodedInt(),
-                    Hue = reader.ReadEncodedInt(),
-                    Kind = (MapEditKind)reader.ReadEncodedInt(),
-                    Reason = reader.ReadString() ?? ""
-                }
-            );
-        }
-
-        var staticBlocks = reader.ReadEncodedInt();
-
-        for (var i = 0; i < staticBlocks; i++)
-        {
-            var mapId = reader.ReadEncodedInt();
-            var blockId = reader.ReadEncodedInt();
-            var count = reader.ReadEncodedInt();
-            var tiles = new List<MapStatic>(count);
-
-            for (var t = 0; t < count; t++)
-            {
-                tiles.Add(
-                    new MapStatic(
-                        reader.ReadUShort(), reader.ReadByte(), reader.ReadByte(),
-                        reader.ReadSByte(), reader.ReadShort()
-                    )
-                );
-            }
-
-            OriginalStatics[(mapId, blockId)] = tiles;
-        }
-
-        var landBlocks = reader.ReadEncodedInt();
-
-        for (var i = 0; i < landBlocks; i++)
+        for (var i = 0; i < blocks; i++)
         {
             var mapId = reader.ReadEncodedInt();
             var blockId = reader.ReadEncodedInt();
@@ -766,9 +749,7 @@ public sealed class MahaonMapEdits : GenericPersistence
                 land[t] = new MapLand(reader.ReadUShort(), reader.ReadSByte());
             }
 
-            OriginalLand[(mapId, blockId)] = land;
+            target[(mapId, blockId)] = land;
         }
-
-        _derived = null;
     }
 }

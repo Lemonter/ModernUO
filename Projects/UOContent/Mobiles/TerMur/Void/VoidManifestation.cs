@@ -16,7 +16,6 @@ namespace Server.Mobiles;
 /// This is the creature GargishRouser's port was missing; with the Void Creatures set in place
 /// it is back, and so is the rouser's full summoning behaviour.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a void corpse")]
 public partial class VoidManifestation : BaseCreature
 {
     private long _nextSummon;
@@ -68,6 +67,7 @@ public partial class VoidManifestation : BaseCreature
         Karma = -15000;
     }
 
+    public override string CorpseName => "труп воплощения Пустоты";
     public override string DefaultName => "воплощение Пустоты";
 
     // ServUO's Poison.Parasitic is an alias for DeadlyParasitic; this codebase names the

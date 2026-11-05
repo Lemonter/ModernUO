@@ -1,10 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/EffetePutridGargoyle.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an effete putrid gargoyle corpse")]
 public partial class EffetePutridGargoyle : BaseCreature
 {
     [Constructible]
@@ -38,6 +37,7 @@ public partial class EffetePutridGargoyle : BaseCreature
         Karma = -3500;
     }
 
+    public override string CorpseName => "труп дряхлой гнилой гаргульи";
     public override string DefaultName => "дряхлая гнилая гаргулья";
 
     public override int Meat => 1;

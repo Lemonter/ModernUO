@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// "Dragon's Flame Sect" rank-and-file mage. See SerpentsFangAssassin's class doc comment
 /// for the SetWearable/ShowFameTitle conversion notes shared across this whole set.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a black order mage corpse")]
 public partial class DragonsFlameMage : BaseCreature
 {
     [Constructible]
@@ -55,6 +54,7 @@ public partial class DragonsFlameMage : BaseCreature
         Karma = -13000;
     }
 
+    public override string CorpseName => "труп мага Чёрного ордена";
     public override string DefaultName => "маг Чёрного ордена";
 
     public override bool AlwaysMurderer => true;

@@ -86,11 +86,10 @@ public partial class MahaonBridgeKit : Item
 
             // Пометка одна на стройку и строителя: весь мост откатывается разом, чужие
             // мосты рядом при этом не трогаются.
-            var reason = MahaonDemolition.ReasonFor(from, _kit._dismantleMode ? "разбор настила" : "настил");
 
             if (_kit._dismantleMode)
             {
-                var removed = MahaonBridging.Dismantle(map, x, y, reason);
+                var removed = MahaonBridging.Dismantle(map, x, y);
 
                 if (removed == 0)
                 {
@@ -120,7 +119,7 @@ public partial class MahaonBridgeKit : Item
             }
 
             // Высоту берём у строителя, а не у цели: мост держит уровень берега.
-            var result = MahaonBridging.Build(map, x, y, from.Z, reason);
+            var result = MahaonBridging.Build(map, x, y, from.Z);
 
             switch (result)
             {

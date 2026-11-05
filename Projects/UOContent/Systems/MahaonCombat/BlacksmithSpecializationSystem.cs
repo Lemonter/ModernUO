@@ -27,7 +27,7 @@ public enum BlacksmithSpecialization : byte
 /// </summary>
 public static class BlacksmithSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, BlacksmithSpecialization), double> Value = new();
+    private static readonly ProgressTable<BlacksmithSpecialization> Value = new("branch:blacksmith");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -60,6 +60,7 @@ public static class BlacksmithSpecializationSystem
         Value[key] = newValue;
         MahaonSkillTree.NotifyChanged(m);
         MahaonSkillTree.AnnounceGain(m, RuSpecializationName(spec), newValue - current, newValue);
+        CraftPerks.AnnounceUnlock(m, $"craft:blacksmith/{spec}", current, newValue);
     }
 
     private static double GetBreadthBonus(Mobile m, BlacksmithSpecialization active)

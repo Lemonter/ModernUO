@@ -62,7 +62,7 @@ public partial class LadyMelisande : BasePeerless
         _nextTaunt = Core.TickCount;
     }
 
-    public override string CorpseName => "a lady melisande corpse";
+    public override string CorpseName => "труп леди Мелисанды";
 
     public override Poison PoisonImmune => Poison.Lethal;
     public override int TreasureMapLevel => 5;

@@ -346,9 +346,12 @@ public static class StaminaSystem
             return;
         }
 
-        if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(from, Systems.MahaonCombat.FractureLocation.Legs))
+        // Сломанная нога не даёт бежать — но верхом бежит конь. Сообщение не чаще раза в
+        // 5 секунд: при постоянном беге оно сыпалось на каждый шаг.
+        if (!from.Mounted &&
+            Systems.MahaonCombat.BoneFractureSystem.HasFracture(from, Systems.MahaonCombat.FractureLocation.Legs))
         {
-            from.SendMessage(0x22, "Сломанная нога не даёт бежать.");
+            Systems.MahaonCombat.BoneFractureSystem.TellCannotRun(from);
             e.Blocked = true;
             return;
         }

@@ -26,16 +26,18 @@ public enum HitLocation
 ///     bonus). Neck is a flat x2 once Tactics is high enough, independent of armor, matching
 ///     the original design exactly.
 ///
-///     This location choice now ALSO drives which weapon style is "active" — see
-///     WeaponStyleSystem.GetActiveStyle, which reads the chosen location here instead of a
-///     separately-picked style. Per the shard owner: "стиль теперь идёт от места удара" —
-///     direct style selection was removed entirely (IncomingMahaonPackets.cs, the
-///     0xF9-select-style handler, is gone).
+///     Стиль от места удара больше не зависит (решено 05.11.2026, COMBAT-PROGRESSION.md,
+///     раздел 7.1): это два независимых выбора. Раньше WeaponStyleSystem.GetActiveStyle
+///     выводил стиль отсюда; теперь место только подсказывает стартовый стиль тому, кто его
+///     ещё ни разу не выбирал.
 /// </summary>
 public static class HitLocationSystem
 {
     private const double NeckTacticsRequirement = 115.0;
     private const double BackTacticsRequirement = 70.0;
+
+    /// <summary>Прибавка к урону за удар со спины — поверх бреши в броне.</summary>
+    public const int BackStabBonus = 25;
     private const double GeneralLocationTacticsRequirement = 50.0;
 
     // Mahaon: was a strict 1 location -> 1 layer map — a Back hit only ever checked
@@ -101,6 +103,21 @@ public static class HitLocationSystem
     // needing to thread the location through every call in between.
     private static readonly Dictionary<Mobile, HitLocation?> LastConsumed = new();
 
+    /// <summary>
+    ///     Прицельный удар прошёл (урон нанесён): сбить каст и, может быть, сломать кость.
+    ///     Зовётся из BaseWeapon.OnHit после урона.
+    /// </summary>
+    public static void OnLandedHit(Mobile attacker, Mobile defender)
+    {
+        if (GetLastConsumedLocation(attacker) is not { } location)
+        {
+            return;
+        }
+
+        CastingChannelSystem.TryDisruptCasting(defender, location);
+        BoneFractureSystem.RollFracture(defender, location, attacker);
+    }
+
     public static HitLocation? GetLastConsumedLocation(Mobile attacker) =>
         LastConsumed.TryGetValue(attacker, out var loc) ? loc : null;
 
@@ -123,9 +140,101 @@ public static class HitLocationSystem
     public static void Configure()
     {
         _persistence = new Persistence();
+        RegisterAimCost();
     }
 
+    /// <summary>Отдельно от Configure: тот заводит хранилище, а второе хранилище в реестре
+    /// сохранений писалось бы в тот же файл. Повторный вызов безвреден.</summary>
+    public static void RegisterAimCost() => StrikeProfiles.Register(AimCost);
+
+    // ---- Цена прицела ----------------------------------------------------------------------
+
+    /// <summary>
+    ///     Насколько труднее попасть в это место, в процентных пунктах.
+    ///
+    ///     До этапа 5 место удара было бесплатной стойкой «на века»: выбрал шею и получил ×2,
+    ///     ничем за это не платя. Теперь в маленькую цель попасть труднее, а эффект у неё
+    ///     сильнее, — выбор места стал решением, а не настройкой. Числа стартовые.
+    /// </summary>
+    public static int HitModifier(HitLocation location) => location switch
+    {
+        HitLocation.Arms  => -5,
+        HitLocation.Legs  => -5,
+        HitLocation.Hands => -10,
+        HitLocation.Back  => -5,
+        HitLocation.Head  => -15,
+        HitLocation.Neck  => -20,
+        _                 => 0
+    };
+
+    /// <summary>
+    ///     Стоит ли атакующий у цели за спиной: направление от цели к нему — напротив её взгляда,
+    ///     с запасом в одну восьмую круга в каждую сторону.
+    /// </summary>
+    public static bool IsBehind(Mobile attacker, Mobile defender)
+    {
+        if (attacker == null || defender == null)
+        {
+            return false;
+        }
+
+        var facing = (int)(defender.Direction & Direction.Mask);
+        var toAttacker = (int)(defender.GetDirectionTo(attacker) & Direction.Mask);
+        var opposite = (facing + 4) % 8;
+        var diff = Math.Abs(toAttacker - opposite);
+
+        return Math.Min(diff, 8 - diff) <= 1;
+    }
+
+    /// <summary>
+    ///     Действует ли выбранное место прямо сейчас. Спина — только со спины: целиться в спину
+    ///     тому, кто стоит к тебе лицом, нельзя, и тогда удар идёт как неприцельный.
+    /// </summary>
+    public static bool AimApplies(Mobile attacker, Mobile defender, HitLocation location) =>
+        CanUseLocation(attacker, location) && (location != HitLocation.Back || IsBehind(attacker, defender));
+
+    private static readonly AimCostContributor AimCost = new();
+
+    /// <summary>Штраф к попаданию за прицел — вкладом в профиль удара, то есть видно в чеке.</summary>
+    private sealed class AimCostContributor : IStrikeContributor
+    {
+        public void Contribute(in StrikeContext context, StrikeProfile profile)
+        {
+            if (context.Attacker == null || !Chosen.TryGetValue(context.Attacker, out var location))
+            {
+                return;
+            }
+
+            if (context.Defender != null && !AimApplies(context.Attacker, context.Defender, location))
+            {
+                return;
+            }
+
+            profile.Add($"Прицел: {RuName(location)}", StrikeField.HitChance, HitModifier(location));
+        }
+    }
+
+    private static string RuName(HitLocation location) => location switch
+    {
+        HitLocation.Chest => "грудь",
+        HitLocation.Arms  => "руки",
+        HitLocation.Legs  => "ноги",
+        HitLocation.Hands => "кисти",
+        HitLocation.Back  => "спина",
+        HitLocation.Neck  => "шея",
+        HitLocation.Head  => "голова",
+        _                 => location.ToString()
+    };
+
     private static Persistence _persistence;
+
+    /// <summary>Сколько тактики нужно для этого места — для окна, где недоступное серое.</summary>
+    public static double TacticsRequirement(HitLocation location) => location switch
+    {
+        HitLocation.Neck => NeckTacticsRequirement,
+        HitLocation.Back => BackTacticsRequirement,
+        _                => GeneralLocationTacticsRequirement
+    };
 
     public static bool CanUseLocation(Mobile attacker, HitLocation location)
     {
@@ -157,16 +266,17 @@ public static class HitLocationSystem
             return 0;
         }
 
-        if (!CanUseLocation(attacker, location))
+        if (!AimApplies(attacker, defender, location))
         {
+            // Тактики уже не хватает — или это спина, а цель стоит к тебе лицом.
             LastConsumed[attacker] = null;
-            return 0; // skill dropped below requirement since it was chosen — no bonus
+            return 0;
         }
 
         LastConsumed[attacker] = location;
 
-        CastingChannelSystem.TryDisruptCasting(defender, location);
-        BoneFractureSystem.RollFracture(defender, location);
+        // Сбитый каст и перелом — не здесь, а после урона (OnLandedHit): удар ещё могут
+        // парировать, и отбитый щитом удар не должен ломать кость.
 
         if (location == HitLocation.Neck)
         {
@@ -193,7 +303,10 @@ public static class HitLocationSystem
         // (overlap below that) and you get bonus damage; picked a slot that happens to
         // resist your weapon's type well and you take a penalty instead.
         const double baseline = 1.0 / 3.0;
-        return (int)((baseline - overlap) * 150);
+        var armorGap = (int)((baseline - overlap) * 150);
+
+        // Удар в спину — это и есть то, ради чего туда заходят: +25% поверх бреши в броне.
+        return location == HitLocation.Back ? armorGap + BackStabBonus : armorGap;
     }
 
     /// <summary>

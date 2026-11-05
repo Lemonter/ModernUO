@@ -16,7 +16,7 @@ public enum ChivalrySchool : byte
 /// class name directly.</summary>
 public static class ChivalrySchoolSystem
 {
-    private static readonly Dictionary<(Mobile, ChivalrySchool), double> SchoolValue = new();
+    private static readonly ProgressTable<ChivalrySchool> SchoolValue = new("branch:chivalry");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -45,6 +45,7 @@ public static class ChivalrySchoolSystem
             SchoolValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(m);
             MahaonSkillTree.AnnounceGain(m, RuSchoolName(school), newValue - current, newValue);
+            SchoolPerks.AnnounceUnlock(m, $"chivalry/{school}", current, newValue);
         }
     }
 
@@ -110,6 +111,26 @@ public static class ChivalrySchoolSystem
         var breadth = GetBreadthBonus(caster, ChivalrySchool.Healing);
 
         return 1.0 + (value / 100.0 * 15.0 + breadth) / 100.0;
+    }
+
+    /// <summary>Школа заклинания и её уровень у мага — для мастерства заклинаний, цены стихии
+    /// и доски (см. SpellSchools). Без мага уровень ноль.</summary>
+    public static bool TryDescribe(Mobile m, ISpell spell, out SpellSchoolInfo info)
+    {
+        var school = SchoolOf(spell);
+
+        if (school == null)
+        {
+            info = default;
+            return false;
+        }
+
+        info = new SpellSchoolInfo(
+            $"chivalry/{school.Value}",
+            RuSchoolName(school.Value),
+            m == null ? 0.0 : GetValue(m, school.Value)
+        );
+        return true;
     }
 
     public static string RuSchoolName(ChivalrySchool school) => school switch

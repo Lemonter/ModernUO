@@ -37,7 +37,7 @@ public enum MartialTechnique : byte
 /// </summary>
 public static class MartialTechniqueSystem
 {
-    private static readonly Dictionary<(Mobile, MartialTechnique), double> Value = new();
+    private static readonly ProgressTable<MartialTechnique> Value = new("mastery:technique");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;

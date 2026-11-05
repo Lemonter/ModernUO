@@ -15,7 +15,6 @@ namespace Server.Mobiles;
 /// entangle-and-drain mechanic (OnMovement/Untangle/DoDamage) is kept verbatim —
 /// TransformationSpellHelper and FountainOfFortune both confirmed to exist locally.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a tangling root corpse")]
 public partial class TanglingRoots : BaseCreature
 {
     private static readonly List<Mobile> _tangleCooldown = new();
@@ -52,6 +51,7 @@ public partial class TanglingRoots : BaseCreature
         Karma = -3000;
     }
 
+    public override string CorpseName => "труп цепкого корня";
     public override string DefaultName => "цепкий корень";
 
     public override void GenerateLoot()

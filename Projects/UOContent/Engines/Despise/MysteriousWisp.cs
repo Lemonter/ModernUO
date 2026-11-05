@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -11,7 +11,6 @@ namespace Server.Mobiles;
 ///     stationary decorative NPC with a single greeting line.
 /// </summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a wisp corpse")]
 public partial class MysteriousWisp : BaseCreature
 {
     [Constructible]
@@ -50,6 +49,7 @@ public partial class MysteriousWisp : BaseCreature
         Backpack?.Delete();
     }
 
+    public override string CorpseName => "труп огонька";
     public override string DefaultName => "загадочный огонёк";
 
     public override void OnDoubleClick(Mobile from)

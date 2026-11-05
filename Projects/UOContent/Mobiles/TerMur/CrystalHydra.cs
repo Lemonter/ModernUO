@@ -1,17 +1,17 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/CrystalHydra.cs). SetSpecialAbility
-/// dropped (see Rotworm.cs).
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/CrystalHydra.cs). ServUO's
+/// <c>SetSpecialAbility(DragonBreath)</c> comes through <see cref="GetMonsterAbilities" /> as
+/// <see cref="MonsterAbilities.ColdBreath" />, the creature being cold-themed (80% cold damage).
 ///
 /// An earlier note here said LootPack.ArcanistScrolls had been dropped because it didn't exist;
 /// checked against the source and the original's loot is UltraRich / HighScrolls / Parrot with
 /// no ArcanistScrolls in it at all, so nothing was lost. The one thing still missing is Parrot,
 /// which is commented out upstream in this codebase's own LootPack.cs pending ParrotItem.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a crystal hydra corpse")]
 public partial class CrystalHydra : BaseCreature
 {
     [Constructible]
@@ -50,7 +50,12 @@ public partial class CrystalHydra : BaseCreature
         Karma = -17000;
     }
 
+    public override string CorpseName => "труп кристаллической гидры";
     public override string DefaultName => "кристаллическая гидра";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.ColdBreath];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override void GenerateLoot()
     {

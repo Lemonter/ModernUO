@@ -181,6 +181,14 @@ public class TrackWhoGump : DynamicGump
             range *= 2;
         }
 
+        // Ветка следопыта этого вида целей: дальше видит (эффект при успехе, не шанс).
+        if (type is >= 0 and <= 3)
+        {
+            range = (int)(range * Systems.MahaonCombat.TrackingSpecializationSystem.RangeScale(
+                from, (Systems.MahaonCombat.TrackingSpecialization)type
+            ));
+        }
+
         var mobs = GetClosestMobs(from, range, type);
 
         if (mobs.Length > 0)

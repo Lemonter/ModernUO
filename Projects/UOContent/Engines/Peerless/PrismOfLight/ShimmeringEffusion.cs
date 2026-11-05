@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -60,7 +60,7 @@ public partial class ShimmeringEffusion : BasePeerless
         Karma = -30000;
     }
 
-    public override string CorpseName => "a shimmering effusion corpse";
+    public override string CorpseName => "труп мерцающего истечения";
 
     public override int GetIdleSound() => 0x1BF;
     public override int GetAttackSound() => 0x1C0;

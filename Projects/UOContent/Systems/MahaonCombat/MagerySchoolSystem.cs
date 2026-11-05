@@ -38,7 +38,7 @@ public enum MagerySchool : byte
 /// </summary>
 public static class MagerySchoolSystem
 {
-    private static readonly Dictionary<(Mobile, MagerySchool), double> SchoolValue = new();
+    private static readonly ProgressTable<MagerySchool> SchoolValue = new("branch:magery");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -71,6 +71,7 @@ public static class MagerySchoolSystem
         SchoolValue[key] = newValue;
         MahaonSkillTree.NotifyChanged(m);
         MahaonSkillTree.AnnounceGain(m, RuSchoolName(school), newValue - current, newValue);
+        SchoolPerks.AnnounceUnlock(m, $"magery/{school}", current, newValue);
     }
 
     private static double GetBreadthBonus(Mobile m, MagerySchool active)
@@ -185,6 +186,26 @@ public static class MagerySchoolSystem
 
         var bonus = value / 100.0 * 18.0 + breadth; // up to +18% at 100 trained, plus breadth
         return 1.0 + bonus / 100.0;
+    }
+
+    /// <summary>Школа заклинания и её уровень у мага — для мастерства заклинаний, цены стихии
+    /// и доски (см. SpellSchools). Без мага уровень ноль.</summary>
+    public static bool TryDescribe(Mobile m, ISpell spell, out SpellSchoolInfo info)
+    {
+        var school = SchoolOf(spell);
+
+        if (school == null)
+        {
+            info = default;
+            return false;
+        }
+
+        info = new SpellSchoolInfo(
+            $"magery/{school.Value}",
+            RuSchoolName(school.Value),
+            m == null ? 0.0 : GetValue(m, school.Value)
+        );
+        return true;
     }
 
     public static string RuSchoolName(MagerySchool school) => school switch

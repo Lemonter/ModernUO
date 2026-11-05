@@ -1,11 +1,10 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/PutridUndeadGuardian.cs). Its reagent
 /// pack is a guess in the original too — its own comment says Stratics never listed one.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a putrid undead guardian corpse")]
 public partial class PutridUndeadGuardian : BaseCreature
 {
     [Constructible]
@@ -39,6 +38,7 @@ public partial class PutridUndeadGuardian : BaseCreature
         PackNecroReg(10, 15);
     }
 
+    public override string CorpseName => "труп гнилого стража-нежити";
     public override string DefaultName => "гнилой страж-нежить";
 
     public override int Meat => 1;

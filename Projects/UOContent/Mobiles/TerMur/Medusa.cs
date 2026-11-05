@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Items;
@@ -36,7 +36,6 @@ namespace Server.Mobiles;
 /// bValidLoc" middle parameter (5 args here vs ServUO's 6) — calls adjusted. IPooledEnumerable
 /// enumeration replaced with Map.GetMobilesInRange throughout.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a medusa corpse")]
 public partial class Medusa : BaseCreature
 {
     [SerializableField(0)]
@@ -85,6 +84,7 @@ public partial class Medusa : BaseCreature
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп медузы";
     public override string DefaultName => "Медуза";
 
     public override bool IgnoreYoungProtection => true;

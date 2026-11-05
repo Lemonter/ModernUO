@@ -1,14 +1,14 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 using Server.Network;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/LowlandBoura.cs) — the third and
-/// tamest of the boura herd. SetSpecialAbility dropped (see Rotworm.cs); everything else,
-/// including the live fur shearing, is the original's.</summary>
+/// tamest of the boura herd. ServUO's <c>SetSpecialAbility(ColossalBlow)</c> comes through
+/// <see cref="GetMonsterAbilities" />; everything else, including the live fur shearing, is
+/// the original's.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a boura corpse")]
 public partial class LowlandBoura : BaseCreature, ICarvable
 {
     [SerializableField(0)]
@@ -51,7 +51,12 @@ public partial class LowlandBoura : BaseCreature, ICarvable
         VirtualArmor = 16;
     }
 
+    public override string CorpseName => "труп боуры";
     public override string DefaultName => "низинная боура";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.ColossalBlow];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override int Meat => 10;
     public override int Hides => 20;

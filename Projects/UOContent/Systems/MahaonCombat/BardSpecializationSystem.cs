@@ -13,14 +13,14 @@ public enum BardSpecialization : byte
 /// <summary>
 ///     Musicianship itself has no independent action file in this codebase — it's only
 ///     ever checked as a modifier inside Discordance/Peacemaking/Provocation, so those
-///     three real action-skills are what get specializations here, same window-widening
-///     mechanic as MinorSkillSpecializationSystem. Breadth bonus kept (unlike Minor
+///     three real action-skills are what get specializations here — each gives an extra
+///     effect on success, never a better success chance (see below). Breadth bonus kept (unlike Minor
 ///     skills) since these three genuinely share a "stage presence" theme a real bard
 ///     would plausibly carry between them.
 /// </summary>
 public static class BardSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, BardSpecialization), double> Value = new();
+    private static readonly ProgressTable<BardSpecialization> Value = new("branch:bard");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -71,10 +71,21 @@ public static class BardSpecializationSystem
         return Math.Min(BreadthCap, total / BreadthUnitsPerPercent);
     }
 
-    /// <summary>Points to subtract from the low end of that skill's CheckTargetSkill
-    /// window — up to 15 at 100 trained, plus breadth from the other two.</summary>
-    public static double GetWindowBonus(Mobile m, BardSpecialization spec) =>
-        GetValue(m, spec) / 100.0 * 15.0 + GetBreadthBonus(m, spec);
+    // ---- Эффекты при успехе (этап 8, раздел 11.2) ----------------------------------------
+    //
+    // Раньше ветка сдвигала нижнюю границу проверки — работа навыка. Теперь при успехе:
+    //   Мастер дисгармонии  — дисгармония сильнее (до +50% на 100);
+    //   Мастер умиротворения — цель успокоена дольше (до +50%);
+    //   Мастер провокации    — с шансом инструмент не изнашивается (до 50%).
+    // «Ширина» (очки в двух других) добавляет сверху, как и раньше.
+
+    /// <summary>Множитель силы/длительности эффекта при успехе.</summary>
+    public static double EffectScale(Mobile m, BardSpecialization spec) =>
+        1.0 + GetValue(m, spec) / 100.0 * 0.5 + GetBreadthBonus(m, spec) / 100.0;
+
+    /// <summary>Удачная игра не тратит заряд инструмента — шанс до половины на 100.</summary>
+    public static bool SparesInstrument(Mobile m, BardSpecialization spec) =>
+        Utility.RandomDouble() * 100.0 < GetValue(m, spec) / 2.0 + GetBreadthBonus(m, spec);
 
     public static string RuSpecializationName(BardSpecialization spec) => spec switch
     {

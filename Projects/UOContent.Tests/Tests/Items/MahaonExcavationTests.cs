@@ -23,39 +23,15 @@ public class MahaonExcavationTests
 
     private static Map Facet => Map.Felucca;
 
-    private static void Reset() => MahaonMapEdits.UndoAll();
+    private static void Reset() => MahaonMapEdits.ResetAll();
 
-    /// <summary>Сколько правок земли записано на этом тайле.</summary>
-    private static int LandEdits()
-    {
-        var n = 0;
-
-        foreach (var e in MahaonMapEdits.Entries)
-        {
-            if (e.Kind == MapEditKind.SetLand && e.X == X && e.Y == Y)
-            {
-                n++;
-            }
-        }
-
-        return n;
-    }
-
-    /// <summary>Высота, записанная последней правкой этого тайла.</summary>
-    private static int LastZ()
-    {
-        var z = int.MinValue;
-
-        foreach (var e in MahaonMapEdits.Entries)
-        {
-            if (e.Kind == MapEditKind.SetLand && e.X == X && e.Y == Y)
-            {
-                z = e.Z;
-            }
-        }
-
-        return z;
-    }
+    /// <summary>
+    ///     Высота тайла сейчас.
+    ///
+    ///     Раньше тесты считали записи в журнале правок и брали высоту из последней. Журнала
+    ///     больше нет: хранится исходный мир и изменённый, и спрашивать надо у изменённого.
+    /// </summary>
+    private static int LastZ() => MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
     [Fact]
     public void Dig_LowersGroundByOne()
@@ -63,10 +39,9 @@ public class MahaonExcavationTests
         Reset();
 
         var before = MahaonExcavation.CurrentZ(Facet, X, Y);
-        var result = MahaonExcavation.Dig(Facet, X, Y, "копка");
+        var result = MahaonExcavation.Dig(Facet, X, Y);
 
         Assert.Equal(MahaonExcavation.DigResult.Dug, result);
-        Assert.Equal(1, LandEdits());
         Assert.Equal(before - 1, LastZ());
 
         Reset();
@@ -82,30 +57,43 @@ public class MahaonExcavationTests
     {
         Reset();
 
-        for (var i = 0; i < MahaonExcavation.MaxDepth; i++)
+        for (var i = 0; i < 20; i++)
         {
-            Assert.Equal(MahaonExcavation.DigResult.Dug, MahaonExcavation.Dig(Facet, X, Y, "копка"));
+            Assert.Equal(MahaonExcavation.DigResult.Dug, MahaonExcavation.Dig(Facet, X, Y));
             Assert.False(MahaonExcavation.IsWater(Facet, X, Y));
         }
 
         Reset();
     }
 
-    /// <summary>Бездонных ям не бывает: дальше воды лопата не идёт.</summary>
+    /// <summary>
+    ///     Игрового предела глубины больше нет — остался предел самой карты: высота тайла
+    ///     хранится байтом со знаком. Проверяем, что лопата доходит ровно до него и там
+    ///     встаёт, не уводя высоту за границу типа.
+    /// </summary>
     [Fact]
-    public void Dig_StopsOnceFlooded()
+    public void Dig_StopsOnlyAtTheBottomOfTheWorld()
     {
         Reset();
 
-        for (var i = 0; i < MahaonExcavation.MaxDepth; i++)
+        var start = MahaonExcavation.CurrentZ(Facet, X, Y);
+
+        // С запасом: от любой разумной целины до дна карты не больше двух с лишним сотен.
+        for (var i = 0; i < 400; i++)
         {
-            MahaonExcavation.Dig(Facet, X, Y, "копка");
+            if (MahaonExcavation.Dig(Facet, X, Y) != MahaonExcavation.DigResult.Dug)
+            {
+                break;
+            }
         }
 
-        var edits = LandEdits();
+        Assert.Equal(MahaonExcavation.MinZ, LastZ());
+        Assert.True(start - MahaonExcavation.MinZ > 5, "прежний предел в пять единиц должен быть позади");
 
-        Assert.Equal(MahaonExcavation.DigResult.TooDeep, MahaonExcavation.Dig(Facet, X, Y, "копка"));
-        Assert.Equal(edits, LandEdits());
+        var bottom = LastZ();
+
+        Assert.Equal(MahaonExcavation.DigResult.TooDeep, MahaonExcavation.Dig(Facet, X, Y));
+        Assert.Equal(bottom, LastZ());
 
         Reset();
     }
@@ -117,13 +105,13 @@ public class MahaonExcavationTests
 
         var original = MahaonExcavation.CurrentZ(Facet, X, Y);
 
-        MahaonExcavation.Dig(Facet, X, Y, "копка");
-        MahaonExcavation.Dig(Facet, X, Y, "копка");
+        MahaonExcavation.Dig(Facet, X, Y);
+        MahaonExcavation.Dig(Facet, X, Y);
 
-        Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка"));
+        Assert.True(MahaonExcavation.Fill(Facet, X, Y));
         Assert.Equal(original - 1, LastZ());
 
-        Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка"));
+        Assert.True(MahaonExcavation.Fill(Facet, X, Y));
         Assert.Equal(original, LastZ());
 
         Reset();
@@ -135,31 +123,42 @@ public class MahaonExcavationTests
     {
         Reset();
 
-        Assert.False(MahaonExcavation.Fill(Facet, X, Y, "засыпка"));
-        Assert.Equal(0, LandEdits());
+        var untouched = LastZ();
+
+        Assert.False(MahaonExcavation.Fill(Facet, X, Y));
+        Assert.Equal(untouched, LastZ());
 
         Reset();
     }
 
     /// <summary>
-    ///     Вся яма подписана одной пометкой, значит откатывается одним движением — ровно
-    ///     как подрыв.
+    ///     Яма сбрасывается вся разом — вместе со всем, что изменено. Отката по событию
+    ///     больше нет: хранится не история правок, а два состояния мира.
     /// </summary>
     [Fact]
-    public void WholePit_UndoesAsOneEvent()
+    public void WholePit_ResetsBackToTheOriginalWorld()
     {
         Reset();
 
+        var before = new int[3];
+
         for (var i = 0; i < 3; i++)
         {
-            MahaonExcavation.Dig(Facet, X + i, Y, "копка Васи");
+            before[i] = MahaonExcavation.CurrentZ(Facet, X + i, Y);
+            MahaonExcavation.Dig(Facet, X + i, Y);
         }
 
-        Assert.Equal(3, MahaonMapEdits.Entries.Count);
-        Assert.Equal(3, MahaonMapEdits.UndoByReason("копка Васи"));
-        Assert.Empty(MahaonMapEdits.Entries);
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal(before[i] - 1, MahaonExcavation.CurrentZ(Facet, X + i, Y));
+        }
 
-        Reset();
+        Assert.True(MahaonMapEdits.ResetAll() > 0);
+
+        for (var i = 0; i < 3; i++)
+        {
+            Assert.Equal(before[i], MahaonExcavation.CurrentZ(Facet, X + i, Y));
+        }
     }
 
     // Защиту городов здесь не проверить: регионы в тестовом хосте не загружены, и
@@ -169,33 +168,32 @@ public class MahaonExcavationTests
     // логика закреплена в MahaonDemolitionTests.
 
     /// <summary>
-    ///     Поворот лопаты. Режимов у неё нет: направление берётся из журнала, и потому
-    ///     важно, что цикл замкнут — копаем до воды, бьём ещё раз и начинаем засыпать, а
-    ///     засыпав до исходной высоты, снова копаем.
+    ///     Направление задаёт игрок, а не история тайла. Раньше лопата выводила его из
+    ///     журнала правок и разворачивалась сама, упёршись в дно; теперь дна нет, и
+    ///     разворачивать стало нечем — режим спрашивают у игрока.
     /// </summary>
     [Fact]
-    public void FillsNext_TurnsAroundAtWaterAndBackAtOriginalHeight()
+    public void DigMode_DefaultsToDiggingAndRemembersTheChoice()
     {
-        Reset();
+        var player = new Mobile();
 
-        Assert.False(MahaonExcavation.FillsNext(Facet, X, Y)); // целина — копаем
-
-        for (var i = 1; i < MahaonExcavation.MaxDepth; i++)
+        try
         {
-            MahaonExcavation.Dig(Facet, X, Y, "копка: тест");
-            Assert.False(MahaonExcavation.FillsNext(Facet, X, Y)); // яма ещё не полна
+            Assert.Equal(DigMode.Dig, MahaonDigMode.Of(player));
+
+            MahaonDigMode.Set(player, DigMode.Fill);
+            Assert.Equal(DigMode.Fill, MahaonDigMode.Of(player));
+
+            MahaonDigMode.Set(player, DigMode.Harvest);
+            Assert.Equal(DigMode.Harvest, MahaonDigMode.Of(player));
+
+            MahaonDigMode.Set(player, DigMode.Dig);
+            Assert.Equal(DigMode.Dig, MahaonDigMode.Of(player));
         }
-
-        MahaonExcavation.Dig(Facet, X, Y, "копка: тест"); // набрала воду
-        Assert.True(MahaonExcavation.FillsNext(Facet, X, Y));
-
-        for (var i = 1; i < MahaonExcavation.MaxDepth; i++)
+        finally
         {
-            Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка: тест"));
-            Assert.True(MahaonExcavation.FillsNext(Facet, X, Y)); // начал засыпать — засыпай
+            MahaonDigMode.Set(player, DigMode.Dig);
+            player.Delete();
         }
-
-        Assert.True(MahaonExcavation.Fill(Facet, X, Y, "засыпка: тест")); // вернулись на исходную
-        Assert.False(MahaonExcavation.FillsNext(Facet, X, Y));           // и снова копаем
     }
 }

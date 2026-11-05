@@ -1,10 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ClanRibbonPlagueRat.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a rat corpse")]
 public partial class ClanRibbonPlagueRat : BaseCreature
 {
     [Constructible]
@@ -43,6 +42,7 @@ public partial class ClanRibbonPlagueRat : BaseCreature
         MinTameSkill = -0.9;
     }
 
+    public override string CorpseName => "труп крысы";
     public override string DefaultName => "чумная крыса клана Лента";
 
     public override int Meat => 1;

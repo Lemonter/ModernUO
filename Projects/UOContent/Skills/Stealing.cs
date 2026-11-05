@@ -319,13 +319,7 @@ public static class Stealing
                         var iw = (int)Math.Ceiling(w);
                         iw *= 10;
 
-                        var windowBonus = mobRoot != null
-                            ? Systems.MahaonCombat.ThievingSpecializationSystem.GetSkillWindowBonus(
-                                _thief, Systems.MahaonCombat.ThievingSpecialization.Pickpocket
-                            )
-                            : 0.0;
-
-                        if (_thief.CheckTargetSkill(SkillName.Stealing, toSteal, iw - 22.5 - windowBonus, iw + 27.5))
+                        if (_thief.CheckTargetSkill(SkillName.Stealing, toSteal, iw - 22.5, iw + 27.5))
                         {
                             stolen = toSteal;
                         }
@@ -354,6 +348,15 @@ public static class Stealing
                     }
 
                     caught = _thief.Skills.Stealing.Value < Utility.Random(150);
+
+                    // Карманник: удачная кража с живой цели — с шансом незаметно.
+                    if (caught && stolen != null && mobRoot != null &&
+                        Systems.MahaonCombat.ThievingSpecializationSystem.StaysUnnoticed(
+                            _thief, Systems.MahaonCombat.ThievingSpecialization.Pickpocket
+                        ))
+                    {
+                        caught = false;
+                    }
                 }
             }
 

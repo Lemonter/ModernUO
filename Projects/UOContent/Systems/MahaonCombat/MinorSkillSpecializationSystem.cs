@@ -17,12 +17,12 @@ public enum MinorSkill : byte
 ///     shared system instead of four near-identical files. Each is independent (no
 ///     breadth bonus between them; a Forensics investigator gains nothing from being
 ///     also good at Camping, there's no thematic link like weapon styles/magic schools
-///     had). Bonus: widens the low end of that skill's check window, same pattern as
-///     Stealing/Snooping specializations.
+///     had). Bonus: an extra effect on SUCCESS (see below) — the success chance itself is
+///     the skill's business, not the branch's (COMBAT-PROGRESSION.md, 11.2).
 /// </summary>
 public static class MinorSkillSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, MinorSkill), double> Value = new();
+    private static readonly ProgressTable<MinorSkill> Value = new("branch:minor");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -52,9 +52,20 @@ public static class MinorSkillSpecializationSystem
         }
     }
 
-    /// <summary>Points to subtract from the low end of a CheckSkill/CheckTargetSkill
-    /// window — up to 15 at 100 trained, no breadth bonus (see class doc).</summary>
-    public static double GetWindowBonus(Mobile m, MinorSkill skill) => GetValue(m, skill) / 100.0 * 15.0;
+    // ---- Эффекты при успехе (этап 8, раздел 11.2) ----------------------------------------
+    //
+    // Раньше ветка сдвигала нижнюю границу проверки навыка — то есть делала его работу. Теперь
+    // шанс у навыка, а ветка добавляет к успеху своё:
+    //   Криминалист — с шансом узнаёт ещё и убийцу (по трупу);
+    //   Дегустатор  — с шансом узнаёт силу яда;
+    //   Оценщик     — с шансом опознаёт заодно остальное в той же сумке;
+    //   Кострожог   — костёр горит дольше (вдвое на 100).
+
+    /// <summary>Шанс дополнительного эффекта при успехе, 0–100: равен тренировке ветки.</summary>
+    public static bool RollExtra(Mobile m, MinorSkill skill) => Utility.RandomDouble() * 100.0 < GetValue(m, skill);
+
+    /// <summary>Во сколько раз дольше горит костёр Кострожога.</summary>
+    public static double CampfireScale(Mobile m) => 1.0 + GetValue(m, MinorSkill.Camping) / 100.0;
 
     public static string RuSkillName(MinorSkill skill) => skill switch
     {

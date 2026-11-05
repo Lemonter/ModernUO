@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Server.Multis;
 using Server.Regions;
@@ -15,7 +14,7 @@ namespace Server.Systems.MahaonMapEdits;
 ///     ---- Как это выглядит в игре ----
 ///
 ///     Копаешь тайл — он опускается на единицу и превращается в вскопанную землю. Копаешь
-///     дальше — глубже, до предела (FloorZ). Воду сама копка не наливает никогда: вода
+///     дальше — глубже, до самого дна карты. Воду сама копка не наливает никогда: вода
 ///     приходит по рельефу из настоящего источника, этим занимается MahaonWaterFlow.
 ///
 ///     Засыпать можно обратно — землю поднимают той же лопатой, пока не вернётся исходная
@@ -33,11 +32,17 @@ namespace Server.Systems.MahaonMapEdits;
 /// </summary>
 public static class MahaonExcavation
 {
-    /// <summary>На сколько единиц ниже исходной земли можно закопаться.</summary>
-    public const int MaxDepth = 5;
+    /// <summary>
+    ///     Ниже этой высоты земля не опускается.
+    ///
+    ///     Это не игровое правило, а предел самой карты: высота тайла хранится одним
+    ///     байтом со знаком, и выйти за него нельзя физически. Прежний игровой предел
+    ///     («пять единиц от целины») снят: он не давал довести канаву до воды там, где
+    ///     берег заметно выше реки, а это как раз обычный случай.
+    /// </summary>
+    public const int MinZ = -127;
 
-    /// <summary>Вскопанная земля — вид ямы, пока она не набрала воду.</summary>
-    private static readonly int[] DugGraphics = { 0x0009, 0x000A, 0x000B, 0x000C };
+
 
 
 
@@ -92,6 +97,33 @@ public static class MahaonExcavation
         (TileData.LandTable[MahaonMapEdits.LandAt(map, x, y).Graphic & TileData.MaxLandValue].Flags
          & TileFlag.Wet) != 0;
 
+    /// <summary>
+    ///     Насколько далеко от дома земля считается укреплённой.
+    ///
+    ///     Под домом копать было нельзя и раньше — иначе он повисал бы над ямой. Но
+    ///     прогибается не только свой тайл: борта тянутся волной во всю глубину ямы, и
+    ///     каньон, вырытый впритык, утащил бы дом за собой. Поэтому запрет отодвинут на
+    ///     пять тайлов от границ постройки.
+    ///
+    ///     Забор отдельно проверять не нужно: он всегда принадлежит дому, а его радиус
+    ///     (MahaonHouseFenceSystem.AllowedRadii) не превышает пяти. То есть любая
+    ///     огороженная территория целиком лежит внутри этой же полосы — и спрашивать
+    ///     реестр заборов, который перебирает все дома шарда, на каждый тайл не придётся.
+    /// </summary>
+    public const int HouseGuard = 5;
+
+    /// <summary>Есть ли рядом постройка. Через сектора, а не перебором: этот вопрос
+    /// задаётся на каждый тайл ямы и на каждый тайл пересчёта разлива.</summary>
+    private static bool NearHouse(Map map, int x, int y)
+    {
+        foreach (var _ in map.GetMultisInRange<BaseHouse>(new Point2D(x, y), HouseGuard))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>Можно ли тут вообще копать — вопрос к месту, не к глубине.</summary>
     public static bool CanDigHere(Map map, int x, int y, out string why)
     {
@@ -112,9 +144,9 @@ public static class MahaonExcavation
             return false;
         }
 
-        if (BaseHouse.FindHouseAt(point, map, 16) != null)
+        if (NearHouse(map, x, y))
         {
-            why = "Под домом копать нельзя.";
+            why = "Это укреплённая земля — у дома она не прогибается.";
             return false;
         }
 
@@ -155,60 +187,9 @@ public static class MahaonExcavation
     }
 
     /// <summary>
-    ///     Предел глубины на этом тайле: ниже этой высоты лопата не идёт.
-    ///
-    ///     Обычно это MaxDepth от целины — яма в чистом поле имеет дно. Но РЯДОМ С ВОДОЙ
-    ///     предел опускается под её поверхность, и вот почему.
-    ///
-    ///     Вода разливается только туда, где земля СТРОГО НИЖЕ её уровня (см.
-    ///     MahaonWaterFlow). Река у нас лежит на −5, поле над ней на 0, MaxDepth 5 — и
-    ///     яма в поле упирается дном ровно в урез воды. По высоте это пляж, а не дно:
-    ///     воды в такой яме ноль. Получались две ямы рядом, своя и речная, и соединить
-    ///     их было нельзя — ровно на этом месте предел и срабатывал.
-    ///
-    ///     Поэтому правило игры: сколько видишь воды рядом — на столько и можешь
-    ///     подкопаться под неё. Бездонности это не даёт: уровень воды сам по себе не
-    ///     опускается, и каждый тайл всё равно стоит отдельного взмаха.
-    /// </summary>
-    public static int FloorZ(Map map, int x, int y)
-    {
-        var floor = OriginalZ(map, x, y) - MaxDepth;
-
-        if (NearbyWaterLevel(map, x, y) is { } level && level - 1 < floor)
-        {
-            floor = level - 1;
-        }
-
-        return floor;
-    }
-
-    /// <summary>Самая высокая вода на этом тайле или вплотную к нему, если она тут есть.</summary>
-    private static int? NearbyWaterLevel(Map map, int x, int y)
-    {
-        int? best = null;
-
-        Span<(int X, int Y)> around = [(x, y), (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)];
-
-        foreach (var (nx, ny) in around)
-        {
-            if (nx < 0 || ny < 0 || nx >= map.Width || ny >= map.Height)
-            {
-                continue;
-            }
-
-            if (MahaonWaterFlow.SurfaceZ(map, nx, ny) is { } z && (best == null || z > best.Value))
-            {
-                best = z;
-            }
-        }
-
-        return best;
-    }
-
-    /// <summary>
     ///     Копает один тайл. Пометка общая на всю яму, чтобы вся работа откатывалась разом.
     /// </summary>
-    public static DigResult Dig(Map map, int x, int y, string reason)
+    public static DigResult Dig(Map map, int x, int y)
     {
         if (!CanDigHere(map, x, y, out _))
         {
@@ -220,7 +201,7 @@ public static class MahaonExcavation
 
         var current = GroundZ(map, x, y);
 
-        if (current <= FloorZ(map, x, y))
+        if (current <= MinZ)
         {
             return DigResult.TooDeep;
         }
@@ -231,7 +212,9 @@ public static class MahaonExcavation
         // рельефу, из настоящего источника (MahaonWaterFlow). Раньше было наоборот:
         // яма на последней лопате сама объявлялась прудом, и пруд появлялся посреди
         // сухого луга.
-        MahaonMapEdits.SetLand(map, x, y, DugGraphics[Utility.Random(DugGraphics.Length)], newZ, reason);
+        MahaonSuccession.MoveTrees(map, x, y, newZ);
+        MahaonMapEdits.SetLand(map, x, y, MahaonSuccession.RandomFurrow(), newZ);
+        MahaonSuccession.Dug(map, x, y);
 
         return DigResult.Dug;
     }
@@ -240,7 +223,7 @@ public static class MahaonExcavation
     ///     Засыпает тайл обратно на единицу. Внутриигровая отмена: игрок правит свою яму
     ///     сам, не дёргая ГМ.
     /// </summary>
-    public static bool Fill(Map map, int x, int y, string reason)
+    public static bool Fill(Map map, int x, int y)
     {
         if (map == null || map == Map.Internal)
         {
@@ -258,19 +241,30 @@ public static class MahaonExcavation
         var blockId = MahaonMapEdits.BlockIdFor(map, x, y);
         var restored = MahaonMapEdits.TryGetOriginalLand(map.MapID, blockId, out var land)
             ? land[(y & 7) * 8 + (x & 7)].Graphic
-            : (ushort)DugGraphics[0];
+            : (ushort)MahaonSuccession.Furrows[0];
 
         var newZ = current + 1;
 
-        // Вернулись на исходную высоту — возвращаем и исходный вид. Пока не вернулись,
-        // тайл остаётся вскопанным, а не водой: засыпаемый пруд перестаёт быть прудом
-        // с первой же лопаты.
+        var back = newZ >= original;
+
+        MahaonSuccession.MoveTrees(map, x, y, newZ);
+
+        // Вернулись на исходную высоту — но не на исходный вид: свежая засыпка это голый
+        // грунт, а дёрн нарастает сам, за пару сезонов (MahaonSuccession). Мгновенная
+        // трава на месте только что заваленной ямы и была тем, что выдавало подделку.
         MahaonMapEdits.SetLand(
             map, x, y,
-            newZ >= original ? restored : DugGraphics[Utility.Random(DugGraphics.Length)],
-            newZ,
-            reason
-        );
+            back ? MahaonSuccession.Bare[Utility.Random(MahaonSuccession.Bare.Length)] : MahaonSuccession.RandomFurrow(),
+            newZ);
+
+        if (back)
+        {
+            MahaonSuccession.Filled(map, x, y);
+        }
+        else
+        {
+            MahaonSuccession.Dug(map, x, y);
+        }
 
         return true;
     }
@@ -295,11 +289,6 @@ public static class MahaonExcavation
 
     // ---- Лопата в руках игрока ------------------------------------------------------------
 
-    /// <summary>Слово, с которого начинается причина правки: по нему лопата и помнит направление.</summary>
-    private const string DigTag = "копка";
-
-    private const string FillTag = "засыпка";
-
     /// <summary>
     ///     На сколько соседние тайлы могут разойтись по высоте, оставаясь склоном.
     ///
@@ -311,16 +300,13 @@ public static class MahaonExcavation
     public const int MaxStep = 1;
 
     /// <summary>
-    ///     Один взмах лопатой по земле — и копка, и засыпка, без всяких режимов.
+    ///     Один взмах лопатой по земле. Копать или закапывать — решает РЕЖИМ, выбранный
+    ///     игроком в меню лопаты (MahaonDigMode), а не лопата за него.
     ///
-    ///     Направление лопата берёт из журнала правок: у каждой записи там есть причина, а
-    ///     причина у нас начинается со слова «копка» или «засыпка». Поэтому ни переключателя
-    ///     в предмете, ни лишнего поля в сохранении не нужно — порядок получается сам:
-    ///
-    ///         копаешь, копаешь — яма становится глубже и шире;
-    ///         дошёл до предела — если рядом есть вода, дно её набирает;
-    ///         бьёшь по дну — лопата поворачивает и начинает засыпать;
-    ///         засыпал до исходной высоты — следующий взмах снова копает.
+    ///     Раньше направление выводилось из журнала правок: что тут делали в прошлый раз,
+    ///     то и продолжаем, а на дне разворачиваемся сами. Это значило, что посреди работы
+    ///     лопата молча меняла смысл клика, и предсказать её можно было только зная
+    ///     историю тайла.
     /// </summary>
     public static bool Swing(Mobile from, Item tool, Map map, int x, int y)
     {
@@ -341,7 +327,7 @@ public static class MahaonExcavation
             return false;
         }
 
-        var filling = FillsNext(map, x, y);
+        var filling = MahaonDigMode.Of(from) == DigMode.Fill;
         var result = DigResult.Dug;
 
         // Одна копка двигает не только свой тайл, но и борта ямы. Без пачки каждый такой
@@ -352,7 +338,7 @@ public static class MahaonExcavation
         {
             if (filling)
             {
-                if (!Fill(map, x, y, MahaonDemolition.ReasonFor(from, FillTag)))
+                if (!Fill(map, x, y))
                 {
                     from.SendMessage(0x3B2, "Здесь и так ровно.");
                     return false;
@@ -360,7 +346,7 @@ public static class MahaonExcavation
             }
             else
             {
-                result = Dig(map, x, y, MahaonDemolition.ReasonFor(from, DigTag));
+                result = Dig(map, x, y);
 
                 switch (result)
                 {
@@ -375,10 +361,7 @@ public static class MahaonExcavation
                 }
             }
 
-            Smooth(
-                from, map, x, y, GroundZ(map, x, y), !filling,
-                MahaonDemolition.ReasonFor(from, filling ? FillTag : DigTag)
-            );
+            Smooth(from, map, x, y, GroundZ(map, x, y), !filling);
 
             // Рельеф изменился — значит вода могла и прийти, и уйти. Пересчитываем
             // разлив вокруг: прокопал канаву к реке — налилось, засыпал перемычку —
@@ -401,6 +384,8 @@ public static class MahaonExcavation
                     : "Ты выкапываешь землю."
         );
 
+        Hint(from, map, x, y, filling);
+
         Wear(from, tool);
 
         return true;
@@ -411,6 +396,13 @@ public static class MahaonExcavation
     ///     получилось углубление, а не ступенька: сосед, отставший больше чем на MaxStep,
     ///     едет следом, и так волной наружу, пока разница не сойдёт.
     ///
+    ///     Ширину борта мы НЕ ограничиваем, и это осознанно: при MaxStep в единицу ширина
+    ///     ямы равна её глубине, так что глубокая яма — это воронка во всю глубину, то есть
+    ///     каньон. Так и задумано; обрыв вместо склона выглядел бы обрезанным.
+    ///
+    ///     Платим за это объёмом журнала: один взмах на глубине d переписывает порядка
+    ///     (2d+1)² тайлов, и каждый — отдельной записью.
+    ///
     ///     Тянем строго в свою сторону. Копка опускает борта, засыпка их поднимает — иначе
     ///     копка у края чужого пруда начала бы этот пруд засыпать.
     ///
@@ -418,7 +410,7 @@ public static class MahaonExcavation
     ///     ни ниже предела, ни выше целины, так что он отсеивается сам. Он и так рисуется
     ///     склоном — срезать гору лопатой никто не просил.
     /// </summary>
-    private static void Smooth(Mobile from, Map map, int x, int y, int z, bool lowering, string reason)
+    private static void Smooth(Mobile from, Map map, int x, int y, int z, bool lowering)
     {
         var plan = new Dictionary<(int X, int Y), int> { [(x, y)] = z };
         var queue = new Queue<(int X, int Y)>();
@@ -456,7 +448,7 @@ public static class MahaonExcavation
                         continue;
                     }
 
-                    if (want < FloorZ(map, nx, ny) || want > OriginalZ(map, nx, ny))
+                    if (want < MinZ || want > OriginalZ(map, nx, ny))
                     {
                         continue;
                     }
@@ -479,49 +471,9 @@ public static class MahaonExcavation
                 continue; // этот тайл уже поставили Dig или Fill
             }
 
-            MahaonMapEdits.SetLand(map, px, py, MahaonMapEdits.LandAt(map, px, py).Graphic, pz, reason);
+            MahaonSuccession.MoveTrees(map, px, py, pz);
+            MahaonMapEdits.SetLand(map, px, py, MahaonMapEdits.LandAt(map, px, py).Graphic, pz);
         }
-    }
-
-    /// <summary>
-    ///     Куда повернёт следующий взмах: true — засыпать, false — копать.
-    ///
-    ///     Засыпаем, если в прошлый раз тут засыпали и засыпать ещё есть что, либо если
-    ///     копать уже некуда (дно). Вернулись на исходную высоту — условие гаснет само, и
-    ///     взмах снова становится копкой; иначе лопата застряла бы на засыпке навсегда.
-    /// </summary>
-    public static bool FillsNext(Map map, int x, int y)
-    {
-        var original = OriginalZ(map, x, y);
-        var current = GroundZ(map, x, y);
-
-        if (current >= original)
-        {
-            return false;
-        }
-
-        return LastWasFill(map, x, y) || IsWater(map, x, y) || current <= FloorZ(map, x, y);
-    }
-
-    /// <summary>
-    ///     Последняя правка земли на этом тайле была засыпкой? Журнал смотрим с конца:
-    ///     нам нужна только самая свежая запись про это место.
-    /// </summary>
-    private static bool LastWasFill(Map map, int x, int y)
-    {
-        var journal = MahaonMapEdits.Entries;
-
-        for (var i = journal.Count - 1; i >= 0; i--)
-        {
-            var entry = journal[i];
-
-            if (entry.Kind == MapEditKind.SetLand && entry.MapId == map.MapID && entry.X == x && entry.Y == y)
-            {
-                return entry.Reason.StartsWith(FillTag, StringComparison.Ordinal);
-            }
-        }
-
-        return false;
     }
 
     /// <summary>
@@ -567,6 +519,21 @@ public static class MahaonExcavation
                 continue;
             }
 
+            // Пень — наших же рук дело: его MoveTrees переставляет на новую высоту вместе
+            // с землёй. Считать его преградой значило бы, что первое же срубленное копкой
+            // дерево навсегда запирает свой тайл.
+            if (MahaonSuccession.IsStump(tile.ID))
+            {
+                continue;
+            }
+
+            // Дерево не преграда, а будущий пень: MoveTrees сводит его до того, как земля
+            // поедет.
+            if (MahaonSuccession.IsTree(tile.ID))
+            {
+                continue;
+            }
+
             // Подземелье под ногами и мост высоко над головой к этой земле отношения не имеют.
             if (tile.Z + data.CalcHeight < ground - 4 || tile.Z > ground + 20)
             {
@@ -579,6 +546,42 @@ public static class MahaonExcavation
 
         why = null;
         return true;
+    }
+
+    /// <summary>Докуда смотрим в поисках воды ради подсказки. Дальше это уже не «рядом».</summary>
+    private const int HintLook = 12;
+
+    /// <summary>
+    ///     Одна строка о том, почему в яме сухо, прямо во время копки.
+    ///
+    ///     Раньше система молчала: вода либо приходила, либо нет, и отличить «копай
+    ///     глубже» от «канава перегорожена» можно было только ГМ-командой. А это два
+    ///     совершенно разных действия, и игрок, выбрав не то, копает впустую.
+    ///
+    ///     Полный разбор (MahaonWaterFlow.Explain) тут не зовём: он повторяет весь обход
+    ///     разлива, а взмах и так уже один раз его посчитал. Подсказка довольствуется
+    ///     уровнем ближайшей воды — этого хватает, чтобы различить два случая.
+    /// </summary>
+    private static void Hint(Mobile from, Map map, int x, int y, bool filling)
+    {
+        if (filling || IsWater(map, x, y))
+        {
+            return;
+        }
+
+        if (!MahaonWaterFlow.NearestWater(map, x, y, HintLook, out var level, out var distance))
+        {
+            return; // воды рядом нет — подсказывать не о чем, это просто яма
+        }
+
+        var ground = GroundZ(map, x, y);
+
+        from.SendMessage(
+            0x3B2,
+            ground < level
+                ? $"Вода в {distance} тайлах, её уровень {level}, дно у тебя ниже — значит канава где-то перегорожена."
+                : $"Вода в {distance} тайлах, её уровень {level}. Дно {ground} — выше воды, копай ниже {level}."
+        );
     }
 
     /// <summary>Замах и звук — те же, что у кирки по руде (Mining: действие 11, звуки 0x125/0x126).</summary>

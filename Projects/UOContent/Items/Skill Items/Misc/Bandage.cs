@@ -238,11 +238,6 @@ public class BandageContext : Timer
             var anatomy = Healer.Skills[secondarySkill].Value;
             var chance = (healing - 68.0) / 50.0 - Slips * 0.02;
 
-            if (petPatient?.IsDeadPet == true)
-            {
-                chance += Systems.MahaonCombat.VeterinarySpecializationSystem.GetResurrectionChanceBonus(Healer);
-            }
-
             checkSkills = healing >= 80.0 && anatomy >= 80.0;
 
             // TODO: Dbl check doesn't check for faction of the horse here?
@@ -277,10 +272,16 @@ public class BandageContext : Timer
                 {
                     petPatient.ResurrectPet();
 
-                    for (var i = 0; i < petPatient.Skills.Length; ++i)
+                    // Воскреситель: питомец может не потерять навыки и встаёт с частью здоровья.
+                    if (!Systems.MahaonCombat.VeterinarySpecializationSystem.SparesSkillLoss(Healer))
                     {
-                        petPatient.Skills[i].Base -= 0.1;
+                        for (var i = 0; i < petPatient.Skills.Length; ++i)
+                        {
+                            petPatient.Skills[i].Base -= 0.1;
+                        }
                     }
+
+                    Systems.MahaonCombat.VeterinarySpecializationSystem.OnPetResurrected(Healer, petPatient);
                 }
                 else if (master?.InRange(petPatient, 3) == true)
                 {
@@ -483,6 +484,7 @@ public class BandageContext : Timer
             healer.SendLocalizedMessage(500951); // You cannot heal that.
         }
         else if (!patient.Poisoned && patient.Hits == patient.HitsMax && !BleedAttack.IsBleeding(patient) &&
+                 !Systems.MahaonCombat.BleedingSystem.IsBleeding(patient) &&
                  creature?.IsDeadPet != true)
         {
             healer.SendLocalizedMessage(500955); // That being is not damaged!

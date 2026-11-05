@@ -84,12 +84,7 @@ namespace Server.SkillHandlers
                             m_Instrument.PlayInstrumentBadly(from);
                             m_Instrument.ConsumeUse(from);
                         }
-                        else if (!from.CheckSkill(
-                            SkillName.Peacemaking,
-                            0.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
-                                from, Systems.MahaonCombat.BardSpecialization.Peacemaking
-                            ), 120.0
-                        ))
+                        else if (!from.CheckSkill(SkillName.Peacemaking, 0.0, 120.0))
                         {
                             from.SendLocalizedMessage(500613); // You attempt to calm everyone, but fail.
                             m_Instrument.PlayInstrumentBadly(from);
@@ -181,12 +176,7 @@ namespace Server.SkillHandlers
                                 diff -= (music - 100.0) * 0.5;
                             }
 
-                            if (!from.CheckTargetSkill(
-                                SkillName.Peacemaking, targ,
-                                diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
-                                    from, Systems.MahaonCombat.BardSpecialization.Peacemaking
-                                ), diff + 25.0
-                            ))
+                            if (!from.CheckTargetSkill(SkillName.Peacemaking, targ, diff - 25.0, diff + 25.0))
                             {
                                 from.SendLocalizedMessage(1049531); // You attempt to calm your target, but fail.
                                 m_Instrument.PlayInstrumentBadly(from);
@@ -219,6 +209,11 @@ namespace Server.SkillHandlers
                                     {
                                         seconds = 10;
                                     }
+
+                                    // Мастер умиротворения: цель успокоена дольше.
+                                    seconds *= Systems.MahaonCombat.BardSpecializationSystem.EffectScale(
+                                        from, Systems.MahaonCombat.BardSpecialization.Peacemaking
+                                    );
 
                                     bc.Pacify(from, Core.Now + TimeSpan.FromSeconds(seconds));
                                 }

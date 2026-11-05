@@ -192,6 +192,9 @@ namespace Server.Engines.Harvest
                             {
                                 item.Amount = amount;
                             }
+
+                            // A woodsman's talisman of the matching wood adds extra logs per cut.
+                            item.Amount += WoodsmansTalisman.CheckHarvest(from, type, this);
                         }
 
                         bank.Consume(item.Amount, from);

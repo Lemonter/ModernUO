@@ -5,7 +5,7 @@ namespace Server.Systems.MahaonCombat;
 
 /// <summary>
 ///     Mahaon: everything the three Necromancy summons (AnimateDead, SummonFamiliar,
-///     VengefulSpirit) take from the "Школа призыва" branch of NecromancySchoolSystem.
+///     VengefulSpirit) take from the "Школа призыва мёртвых" branch of NecromancySchoolSystem.
 ///
 ///     Vanilla scales those spells off SpiritSpeak alone and caps them at flat numbers
 ///     (3 raised undead, 1 familiar, 1 revenant), which left the summoning mastery with
@@ -139,7 +139,7 @@ public static class NecromancySummonSystem
             MessageType.Regular,
             0x3B2,
             false,
-            $"Школа призыва {mastery:F0} — {current}/{limit}"
+            $"{NecromancySchoolSystem.RuSchoolName(NecromancySchool.Summoning)} {mastery:F0} — {current}/{limit}"
         );
     }
 }

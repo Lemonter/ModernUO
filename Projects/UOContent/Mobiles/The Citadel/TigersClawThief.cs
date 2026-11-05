@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// "Tiger's Claw Sect" rank-and-file. See SerpentsFangAssassin's class doc comment for the
 /// SetWearable/ShowFameTitle conversion notes shared across this whole set.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a black order thief corpse")]
 public partial class TigersClawThief : BaseCreature
 {
     [Constructible]
@@ -60,6 +59,7 @@ public partial class TigersClawThief : BaseCreature
         Karma = -13000;
     }
 
+    public override string CorpseName => "труп вора Чёрного ордена";
     public override string DefaultName => "вор Чёрного ордена";
 
     public override bool AlwaysMurderer => true;

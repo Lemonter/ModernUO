@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 using Server.Misc;
 
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// <summary>The human half of the Exodus cult. Ported from ServUO
 /// (Scripts/Services/Revamped Dungeons/TheExodusEncounter/Mobiles/ExodusZealot.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a human corpse")]
 public partial class ExodusZealot : BaseCreature
 {
     [Constructible]
@@ -56,6 +55,8 @@ public partial class ExodusZealot : BaseCreature
         AddItem(new HoodedShroudOfShadows(2702) { LootType = LootType.Blessed });
         AddItem(new Spellbook { LootType = LootType.Blessed });
     }
+
+    public override string CorpseName => "труп человека";
 
     public override bool AlwaysMurderer => true;
     public override bool ShowFameTitle => false;

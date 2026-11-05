@@ -33,11 +33,7 @@ namespace Server.SkillHandlers
             {
                 if (target is Mobile)
                 {
-                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
-                        from, Systems.MahaonCombat.MinorSkill.Forensics
-                    );
-
-                    if (from.CheckTargetSkill(SkillName.Forensics, target, 40.0 - windowBonus, 100.0))
+                    if (from.CheckTargetSkill(SkillName.Forensics, target, 40.0, 100.0))
                     {
                         Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(
                             from, Systems.MahaonCombat.MinorSkill.Forensics
@@ -59,15 +55,18 @@ namespace Server.SkillHandlers
                 }
                 else if (target is Corpse c)
                 {
-                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
-                        from, Systems.MahaonCombat.MinorSkill.Forensics
-                    );
-
-                    if (from.CheckTargetSkill(SkillName.Forensics, c, 0.0 - windowBonus, 100.0))
+                    if (from.CheckTargetSkill(SkillName.Forensics, c, 0.0, 100.0))
                     {
                         Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(
                             from, Systems.MahaonCombat.MinorSkill.Forensics
                         );
+
+                        // Криминалист: с шансом узнаёт и того, кто убил.
+                        if (c.Killer is { } killer &&
+                            Systems.MahaonCombat.MinorSkillSpecializationSystem.RollExtra(from, Systems.MahaonCombat.MinorSkill.Forensics))
+                        {
+                            from.SendMessage(0x59, $"По следам ясно: убил — {killer.Name}.");
+                        }
 
                         if (c.Forensicist != null)
                         {

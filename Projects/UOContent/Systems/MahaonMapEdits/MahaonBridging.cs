@@ -56,7 +56,7 @@ public static class MahaonBridging
     ///     Кладёт доску. Высота берётся от строителя: мост держит уровень берега, а не
     ///     повторяет рельеф дна.
     /// </summary>
-    public static BuildResult Build(Map map, int x, int y, int builderZ, string reason)
+    public static BuildResult Build(Map map, int x, int y, int builderZ)
     {
         if (map == null || map == Map.Internal)
         {
@@ -90,14 +90,13 @@ public static class MahaonBridging
 
         MahaonMapEdits.AddStatic(
             map, x, y, builderZ,
-            PlankGraphics[Utility.Random(PlankGraphics.Length)], 0, reason
-        );
+            PlankGraphics[Utility.Random(PlankGraphics.Length)], 0);
 
         return BuildResult.Built;
     }
 
     /// <summary>Снимает настил в точке — разобрать мост можно и без взрыва.</summary>
-    public static int Dismantle(Map map, int x, int y, string reason)
+    public static int Dismantle(Map map, int x, int y)
     {
         var removed = 0;
 
@@ -105,7 +104,7 @@ public static class MahaonBridging
         {
             if (IsPlank(s.Graphic))
             {
-                removed += MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic, reason);
+                removed += MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic);
             }
         }
 

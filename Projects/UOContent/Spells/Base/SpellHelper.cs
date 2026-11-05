@@ -304,6 +304,8 @@ namespace Server.Spells
             Mobile caster, Mobile target, StatType type, int bonus, TimeSpan duration, bool skillCheck = false
         )
         {
+            duration = Systems.MahaonCombat.SchoolPerks.ScaleDuration(caster, duration); // перк школы (этап 8)
+
             var name = $"[Magic] {type} Buff";
 
             var mod = target.GetStatMod(name);
@@ -324,6 +326,7 @@ namespace Server.Spells
             }
 
             target.AddStatMod(new StatMod(type, name, bonus, duration));
+            Systems.MahaonCombat.SpellMasterySystem.OnEffect(caster); // усиление легло — мастерство (этап 7)
             return true;
         }
 
@@ -350,6 +353,8 @@ namespace Server.Spells
             Mobile caster, Mobile target, StatType type, int curse, TimeSpan duration, bool skillCheck = false
         )
         {
+            duration = Systems.MahaonCombat.SchoolPerks.ScaleDuration(caster, duration); // перк школы (этап 8)
+
             var malus = -curse;
             var name = $"[Magic] {type} Curse";
 
@@ -372,6 +377,7 @@ namespace Server.Spells
             }
 
             target.AddStatMod(new StatMod(type, name, malus, duration));
+            Systems.MahaonCombat.SpellMasterySystem.OnEffect(caster); // ослабление легло — мастерство (этап 7)
             return true;
         }
 
@@ -486,6 +492,9 @@ namespace Server.Spells
                    Notoriety.Compute(from, to) != Notoriety.Innocent || from.Murderer;
         }
 
+        private static TimeSpan ScaleSummonDuration(Mobile caster, TimeSpan duration) =>
+            Systems.MahaonCombat.SchoolPerks.ScaleDuration(caster, duration);
+
         public static void Summon(
             BaseCreature creature, Mobile caster, int sound, TimeSpan duration, bool scaleDuration,
             bool scaleStats
@@ -521,7 +530,9 @@ namespace Server.Spells
 
             if (FindValidSpawnLocation(map, ref p, true))
             {
-                BaseCreature.Summon(creature, caster, p, sound, duration);
+                Systems.MahaonCombat.SchoolPerks.EmpowerSummon(caster, creature); // перк школы (этап 8)
+                BaseCreature.Summon(creature, caster, p, sound, ScaleSummonDuration(caster, duration));
+                Systems.MahaonCombat.SpellMasterySystem.OnEffect(caster); // призыв удался — мастерство (этап 7)
                 return;
             }
 
@@ -1022,8 +1033,12 @@ namespace Server.Spells
                     dmg = (int)(dmg * Systems.MahaonCombat.NecromancySchoolSystem.GetDamageScalar(from, spell));
                     dmg = (int)(dmg * Systems.MahaonCombat.SpellweavingSchoolSystem.GetDamageScalar(from, spell));
                     dmg = (int)(dmg * Systems.MahaonCombat.MysticismSchoolSystem.GetDamageScalar(from, spell));
+                    dmg = (int)(dmg * Systems.MahaonCombat.SpellMasterySystem.PowerScalar(from, spell));
+                    dmg = (int)(dmg * Systems.MahaonCombat.SchoolPerks.PowerScalar(from, spell));
+                    dmg = Systems.MahaonCombat.SchoolPerks.RollSpellCrit(from, spell, target, dmg);
 
-                    Systems.MahaonCombat.PreferredElementSystem.ApplyConversion(from, ref fire, ref cold, ref pois, ref nrgy);
+                    // Стихия больше не бесплатна: перевод половины урона стоит маны (этап 7).
+                    Systems.MahaonCombat.PreferredElementSystem.ApplyPaidConversion(from, spell, ref fire, ref cold, ref pois, ref nrgy);
                 }
 
                 var damageGiven = AOS.Damage(
@@ -1036,6 +1051,8 @@ namespace Server.Spells
                 {
                     Systems.MahaonCombat.CombatLogSystem.LogSpellHit(from, target, spell.Name, damageGiven);
                     Systems.MahaonCombat.CombatSkillGainSystem.OnDamageDealt(from, spell.DamageSkill, damageGiven);
+                    Systems.MahaonCombat.SpellMasterySystem.OnEffect(from, spell);
+                    Systems.MahaonCombat.SchoolPerks.TryBurn(from, spell, target, damageGiven);
                 }
 
                 StaminaSystem.DFA = DFAlgorithm.Standard;
@@ -1084,6 +1101,19 @@ namespace Server.Spells
 
             // «Длань света» — сигнатурный перк категории Вера.
             amount = (int)(amount * Systems.MahaonProfessions.ProfessionBonuses.HealingScalar(from));
+
+            // Мастерство лечащего заклинания: +10% силы на 100 и рост, если вылечило (этап 7).
+            if (from?.Spell is Spell spell && spell.Caster == from)
+            {
+                amount = (int)(amount * Systems.MahaonCombat.SpellMasterySystem.PowerScalar(from, spell));
+                amount = (int)(amount * Systems.MahaonCombat.SchoolPerks.PowerScalar(from, spell));
+                Systems.MahaonCombat.SchoolPerks.TryCurePoison(from, spell, target);
+
+                if (amount > 0 && target.Hits < target.HitsMax)
+                {
+                    Systems.MahaonCombat.SpellMasterySystem.OnEffect(from, spell);
+                }
+            }
 
             target.Heal(amount, from, message);
         }

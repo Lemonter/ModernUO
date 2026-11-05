@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -9,7 +9,6 @@ namespace Server.Mobiles;
 /// Log drops are dropped entirely rather than converted, since TreefellowWood doesn't exist
 /// anywhere in this codebase either (a ToL-specific resource item never ported).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a treefellow guardian corpse")]
 public partial class TreefellowGuardian : BaseCreature
 {
     [Constructible]
@@ -41,6 +40,7 @@ public partial class TreefellowGuardian : BaseCreature
         Karma = 1500;
     }
 
+    public override string CorpseName => "труп древня-стража";
     public override string DefaultName => "древень-страж";
 
     public override bool BleedImmune => true;

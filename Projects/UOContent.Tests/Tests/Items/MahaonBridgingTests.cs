@@ -28,7 +28,7 @@ public class MahaonBridgingTests
 
     private static Map Facet => Map.Felucca;
 
-    private void Reset() => MahaonMapEdits.UndoAll();
+    private void Reset() => MahaonMapEdits.ResetAll();
 
     /// <summary>
     ///     Ставит флаги тайлу земли и возвращает как было.
@@ -54,7 +54,7 @@ public class MahaonBridgingTests
     {
         var z = MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
-        MahaonMapEdits.SetLand(Facet, X, Y, 0x0009, z - depth, "подготовка");
+        MahaonMapEdits.SetLand(Facet, X, Y, 0x0009, z - depth);
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class MahaonBridgingTests
 
         var z = MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
-        Assert.Equal(MahaonBridging.BuildResult.NoGap, MahaonBridging.Build(Facet, X, Y, z, "мост"));
+        Assert.Equal(MahaonBridging.BuildResult.NoGap, MahaonBridging.Build(Facet, X, Y, z));
 
         Reset();
     }
@@ -80,7 +80,7 @@ public class MahaonBridgingTests
 
         var standing = MahaonMapEdits.LandAt(Facet, X, Y).Z + MahaonBridging.MinGap - 1;
 
-        Assert.Equal(MahaonBridging.BuildResult.NoGap, MahaonBridging.Build(Facet, X, Y, standing, "мост"));
+        Assert.Equal(MahaonBridging.BuildResult.NoGap, MahaonBridging.Build(Facet, X, Y, standing));
 
         Reset();
     }
@@ -94,7 +94,7 @@ public class MahaonBridgingTests
 
         SinkGround(MahaonBridging.MinGap + 2);
 
-        Assert.Equal(MahaonBridging.BuildResult.Built, MahaonBridging.Build(Facet, X, Y, original, "мост"));
+        Assert.Equal(MahaonBridging.BuildResult.Built, MahaonBridging.Build(Facet, X, Y, original));
 
         var planks = MahaonMapEdits.StaticsAt(Facet, X, Y);
 
@@ -122,9 +122,9 @@ public class MahaonBridgingTests
         {
             var z = MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
-            MahaonMapEdits.SetLand(Facet, X, Y, water, z, "пруд");
+            MahaonMapEdits.SetLand(Facet, X, Y, water, z);
 
-            Assert.Equal(MahaonBridging.BuildResult.Built, MahaonBridging.Build(Facet, X, Y, z, "мост"));
+            Assert.Equal(MahaonBridging.BuildResult.Built, MahaonBridging.Build(Facet, X, Y, z));
         }
         finally
         {
@@ -141,9 +141,9 @@ public class MahaonBridgingTests
         var original = MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
         SinkGround(MahaonBridging.MinGap + 2);
-        MahaonBridging.Build(Facet, X, Y, original, "мост");
+        MahaonBridging.Build(Facet, X, Y, original);
 
-        Assert.Equal(MahaonBridging.BuildResult.Occupied, MahaonBridging.Build(Facet, X, Y, original, "мост"));
+        Assert.Equal(MahaonBridging.BuildResult.Occupied, MahaonBridging.Build(Facet, X, Y, original));
 
         Reset();
     }
@@ -156,10 +156,10 @@ public class MahaonBridgingTests
         var original = MahaonMapEdits.LandAt(Facet, X, Y).Z;
 
         SinkGround(MahaonBridging.MinGap + 2);
-        MahaonBridging.Build(Facet, X, Y, original, "мост");
-        MahaonMapEdits.AddStatic(Facet, X, Y, original, 0x0006, 0, "чужое");
+        MahaonBridging.Build(Facet, X, Y, original);
+        MahaonMapEdits.AddStatic(Facet, X, Y, original, 0x0006, 0);
 
-        Assert.Equal(1, MahaonBridging.Dismantle(Facet, X, Y, "разбор"));
+        Assert.Equal(1, MahaonBridging.Dismantle(Facet, X, Y));
 
         var left = MahaonMapEdits.StaticsAt(Facet, X, Y);
 

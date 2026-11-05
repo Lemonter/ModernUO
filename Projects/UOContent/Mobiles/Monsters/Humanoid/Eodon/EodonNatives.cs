@@ -579,6 +579,7 @@ public abstract partial class HighChiefBase : BaseCreature
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("верховный вождь Барако")]
 public partial class BarakoHighChief : HighChiefBase
 {
     [Constructible]
@@ -595,6 +596,7 @@ public partial class BarakoHighChief : HighChiefBase
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("верховный вождь Джукари")]
 public partial class JukariHighChief : HighChiefBase
 {
     [Constructible]
@@ -611,6 +613,7 @@ public partial class JukariHighChief : HighChiefBase
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("верховный вождь Курак")]
 public partial class KurakHighChief : HighChiefBase
 {
     [Constructible]
@@ -627,6 +630,7 @@ public partial class KurakHighChief : HighChiefBase
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("верховная вождиня Саккхра")]
 public partial class SakkhraHighChieftess : HighChiefBase
 {
     [Constructible]
@@ -643,6 +647,7 @@ public partial class SakkhraHighChieftess : HighChiefBase
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("верховная вождиня Урали")]
 public partial class UraliHighChieftess : HighChiefBase
 {
     [Constructible]
@@ -661,6 +666,7 @@ public partial class UraliHighChieftess : HighChiefBase
 
 // Peaceful, unique named NPCs referenced by Eodon.xml — not combatants, so no loot/damage setup.
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("Ястребиный Ветер")]
 public partial class Hawkwind : BaseCreature
 {
     [Constructible]
@@ -697,6 +703,7 @@ public partial class Hawkwind : BaseCreature
 }
 
 [SerializationGenerator(0, false)]
+[Server.Engines.MLQuests.QuesterName("сэр Джеффри")]
 public partial class SirGeoffery : BaseCreature
 {
     [Constructible]

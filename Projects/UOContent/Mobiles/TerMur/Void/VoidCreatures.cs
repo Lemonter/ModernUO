@@ -16,7 +16,6 @@ namespace Server.Mobiles;
 /// never sets Cold, Poison or Energy at all; Anzuanord sets Physical three times and Poison
 /// twice, ending at Physical 100 and Poison 0-20. Both are noted where they occur.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a korpre corpse")]
 public partial class Korpre : BaseVoidCreature
 {
     [Constructible]
@@ -51,6 +50,7 @@ public partial class Korpre : BaseVoidCreature
         VirtualArmor = 8;
     }
 
+    public override string CorpseName => "труп корпре";
     public override string DefaultName => "Корпре";
 
     public override Poison PoisonImmune => Poison.Regular;
@@ -67,7 +67,6 @@ public partial class Korpre : BaseVoidCreature
 #region Killing line — Betballem, Ballem, Usagralem Ballem
 
 [SerializationGenerator(0, false)]
-[CorpseName("a betballem corpse")]
 public partial class Betballem : BaseVoidCreature
 {
     [Constructible]
@@ -112,6 +111,7 @@ public partial class Betballem : BaseVoidCreature
         PackItem(new DaemonBone(5));
     }
 
+    public override string CorpseName => "труп бетбаллема";
     public override string DefaultName => "бетбаллем";
 
     public override VoidEvolution Evolution => VoidEvolution.Killing;
@@ -147,7 +147,6 @@ public partial class Betballem : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a Ballem corpse")]
 public partial class Ballem : BaseVoidCreature
 {
     [Constructible]
@@ -190,6 +189,7 @@ public partial class Ballem : BaseVoidCreature
         PackItem(new DaemonBone(15));
     }
 
+    public override string CorpseName => "труп баллема";
     public override string DefaultName => "баллем";
 
     public override VoidEvolution Evolution => VoidEvolution.Killing;
@@ -221,7 +221,6 @@ public partial class Ballem : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("an usagralem ballem corpse")]
 public partial class UsagralemBallem : BaseVoidCreature
 {
     [Constructible]
@@ -264,6 +263,7 @@ public partial class UsagralemBallem : BaseVoidCreature
         PackItem(new DaemonBone(30));
     }
 
+    public override string CorpseName => "труп усагралема баллема";
     public override string DefaultName => "усагралем баллем";
 
     public override VoidEvolution Evolution => VoidEvolution.Killing;
@@ -305,7 +305,6 @@ public partial class UsagralemBallem : BaseVoidCreature
 #region Grouping line — Anlorzen, Anlorlem, Anlorvaglem
 
 [SerializationGenerator(0, false)]
-[CorpseName("an anlorzen corpse")]
 public partial class Anlorzen : BaseVoidCreature
 {
     [Constructible]
@@ -346,6 +345,7 @@ public partial class Anlorzen : BaseVoidCreature
         PackItem(new DaemonBone(5));
     }
 
+    public override string CorpseName => "труп анлорзена";
     public override string DefaultName => "анлорзен";
 
     public override VoidEvolution Evolution => VoidEvolution.Grouping;
@@ -359,7 +359,6 @@ public partial class Anlorzen : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("an Anlorlem corpse")]
 public partial class Anlorlem : BaseVoidCreature
 {
     [Constructible]
@@ -398,6 +397,7 @@ public partial class Anlorlem : BaseVoidCreature
         PackItem(new DaemonBone(15));
     }
 
+    public override string CorpseName => "труп анлорлема";
     public override string DefaultName => "анлорлем";
 
     public override VoidEvolution Evolution => VoidEvolution.Grouping;
@@ -418,7 +418,6 @@ public partial class Anlorlem : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("an anlorvaglem corpse")]
 public partial class Anlorvaglem : BaseVoidCreature
 {
     [Constructible]
@@ -459,6 +458,7 @@ public partial class Anlorvaglem : BaseVoidCreature
         PackItem(new DaemonBone(30));
     }
 
+    public override string CorpseName => "труп анлорваглема";
     public override string DefaultName => "анлорваглем";
 
     public override VoidEvolution Evolution => VoidEvolution.Grouping;
@@ -477,7 +477,6 @@ public partial class Anlorvaglem : BaseVoidCreature
 #region Survival line — Anzuanord, Relanord, Vasanord
 
 [SerializationGenerator(0, false)]
-[CorpseName("an anzuanord corpse")]
 public partial class Anzuanord : BaseVoidCreature
 {
     [Constructible]
@@ -522,6 +521,7 @@ public partial class Anzuanord : BaseVoidCreature
         PackItem(new DaemonBone(5));
     }
 
+    public override string CorpseName => "труп анзуанорда";
     public override string DefaultName => "анзуанорд";
 
     public override VoidEvolution Evolution => VoidEvolution.Survival;
@@ -542,7 +542,6 @@ public partial class Anzuanord : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a relanord corpse")]
 public partial class Relanord : BaseVoidCreature
 {
     [Constructible]
@@ -583,6 +582,7 @@ public partial class Relanord : BaseVoidCreature
         PackItem(new DaemonBone(15));
     }
 
+    public override string CorpseName => "труп реланорда";
     public override string DefaultName => "реланорд";
 
     public override VoidEvolution Evolution => VoidEvolution.Survival;
@@ -602,7 +602,6 @@ public partial class Relanord : BaseVoidCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a plant corpse")]
 public partial class Vasanord : BaseVoidCreature
 {
     [Constructible]
@@ -646,6 +645,7 @@ public partial class Vasanord : BaseVoidCreature
         PackItem(new DaemonBone(30));
     }
 
+    public override string CorpseName => "труп растения";
     public override string DefaultName => "васанорд";
 
     public override VoidEvolution Evolution => VoidEvolution.Survival;

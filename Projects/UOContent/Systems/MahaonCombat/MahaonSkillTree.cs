@@ -39,12 +39,18 @@ public static class MahaonSkillTree
     /// <summary>Одна мастерка в дереве. Cap — её персональный потолок у ЭТОГО игрока
     /// (свитки мастерства и профессия его двигают, см. MahaonMasteryCapSystem); он
     /// проставляется одним махом в GetTreeSnapshot, а не в каждом Build*-методе.</summary>
+    /// <param name="HasCap">false — у записи нет своего потолка (классический стиль — это сам
+    /// навык оружия): свитки мастерства её не выбирают.</param>
     public readonly record struct SkillEntry(
-        byte EntryId, string Name, double Value, string Description = "", double Cap = 0
+        byte EntryId, string Name, double Value, string Description = "", double Cap = 0, bool HasCap = true
     );
 
+    /// <summary>SkillId — ванильный навык подраздела (номер SkillName), −1 если подраздел —
+    /// это сводный список разных навыков. Нужен доске мастерства: она показывает у ветки
+    /// и сам навык, на котором ветка растёт.</summary>
     public readonly record struct SkillSubCategory(
-        string Name, bool IsSelectable, byte CategoryId, byte SelectedId, SkillEntry[] Entries, bool IsUsableSkillList
+        string Name, bool IsSelectable, byte CategoryId, byte SelectedId, SkillEntry[] Entries, bool IsUsableSkillList,
+        int SkillId = -1
     );
 
     public readonly record struct SkillCategory(string Name, SkillSubCategory[] SubCategories);
@@ -83,6 +89,9 @@ public static class MahaonSkillTree
             if (pm.NetState != null)
             {
                 pm.NetState.SendSkillTree(GetTreeSnapshot(pm));
+
+                // Доска мастерства в Unity строится из того же снимка — обновляется вместе с ним.
+                MahaonCombatWindow.PushBoard(pm);
             }
         });
     }
@@ -251,10 +260,9 @@ public static class MahaonSkillTree
         "Базовый («классический») стиль — совпадает с обычным навыком владения этим видом оружия, растёт как любой ванильный навык.";
 
     private const string NamedStyleDescription =
-        "Стиль боя, привязанный к месту удара (выбирается в боевом меню, вкладка «Целиться в»). " +
-        "Активный сейчас стиль даёт бонус к урону в этой категории оружия, растущий с его тренированностью; " +
-        "тренируется от успешных ударов, пока выбран активным (т.е. пока выбрано его место удара). Тренировка ДРУГИХ " +
-        "стилей этой же категории тоже немного добавляет к бонусу («широта» владения), даже когда они не выбраны.";
+        "Стиль боя — выбирается в боевом окне, отдельно от места удара. Даёт свою плюшку и платит за неё: " +
+        "плюшка растёт с тренировкой стиля (пятая часть на 0, полная на 100), цена постоянная. Тренируется от " +
+        "удачных ударов, пока выбран. Очки в других стилях этого оружия добавляют немного урона («ширина»).";
 
     private static SkillSubCategory BuildStyleSubCategory(Mobile player, WeaponCategory category)
     {
@@ -264,12 +272,16 @@ public static class MahaonSkillTree
         {
             entries[style] = new SkillEntry(
                 style, WeaponStyleSystem.StyleName(category, style), WeaponStyleSystem.GetValue(player, category, style),
-                style == 0 ? BaselineStyleDescription : NamedStyleDescription
+                style == 0 ? BaselineStyleDescription : $"{NamedStyleDescription} Сейчас: {WeaponStylePerks.Describe(player, category, style)}.",
+                HasCap: style != 0
             );
         }
 
         var activeStyle = WeaponStyleSystem.GetActiveStyle(player, category);
-        return new SkillSubCategory(WeaponStyleSystem.RuCategoryName(category), true, (byte)category, activeStyle, entries, false);
+        return new SkillSubCategory(
+            WeaponStyleSystem.RuCategoryName(category), true, (byte)category, activeStyle, entries, false,
+            (int)WeaponStyleSystem.SkillOf(category)
+        );
     }
 
     /// <summary>Shared shape for a real vanilla skill's Mahaon specialization(s), grouped
@@ -290,7 +302,7 @@ public static class MahaonSkillTree
             entries[i] = new SkillEntry((byte)i, specs[i].name, specs[i].value, specs[i].description);
         }
 
-        return new SkillSubCategory(RuSkillName(skill), false, 0, 0, entries, false);
+        return new SkillSubCategory(RuSkillName(skill), false, 0, 0, entries, false, (int)skill);
     }
 
     private const string MagicSchoolDescription =
@@ -406,7 +418,7 @@ public static class MahaonSkillTree
                 (
                     ThievingSpecializationSystem.RuSpecializationName(ThievingSpecialization.Pickpocket),
                     ThievingSpecializationSystem.GetValue(player, ThievingSpecialization.Pickpocket),
-                    "Растёт от успешной кражи из рук/сумки живой цели (не из сундуков и не с трупов). Повышает шанс успеха карманных краж."
+                    "Растёт от успешной кражи из рук/сумки живой цели (не из сундуков и не с трупов). При удачной краже с живой цели — шанс остаться незамеченным (до 50% на 100)."
                 )
             }
         );
@@ -419,7 +431,7 @@ public static class MahaonSkillTree
                 (
                     ThievingSpecializationSystem.RuSpecializationName(ThievingSpecialization.Locksmith),
                     ThievingSpecializationSystem.GetValue(player, ThievingSpecialization.Locksmith),
-                    "Растёт от каждого успешного взлома замка. Повышает шанс успеха при следующих взломах."
+                    "Растёт от каждого успешного взлома замка. Шанс обойти ловушку на взламываемом замке."
                 )
             }
         );
@@ -458,7 +470,7 @@ public static class MahaonSkillTree
                 (
                     ThievingSpecializationSystem.RuSpecializationName(ThievingSpecialization.Snoop),
                     ThievingSpecializationSystem.GetValue(player, ThievingSpecialization.Snoop),
-                    "Растёт от успешного обыска чужого рюкзака. Повышает шанс успеха при обыске."
+                    "Растёт от успешного обыска чужого рюкзака. Шанс, что тебя не заметят за обыском чужой сумки (до 50% на 100)."
                 )
             }
         );
@@ -564,7 +576,7 @@ public static class MahaonSkillTree
             var s = (TamingSpecialization)spec;
             specs[spec] = (
                 TamingSpecializationSystem.RuSpecializationName(s), TamingSpecializationSystem.GetValue(player, s),
-                "Растёт от успешного приручения соответствующего типа существ. Повышает шанс успеха именно с этим типом."
+                "Растёт от успешного приручения соответствующего типа существ. При первом приручении питомец сохраняет больше своих навыков."
             );
         }
 
@@ -633,7 +645,7 @@ public static class MahaonSkillTree
             var s = (VeterinarySpecialization)spec;
             specs[spec] = (
                 VeterinarySpecializationSystem.RuSpecializationName(s), VeterinarySpecializationSystem.GetValue(player, s),
-                "Растёт от успешного лечения соответствующего типа существ. Повышает шанс успеха именно с этим типом."
+                "Растёт от успешного лечения соответствующего типа существ. При успехе: живых лечит больше, воскрешённый встаёт с частью здоровья и может не потерять навыки."
             );
         }
 
@@ -665,7 +677,7 @@ public static class MahaonSkillTree
             var spec = (TrackingSpecialization)s;
             specs[s] = (
                 TrackingSpecializationSystem.RuSpecializationName(spec), TrackingSpecializationSystem.GetValue(player, spec),
-                "Растёт от выслеживания соответствующего типа целей. Повышает шанс успеха именно с этим типом."
+                "Растёт от выслеживания соответствующего типа целей. Этот тип целей видно дальше (до +50% радиуса на 100)."
             );
         }
 
@@ -683,7 +695,7 @@ public static class MahaonSkillTree
                 (
                     MinorSkillSpecializationSystem.RuSkillName(MinorSkill.Forensics),
                     MinorSkillSpecializationSystem.GetValue(player, MinorSkill.Forensics),
-                    "Растёт от успешного осмотра трупов. Повышает шанс успеха при опознании причины смерти/личности."
+                    "Растёт от успешного осмотра трупов. При удачном осмотре трупа — шанс узнать и убийцу."
                 )
             }
         );
@@ -696,7 +708,7 @@ public static class MahaonSkillTree
                 (
                     MinorSkillSpecializationSystem.RuSkillName(MinorSkill.TasteID),
                     MinorSkillSpecializationSystem.GetValue(player, MinorSkill.TasteID),
-                    "Растёт от успешного распознавания еды/зелий на вкус. Повышает шанс успеха проверки."
+                    "Растёт от успешного распознавания еды/зелий на вкус. При удачной пробе яда — шанс узнать его силу."
                 )
             }
         );
@@ -709,7 +721,7 @@ public static class MahaonSkillTree
                 (
                     MinorSkillSpecializationSystem.RuSkillName(MinorSkill.Camping),
                     MinorSkillSpecializationSystem.GetValue(player, MinorSkill.Camping),
-                    "Растёт от успешной установки лагеря/костра. Повышает шанс успеха и качество отдыха."
+                    "Растёт от успешной установки лагеря/костра. Костёр горит дольше (вдвое на 100)."
                 )
             }
         );
@@ -722,7 +734,7 @@ public static class MahaonSkillTree
                 (
                     MinorSkillSpecializationSystem.RuSkillName(MinorSkill.ItemID),
                     MinorSkillSpecializationSystem.GetValue(player, MinorSkill.ItemID),
-                    "Растёт от успешного опознания магических предметов. Повышает шанс успеха проверки."
+                    "Растёт от успешного опознания магических предметов. При удаче — шанс опознать заодно всё в той же сумке."
                 )
             }
         );
@@ -749,7 +761,7 @@ public static class MahaonSkillTree
                 (
                     BardSpecializationSystem.RuSpecializationName(BardSpecialization.Peacemaking),
                     BardSpecializationSystem.GetValue(player, BardSpecialization.Peacemaking),
-                    "Растёт от успешного усмирения цели. Повышает шанс успеха и длительность усмирения."
+                    "Растёт от успешного усмирения цели. Усмирённая цель успокоена дольше (до +50% на 100)."
                 )
             }
         );
@@ -762,7 +774,7 @@ public static class MahaonSkillTree
                 (
                     BardSpecializationSystem.RuSpecializationName(BardSpecialization.Provocation),
                     BardSpecializationSystem.GetValue(player, BardSpecialization.Provocation),
-                    "Растёт от успешной провокации. Повышает шанс успеха стравливания целей друг с другом."
+                    "Растёт от успешной провокации. Удачная провокация может не износить инструмент (до 50% на 100)."
                 )
             }
         );
@@ -774,7 +786,7 @@ public static class MahaonSkillTree
             {
                 (
                     HealingSpecializationSystem.RuSpecializationName, HealingSpecializationSystem.GetValue(player),
-                    "Растёт от успешного лечения (бинтами и заклинаниями). Повышает эффективность/шанс успеха лечения."
+                    "Растёт от успешного лечения (бинтами и заклинаниями). Удачное лечение лечит больше."
                 )
             }
         );

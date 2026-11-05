@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// here. LootPack.NecroRegs doesn't exist here
 /// (verified — not one of this codebase's LootPack members) — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a lifestealer corpse")]
 public partial class Lifestealer : BaseCreature
 {
     [Constructible]
@@ -50,6 +49,7 @@ public partial class Lifestealer : BaseCreature
         Karma = -9500;
     }
 
+    public override string CorpseName => "труп похитителя жизни";
     public override string DefaultName => "похититель жизни";
 
     public override Poison PoisonImmune => Poison.Lethal;

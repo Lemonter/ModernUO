@@ -432,6 +432,10 @@ public class DefCooking : CraftSystem
             SetNeededExpansion(index, Expansion.ML);
         }
 
+        /* Distillation: wheat wort */
+        index = AddCraft(typeof(WheatWort), 1044495, 1150275, 30.0, 100.0, typeof(Bottle), 1023854, 1, 1044253);
+        AddRes(index, typeof(BaseBeverage), 1046458, 1, 1044253);
+
         /* End Chocolatiering */
     }
 }

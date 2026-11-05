@@ -12,7 +12,7 @@ namespace Server.Systems.MahaonCombat;
 /// </summary>
 public static class CookingSpecializationSystem
 {
-    private static readonly Dictionary<Mobile, double> Value = new();
+    private static readonly ProgressTable Value = new("branch:cooking");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -43,6 +43,7 @@ public static class CookingSpecializationSystem
             Value[from] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuSpecializationName, newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, "craft:cooking", current, newValue);
         }
 
         var value = GetValue(from);

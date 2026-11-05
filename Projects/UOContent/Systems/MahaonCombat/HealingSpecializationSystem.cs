@@ -12,7 +12,7 @@ namespace Server.Systems.MahaonCombat;
 /// </summary>
 public static class HealingSpecializationSystem
 {
-    private static readonly Dictionary<Mobile, double> Value = new();
+    private static readonly ProgressTable Value = new("branch:healing");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -41,8 +41,8 @@ public static class HealingSpecializationSystem
         }
     }
 
-    /// <summary>Read-only — call BEFORE rolling the bandage success chance.</summary>
-    public static double GetSuccessChanceBonus(Mobile healer) => GetValue(healer) / 100.0 * 0.10; // up to +10% at 100 trained
+    // Прибавки к шансу перевязки больше нет (её и так никто не звал): шанс — дело навыка,
+    // ветка даёт только «больше лечит» при успехе (OnHumanHealed).
 
     /// <summary>Call once healing has actually succeeded — trains AND returns a flat
     /// amount to add to toHeal, scaled by trained value.</summary>

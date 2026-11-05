@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 using Server.Misc;
 using Server.Targeting;
@@ -15,7 +15,6 @@ namespace Server.Mobiles;
 /// chance-based OnDeath drops (see WolfSpider.cs). GetMobilesInRange/IPooledEnumerable.Free
 /// converted to the modern Map.GetMobilesInRange foreach pattern (no Free() needed).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an orcish corpse")]
 public partial class OrcScout : BaseCreature
 {
     [Constructible]
@@ -59,6 +58,7 @@ public partial class OrcScout : BaseCreature
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп орка";
     public override string DefaultName => "орк-разведчик";
 
     public override bool CanRummageCorpses => true;

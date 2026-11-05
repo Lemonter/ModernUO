@@ -18,7 +18,7 @@ public enum TamingSpecialization : byte
 /// </summary>
 public static class TamingSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, TamingSpecialization), double> Value = new();
+    private static readonly ProgressTable<TamingSpecialization> Value = new("branch:taming");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;

@@ -16,7 +16,7 @@ public enum VeterinarySpecialization : byte
 /// </summary>
 public static class VeterinarySpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, VeterinarySpecialization), double> Value = new();
+    private static readonly ProgressTable<VeterinarySpecialization> Value = new("branch:veterinary");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -70,16 +70,33 @@ public static class VeterinarySpecializationSystem
         return value / 100.0 * 6.0 + breadth / 2.0; // up to +6 healed at 100 trained, plus breadth
     }
 
-    /// <summary>Read-only — call BEFORE rolling the resurrection chance to get the bonus
-    /// (0.0-1.0 scale) to add. Does NOT train; call TrainResurrector separately only if
-    /// the resurrection actually succeeds, so training matches genuine success like every
-    /// other Mahaon specialization, not just an attempt.</summary>
-    public static double GetResurrectionChanceBonus(Mobile healer)
+    /// <summary>
+    ///     Воскреситель — эффект при успехе (этап 8, раздел 11.2). Раньше ветка прибавляла до
+    ///     +15% к шансу воскрешения, то есть делала работу навыка. Теперь шанс — у навыка, а
+    ///     ветка решает, в каком виде питомец вернулся: доля здоровья (до половины на 100) и
+    ///     шанс не потерять навыки при воскрешении.
+    /// </summary>
+    public static double ReviveHitsShare(Mobile healer)
     {
         var value = GetValue(healer, VeterinarySpecialization.Resurrector);
         var breadth = GetBreadthBonus(healer, VeterinarySpecialization.Resurrector);
 
-        return (value / 100.0 * 15.0 + breadth) / 100.0; // up to +15% at 100 trained, plus breadth
+        return Math.Min(0.6, value / 100.0 * 0.5 + breadth / 100.0);
+    }
+
+    /// <summary>Воскрешённый питомец не теряет навыков — шанс равен тренировке Воскресителя.</summary>
+    public static bool SparesSkillLoss(Mobile healer) =>
+        Utility.RandomDouble() * 100.0 < GetValue(healer, VeterinarySpecialization.Resurrector);
+
+    /// <summary>После удачного воскрешения: вернуть питомцу часть здоровья.</summary>
+    public static void OnPetResurrected(Mobile healer, Mobile pet)
+    {
+        var share = ReviveHitsShare(healer);
+
+        if (share > 0 && pet is { Alive: true })
+        {
+            pet.Hits = Math.Max(pet.Hits, (int)(pet.HitsMax * share));
+        }
     }
 
     public static void TrainResurrector(Mobile healer) => Train(healer, VeterinarySpecialization.Resurrector);

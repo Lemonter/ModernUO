@@ -4,10 +4,11 @@ using Server.Network;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Kepetch.cs). SetSpecialAbility dropped
-/// (see Rotworm.cs). Fur, FurType and DragonBlood are back — see RuddyBoura.cs.</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Kepetch.cs). ServUO's
+/// <c>SetSpecialAbility(SpecialAbility.ViciousBite)</c> stays dropped: the monster-ability
+/// framework (<see cref="GetMonsterAbilities" />) has no bite counterpart. Fur, FurType and
+/// DragonBlood are back — see RuddyBoura.cs.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a kepetch corpse")]
 public partial class Kepetch : BaseCreature, ICarvable
 {
     [SerializableField(0)]
@@ -46,6 +47,7 @@ public partial class Kepetch : BaseCreature, ICarvable
         Karma = -6000;
     }
 
+    public override string CorpseName => "труп кепетча";
     public override string DefaultName => "кепетч";
 
     public override int Meat => 5;

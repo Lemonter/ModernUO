@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// header admits the stats are a guess built off the plain gargoyle and that the body ID is
 /// unconfirmed; ported as it stands rather than invented anew.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an undead gargoyle corpse")]
 public partial class UndeadGargoyle : BaseCreature
 {
     [Constructible]
@@ -53,6 +52,7 @@ public partial class UndeadGargoyle : BaseCreature
         }
     }
 
+    public override string CorpseName => "труп горгульи-нежити";
     public override string DefaultName => "нежить-горгулья";
 
     public override int TreasureMapLevel => 1;

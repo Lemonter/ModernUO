@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -137,7 +137,6 @@ public abstract partial class BaseExodusMinion : BaseCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a drone's corpse")]
 public partial class ExodusDrone : BaseExodusMinion
 {
     [Constructible]
@@ -177,13 +176,13 @@ public partial class ExodusDrone : BaseExodusMinion
         PackItem(new ClockworkAssembly());
     }
 
+    public override string CorpseName => "труп дрона";
     public override string DefaultName => "дрон Исхода";
 
     public override void GenerateLoot() => AddLoot(LootPack.Average);
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a sentinel's corpse")]
 public partial class ExodusSentinel : BaseExodusMinion
 {
     [Constructible]
@@ -223,13 +222,13 @@ public partial class ExodusSentinel : BaseExodusMinion
         PackItem(new ClockworkAssembly());
     }
 
+    public override string CorpseName => "труп стража";
     public override string DefaultName => "страж Исхода";
 
     public override void GenerateLoot() => AddLoot(LootPack.Rich);
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a juggernaut's corpse")]
 public partial class ExodusJuggernaut : BaseExodusMinion
 {
     [Constructible]
@@ -269,6 +268,7 @@ public partial class ExodusJuggernaut : BaseExodusMinion
         PackItem(new ClockworkAssembly());
     }
 
+    public override string CorpseName => "труп джаггернаута";
     public override string DefaultName => "джаггернаут Исхода";
 
     public override void GenerateLoot() => AddLoot(LootPack.Rich);
@@ -278,7 +278,6 @@ public partial class ExodusJuggernaut : BaseExodusMinion
 /// Its ritual-item drop is the one the original puts in GenerateLoot rather than on death; that
 /// branch is idle until the ritual chain is ported (see ExodusChest).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an exodus minion lord's corpse")]
 public partial class ExodusMinionLord : BaseExodusMinion
 {
     [Constructible]
@@ -315,6 +314,7 @@ public partial class ExodusMinionLord : BaseExodusMinion
         PackItem(new ClockworkAssembly());
     }
 
+    public override string CorpseName => "труп повелителя прислужников Исхода";
     public override string DefaultName => "повелитель прислужников Исхода";
 
     public override bool AutoDispel => true;

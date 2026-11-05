@@ -34,17 +34,19 @@ namespace Server.SkillHandlers
                 }
                 else if (targeted is Food food)
                 {
-                    var windowBonus = Systems.MahaonCombat.MinorSkillSpecializationSystem.GetWindowBonus(
-                        from, Systems.MahaonCombat.MinorSkill.TasteID
-                    );
-
-                    if (from.CheckTargetSkill(SkillName.TasteID, food, 0 - windowBonus, 100))
+                    if (from.CheckTargetSkill(SkillName.TasteID, food, 0, 100))
                     {
                         Systems.MahaonCombat.MinorSkillSpecializationSystem.Train(from, Systems.MahaonCombat.MinorSkill.TasteID);
 
                         if (food.Poison != null)
                         {
                             food.SendLocalizedMessageTo(from, 1038284); // It appears to have poison smeared on it.
+
+                            // Дегустатор: с шансом узнаёт, насколько яд силён.
+                            if (Systems.MahaonCombat.MinorSkillSpecializationSystem.RollExtra(from, Systems.MahaonCombat.MinorSkill.TasteID))
+                            {
+                                from.SendMessage(0x59, $"Сила яда: {food.Poison.Level + 1} из 5.");
+                            }
                         }
                         else
                         {

@@ -24,7 +24,10 @@ public class MahaonMasteryCapSystem : GenericPersistence
     /// <summary>Выше этого свитки не поднимают, как и обычные свитки силы не дают больше 120.</summary>
     public const double AbsoluteCap = 120.0;
 
-    private static readonly Dictionary<(Mobile, string), double> Caps = new();
+    /// <summary>Дорожка потолка в общем хранилище. Ключ — по-прежнему русское имя мастерки:
+    /// перевести его на идентификатор дорожки можно, когда у всех веток будет общий реестр
+    /// с именами (доска мастерства), а до тех пор имя уникально и этого хватает.</summary>
+    private static string CapTrack(string masteryName) => "cap/" + masteryName;
 
     public MahaonMasteryCapSystem() : base("MahaonMasteryCaps", 1)
     {
@@ -39,7 +42,7 @@ public class MahaonMasteryCapSystem : GenericPersistence
             return DefaultCap;
         }
 
-        return Caps.TryGetValue((m, masteryName), out var cap) ? cap : DefaultCap;
+        return MahaonProgress.TryGet(m, CapTrack(masteryName), out var cap) ? cap : DefaultCap;
     }
 
     /// <summary>Поднимает потолок до указанного значения. Понизить нельзя — свиток,
@@ -63,25 +66,20 @@ public class MahaonMasteryCapSystem : GenericPersistence
             return false;
         }
 
-        Caps[(m, masteryName)] = cap;
+        MahaonProgress.Set(m, CapTrack(masteryName), cap);
         MahaonSkillTree.NotifyChanged(m);
 
         return true;
     }
 
+    /// <summary>Потолки теперь хранит MahaonProgress; здесь — пустая запись, чтобы формат файла не ломался.</summary>
     public override void Serialize(IGenericWriter writer)
     {
         writer.WriteEncodedInt(0); // version
-        writer.WriteEncodedInt(Caps.Count);
-
-        foreach (var ((mobile, name), cap) in Caps)
-        {
-            writer.Write(mobile);
-            writer.Write(name);
-            writer.Write(cap);
-        }
+        writer.WriteEncodedInt(0);
     }
 
+    /// <summary>Читает прежние потолки и перекладывает их в общее хранилище.</summary>
     public override void Deserialize(IGenericReader reader)
     {
         reader.ReadEncodedInt(); // version
@@ -96,7 +94,7 @@ public class MahaonMasteryCapSystem : GenericPersistence
 
             if (mobile != null && name != null)
             {
-                Caps[(mobile, name)] = cap;
+                MahaonProgress.Migrated(mobile, CapTrack(name), cap);
             }
         }
     }

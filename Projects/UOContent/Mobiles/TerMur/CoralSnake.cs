@@ -1,13 +1,13 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/CoralSnake.cs). SetMagicalAbility
-/// dropped (legacy-save migration only in the original, irrelevant for a fresh port) — see
-/// Rotworm.cs's class doc comment for why this framework doesn't exist here at all.</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/CoralSnake.cs). ServUO's
+/// <c>SetMagicalAbility(MagicalAbility.Poisoning)</c> stays dropped: that is a pet-training
+/// school flag with no counterpart in the monster-ability framework
+/// (<see cref="GetMonsterAbilities" />).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a snake corpse")]
 public partial class CoralSnake : BaseCreature
 {
     [Constructible]
@@ -47,6 +47,7 @@ public partial class CoralSnake : BaseCreature
         MinTameSkill = 59.1;
     }
 
+    public override string CorpseName => "труп змеи";
     public override string DefaultName => "коралловая змея";
 
     public override Poison PoisonImmune => Poison.Lesser;

@@ -15,7 +15,7 @@ public enum MysticismSchool : byte
 /// Spell.cs cast-completion point. All 8 real Mysticism spells checked by class name.</summary>
 public static class MysticismSchoolSystem
 {
-    private static readonly Dictionary<(Mobile, MysticismSchool), double> SchoolValue = new();
+    private static readonly ProgressTable<MysticismSchool> SchoolValue = new("branch:mysticism");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -44,6 +44,7 @@ public static class MysticismSchoolSystem
             SchoolValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(m);
             MahaonSkillTree.AnnounceGain(m, RuSchoolName(school), newValue - current, newValue);
+            SchoolPerks.AnnounceUnlock(m, $"mysticism/{school}", current, newValue);
         }
     }
 
@@ -111,6 +112,26 @@ public static class MysticismSchoolSystem
         var breadth = GetBreadthBonus(caster, MysticismSchool.Damage);
 
         return 1.0 + (value / 100.0 * 18.0 + breadth) / 100.0;
+    }
+
+    /// <summary>Школа заклинания и её уровень у мага — для мастерства заклинаний, цены стихии
+    /// и доски (см. SpellSchools). Без мага уровень ноль.</summary>
+    public static bool TryDescribe(Mobile m, ISpell spell, out SpellSchoolInfo info)
+    {
+        var school = SchoolOf(spell);
+
+        if (school == null)
+        {
+            info = default;
+            return false;
+        }
+
+        info = new SpellSchoolInfo(
+            $"mysticism/{school.Value}",
+            RuSchoolName(school.Value),
+            m == null ? 0.0 : GetValue(m, school.Value)
+        );
+        return true;
     }
 
     public static string RuSchoolName(MysticismSchool school) => school switch

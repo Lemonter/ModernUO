@@ -109,7 +109,30 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
         if (CanExcavate)
         {
             list.Add("Копает землю: яма, ров, пруд");
-            list.Add("Режим — в меню предмета (Alt-клик)");
+
+            // Режим — выбор игрока, не предмета (MahaonDigMode), поэтому показывается режим
+            // ДЕРЖАТЕЛЯ: того, у кого лопата в руках или в сумке. У лопаты на земле держателя
+            // нет — остаётся только подсказка, где режим меняется.
+            if (RootParent is Mobile holder)
+            {
+                list.Add($"Режим: {Systems.MahaonMapEdits.MahaonDigMode.Name(Systems.MahaonMapEdits.MahaonDigMode.Of(holder))}");
+                list.Add("Сменить — в меню предмета (Alt-клик)");
+            }
+            else
+            {
+                list.Add("Копать, закапывать или добывать песок — в меню предмета (Alt-клик)");
+            }
+        }
+    }
+
+    // Лопата сменила держателя (подняли, положили, передали) — режим в тултипе теперь чужой.
+    public override void OnAdded(IEntity parent)
+    {
+        base.OnAdded(parent);
+
+        if (CanExcavate)
+        {
+            InvalidateProperties();
         }
     }
 
@@ -168,7 +191,8 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
             var mode = Systems.MahaonMapEdits.MahaonDigMode.Of(pm);
 
             list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Harvest, mode != Systems.MahaonMapEdits.DigMode.Harvest, 6163));
-            list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Terraform, mode != Systems.MahaonMapEdits.DigMode.Terraform, 6164));
+            list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Dig, mode != Systems.MahaonMapEdits.DigMode.Dig, 6164));
+            list.Add(new DigModeEntry(Systems.MahaonMapEdits.DigMode.Fill, mode != Systems.MahaonMapEdits.DigMode.Fill, 6165));
 
             return;
         }
@@ -203,9 +227,9 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
     }
 
     /// <summary>
-    ///     «Добыча» / «Изменение ландшафта» в меню лопаты. Номера 6163 и 6164 — пустые
-    ///     строки в клилоке рядом с остальными пунктами меню (3006163, 3006164); текст им
-    ///     задан в нашей русской поставке клилока.
+    ///     «Добыча» / «Копать» / «Закапывать» в меню лопаты. Номера 6163, 6164 и 6165 —
+    ///     пустые строки в клилоке рядом с остальными пунктами меню (3006163 и далее);
+    ///     текст им задан в нашей русской поставке клилока.
     /// </summary>
     private class DigModeEntry : ContextMenuEntry
     {
@@ -221,11 +245,15 @@ public abstract partial class BaseHarvestTool : Item, IUsesRemaining, ICraftable
         {
             Systems.MahaonMapEdits.MahaonDigMode.Set(from, _mode);
 
+            // Тултип обновит сама MahaonDigMode.Set.
             from.SendMessage(
                 0x59,
-                _mode == Systems.MahaonMapEdits.DigMode.Harvest
-                    ? "Лопата для добычи: копаешь песок, не меняя глубину."
-                    : "Лопата для земляных работ: копаешь яму и засыпаешь её."
+                _mode switch
+                {
+                    Systems.MahaonMapEdits.DigMode.Harvest => "Лопата для добычи: копаешь песок, не меняя глубину.",
+                    Systems.MahaonMapEdits.DigMode.Fill    => "Лопата закапывает: земля поднимается, но не выше целины.",
+                    _                                      => "Лопата копает: земля опускается."
+                }
             );
         }
     }

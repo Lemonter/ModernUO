@@ -4,12 +4,12 @@ using Server.Network;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/RuddyBoura.cs). SetSpecialAbility
-/// dropped (see Rotworm.cs). The live-fur-shearing ICarvable mechanic was dropped at first
-/// because neither Fur nor FurType existed on BaseCreature here; both do now
-/// (Items/Resources/Fur.cs), so it is restored along with the dragon-blood carve.</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/RuddyBoura.cs). ServUO's
+/// <c>SetSpecialAbility(ColossalBlow)</c> comes through <see cref="GetMonsterAbilities" />.
+/// The live-fur-shearing ICarvable mechanic was dropped at first because neither Fur nor
+/// FurType existed on BaseCreature here; both do now (Items/Resources/Fur.cs), so it is
+/// restored along with the dragon-blood carve.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a boura corpse")]
 public partial class RuddyBoura : BaseCreature, ICarvable
 {
     [SerializableField(0)]
@@ -52,7 +52,12 @@ public partial class RuddyBoura : BaseCreature, ICarvable
         Karma = -2500;
     }
 
+    public override string CorpseName => "труп боуры";
     public override string DefaultName => "рыжая боура";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.ColossalBlow];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override int Meat => 10;
     public override int Hides => 20;

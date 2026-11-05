@@ -78,7 +78,6 @@ public abstract partial class BaseDupresGuard : BaseCreature
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a human corpse")]
 public partial class DupresSquire : BaseDupresGuard
 {
     [Constructible]
@@ -96,11 +95,12 @@ public partial class DupresSquire : BaseDupresGuard
         AddBlessed(new BodySash(0x794));
     }
 
+    public override string CorpseName => "труп человека";
+
     public override bool InitialInnocent => true;
 }
 
 [SerializationGenerator(0, false)]
-[CorpseName("a human corpse")]
 public partial class DupresKnight : BaseDupresGuard
 {
     [Constructible]
@@ -119,13 +119,14 @@ public partial class DupresKnight : BaseDupresGuard
         AddBlessed(new BodySash(0x794));
     }
 
+    public override string CorpseName => "труп человека";
+
     public override bool InitialInnocent => true;
 }
 
 /// <summary>The champion is the only one of the three the original does not mark innocent —
 /// left as it stands.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a human corpse")]
 public partial class DupresChampion : BaseDupresGuard
 {
     [Constructible]
@@ -144,4 +145,6 @@ public partial class DupresChampion : BaseDupresGuard
         AddBlessed(new BodySash(0x486));
         AddBlessed(new Cloak(0x486));
     }
+
+    public override string CorpseName => "труп человека";
 }

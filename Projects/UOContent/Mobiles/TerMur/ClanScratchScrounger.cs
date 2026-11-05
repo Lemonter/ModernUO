@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ClanSS.cs). Same SetWearable/Arrow-drop
 /// fix as ClanChitterAssistant.cs.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clan scratch scrounger corpse")]
 public partial class ClanScratchScrounger : BaseCreature
 {
     [Constructible]
@@ -42,6 +41,7 @@ public partial class ClanScratchScrounger : BaseCreature
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп стервятника клана Царапина";
     public override string DefaultName => "стервятник клана Царапина";
 
     public override bool CanRummageCorpses => true;

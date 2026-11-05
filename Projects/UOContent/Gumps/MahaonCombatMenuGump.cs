@@ -1,3 +1,6 @@
+using System;
+using Server.Items;
+using Server.Mobiles;
 using Server.Network;
 using Server.Systems.MahaonCombat;
 
@@ -40,7 +43,11 @@ public class MahaonCombatMenuGump : DynamicGump
 
     // Раскладка кнопок: 0 = закрытие клиентом (ESC/крестик) — трактуется как сворачивание.
     // 1 = развернуть/свернуть, 2/3/4 = переключение вкладок, 10-13 = стойки,
-    // 20-26 = места удара, 30-32 = канал каста, 40-43 = предпочитаемая стихия.
+    // 20-26 = места удара, 30-32 = канал каста, 40-43 = предпочитаемая стихия,
+    // 50-56 = стиль вида оружия, которое сейчас в руках, 60-63 = стойка лучника.
+    //
+    // Сами проверки и сообщения — в MahaonCombatChoices: туда же ходит и Unity-окно, и правила
+    // у двух окон не могут разойтись.
     protected override void BuildLayout(ref DynamicGumpBuilder builder)
     {
         if (_collapsed)
@@ -50,10 +57,10 @@ public class MahaonCombatMenuGump : DynamicGump
         }
 
         builder.AddPage();
-        builder.AddBackground(0, 0, 320, 410, 5054);
-        builder.AddAlphaRegion(10, 10, 300, 390);
+        builder.AddBackground(0, 0, 480, 410, 5054);
+        builder.AddAlphaRegion(10, 10, 460, 390);
 
-        builder.AddButton(280, 15, 2437, 2436, 1); // collapse, top-right corner
+        builder.AddButton(440, 15, 2437, 2436, 1); // collapse, top-right corner
 
         AddTabButton(ref builder, 15, 15, 2, "Бой", _tab == CombatTab);
         AddTabButton(ref builder, 110, 15, 3, "Магия", _tab == MagicTab);
@@ -85,21 +92,79 @@ public class MahaonCombatMenuGump : DynamicGump
         builder.AddHtml(15, 60, 290, 20, "Стойка:");
         AddStanceButton(ref builder, 15, 85, 10, CombatStance.Normal, "Обычная", stance, true);
         AddStanceButton(ref builder, 15, 110, 11, CombatStance.Defensive, "Защитная (вдвое меньше урона наносишь/получаешь)", stance, true);
-        AddStanceButton(ref builder, 15, 135, 12, CombatStance.Aggressive2x, "Агрессивная x2 (нужна Тактика 60)", stance,
+        AddStanceButton(ref builder, 15, 135, 12, CombatStance.Aggressive2x, "Агрессивная (Т 60): быстрее, слабее", stance,
             CombatStanceSystem.CanUseStance(_player, CombatStance.Aggressive2x));
-        AddStanceButton(ref builder, 15, 160, 13, CombatStance.Aggressive3x, "Агрессивная x3 (нужна Тактика 100)", stance,
+        AddStanceButton(ref builder, 15, 160, 13, CombatStance.Aggressive3x, "Яростная (Т 100): ещё быстрее", stance,
             CombatStanceSystem.CanUseStance(_player, CombatStance.Aggressive3x));
 
-        builder.AddHtml(15, 195, 290, 20, "Целиться в: (от этого зависит и стиль боя)");
+        builder.AddHtml(15, 195, 290, 20, "Целиться в: (в скобках — к попаданию)");
         AddLocationButton(ref builder, 15, 220, 20, HitLocation.Chest, "Грудь", true);
-        AddLocationButton(ref builder, 15, 245, 21, HitLocation.Arms, "Руки", true);
-        AddLocationButton(ref builder, 15, 270, 22, HitLocation.Legs, "Ноги", true);
-        AddLocationButton(ref builder, 15, 295, 23, HitLocation.Hands, "Кисти", true);
-        AddLocationButton(ref builder, 15, 320, 26, HitLocation.Head, "Голова", true);
-        AddLocationButton(ref builder, 15, 345, 25, HitLocation.Back, "Спина (нужна Тактика 70)",
+        AddLocationButton(ref builder, 15, 245, 21, HitLocation.Arms, "Руки (−5)", true);
+        AddLocationButton(ref builder, 15, 270, 22, HitLocation.Legs, "Ноги (−5)", true);
+        AddLocationButton(ref builder, 15, 295, 23, HitLocation.Hands, "Кисти (−10)", true);
+        AddLocationButton(ref builder, 15, 320, 26, HitLocation.Head, "Голова (−15)", true);
+        AddLocationButton(ref builder, 15, 345, 25, HitLocation.Back, "Спина, только сзади (−5, Тактика 70)",
             HitLocationSystem.CanUseLocation(_player, HitLocation.Back));
-        AddLocationButton(ref builder, 160, 220, 24, HitLocation.Neck, "Шея x2 (нужна Тактика 115)",
+        AddLocationButton(ref builder, 160, 220, 24, HitLocation.Neck, "Шея ×2 (−20, Тактика 115)",
             HitLocationSystem.CanUseLocation(_player, HitLocation.Neck));
+
+        BuildStyleColumn(ref builder);
+        BuildTargetNotes(ref builder);
+    }
+
+    /// <summary>Что игрок уже разглядел у текущей цели — слабые и крепкие места.</summary>
+    private void BuildTargetNotes(ref DynamicGumpBuilder builder)
+    {
+        var target = _player.Combatant;
+
+        if (target == null)
+        {
+            return;
+        }
+
+        var known = MahaonWeakPoints.Known(_player, target);
+
+        builder.AddHtml(160, 250, 150, 20, $"Цель: {target.Name}");
+
+        if (known.Count == 0)
+        {
+            builder.AddHtml(160, 270, 150, 40, MahaonWeakPoints.IsArmored(target) ? "слабость — в броне" : "слабостей не замечено");
+            return;
+        }
+
+        for (var i = 0; i < known.Count && i < 3; i++)
+        {
+            var p = known[i];
+            builder.AddLabel(160, 270 + i * 20, p.Multiplier > 1 ? 0x35 : 0x22,
+                $"{MahaonCombatChoices.LocationName(p.Location)} ×{p.Multiplier:0.0}");
+        }
+    }
+
+    /// <summary>
+    ///     Стиль — отдельно от места удара (решено 05.11.2026). Показываем стили того вида
+    ///     оружия, что сейчас в руках: у мечей свои семь, у булав свои.
+    /// </summary>
+    private void BuildStyleColumn(ref DynamicGumpBuilder builder)
+    {
+        var category = WeaponStyleSystem.CategoryOf(_player.Weapon as Item);
+
+        if (category == null)
+        {
+            builder.AddHtml(320, 60, 150, 40, "Стиль: в руках нет оружия со стилями.");
+            return;
+        }
+
+        var active = WeaponStyleSystem.GetActiveStyle(_player, category.Value);
+
+        builder.AddHtml(320, 60, 150, 20, $"Стиль ({WeaponStyleSystem.RuCategoryName(category.Value).ToLowerInvariant()}):");
+
+        for (byte style = 0; style < WeaponStyleSystem.StyleCount; style++)
+        {
+            var y = 85 + style * 25;
+
+            builder.AddButton(320, y, 4005, 4007, 50 + style);
+            builder.AddLabelCropped(345, y, 125, 20, style == active ? 0x59 : 0x480, WeaponStyleSystem.StyleName(category.Value, style));
+        }
     }
 
     private void BuildMagicTab(ref DynamicGumpBuilder builder)
@@ -125,37 +190,49 @@ public class MahaonCombatMenuGump : DynamicGump
         AddElementButton(ref builder, 15, 315, 43, PreferredElement.Cold, "Холод", preferred);
     }
 
+    /// <summary>
+    ///     Стойки лучника. Прежде здесь было только объяснение автоматического правила «лук
+    ///     выше 90 — дальше, но медленнее»; теперь это одна из четырёх стоек, у каждой своя цена.
+    /// </summary>
     private void BuildArcheryTab(ref DynamicGumpBuilder builder)
     {
         var archery = _player.Skills[SkillName.Archery].Value;
-        var weapon = _player.Weapon as IWeapon;
-        var extended = archery > 90.0;
+        var weapon = _player.Weapon as BaseWeapon;
+        var active = ArcheryStanceSystem.Active(_player);
 
-        builder.AddHtml(15, 40, 290, 20, $"Стрельба из лука {archery:F1}");
+        builder.AddHtml(15, 40, 450, 20, $"Стрельба из лука {archery:F1}");
+        builder.AddHtml(15, 60, 450, 20, "Стойка лучника:");
 
-        builder.AddHtml(
-            15, 65, 290, 54,
-            extended
-                ? "Больше 90 — можешь стрелять и за пределами дальности оружия, но на 40% медленнее. Как только цель окажется в пределах обычной дальности оружия — скорость снова станет нормальной."
-                : "Пока не больше 90 — стрельба ограничена обычной дальностью оружия. При 90+ появится возможность стрелять дальше ценой скорости."
-        );
+        var stances = (ArcheryStance[])Enum.GetValues(typeof(ArcheryStance));
+
+        for (var i = 0; i < stances.Length; i++)
+        {
+            var stance = stances[i];
+            var y = 85 + i * 45;
+
+            if (ArcheryStanceSystem.CanUse(_player, stance))
+            {
+                builder.AddButton(15, y, 4005, 4007, 60 + (int)stance);
+            }
+            else
+            {
+                builder.AddImage(15, y, 4020);
+            }
+
+            builder.AddLabel(40, y, stance == active ? 0x59 : 0x480, ArcheryStanceSystem.Name(stance));
+            builder.AddHtml(40, y + 18, 420, 20, ArcheryStanceSystem.Trade(stance));
+        }
 
         if (weapon is { IsRangedWeapon: true })
         {
-            var inNormalRange = _player.Combatant == null || _player.InRange(_player.Combatant, weapon.MaxRange);
-            builder.AddHtml(15, 125, 290, 20, $"Дальность оружия: {weapon.MaxRange}");
-
-            if (extended && _player.Combatant != null)
-            {
-                builder.AddHtml(
-                    15, 150, 290, 20,
-                    inNormalRange ? "Цель в пределах дальности — скорость обычная." : "Цель дальше обычной дальности — стрельба на 40% медленнее."
-                );
-            }
+            builder.AddHtml(
+                15, 275, 450, 20,
+                $"Дальность: {weapon.MaxRange}, в этой стойке — {ArcheryStanceSystem.CombatRange(_player, weapon)}."
+            );
         }
         else
         {
-            builder.AddHtml(15, 125, 290, 20, "В руках не лук/арбалет.");
+            builder.AddHtml(15, 275, 450, 20, "В руках не лук/арбалет.");
         }
     }
 
@@ -271,6 +348,10 @@ public class MahaonCombatMenuGump : DynamicGump
             case 31: SetChannel(CastingChannel.Voice); return;
             case 32: SetChannel(CastingChannel.Mind); return;
 
+            case >= 50 and < 50 + WeaponStyleSystem.StyleCount: SetStyle((byte)(info.ButtonID - 50)); return;
+
+            case >= 60 and <= 63: SetArcheryStance((ArcheryStance)(info.ButtonID - 60)); return;
+
             case 40: SetElement(PreferredElement.Fire); return;
             case 41: SetElement(PreferredElement.Poison); return;
             case 42: SetElement(PreferredElement.Energy); return;
@@ -282,8 +363,8 @@ public class MahaonCombatMenuGump : DynamicGump
     {
         CombatStance.Normal       => "обычную",
         CombatStance.Defensive    => "защитную",
-        CombatStance.Aggressive2x => "агрессивную x2",
-        CombatStance.Aggressive3x => "агрессивную x3",
+        CombatStance.Aggressive2x => "агрессивную",
+        CombatStance.Aggressive3x => "яростную",
         _                         => stance.ToString()
     };
 
@@ -301,58 +382,61 @@ public class MahaonCombatMenuGump : DynamicGump
 
     private void SetStance(CombatStance stance)
     {
-        if (!CombatStanceSystem.CanUseStance(_player, stance))
+        if (_player is PlayerMobile pm)
         {
-            _player.SendMessage(0x22, "Твоей Тактики пока не хватает для этой стойки.");
-            _player.SendGump(new MahaonCombatMenuGump(_player, false, _tab));
-            return;
+            MahaonCombatChoices.SetStance(pm, stance);
         }
 
-        CombatStanceSystem.SetStance(_player, stance);
-        _player.SendMessage(0x59, $"Ты переходишь в {StanceRu(stance)} стойку.");
         _player.SendGump(new MahaonCombatMenuGump(_player, false, _tab));
     }
 
     private void SetLocation(HitLocation location)
     {
-        if (!HitLocationSystem.CanUseLocation(_player, location))
+        if (_player is PlayerMobile pm)
         {
-            _player.SendMessage(0x22, "Твоей Тактики пока не хватает для такого удара.");
-            _player.SendGump(new MahaonCombatMenuGump(_player, false, _tab));
-            return;
+            MahaonCombatChoices.SetLocation(pm, location);
         }
 
-        HitLocationSystem.SetLocation(_player, location);
-        _player.SendMessage(0x59, $"Ты целишься в {LocationRu(location)}.");
-        Systems.MahaonCombat.MahaonSkillTree.NotifyChanged(_player); // derived style may have changed
         _player.SendGump(new MahaonCombatMenuGump(_player, false, _tab));
+    }
+
+    private void SetStyle(byte style)
+    {
+        var category = WeaponStyleSystem.CategoryOf(_player.Weapon as Item);
+
+        if (category != null && _player is PlayerMobile pm)
+        {
+            MahaonCombatChoices.SetStyle(pm, category.Value, style);
+        }
+
+        _player.SendGump(new MahaonCombatMenuGump(_player, false, CombatTab));
+    }
+
+    private void SetArcheryStance(ArcheryStance stance)
+    {
+        if (_player is PlayerMobile pm)
+        {
+            MahaonCombatChoices.SetArcheryStance(pm, stance);
+        }
+
+        _player.SendGump(new MahaonCombatMenuGump(_player, false, ArcheryTab));
     }
 
     private void SetChannel(CastingChannel channel)
     {
-        if (!CastingChannelSystem.CanUseChannel(_player, channel))
+        if (_player is PlayerMobile pm)
         {
-            _player.SendMessage(0x22, "Твоей Магии пока не хватает для этого канала каста.");
-            _player.SendGump(new MahaonCombatMenuGump(_player, false, MagicTab));
-            return;
+            MahaonCombatChoices.SetChannel(pm, channel);
         }
 
-        CastingChannelSystem.SetChannel(_player, channel);
-        _player.SendMessage(0x59, $"Теперь ты колдуешь: {CastingChannelSystem.RuChannelName(channel).ToLowerInvariant()}.");
         _player.SendGump(new MahaonCombatMenuGump(_player, false, MagicTab));
     }
 
     private void SetElement(PreferredElement element)
     {
-        if (PreferredElementSystem.GetPreferred(_player) == element)
+        if (_player is PlayerMobile pm)
         {
-            PreferredElementSystem.ClearPreferred(_player);
-            _player.SendMessage(0x59, "Предпочитаемая стихия снята.");
-        }
-        else
-        {
-            PreferredElementSystem.SetPreferred(_player, element);
-            _player.SendMessage(0x59, $"Предпочитаемая стихия: {PreferredElementSystem.RuElementName(element)}.");
+            MahaonCombatChoices.ToggleElement(pm, element);
         }
 
         _player.SendGump(new MahaonCombatMenuGump(_player, false, MagicTab));

@@ -108,4 +108,76 @@ internal static class MahaonSpecializationPersistenceHelper
             }
         }
     }
+    // ---- Переезд в MahaonProgress ---------------------------------------------------------
+    //
+    // Те же самые вызовы, что делают классы сохранения всех веток, — только словарь у них
+    // теперь заменён таблицей (ProgressTable), и перегрузки ниже выбираются сами, по типу.
+    // Чтение разбирает ровно те же байты, что и раньше, и перекладывает значения в общее
+    // хранилище. Запись пишет пустой список: данные теперь хранит MahaonProgress, а старый
+    // файл остаётся только затем, чтобы его формат не сломался для того, кто прочтёт.
+
+    public static void Write(IGenericWriter writer, ProgressTable table) => writer.WriteEncodedInt(0);
+
+    public static void Read(IGenericReader reader, ProgressTable table)
+    {
+        var count = reader.ReadEncodedInt();
+
+        for (var i = 0; i < count; i++)
+        {
+            var mobile = reader.ReadEntity<Mobile>();
+            var value = reader.ReadDouble();
+
+            if (mobile != null)
+            {
+                MahaonProgress.Migrated(mobile, table.Track, value);
+            }
+        }
+    }
+
+    public static void Write<TKey>(IGenericWriter writer, ProgressTable<TKey> table, Action<IGenericWriter, TKey> writeKey)
+        where TKey : notnull => writer.WriteEncodedInt(0);
+
+    public static void Read<TKey>(IGenericReader reader, ProgressTable<TKey> table, Func<IGenericReader, TKey> readKey)
+        where TKey : notnull
+    {
+        var count = reader.ReadEncodedInt();
+
+        for (var i = 0; i < count; i++)
+        {
+            var mobile = reader.ReadEntity<Mobile>();
+            var key = readKey(reader);
+            var value = reader.ReadDouble();
+
+            if (mobile != null)
+            {
+                MahaonProgress.Migrated(mobile, table.TrackOf(key), value);
+            }
+        }
+    }
+
+    public static void Write3<TKey1, TKey2>(
+        IGenericWriter writer, ProgressTable<TKey1, TKey2> table,
+        Action<IGenericWriter, TKey1> writeKey1, Action<IGenericWriter, TKey2> writeKey2
+    ) where TKey1 : notnull where TKey2 : notnull => writer.WriteEncodedInt(0);
+
+    public static void Read3<TKey1, TKey2>(
+        IGenericReader reader, ProgressTable<TKey1, TKey2> table,
+        Func<IGenericReader, TKey1> readKey1, Func<IGenericReader, TKey2> readKey2
+    ) where TKey1 : notnull where TKey2 : notnull
+    {
+        var count = reader.ReadEncodedInt();
+
+        for (var i = 0; i < count; i++)
+        {
+            var mobile = reader.ReadEntity<Mobile>();
+            var key1 = readKey1(reader);
+            var key2 = readKey2(reader);
+            var value = reader.ReadDouble();
+
+            if (mobile != null)
+            {
+                MahaonProgress.Migrated(mobile, table.TrackOf(key1, key2), value);
+            }
+        }
+    }
 }

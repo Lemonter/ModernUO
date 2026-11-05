@@ -61,8 +61,6 @@ public static class MahaonFluids
     /// <summary>Сколько всего клеток жидкости согласны держать.</summary>
     private const int MaxCells = 4000;
 
-    public const string LavaTag = "лава";
-    public const string SpillTag = "пролив";
 
     /// <summary>Лава: анимированная, светит сама, жжёт стоящего. Высота ноль.</summary>
     private static readonly int[] LavaStatics =
@@ -140,7 +138,7 @@ public static class MahaonFluids
         Cells[key] = new Cell { Kind = kind, Z = z, Strength = strength };
         Active.Enqueue(key);
 
-        MahaonMapEdits.AddStatic(map, x, y, z, Graphic(kind), 0, Tag(kind));
+        MahaonMapEdits.AddStatic(map, x, y, z, Graphic(kind), 0);
 
         return true;
     }
@@ -150,7 +148,16 @@ public static class MahaonFluids
             ? LavaStatics[Utility.Random(LavaStatics.Length)]
             : MahaonWaterFlow.RandomWaterStatic();
 
-    private static string Tag(FluidKind kind) => kind == FluidKind.Lava ? LavaTag : SpillTag;
+    /// <summary>
+    ///     Наша ли это клетка.
+    ///
+    ///     Текучая вода и разлив (MahaonWaterFlow) кладут ОДНУ И ТУ ЖЕ графику, и раньше их
+    ///     различала пометка в журнале правок. Журнала больше нет, поэтому спрашиваем прямо:
+    ///     у нас есть свой список клеток, и он и есть ответ. Без этого разлив считал бы
+    ///     текучую воду своей и осушал её на первом же пересчёте.
+    /// </summary>
+    public static bool Holds(Map map, int x, int y) =>
+        map != null && Cells.ContainsKey((map.MapID, x, y));
 
     private static void Tick()
     {
@@ -324,16 +331,14 @@ public static class MahaonFluids
         {
             if (Array.IndexOf(LavaStatics, s.Graphic) >= 0)
             {
-                MahaonMapEdits.RemoveStatics(map, key.X, key.Y, s.Graphic, LavaTag);
+                MahaonMapEdits.RemoveStatics(map, key.X, key.Y, s.Graphic);
             }
         }
 
         MahaonMapEdits.SetLand(
             map, key.X, key.Y,
             StoneLand[Utility.Random(StoneLand.Length)],
-            cell.Z,
-            LavaTag
-        );
+            cell.Z);
     }
 
     // ---- Команды ---------------------------------------------------------------------------

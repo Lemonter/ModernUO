@@ -27,7 +27,7 @@ public static class CombatLogSystem
     public static void LogMeleeHit(Mobile attacker, Mobile defender, int damage, string locationRu = null, string armorNameRu = null)
     {
         var locationSuffix = locationRu != null ? $" в {locationRu}" : "";
-        var armorSuffix = armorNameRu != null ? $" (по {armorNameRu})" : "";
+        var armorSuffix = armorNameRu != null ? $" (броня: {armorNameRu})" : ""; // имя из cliloc в именительном — без предлога, чтобы падеж не ломался
 
         attacker?.SendMessage(Hue, $"Вы ударили {defender.Name}{locationSuffix}{armorSuffix} на {damage}.");
         defender?.SendMessage(Hue, $"{attacker?.Name ?? "Кто-то"} ударил вас{locationSuffix}{armorSuffix} на {damage}.");

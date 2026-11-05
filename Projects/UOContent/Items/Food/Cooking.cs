@@ -1,9 +1,8 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Targeting;
 
 namespace Server.Items;
-
 [SerializationGenerator(0, false)]
 public partial class Dough : Item
 {
@@ -15,7 +14,6 @@ public partial class Dough : Item
 
     public override double DefaultWeight => 1.0;
 }
-
 [SerializationGenerator(0, false)]
 public partial class SweetDough : Item
 {
@@ -29,7 +27,6 @@ public partial class SweetDough : Item
     public override double DefaultWeight => 1.0;
     public override int LabelNumber => 1041340; // sweet dough
 }
-
 [SerializationGenerator(0, false)]
 public partial class JarHoney : Item
 {
@@ -41,7 +38,6 @@ public partial class JarHoney : Item
 
     public override double DefaultWeight => 1.0;
 }
-
 [SerializationGenerator(0, false)]
 public partial class BowlFlour : Item
 {
@@ -52,7 +48,6 @@ public partial class BowlFlour : Item
 
     public override double DefaultWeight => 1.0;
 }
-
 [SerializationGenerator(0, false)]
 public partial class WoodenBowl : Item
 {
@@ -63,8 +58,6 @@ public partial class WoodenBowl : Item
 
     public override double DefaultWeight => 1.0;
 }
-
-[TypeAlias("Server.Items.SackFlourOpen")]
 [SerializationGenerator(0, false)]
 public partial class SackFlour : Item, IHasQuantity
 {
@@ -106,7 +99,6 @@ public partial class SackFlour : Item, IHasQuantity
         }
     }
 }
-
 [SerializationGenerator(0, false)]
 public partial class Eggshells : Item
 {
@@ -117,7 +109,6 @@ public partial class Eggshells : Item
 
     public override double DefaultWeight => 0.5;
 }
-
 [SerializationGenerator(0, false)]
 public partial class WheatSheaf : Item
 {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Collections;
 using Server.Items;
@@ -63,7 +63,7 @@ public partial class DreadHorn : BasePeerless
         _nextStomp = Core.TickCount;
     }
 
-    public override string CorpseName => "a dread horns corpse";
+    public override string CorpseName => "труп Ужасного Рога";
 
     public override int Hides => 10;
     public override HideType HideType => HideType.Regular;

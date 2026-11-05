@@ -1,11 +1,10 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/UndeadGuardian.cs).
 /// LootPack.NecroRegs doesn't exist here (verified) — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an undead guardian corpse")]
 public partial class UndeadGuardian : BaseCreature
 {
     [Constructible]
@@ -35,6 +34,7 @@ public partial class UndeadGuardian : BaseCreature
         SetSkill(SkillName.Wrestling, 86.9);
     }
 
+    public override string CorpseName => "труп стража-нежити";
     public override string DefaultName => "страж-нежить";
 
     public override int Meat => 1;

@@ -165,6 +165,7 @@ namespace Server.Spells
         public virtual void FinishSequence()
         {
             State = SpellState.None;
+            Systems.MahaonCombat.SpellElementTint.End();
 
             if (Caster.Spell == this)
             {
@@ -297,7 +298,9 @@ namespace Server.Spells
         public virtual bool ConsumeReagents() =>
             Scroll != null || !Caster.Player ||
             AosAttributes.GetValue(Caster, AosAttribute.LowerRegCost) > Utility.Random(100) ||
-            DuelContext.IsFreeConsume(Caster) || Caster.Backpack?.ConsumeTotal(Info.Reagents, Info.Amounts) == -1;
+            DuelContext.IsFreeConsume(Caster) ||
+            Systems.MahaonCombat.SchoolPerks.SavesReagents(Caster, this) || // перк школы (этап 8)
+            Caster.Backpack?.ConsumeTotal(Info.Reagents, Info.Amounts) == -1;
 
         public virtual double GetInscribeSkill(Mobile m) => m.Skills.Inscribe.Value;
 
@@ -715,6 +718,12 @@ namespace Server.Spells
             scalar *= Systems.MahaonCombat.SpellweavingSchoolSystem.GetManaCostScalar(Caster, this);
             scalar *= Systems.MahaonCombat.MysticismSchoolSystem.GetManaCostScalar(Caster, this);
 
+            // Мастерство самого заклинания — до −15% на 100 (этап 7).
+            scalar *= Systems.MahaonCombat.SpellMasterySystem.ManaScalar(Caster, this);
+
+            // Перки школы на 25/50/75/100 (этап 8).
+            scalar *= Systems.MahaonCombat.SchoolPerks.ManaScalar(Caster, this);
+
             // Перки «Тёмный резерв» / «Свет не гаснет» / «Средоточие» / «Нить не рвётся» —
             // каждая школа дешевле на четверть тому, кому она первична.
             scalar *= Systems.MahaonProfessions.ProfessionBonuses.SchoolManaScalar(Caster, CastSkill);
@@ -814,6 +823,12 @@ namespace Server.Spells
                 (long)(baseDelay.Ticks * Systems.MahaonProfessions.ProfessionBonuses.CastDelayScalar(Caster))
             );
 
+            // Мастерство самого заклинания — до −10% времени каста на 100 (этап 7).
+            baseDelay = TimeSpan.FromTicks(
+                (long)(baseDelay.Ticks * Systems.MahaonCombat.SpellMasterySystem.CastDelayScalar(Caster, this) *
+                       Systems.MahaonCombat.SchoolPerks.CastScalar(Caster, this))
+            );
+
             return baseDelay;
         }
 
@@ -911,6 +926,8 @@ namespace Server.Spells
                     }
                 }
 
+                // Эффекты этого заклинания — в цвет стихии мага (этап 7).
+                Systems.MahaonCombat.SpellElementTint.Begin(this);
                 return true;
             }
             else

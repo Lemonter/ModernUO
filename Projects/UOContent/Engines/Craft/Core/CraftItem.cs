@@ -965,7 +965,12 @@ namespace Server.Engines.Craft
         {
             var chance = GetSuccessChance(from, typeRes, craftSystem, gainSkills, out allRequiredSkills);
 
-            if (GetExceptionalChance(craftSystem, chance, from) > Utility.RandomDouble())
+            var exceptional = GetExceptionalChance(craftSystem, chance, from);
+
+            // Перк ветки ремесла (этап 8): только поверх уже возможного исключительного.
+            exceptional += Systems.MahaonCombat.CraftPerks.ExceptionalBonus(from, craftSystem, ItemType, exceptional);
+
+            if (exceptional > Utility.RandomDouble())
             {
                 quality = 2;
             }
@@ -1561,13 +1566,14 @@ namespace Server.Engines.Craft
 
             if (CheckSkills(from, typeRes, craftSystem, ref ignored, out var allRequiredSkills))
             {
+                // Перк ветки «экономия»: удачное изделие может не потратить материалы.
                 consumeRes = ConsumeRes(
                     from,
                     typeRes,
                     craftSystem,
                     ref resHue,
                     ref maxAmount,
-                    ConsumeType.All,
+                    Systems.MahaonCombat.CraftPerks.SavesMaterials(from, craftSystem, ItemType) ? ConsumeType.None : ConsumeType.All,
                     ref message
                 );
 
@@ -1657,6 +1663,7 @@ namespace Server.Engines.Craft
                     Systems.MahaonCombat.CookingSpecializationSystem.OnItemCrafted(from, item, craftSystem);
                     Systems.MahaonCombat.AlchemySpecializationSystem.OnItemCrafted(from, item, craftSystem);
                     Systems.MahaonCombat.InscriptionSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CraftPerks.OnItemCrafted(from, item, craftSystem); // ступени веток (этап 8)
 
                     // Клеймо металла. Вещь получает металл СРАЗУ при ковке — раньше её
                     // ковали из железа, а металл давала отдельная перековка молотом, и
@@ -1995,6 +2002,7 @@ namespace Server.Engines.Craft
                     Systems.MahaonCombat.CookingSpecializationSystem.OnItemCrafted(from, item, craftSystem);
                     Systems.MahaonCombat.AlchemySpecializationSystem.OnItemCrafted(from, item, craftSystem);
                     Systems.MahaonCombat.InscriptionSpecializationSystem.OnItemCrafted(from, item, craftSystem);
+                    Systems.MahaonCombat.CraftPerks.OnItemCrafted(from, item, craftSystem); // ступени веток (этап 8)
 
                     // Клеймо металла. Вещь получает металл СРАЗУ при ковке — раньше её
                     // ковали из железа, а металл давала отдельная перековка молотом, и

@@ -1,0 +1,34 @@
+using ModernUO.Serialization;
+using System;
+
+namespace Server.Items;
+
+/// <summary>
+///     Ported from ServUO (Scripts/Items/Addons/PlushLoveseatSouth.cs).
+/// </summary>
+[Furniture]
+[SerializationGenerator(0, false)]
+public partial class PlushLoveseatSouthAddon : BaseAddon
+{
+    public override BaseAddonDeed Deed => new PlushLoveseatSouthDeed();
+    public override bool RetainDeedHue => true;
+
+    [Constructible]
+    public PlushLoveseatSouthAddon()
+    {
+        AddComponent(new AddonComponent(0x4C83), 0, 0, 0);
+        AddComponent(new AddonComponent(0x4C82), 1, 0, 0);
+    }
+}
+
+[SerializationGenerator(0, false)]
+public partial class PlushLoveseatSouthDeed : BaseAddonDeed
+{
+    public override BaseAddon Addon => new PlushLoveseatSouthAddon();
+    public override int LabelNumber => 1154135; // Plush Loveseat (South)
+
+    [Constructible]
+    public PlushLoveseatSouthDeed()
+    {
+    }
+}

@@ -9,7 +9,6 @@ namespace Server.Mobiles;
 /// UniqueSAList/SharedSAList: SpinedBloodwormBracers/DefenderOfTheMagus/SummonersKilt don't
 /// exist anywhere in this codebase — dropped. LootPack.NecroRegs doesn't exist — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Ancient Lich [Renowned] corpse")]
 public partial class AncientLichRenowned : BaseRenowned
 {
     [Constructible]
@@ -48,6 +47,7 @@ public partial class AncientLichRenowned : BaseRenowned
         Karma = -23000;
     }
 
+    public override string CorpseName => "труп знаменитого древнего лича";
     public override string DefaultName => "древний лич";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

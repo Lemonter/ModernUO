@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// the local BaseRenowned base. SharedSAList: StormCaller exists, TorcOfTheGuardians/
 /// GiantSteps/CavalrysFolly don't — kept only StormCaller.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Gray Goblin Mage [Renowned] corpse")]
 public partial class GrayGoblinMageRenowned : BaseRenowned
 {
     [Constructible]
@@ -48,6 +47,7 @@ public partial class GrayGoblinMageRenowned : BaseRenowned
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп знаменитого серого гоблина-мага";
     public override string DefaultName => "серый гоблин-маг";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

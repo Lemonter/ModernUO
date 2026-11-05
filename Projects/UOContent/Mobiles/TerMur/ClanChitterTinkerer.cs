@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -14,7 +14,6 @@ namespace Server.Mobiles;
 /// ClanST.cs exists there. The player-visible strings below are therefore NOT touched:
 /// flip them to "chitter" only if that's confirmed against OSI.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clan scratch tinkerer corpse")]
 public partial class ClanChitterTinkerer : BaseCreature
 {
     [Constructible]
@@ -51,6 +50,7 @@ public partial class ClanChitterTinkerer : BaseCreature
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп механика клана Царапина";
     public override string DefaultName => "механик клана Царапина";
 
     public override bool CanRummageCorpses => true;

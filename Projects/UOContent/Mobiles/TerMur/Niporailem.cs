@@ -15,7 +15,6 @@ namespace Server.Mobiles;
 /// are missing from this codebase, as are the four shared artifacts. BaseSABoss rolls against
 /// an empty list without complaint; fill both lists when the SA artifact tables are ported.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("the corpse of niporailem")]
 public partial class Niporailem : BaseSABoss
 {
     private long _nextTreasure;
@@ -67,6 +66,7 @@ public partial class Niporailem : BaseSABoss
         Karma = -15000;
     }
 
+    public override string CorpseName => "труп Нипораилема";
     public override string DefaultName => "Нипораилем";
 
     public override Type[] UniqueSAList => Type.EmptyTypes;

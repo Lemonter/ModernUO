@@ -12,7 +12,7 @@ namespace Server.Systems.MahaonCombat;
 /// </summary>
 public static class InscriptionSpecializationSystem
 {
-    private static readonly Dictionary<Mobile, double> Value = new();
+    private static readonly ProgressTable Value = new("branch:inscription");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -43,6 +43,7 @@ public static class InscriptionSpecializationSystem
             Value[from] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuSpecializationName, newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, "craft:inscription", current, newValue);
         }
 
         var value = GetValue(from);

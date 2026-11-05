@@ -10,7 +10,6 @@ namespace Server.Mobiles;
 /// and PillarOfStrength don't exist anywhere in this codebase — dropped, kept StormCaller
 /// (confirmed to exist). LootPack.NecroRegs doesn't exist — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Devourer of Souls [Renowned] corpse")]
 public partial class DevourerRenowned : BaseRenowned
 {
     [Constructible]
@@ -51,6 +50,7 @@ public partial class DevourerRenowned : BaseRenowned
         Karma = -9500;
     }
 
+    public override string CorpseName => "труп знаменитого пожирателя душ";
     public override string DefaultName => "пожиратель душ";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/SerpentsFangHighExecutioner.cs) —
 /// the Serpent's Fang Sect's leader; drops the key needed for its own quest chest.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a black order high executioner corpse")]
 public partial class SerpentsFangHighExecutioner : SerpentsFangAssassin
 {
     [Constructible]
@@ -27,6 +26,7 @@ public partial class SerpentsFangHighExecutioner : SerpentsFangAssassin
         Karma = -25000;
     }
 
+    public override string CorpseName => "труп верховного палача Чёрного ордена";
     public override string DefaultName => "верховный палач Чёрного ордена";
 
     public override void GenerateLoot()

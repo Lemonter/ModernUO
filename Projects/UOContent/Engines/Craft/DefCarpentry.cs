@@ -251,6 +251,7 @@ public class DefCarpentry : CraftSystem
         }
 
         index = AddCraft(typeof(Keg), 1044292, 1023711, 57.8, 82.8, typeof(BarrelStaves), 1044288, 3, 1044253);
+            AddCraft(typeof(LiquorBarrel), 1044292, 1150816, 60.0, 90.0, typeof(Board), 1044041, 50, 1044351);
         AddRes(index, typeof(BarrelHoops), 1044289, 1, 1044253);
         AddRes(index, typeof(BarrelLid), 1044251, 1, 1044253);
 

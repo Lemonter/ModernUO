@@ -175,7 +175,7 @@ public static class AnimalTrainingSystem
         }
     }
 
-    private static readonly Dictionary<(Mobile, HerdingSpecialization), double> SpecValue = new();
+    private static readonly ProgressTable<HerdingSpecialization> SpecValue = new("branch:herding");
 
     public const double SpecMaxValue = 100.0;
     private const double SpecGainChance = 0.15;

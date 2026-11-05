@@ -23,6 +23,9 @@ public partial class Campfire : Item
 
     private TimerExecutionToken _timerToken;
 
+    /// <summary>Во сколько раз дольше горит (Кострожог). 1 — как в оригинале: 60 / 90 / 100 с.</summary>
+    public double LifetimeScale { get; set; } = 1.0;
+
     public Campfire() : base(0xDE3)
     {
         Movable = false;
@@ -93,15 +96,17 @@ public partial class Campfire : Item
         var now = Core.Now;
         var age = now - Created;
 
-        if (age >= TimeSpan.FromSeconds(100.0))
+        var k = Math.Max(1.0, LifetimeScale);
+
+        if (age >= TimeSpan.FromSeconds(100.0 * k))
         {
             Delete();
         }
-        else if (age >= TimeSpan.FromSeconds(90.0))
+        else if (age >= TimeSpan.FromSeconds(90.0 * k))
         {
             Status = CampfireStatus.Off;
         }
-        else if (age >= TimeSpan.FromSeconds(60.0))
+        else if (age >= TimeSpan.FromSeconds(60.0 * k))
         {
             Status = CampfireStatus.Extinguishing;
         }

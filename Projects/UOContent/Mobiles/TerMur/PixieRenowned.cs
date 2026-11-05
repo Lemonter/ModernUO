@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 
 namespace Server.Mobiles;
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// PillarOfStrength/SwordOfShatteredHopes don't exist anywhere in this codebase — dropped.
 /// LootPack.Statue doesn't exist — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Pixie [Renowned] corpse")]
 public partial class PixieRenowned : BaseRenowned
 {
     [Constructible]
@@ -47,6 +46,7 @@ public partial class PixieRenowned : BaseRenowned
         Karma = 7000;
     }
 
+    public override string CorpseName => "труп знаменитой пикси";
     public override string DefaultName => "пикси";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

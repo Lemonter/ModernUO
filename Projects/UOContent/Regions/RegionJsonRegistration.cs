@@ -1,4 +1,4 @@
-﻿namespace Server.Regions;
+namespace Server.Regions;
 
 public static class RegionJsonRegistration
 {
@@ -33,6 +33,9 @@ public static class RegionJsonRegistration
 
         // Blackthorn Dungeon
         RegionJsonSerializer.Register<BlackthornDungeonRegion>();
+
+        // Blackthorn Castle
+        RegionJsonSerializer.Register<BlackthornCastleRegion>();
 
         RegionJsonSerializer.Register<CousteauPerronHouseRegion>();
 

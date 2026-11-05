@@ -1,20 +1,18 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Rotworm.cs). SetSpecialAbility
-/// dropped — see Mobiles/Monsters/Reptile/Eodon/Dinosaurs.cs's own class doc comment
-/// (an earlier session's port): this codebase has no RunUO-era creature special-move
-/// framework at all, only the player-facing WeaponAbility system. The ML Quest tie-in
-/// (Missing quest reward drop) dropped too — narrative flavor, not core to the creature.
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Rotworm.cs). ServUO's
+/// <c>SetSpecialAbility(SpecialAbility.BloodDisease)</c> stays dropped: the monster-ability
+/// framework (<see cref="GetMonsterAbilities" />) has no disease/bleed counterpart. The ML Quest
+/// tie-in (Missing quest reward drop) dropped too — narrative flavor, not core to the creature.
 /// LootPack.BodyPartsAndBones also dropped — no such member on this codebase's LootPack
 /// class (verified: only Poor/Meager/Average/Rich/FilthyRich/UltraRich/SuperBoss/Gems/
 /// Potions/LowScrolls/MedScrolls/HighScrolls exist; Parrot exists but is commented out dead
 /// code in LootPack.cs). MeatType.Rotworm doesn't exist either — this codebase's MeatType
 /// enum is just { Ribs, Bird, LambLeg } — dropped the MeatType override entirely.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a rotworm corpse")]
 [TypeAlias("Server.Mobiles.RotWorm")]
 public partial class Rotworm : BaseCreature
 {
@@ -48,6 +46,7 @@ public partial class Rotworm : BaseCreature
         Karma = -500;
     }
 
+    public override string CorpseName => "труп гнилостного червя";
     public override string DefaultName => "гнилостный червь";
 
     public override int GetAngerSound() => 0x62D;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Collections;
 using Server.Items;
@@ -60,7 +60,7 @@ public partial class ChiefParoxysmus : BasePeerless
         _nextTeleport = Core.TickCount;
     }
 
-    public override string CorpseName => "a chief paroxysmus corpse";
+    public override string CorpseName => "труп главного Пароксизмуса";
 
     public override int GetAttackSound() => 0x570;
     public override int GetDeathSound() => 0x56F;

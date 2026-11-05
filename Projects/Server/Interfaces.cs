@@ -22,11 +22,16 @@ public interface IWeapon
 {
     int MaxRange { get; }
 
-    // Mahaon: true only for bows/crossbows (BaseRanged) — gates the Archery>90
-    // beyond-max-range shooting allowance in Mobile.CheckCombatTime. False (the BaseWeapon
-    // default) for melee/thrown weapons, including short-reach polearms — MaxRange alone
-    // isn't a safe proxy for "this uses Archery skill and ranged combat mechanics".
+    // Mahaon: true only for bows/crossbows (BaseRanged) — стойки лучника (ArcheryStanceSystem)
+    // действуют только на них. False (the BaseWeapon default) for melee/thrown weapons,
+    // including short-reach polearms — MaxRange alone isn't a safe proxy for "this uses
+    // Archery skill and ranged combat mechanics".
     bool IsRangedWeapon { get; }
+
+    // Mahaon: на какой дистанции этот боец может бить этим оружием прямо сейчас. Обычно это
+    // MaxRange, но у лучника её меняет стойка (навесной — вдвое дальше, беглый — ближе). Ядро
+    // спрашивает здесь и правил не знает: они живут в UOContent (ArcheryStanceSystem).
+    int GetCombatRange(Mobile attacker);
 
     void OnBeforeSwing(Mobile attacker, Mobile defender);
     TimeSpan OnSwing(Mobile attacker, Mobile defender, double damageBonus = 1.0);

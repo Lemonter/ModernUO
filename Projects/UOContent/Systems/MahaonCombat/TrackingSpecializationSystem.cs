@@ -19,7 +19,7 @@ public enum TrackingSpecialization : byte
 /// </summary>
 public static class TrackingSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, TrackingSpecialization), double> Value = new();
+    private static readonly ProgressTable<TrackingSpecialization> Value = new("branch:tracking");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -70,10 +70,13 @@ public static class TrackingSpecializationSystem
         return Math.Min(BreadthCap, total / BreadthUnitsPerPercent);
     }
 
-    /// <summary>Points to subtract from the low end of Tracking's CheckSkill window —
-    /// up to 15 at 100 trained, plus breadth from the other three categories.</summary>
-    public static double GetWindowBonus(Mobile m, TrackingSpecialization spec) =>
-        GetValue(m, spec) / 100.0 * 15.0 + GetBreadthBonus(m, spec);
+    /// <summary>
+    ///     Эффект при успехе (этап 8): видит этот вид целей дальше — до +50% радиуса на 100,
+    ///     плюс ширина. Раньше здесь была прибавка к шансу, которую никто не вызывал, — ветка
+    ///     не давала ничего.
+    /// </summary>
+    public static double RangeScale(Mobile m, TrackingSpecialization spec) =>
+        1.0 + GetValue(m, spec) / 100.0 * 0.5 + GetBreadthBonus(m, spec) / 100.0;
 
     public static string RuSpecializationName(TrackingSpecialization spec) => spec switch
     {

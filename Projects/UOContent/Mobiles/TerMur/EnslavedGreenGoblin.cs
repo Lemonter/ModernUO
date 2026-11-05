@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/EnslavedGreenGoblin.cs). Same
 /// LootPack.LootItem&lt;T&gt; fix as EnslavedGrayGoblin.cs.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an goblin corpse")]
 public partial class EnslavedGreenGoblin : BaseCreature
 {
     [Constructible]
@@ -42,6 +41,7 @@ public partial class EnslavedGreenGoblin : BaseCreature
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп гоблина";
     public override string DefaultName => "порабощённый зелёный гоблин";
 
     public override int GetAngerSound() => 0x600;

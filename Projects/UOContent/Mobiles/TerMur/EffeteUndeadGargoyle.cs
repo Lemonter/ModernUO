@@ -1,10 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/EffeteUndeadGargoyle.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an effete undead gargoyle corpse")]
 public partial class EffeteUndeadGargoyle : BaseCreature
 {
     [Constructible]
@@ -37,6 +36,7 @@ public partial class EffeteUndeadGargoyle : BaseCreature
         Karma = -3500;
     }
 
+    public override string CorpseName => "труп дряхлой гаргульи-нежити";
     public override string DefaultName => "дряхлая гаргулья-нежить";
 
     public override int TreasureMapLevel => 1;

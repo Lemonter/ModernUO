@@ -118,7 +118,7 @@ public static class MahaonDemolition
             {
                 if (IsDestructible(tile.ID))
                 {
-                    destroyed += MahaonMapEdits.RemoveStatics(map, x, y, tile.ID, reason);
+                    destroyed += MahaonMapEdits.RemoveStatics(map, x, y, tile.ID);
                 }
             }
 
@@ -129,7 +129,7 @@ public static class MahaonDemolition
         {
             if (IsDestructible(s.Graphic))
             {
-                destroyed += MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic, reason);
+                destroyed += MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic);
             }
         }
 

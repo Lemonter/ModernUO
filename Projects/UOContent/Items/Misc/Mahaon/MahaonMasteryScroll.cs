@@ -115,6 +115,11 @@ public partial class MahaonMasteryScroll : Item
 
                 foreach (var entry in sub.Entries)
                 {
+                    if (!entry.HasCap)
+                    {
+                        continue; // классический стиль — это сам навык, потолка у него нет
+                    }
+
                     var cap = MahaonMasteryCapSystem.GetCap(from, entry.Name);
                     if (entry.Value > 0 && cap < value)
                     {

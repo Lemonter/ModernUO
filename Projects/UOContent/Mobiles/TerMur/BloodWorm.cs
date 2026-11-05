@@ -11,11 +11,12 @@ public interface IBloodCreature
 {
 }
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/BloodWorm.cs). SetSpecialAbility
-/// dropped (see Rotworm.cs). The corpse-blood-drain OnAfterMove mechanic is kept verbatim
-/// (Corpse confirmed to exist locally at Items/Misc/Corpses/Corpse.cs).</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/BloodWorm.cs). ServUO's
+/// <c>SetSpecialAbility(SpecialAbility.Anemia)</c> stays dropped: the monster-ability framework
+/// (<see cref="GetMonsterAbilities" />) has no bleed/anaemia counterpart. The corpse-blood-drain
+/// OnAfterMove mechanic is kept verbatim (Corpse confirmed to exist locally at
+/// Items/Misc/Corpses/Corpse.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a bloodworm corpse")]
 public partial class BloodWorm : BaseCreature, IBloodCreature
 {
     [Constructible]
@@ -45,6 +46,7 @@ public partial class BloodWorm : BaseCreature, IBloodCreature
         SetSkill(SkillName.Wrestling, 100.0);
     }
 
+    public override string CorpseName => "труп кровавого червя";
     public override string DefaultName => "кровавый червь";
 
     public override void GenerateLoot()

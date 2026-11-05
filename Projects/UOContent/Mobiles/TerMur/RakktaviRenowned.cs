@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Misc;
@@ -12,7 +12,6 @@ namespace Server.Mobiles;
 /// to an always-on OnDeath drop (see ClanChitterAssistant.cs). InhumanSpeech.Ratman confirmed to exist
 /// (used by several existing Ratman-family mobiles).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Rakktavi [Renowned] corpse")]
 public partial class RakktaviRenowned : BaseRenowned
 {
     [Constructible]
@@ -52,6 +51,7 @@ public partial class RakktaviRenowned : BaseRenowned
         AddItem(new Bow());
     }
 
+    public override string CorpseName => "труп знаменитого Рактави";
     public override string DefaultName => "Рактави";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

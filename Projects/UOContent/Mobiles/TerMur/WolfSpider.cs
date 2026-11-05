@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// converted to a chance-based OnDeath drop instead; same fix applied to every other TerMur
 /// creature that used this call.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a wolf spider spider corpse")]
 public partial class WolfSpider : BaseCreature
 {
     [Constructible]
@@ -49,6 +48,7 @@ public partial class WolfSpider : BaseCreature
         MinTameSkill = 59.1;
     }
 
+    public override string CorpseName => "труп волка-паука";
     public override string DefaultName => "волк-паук";
 
     public override FoodType FavoriteFood => FoodType.Meat;

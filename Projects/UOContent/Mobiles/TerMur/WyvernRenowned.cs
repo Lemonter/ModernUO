@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// local BaseRenowned base. SharedSAList: AnimatedLegsoftheInsaneTinker/PillarOfStrength
 /// don't exist — kept only StormCaller (see DevourerRenowned.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Wyvern [Renowned] corpse")]
 public partial class WyvernRenowned : BaseRenowned
 {
     [Constructible]
@@ -49,6 +48,7 @@ public partial class WyvernRenowned : BaseRenowned
         Karma = -24000;
     }
 
+    public override string CorpseName => "труп знаменитой виверны";
     public override string DefaultName => "виверна";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

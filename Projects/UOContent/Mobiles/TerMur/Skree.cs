@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// exist here (verified — this codebase's AIType enum has no Mysticism-specific AI at all) —
 /// substituted AIType.AI_Mage, the closest local caster AI.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a skree corpse")]
 public partial class Skree : BaseCreature
 {
     public override bool CanAngerOnTame => true;
@@ -46,6 +45,7 @@ public partial class Skree : BaseCreature
         MinTameSkill = 95.1;
     }
 
+    public override string CorpseName => "труп скри";
     public override string DefaultName => "скри";
 
     public override int Meat => 3;

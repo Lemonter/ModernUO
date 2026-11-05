@@ -301,6 +301,23 @@ namespace Server.Engines.Harvest
                 return base.GetResourceType(from, tool, def, map, loc, resource);
             }
 
+            // Карта добычи из Коветуса: пока в рюкзаке есть подходящая карта с остатком использований,
+            // жила даёт ресурс карты, а не обычный.
+            var harvestMap = HarvestMap.CheckMapOnHarvest(from, loc, def);
+
+            if (harvestMap != null && harvestMap.IsMinerMap)
+            {
+                var info = CraftResources.GetInfo(harvestMap.Resource);
+
+                if (info != null)
+                {
+                    harvestMap.UsesRemaining--;
+                    harvestMap.InvalidateProperties();
+
+                    return info.ResourceTypes[1];
+                }
+            }
+
             if (from.Skills.Mining.Base >= 100.0 && from is PlayerMobile pm && pm.StoneMining && pm.ToggleMiningStone
                 && Utility.RandomDouble() < 0.1)
             {

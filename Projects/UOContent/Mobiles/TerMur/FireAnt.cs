@@ -1,14 +1,14 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/FireAnt.cs). SetAreaEffect dropped (no
-/// such API here — see GrayGoblin.cs/Rotworm.cs class doc comments for the broader special-move
-/// framework gap). The rare SearedFireAntGoo drop dropped too — that item doesn't exist
-/// upstream in ServUO's own master tree either (confirmed via a full tree search), so there's
-/// no source to port from.</summary>
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/FireAnt.cs). ServUO's
+/// <c>SetAreaEffect(AreaEffect.ExplosiveGoo)</c> stays dropped: it is a periodic fire burst on a
+/// combat target with no counterpart in the monster-ability framework
+/// (<see cref="GetMonsterAbilities" />) or the built-in aura. The rare SearedFireAntGoo drop
+/// dropped too — that item doesn't exist upstream in ServUO's own master tree either (confirmed
+/// via a full tree search), so there's no source to port from.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a fire ant corpse")]
 public partial class FireAnt : BaseCreature
 {
     [Constructible]
@@ -39,6 +39,7 @@ public partial class FireAnt : BaseCreature
         SetSkill(SkillName.Wrestling, 75.4);
     }
 
+    public override string CorpseName => "труп огненного муравья";
     public override string DefaultName => "огненный муравей";
 
     public override void GenerateLoot()

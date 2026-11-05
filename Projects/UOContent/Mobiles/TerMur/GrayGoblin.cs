@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// exist in this codebase). LootPack.LootItem&lt;T&gt; doesn't exist here — converted to a
 /// chance-based OnDeath drop (see WolfSpider.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a goblin corpse")]
 public partial class GrayGoblin : BaseCreature
 {
     [Constructible]
@@ -45,6 +44,7 @@ public partial class GrayGoblin : BaseCreature
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп гоблина";
     public override string DefaultName => "серый гоблин";
 
     public override int GetAngerSound() => 0x600;

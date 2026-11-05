@@ -63,7 +63,7 @@ public static class MahaonMapBaker
 
         var blocks = new Dictionary<int, MahaonMapEdits.BlockState>();
 
-        foreach (var ((mapId, blockId), state) in MahaonMapEdits.Derived)
+        foreach (var ((mapId, blockId), state) in MahaonMapEdits.Current)
         {
             if (mapId == map.MapID)
             {

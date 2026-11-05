@@ -1,13 +1,13 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ClockworkScorpion.cs).
 /// IRepairableMobile doesn't exist here (verified) — dropped along with RepairResource. The
-/// legacy version-0-migration SetMagicalAbility block dropped too (fresh port, no prior
-/// version to migrate from, and SetMagicalAbility doesn't exist regardless).</summary>
+/// legacy version-0-migration <c>SetMagicalAbility(Poisoning)</c> block stays dropped too: a
+/// fresh port has no prior version to migrate from, and that pet-training school flag has no
+/// counterpart in the monster-ability framework (<see cref="GetMonsterAbilities" />).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clockwork scorpion corpse")]
 public partial class ClockworkScorpion : BaseCreature
 {
     [Constructible]
@@ -43,6 +43,7 @@ public partial class ClockworkScorpion : BaseCreature
         ControlSlots = 1;
     }
 
+    public override string CorpseName => "труп механического скорпиона";
     public override string DefaultName => "механический скорпион";
 
     public override bool IsScaredOfScaryThings => false;

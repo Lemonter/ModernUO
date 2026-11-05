@@ -1,4 +1,5 @@
 using ModernUO.Serialization;
+using Server.Engines.CleanUpBritannia;
 
 namespace Server.Items;
 
@@ -18,6 +19,7 @@ public partial class TrashChest : Container
         if (base.OnDragDrop(from, dropped))
         {
             PublicOverheadMessage(MessageType.Regular, 0x3B2, Utility.Random(1042891, 8));
+            AwardCleanup(from, dropped);
             dropped.Delete();
             return true;
         }
@@ -30,10 +32,21 @@ public partial class TrashChest : Container
         if (base.OnDragDropInto(from, item, p))
         {
             PublicOverheadMessage(MessageType.Regular, 0x3B2, Utility.Random(1042891, 8));
+            AwardCleanup(from, item);
             item.Delete();
             return true;
         }
 
         return false;
+    }
+
+    private static void AwardCleanup(Mobile from, Item item)
+    {
+        var points = TrashTurnIn.Collect(item);
+
+        if (points > 0)
+        {
+            TrashTurnIn.Award(from, points, 1);
+        }
     }
 }

@@ -4,11 +4,12 @@ namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/MaddeningHorror.cs).
 /// AIType.AI_NecroMage has since been ported (Mobiles/AI/NecroMageAI.cs) and is restored
-/// here. SetSpecialAbility dropped (see Rotworm.cs).
+/// here. ServUO's <c>SetSpecialAbility(SpecialAbility.ManaDrain)</c> stays dropped: the
+/// monster-ability framework (<see cref="GetMonsterAbilities" />) has no mana-drain
+/// counterpart (DrainLifeAttack drains hit points, not mana).
 /// The VileTentacles rare drop dropped too — that item doesn't exist anywhere in this
 /// codebase.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a maddening horror corpse")]
 public partial class MaddeningHorror : BaseCreature
 {
     [Constructible]
@@ -49,6 +50,7 @@ public partial class MaddeningHorror : BaseCreature
         Karma = -23000;
     }
 
+    public override string CorpseName => "труп сводящего с ума ужаса";
     public override string DefaultName => "сводящий с ума ужас";
 
     public override int GetIdleSound() => 1553;

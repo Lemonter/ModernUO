@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
 using Server.Items;
@@ -19,8 +19,9 @@ namespace Server.Engines.Despise;
 ///     GetWeaponAbility() override.
 ///
 ///     Phantom's original had a MagicalAbility.Discordance auto-cast hook via
-///     SetMagicalAbility/GetBardTarget — neither exists anywhere in this codebase (grepped,
-///     zero hits), so it's dropped; Phantom fights as a plain melee creature like the rest.
+///     SetMagicalAbility/GetBardTarget — that pet-training school and its bard-target helper have no
+///     counterpart in this codebase's monster-ability framework, so it stays dropped; Phantom fights as
+///     a plain melee creature like the rest.
 /// </summary>
 [SerializationGenerator(0, false)]
 public partial class Phantom : DespiseCreature

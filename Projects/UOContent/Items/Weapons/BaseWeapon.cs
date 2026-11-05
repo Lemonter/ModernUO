@@ -1231,10 +1231,32 @@ public abstract partial class BaseWeapon
             return false;
         }
 
+        var atkSkill = attacker.Skills[(attacker.Weapon as BaseWeapon)?.Skill ?? SkillName.Wrestling];
+        var chance = ComputeHitChance(attacker, defender);
+
+        // White Tiger Form: flat chance to evade the attack outright, on top of (not
+        // instead of) the normal DCI-weighted roll above.
+        if (Spells.SkillMasteries.WhiteTigerFormSpell.CheckEvasion(defender))
+        {
+            return false;
+        }
+
+        return attacker.CheckSkill(atkSkill.SkillName, chance);
+    }
+
+    /// <summary>
+    ///     Шанс попасть, без броска и без прироста навыка — всё, что CheckHit считал до
+    ///     броска, вынесено сюда как есть.
+    ///
+    ///     Отдельно потому, что тот же шанс нужен чеку в боевом окне, а там удара нет: звать
+    ///     CheckHit значило бы бросать кость и качать навык ради подсказки. Броски — уклонение
+    ///     вора и Белого тигра — и сама проверка навыка остались в CheckHit.
+    /// </summary>
+    public double ComputeHitChance(Mobile attacker, Mobile defender)
+    {
         var atkWeapon = attacker.Weapon as BaseWeapon;
         var defWeapon = defender.Weapon as BaseWeapon;
 
-        var atkSkill = attacker.Skills[atkWeapon?.Skill ?? SkillName.Wrestling];
 
         var atkValue = atkWeapon?.GetAttackSkillValue(attacker, defender) ?? 0.0;
         var defValue = defWeapon?.GetDefendSkillValue(attacker, defender) ?? 0.0;
@@ -1359,19 +1381,16 @@ public abstract partial class BaseWeapon
 
         chance = ModifyHitChance(attacker, defender, chance);
 
+        // Прибавка к попаданию от наших систем — тем же реестром вкладчиков, что и урон. Пока
+        // вкладчиков нет, прибавка нулевая, и шанс не меняется ни на сотую.
+        chance += Systems.MahaonCombat.StrikeProfiles.HitChanceBonus(attacker, defender, this) / 100.0;
+
         if (Core.AOS && chance < 0.02)
         {
             chance = 0.02;
         }
 
-        // White Tiger Form: flat chance to evade the attack outright, on top of (not
-        // instead of) the normal DCI-weighted roll above.
-        if (Spells.SkillMasteries.WhiteTigerFormSpell.CheckEvasion(defender))
-        {
-            return false;
-        }
-
-        return attacker.CheckSkill(atkSkill.SkillName, chance);
+        return chance;
     }
 
     /// <summary>
@@ -1520,19 +1539,19 @@ public abstract partial class BaseWeapon
         }
 
         delayInSeconds /= Systems.MahaonCombat.CombatStanceSystem.GetSwingSpeedScalar(m);
+        delayInSeconds /= Math.Max(0.5, Systems.MahaonCombat.WeaponStylePerks.SpeedScalar(m, this));
 
-        // Mahaon: Archery > 90 lets a bow/crossbow fire past its own MaxRange (see
-        // Mobile.CheckCombatTime) — but 40% slower while actually doing so. Reverts to
-        // normal speed the moment the target is back within the weapon's real MaxRange, no
-        // separate toggle needed.
-        if (IsRangedWeapon && m.Combatant != null &&
-            m.Skills[SkillName.Archery].Value > 90.0 && !m.InRange(m.Combatant, MaxRange))
-        {
-            delayInSeconds /= 0.6;
-        }
+        // Mahaon: стойка лучника — навесной за пределом обычной дальности медленнее на 40%,
+        // прицельный на 25%, беглый быстрее на 25% (ArcheryStanceSystem). Прежнее правило
+        // «лук выше 90 — за пределом дальности медленнее» стало стойкой «Навесной».
+        delayInSeconds *= Systems.MahaonCombat.ArcheryStanceSystem.DelayFactor(m, this);
 
         return TimeSpan.FromSeconds(delayInSeconds);
     }
+
+    /// <summary>На какой дистанции бить — с учётом стойки лучника. Спрашивает ядро (IWeapon).</summary>
+    public virtual int GetCombatRange(Mobile attacker) =>
+        Systems.MahaonCombat.ArcheryStanceSystem.CombatRange(attacker, this);
 
     public static bool CheckParry(Mobile defender)
     {
@@ -1542,6 +1561,9 @@ public abstract partial class BaseWeapon
         }
 
         var shield = defender.FindItemOnLayer<BaseShield>(Layer.TwoHanded);
+
+        // Стиль защищающегося: Дуэльный парирует чаще, Берсерк — реже (WeaponStylePerks).
+        var styleParry = Systems.MahaonCombat.WeaponStylePerks.ParryModifier(defender) / 100.0;
 
         var parry = defender.Skills.Parry.Value;
         var bushidoNonRacial = defender.Skills.Bushido.NonRacialValue;
@@ -1572,7 +1594,7 @@ public abstract partial class BaseWeapon
             }
 
             return defender.CheckSkill(
-                SkillName.Parry, chance * Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender)
+                SkillName.Parry, Math.Max(0, chance * Systems.MahaonProfessions.ProfessionBonuses.ParryScalar(defender) + styleParry)
             );
         }
 
@@ -1617,11 +1639,11 @@ public abstract partial class BaseWeapon
 
         if (chance > aosChance)
         {
-            return defender.CheckSkill(SkillName.Parry, chance * perk);
+            return defender.CheckSkill(SkillName.Parry, Math.Max(0, chance * perk + styleParry));
         }
 
         // Only skillcheck if wielding a shield & there's no effect from Bushido
-        return aosChance * perk > Utility.RandomDouble();
+        return aosChance * perk + styleParry > Utility.RandomDouble();
     }
 
     public virtual int AbsorbDamageAOS(Mobile attacker, Mobile defender, int damage)
@@ -1829,57 +1851,76 @@ public abstract partial class BaseWeapon
          * The following damage bonuses multiply damage by a factor.
          * Capped at x3 (300%).
          */
-        var percentageBonus = 0;
+        // Вклады в урон собираются в профиль удара (Systems.MahaonCombat.StrikeProfile). Сумма
+        // та же, что раньше копилась здесь двадцатью восемью строками «percentageBonus += …»,
+        // только у каждого слагаемого теперь есть подпись — из них складывается чек в боевом
+        // окне и [StrikeInfo. Порядок и побочные эффекты (расход места удара, тренировка
+        // приёма) сохранены строка в строку.
+        var strike = Systems.MahaonCombat.StrikeProfiles.Gather(attacker, defender, this);
+        const Systems.MahaonCombat.StrikeField Dmg = Systems.MahaonCombat.StrikeField.Damage;
 
         var a = WeaponAbility.GetCurrentAbility(attacker);
         var move = SpecialMove.GetCurrentMove(attacker);
 
         if (a != null)
         {
-            percentageBonus += (int)(a.DamageScalar * 100) - 100;
+            strike.Add("Способность оружия", Dmg, (int)(a.DamageScalar * 100) - 100);
         }
 
         if (move != null)
         {
-            percentageBonus += (int)(move.GetDamageScalar(attacker, defender) * 100) - 100;
-            percentageBonus += Systems.MahaonCombat.MartialTechniqueSystem.OnTechniqueLanded(attacker, move);
+            strike.Add("Приём", Dmg, (int)(move.GetDamageScalar(attacker, defender) * 100) - 100);
+            strike.Add("Мастерство приёма", Dmg, Systems.MahaonCombat.MartialTechniqueSystem.OnTechniqueLanded(attacker, move));
         }
 
-        percentageBonus += (int)(ForceOfNature.GetDamageScalar(attacker, defender) * 100) - 100;
+        strike.Add("Сила природы", Dmg, (int)(ForceOfNature.GetDamageScalar(attacker, defender) * 100) - 100);
 
-        percentageBonus += (int)(damageBonus * 100) - 100;
+        strike.Add("Множитель удара", Dmg, (int)(damageBonus * 100) - 100);
 
-        percentageBonus += (int)(Systems.MahaonCombat.CombatStanceSystem.GetDamageDealtScalar(attacker) * 100) - 100;
+        strike.Add("Стойка", Dmg, (int)(Systems.MahaonCombat.CombatStanceSystem.GetDamageDealtScalar(attacker) * 100) - 100);
 
-        percentageBonus += Systems.MahaonCombat.HitLocationSystem.ConsumeHitBonus(attacker, defender);
+        var aimBonus = Systems.MahaonCombat.HitLocationSystem.ConsumeHitBonus(attacker, defender);
 
-        percentageBonus += Systems.MahaonCombat.WeaponEnchantment.GetDamageBonus(this);
+        // Спина — два разных довода в одном числе: сам заход со спины и то, как броня там
+        // держит твоё оружие. В чеке их видно порознь, иначе «+8%» вместо обещанных +25
+        // выглядит ошибкой.
+        if (Systems.MahaonCombat.HitLocationSystem.GetLastConsumedLocation(attacker) == Systems.MahaonCombat.HitLocation.Back)
+        {
+            strike.Add("Удар в спину", Dmg, Systems.MahaonCombat.HitLocationSystem.BackStabBonus);
+            strike.Add("Брешь в броне", Dmg, aimBonus - Systems.MahaonCombat.HitLocationSystem.BackStabBonus);
+        }
+        else
+        {
+            strike.Add("Место удара", Dmg, aimBonus);
+        }
+        Systems.MahaonCombat.MahaonWeakPoints.AddToStrike(strike, attacker, defender);
 
-        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetDamageBonus(this, attacker, defender);
-        percentageBonus += Systems.MahaonMetals.MahaonMetalCombatEffects.GetArmorDefenseBonus(defender, attacker);
+        strike.Add("Зачарование оружия", Dmg, Systems.MahaonCombat.WeaponEnchantment.GetDamageBonus(this));
 
-        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDamageBonus(attacker, this);
-        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetAmbushBonus(attacker, defender, this);
-        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetDistanceBonus(attacker, defender, this);
-        percentageBonus += Systems.MahaonCombat.WeaponStyleSystem.GetLocationSynergyBonus(attacker, defender, this);
+        strike.Add("Металл оружия", Dmg, Systems.MahaonMetals.MahaonMetalCombatEffects.GetDamageBonus(this, attacker, defender));
+        strike.Add("Металл брони цели", Dmg, Systems.MahaonMetals.MahaonMetalCombatEffects.GetArmorDefenseBonus(defender, attacker));
+
+        // Плюшка, цена и особые прибавки стиля (засада, дистанция…) — в профиле удара от
+        // WeaponStylePerks; здесь только ширина.
+        strike.Add("Стиль: ширина", Dmg, Systems.MahaonCombat.WeaponStyleSystem.GetDamageBonus(attacker, this));
 
         if (Systems.MahaonCombat.BoneFractureSystem.HasFracture(attacker, Systems.MahaonCombat.FractureLocation.Arms))
         {
-            percentageBonus -= 30;
+            strike.Add("Перелом рук", Dmg, -30);
         }
 
         // Mahaon: теперь через ProfessionBonuses — с учётом первичной/вторичной категории
         // и без прежних +100 (см. комментарий к ProfessionBonuses).
-        percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.MeleeDamageBonus(attacker);
+        strike.Add("Профессия", Dmg, Systems.MahaonProfessions.ProfessionBonuses.MeleeDamageBonus(attacker));
 
         if (this is BaseRanged)
         {
-            percentageBonus += Systems.MahaonProfessions.ProfessionBonuses.RangedDamageBonus(attacker);
+            strike.Add("Профессия: стрельба", Dmg, Systems.MahaonProfessions.ProfessionBonuses.RangedDamageBonus(attacker));
         }
 
         // Звание охотника («убийца орков» и прочие) — прибавка за собственные заслуги, не за
         // оружие. Скромная рядом со слееровым +100 ниже: 5% за ступень, максимум 15%.
-        percentageBonus += Systems.MahaonSlayer.MahaonSlayerTitles.DamageBonus(attacker, defender);
+        strike.Add("Звание охотника", Dmg, Systems.MahaonSlayer.MahaonSlayerTitles.DamageBonus(attacker, defender));
 
         var cs = CheckSlayers(attacker, defender);
 
@@ -1890,14 +1931,14 @@ public abstract partial class BaseWeapon
                 defender.FixedEffect(0x37B9, 10, 5);
             }
 
-            percentageBonus += 100;
+            strike.Add("Слеер", Dmg, 100);
         }
 
         if (!attacker.Player)
         {
             if (defender is PlayerMobile pm && pm.EnemyOfOneType != null && pm.EnemyOfOneType != attacker.GetType())
             {
-                percentageBonus += 100;
+                strike.Add("Враг одного рода", Dmg, 100);
             }
         }
         else if (!defender.Player && attacker is PlayerMobile pm)
@@ -1912,7 +1953,7 @@ public abstract partial class BaseWeapon
             {
                 defender.FixedEffect(0x37B9, 10, 5, 1160, 0);
 
-                percentageBonus += 50;
+                strike.Add("Враг одного рода", Dmg, 50);
             }
         }
 
@@ -1920,12 +1961,12 @@ public abstract partial class BaseWeapon
 
         if (packInstinctBonus != 0)
         {
-            percentageBonus += packInstinctBonus;
+            strike.Add("Инстинкт стаи", Dmg, packInstinctBonus);
         }
 
         if (InDoubleStrike)
         {
-            percentageBonus -= 10;
+            strike.Add("Двойной удар", Dmg, -10);
         }
 
         var context = TransformationSpellHelper.GetContext(defender);
@@ -1933,30 +1974,50 @@ public abstract partial class BaseWeapon
         if ((_slayer == SlayerName.Silver || _slayer2 == SlayerName.Silver) && context?.Spell is NecromancerSpell &&
             context.Type != typeof(HorrificBeastSpell))
         {
-            percentageBonus += 25;
+            strike.Add("Серебро против нежити", Dmg, 25);
         }
 
         if (attacker is PlayerMobile pmAttacker && !(Core.ML && defender is PlayerMobile))
         {
             if (VirtueSystem.GetVirtues(pmAttacker)?.HonorActive == true && pmAttacker.InRange(defender, 1))
             {
-                percentageBonus += 25;
+                strike.Add("Честь", Dmg, 25);
             }
 
             if (pmAttacker.SentHonorContext != null && pmAttacker.SentHonorContext.Target == defender)
             {
-                percentageBonus += pmAttacker.SentHonorContext.PerfectionDamageBonus;
+                strike.Add("Совершенство", Dmg, pmAttacker.SentHonorContext.PerfectionDamageBonus);
             }
         }
 
         if (attacker.Talisman is BaseTalisman talisman && talisman.Killer != null)
         {
-            percentageBonus += talisman.Killer.DamageBonus(defender);
+            strike.Add("Талисман-убийца", Dmg, talisman.Killer.DamageBonus(defender));
         }
 
-        percentageBonus = Math.Min(percentageBonus, 300);
+        var percentageBonus = Math.Min((int)strike.Sum(Dmg), 300);
 
         damage = AOS.Scale(damage, 100 + percentageBonus);
+
+        // Крит. Пока у него нет ни одного вкладчика, и тогда бросок не делается вовсе: появление
+        // рычага не должно сдвинуть ни одного случайного числа в бою, где им никто не пользуется.
+        var critChance = strike.CritChance;
+
+        if (critChance > 0 && Utility.RandomDouble() * 100.0 < critChance)
+        {
+            damage = AOS.Scale(damage, (int)(Systems.MahaonCombat.StrikeProfile.CritMultiplier * 100));
+            strike.Critical = true;
+
+            // Без отклика крит невидим: урон просто вышел побольше. Надпись видит только тот,
+            // кто бил, — над целью, а не в журнал, чтобы не засорять его в долгом бою.
+            if (attacker.NetState != null)
+            {
+                defender.PrivateOverheadMessage(MessageType.Regular, 0x22, false, "крит!", attacker.NetState);
+            }
+        }
+
+        Systems.MahaonCombat.StrikeProfiles.Remember(attacker, strike);
+
         damage = ModifyDamage(attacker, defender, damage);
 
         var defLoc = new WorldLocation(defender);
@@ -2117,11 +2178,14 @@ public abstract partial class BaseWeapon
             var armorPiece = Systems.MahaonCombat.HitLocationSystem.GetArmorAt(defender, location);
 
             Systems.MahaonCombat.CombatLogSystem.LogMeleeHit(
-                attacker, defender, damageGiven, LocationRuForLog(location), armorPiece?.Name ?? armorPiece?.GetType().Name
+                attacker, defender, damageGiven, LocationRuForLog(location), Systems.MahaonCombat.RussianClilocNames.NameOf(armorPiece)
             );
-            Systems.MahaonCombat.WeaponStyleSystem.OnAfterHit(attacker, defender, this);
+            Systems.MahaonCombat.HitLocationSystem.OnLandedHit(attacker, defender);
+            Systems.MahaonCombat.WeaponStyleSystem.OnAfterHit(attacker, defender, this, damageGiven);
             Systems.MahaonMetals.MahaonMetalCombatEffects.OnAfterHit(this, attacker, defender);
             Systems.MahaonCombat.WeaponStyleSystem.OnSuccessfulHit(attacker, this, damageGiven);
+            Systems.MahaonCombat.WeaponMasterySystem.OnHit(attacker, defender, this);
+            Systems.MahaonCombat.MahaonWeakPoints.TryDiscover(attacker, defender);
             Systems.MahaonCombat.WeaponPoisonSystem.OnWeaponHit(attacker, defender, this, a);
 
             // Чем больше урона нанесено, тем больше бонус к приросту навыка — оружейный
@@ -2446,7 +2510,8 @@ public abstract partial class BaseWeapon
         Systems.MahaonCombat.HitLocation.Hands => "кисть",
         Systems.MahaonCombat.HitLocation.Back  => "спину",
         Systems.MahaonCombat.HitLocation.Neck  => "шею",
-        _                                       => null
+        Systems.MahaonCombat.HitLocation.Head  => "голову",
+        _                                      => null
     };
 
     public virtual void AddBlood(Mobile attacker, Mobile defender, int damage)

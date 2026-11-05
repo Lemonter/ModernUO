@@ -20,7 +20,7 @@ public enum SpellweavingSchool : byte
 /// instead.</summary>
 public static class SpellweavingSchoolSystem
 {
-    private static readonly Dictionary<(Mobile, SpellweavingSchool), double> SchoolValue = new();
+    private static readonly ProgressTable<SpellweavingSchool> SchoolValue = new("branch:spellweaving");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -49,6 +49,7 @@ public static class SpellweavingSchoolSystem
             SchoolValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(m);
             MahaonSkillTree.AnnounceGain(m, RuSchoolName(school), newValue - current, newValue);
+            SchoolPerks.AnnounceUnlock(m, $"spellweaving/{school}", current, newValue);
         }
     }
 
@@ -118,6 +119,26 @@ public static class SpellweavingSchoolSystem
         var breadth = GetBreadthBonus(caster, SpellweavingSchool.Damage);
 
         return 1.0 + (value / 100.0 * 18.0 + breadth) / 100.0;
+    }
+
+    /// <summary>Школа заклинания и её уровень у мага — для мастерства заклинаний, цены стихии
+    /// и доски (см. SpellSchools). Без мага уровень ноль.</summary>
+    public static bool TryDescribe(Mobile m, ISpell spell, out SpellSchoolInfo info)
+    {
+        var school = SchoolOf(spell);
+
+        if (school == null)
+        {
+            info = default;
+            return false;
+        }
+
+        info = new SpellSchoolInfo(
+            $"spellweaving/{school.Value}",
+            RuSchoolName(school.Value),
+            m == null ? 0.0 : GetValue(m, school.Value)
+        );
+        return true;
     }
 
     public static string RuSchoolName(SpellweavingSchool school) => school switch

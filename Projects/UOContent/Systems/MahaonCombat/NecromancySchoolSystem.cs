@@ -22,7 +22,7 @@ public enum NecromancySchool : byte
 /// </summary>
 public static class NecromancySchoolSystem
 {
-    private static readonly Dictionary<(Mobile, NecromancySchool), double> SchoolValue = new();
+    private static readonly ProgressTable<NecromancySchool> SchoolValue = new("branch:necromancy");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -51,6 +51,7 @@ public static class NecromancySchoolSystem
             SchoolValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(m);
             MahaonSkillTree.AnnounceGain(m, RuSchoolName(school), newValue - current, newValue);
+            SchoolPerks.AnnounceUnlock(m, $"necromancy/{school}", current, newValue);
         }
     }
 
@@ -130,12 +131,71 @@ public static class NecromancySchoolSystem
         return 1.0 + (value / 100.0 * 18.0 + breadth) / 100.0;
     }
 
+    /// <summary>Школа заклинания и её уровень у мага — для мастерства заклинаний, цены стихии
+    /// и доски (см. SpellSchools). Без мага уровень ноль.</summary>
+    public static bool TryDescribe(Mobile m, ISpell spell, out SpellSchoolInfo info)
+    {
+        var school = SchoolOf(spell);
+
+        if (school == null)
+        {
+            info = default;
+            return false;
+        }
+
+        info = new SpellSchoolInfo(
+            $"necromancy/{school.Value}",
+            RuSchoolName(school.Value),
+            m == null ? 0.0 : GetValue(m, school.Value)
+        );
+        return true;
+    }
+
+    /// <summary>
+    ///     Прежние имена совпадали с Магией («Школа призыва») и Плетением чар («Школа
+    ///     перевоплощения»), а имя ветки — ключ её потолка: свиток, поднявший потолок одной,
+    ///     поднимал и другую. Имена разведены (05.11.2026); у кого потолок уже был поднят под
+    ///     общим именем, тому он копируется и под новое — свиток тогда честно действовал на обе.
+    /// </summary>
+    private static readonly (string Old, NecromancySchool School)[] RenamedSchools =
+    [
+        ("Школа призыва", NecromancySchool.Summoning),
+        ("Школа перевоплощения", NecromancySchool.Transformation)
+    ];
+
+    public static void Initialize()
+    {
+        var copied = 0;
+
+        foreach (var m in World.Mobiles.Values)
+        {
+            if (m is not Mobiles.PlayerMobile)
+            {
+                continue;
+            }
+
+            foreach (var (old, school) in RenamedSchools)
+            {
+                if (MahaonProgress.TryGet(m, "cap/" + old, out var cap) &&
+                    MahaonMasteryCapSystem.RaiseCap(m, RuSchoolName(school), cap))
+                {
+                    copied++;
+                }
+            }
+        }
+
+        if (copied > 0)
+        {
+            Console.WriteLine($"Некромантия: потолков скопировано под новые имена школ — {copied}.");
+        }
+    }
+
     public static string RuSchoolName(NecromancySchool school) => school switch
     {
         NecromancySchool.Damage         => "Школа боли",
         NecromancySchool.Curse          => "Школа проклятий",
-        NecromancySchool.Summoning      => "Школа призыва",
-        NecromancySchool.Transformation => "Школа перевоплощения",
+        NecromancySchool.Summoning      => "Школа призыва мёртвых",
+        NecromancySchool.Transformation => "Школа тёмного перевоплощения",
         NecromancySchool.Exorcism       => "Школа изгнания",
         _                                 => school.ToString()
     };

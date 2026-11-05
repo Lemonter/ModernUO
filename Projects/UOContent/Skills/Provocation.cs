@@ -151,12 +151,7 @@ namespace Server.SkillHandlers
                                 // from.DoHarmful( m_Creature );
                                 // from.DoHarmful( creature );
 
-                                if (!from.CheckTargetSkill(
-                                    SkillName.Provocation, creature,
-                                    diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
-                                        from, Systems.MahaonCombat.BardSpecialization.Provocation
-                                    ), diff + 25.0
-                                ))
+                                if (!from.CheckTargetSkill(SkillName.Provocation, creature, diff - 25.0, diff + 25.0))
                                 {
                                     from.NextSkillTime = Core.TickCount + 5000;
                                     from.SendLocalizedMessage(501599); // Your music fails to incite enough anger.
@@ -171,7 +166,14 @@ namespace Server.SkillHandlers
 
                                     from.SendLocalizedMessage(501602); // Your music succeeds, as you start a fight.
                                     m_Instrument.PlayInstrumentWell(from);
-                                    m_Instrument.ConsumeUse(from);
+
+                                    // Мастер провокации: удачная игра может не износить инструмент.
+                                    if (!Systems.MahaonCombat.BardSpecializationSystem.SparesInstrument(
+                                            from, Systems.MahaonCombat.BardSpecialization.Provocation
+                                        ))
+                                    {
+                                        m_Instrument.ConsumeUse(from);
+                                    }
                                     m_Creature.Provoke(from, creature, true);
                                 }
                             }

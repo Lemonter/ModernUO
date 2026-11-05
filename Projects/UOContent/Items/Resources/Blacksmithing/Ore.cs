@@ -181,7 +181,11 @@ public abstract partial class BaseOre : Item
                 var minSkill = difficulty - 25.0;
                 var maxSkill = difficulty + 25.0;
 
-                if (difficulty > 50.0 && difficulty > from.Skills.Mining.Value)
+                // A smelter's talisman of the matching metal guarantees the smelt.
+                var talisman = from.FindItemOnLayer(Layer.Talisman) as SmeltersTalisman;
+                var hasTalisman = talisman != null && talisman.Resource == m_Ore._resource;
+
+                if (difficulty > 50.0 && difficulty > from.Skills.Mining.Value && !hasTalisman)
                 {
                     from.SendLocalizedMessage(501986); // You have no idea how to smelt this strange ore!
                     return;
@@ -194,7 +198,7 @@ public abstract partial class BaseOre : Item
                     return;
                 }
 
-                if (from.CheckTargetSkill(SkillName.Mining, targeted, minSkill, maxSkill))
+                if (hasTalisman || from.CheckTargetSkill(SkillName.Mining, targeted, minSkill, maxSkill))
                 {
                     var toConsume = m_Ore.Amount;
 
@@ -235,6 +239,13 @@ public abstract partial class BaseOre : Item
 
                     m_Ore.Consume(toConsume);
                     from.AddToBackpack(ingot);
+
+                    if (hasTalisman)
+                    {
+                        talisman.UsesRemaining--;
+                        // The magic of your talisman guides your hands as you purify the metal. Success is ensured!
+                        from.SendLocalizedMessage(1152620);
+                    }
                     // from.PlaySound( 0x57 );
 
                     // You smelt the ore removing the impurities and put the metal in your backpack.

@@ -1359,11 +1359,9 @@ namespace Server.Mobiles
                 Systems.MahaonQuests.QuestMarkerRegistry.ResendVisible(from, nearby);
             }
 
-            // Always with the player from here on — see MahaonCombatMenuGump's own class
-            // comment for why this is "collapses, never actually closes" rather than a
-            // normal dismissable gump. Starts collapsed so it isn't in the way the moment
-            // someone logs in.
-            from.SendGump(new MahaonCombatMenuGump(from, true));
+            // Боевое меню больше не шлётся при входе: его заменило боевое окно Unity-клиента
+            // (0xF9/8, MahaonCombatWindow, кнопка «Бой» на верхней панели). Старый гамп
+            // остаётся доступен командой [CombatMenu.
             from.SendGump(new MahaonStatusGump(from, true));
 
             if (AccountHandler.LockdownLevel > AccessLevel.Player)
@@ -2392,6 +2390,9 @@ namespace Server.Mobiles
 
         protected override void OnLocationChange(Point3D oldLocation)
         {
+            // Правки карты шарда вокруг нового места — сразу, а не следующим обходом (рекол).
+            Systems.MahaonMapEdits.MahaonMapLive.OnMoved(this);
+
             CheckLightLevels(false);
 
             DuelContext?.OnLocationChanged(this);
@@ -2447,6 +2448,9 @@ namespace Server.Mobiles
 
         protected override void OnMapChange(Map oldMap)
         {
+            // Смена фасета: клиент забыл правки старой карты — правки новой вокруг игрока.
+            Systems.MahaonMapEdits.MahaonMapLive.OnMoved(this);
+
             if (Map != Faction.Facet && oldMap == Faction.Facet || Map == Faction.Facet && oldMap != Faction.Facet)
             {
                 InvalidateProperties();
@@ -2954,6 +2958,7 @@ namespace Server.Mobiles
             var damageBonus = 1.0;
 
             damageBonus *= Systems.MahaonCombat.CombatStanceSystem.GetDamageTakenScalar(this);
+            damageBonus *= Systems.MahaonCombat.WeaponStylePerks.DamageTakenScalar(this);
             damageBonus *= global::Server.Items.MageRingOfProtection.GetDamageTakenScalar(this);
 
             if (EvilOmenSpell.EndEffect(this) && !ignoreEvilOmen)

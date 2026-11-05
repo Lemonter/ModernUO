@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -10,7 +10,6 @@ namespace Server.Mobiles;
 /// uses AI_Archer like this codebase's own OrcScout; and its TribeType.GreenGoblin is dropped,
 /// since the Eodon tribe system isn't ported.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a goblin corpse")]
 public partial class GreenGoblinScout : BaseCreature
 {
     [Constructible]
@@ -49,6 +48,8 @@ public partial class GreenGoblinScout : BaseCreature
         Fame = 1500;
         Karma = -1500;
     }
+
+    public override string CorpseName => "труп гоблина";
 
     public override int GetAngerSound() => 0x600;
     public override int GetIdleSound() => 0x600;

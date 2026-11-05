@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -10,7 +10,6 @@ namespace Server.Mobiles;
 /// Underworld movement-restriction check is kept verbatim — Region.IsPartOf(string) confirmed
 /// to exist (Regions/Region.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an acid slug corpse")]
 public partial class AcidSlug : BaseCreature
 {
     [Constructible]
@@ -47,6 +46,7 @@ public partial class AcidSlug : BaseCreature
         SetSkill(SkillName.Wrestling, 30.0, 80.0);
     }
 
+    public override string CorpseName => "труп кислотного слизня";
     public override string DefaultName => "кислотный слизень";
 
     public override void GenerateLoot()

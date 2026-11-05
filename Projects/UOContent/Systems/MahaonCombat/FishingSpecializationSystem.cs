@@ -19,7 +19,7 @@ public enum FishingSpecialization : byte
 /// </summary>
 public static class FishingSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, FishingSpecialization), double> Value = new();
+    private static readonly ProgressTable<FishingSpecialization> Value = new("branch:fishing");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -64,6 +64,7 @@ public static class FishingSpecializationSystem
             Value[key] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuSpecializationName(spec), newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, CraftPerks.FishingLine(spec), current, newValue);
         }
 
         var value = GetValue(from, spec);
@@ -74,6 +75,8 @@ public static class FishingSpecializationSystem
         {
             fish.Amount += 1;
         }
+
+        CraftPerks.OnHarvested(from, CraftPerks.FishingLine(spec), value, fish); // ступени ветки (этап 8)
     }
 
     public static string RuSpecializationName(FishingSpecialization spec) => spec switch

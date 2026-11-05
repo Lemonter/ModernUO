@@ -23,7 +23,7 @@ public enum ThievingSpecialization : byte
 /// </summary>
 public static class ThievingSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, ThievingSpecialization), double> Value = new();
+    private static readonly ProgressTable<ThievingSpecialization> Value = new("branch:thieving");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -77,16 +77,14 @@ public static class ThievingSpecializationSystem
         return Math.Min(BreadthCap, total / BreadthUnitsPerPercent);
     }
 
-    /// <summary>Widens a CheckTargetSkill-style success window — used by Карманник
-    /// (Stealing from a live target) and Ищейка (Snooping). Returns how many points to
-    /// SUBTRACT from the low end of the check range (easier low roll = higher success
-    /// chance), scaled by trained value + breadth.</summary>
-    public static double GetSkillWindowBonus(Mobile m, ThievingSpecialization spec)
-    {
-        var value = GetValue(m, spec);
-        var breadth = GetBreadthBonus(m, spec);
-        return value / 100.0 * 15.0 + breadth; // up to 15 points easier at 100 trained, plus breadth
-    }
+    /// <summary>
+    ///     Карманник и Ищейка — эффект, а не шанс (этап 8, раздел 11.2). Раньше ветки сдвигали
+    ///     нижнюю границу проверки кражи и подглядывания — работа навыка. Теперь шанс у навыка,
+    ///     а ветка делает дело тише: шанс, что тебя не заметят, до половины на 100 плюс ширина.
+    ///     Карманник — после кражи с живой цели, Ищейка — когда подглядываешь в чужую сумку.
+    /// </summary>
+    public static bool StaysUnnoticed(Mobile m, ThievingSpecialization spec) =>
+        Utility.RandomDouble() * 100.0 < GetValue(m, spec) / 2.0 + GetBreadthBonus(m, spec);
 
     /// <summary>Взломщик — chance to skip a lock's trap entirely even if one would have
     /// fired, scaled by trained value + breadth.</summary>

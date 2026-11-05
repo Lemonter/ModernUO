@@ -1,11 +1,10 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/GargoyleShade.cs). LootPack.MageryRegs
 /// doesn't exist here (verified) — dropped, kept LootPack.Meager.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a ghostly corpse")]
 public partial class GargoyleShade : BaseCreature
 {
     [Constructible]
@@ -43,6 +42,7 @@ public partial class GargoyleShade : BaseCreature
         Karma = -4000;
     }
 
+    public override string CorpseName => "призрачный труп";
     public override string DefaultName => "тень гаргульи";
 
     public override bool BleedImmune => true;

@@ -22,7 +22,7 @@ public enum TailoringSpecialization : byte
 /// </summary>
 public static class TailoringSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, TailoringSpecialization), double> Value = new();
+    private static readonly ProgressTable<TailoringSpecialization> Value = new("branch:tailoring");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -55,6 +55,7 @@ public static class TailoringSpecializationSystem
         Value[key] = newValue;
         MahaonSkillTree.NotifyChanged(m);
         MahaonSkillTree.AnnounceGain(m, RuSpecializationName(spec), newValue - current, newValue);
+        CraftPerks.AnnounceUnlock(m, $"craft:tailoring/{spec}", current, newValue);
     }
 
     private static double GetBreadthBonus(Mobile m, TailoringSpecialization active)

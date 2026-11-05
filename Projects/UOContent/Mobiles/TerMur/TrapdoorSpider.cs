@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// OnDamagedBySpell takes an extra `int damage` param here vs. ServUO's 1-arg version
 /// (verified against Mobile.cs) — fixed.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a trapdoor spider corpse")]
 public partial class TrapdoorSpider : BaseCreature
 {
     [Constructible]
@@ -43,6 +42,7 @@ public partial class TrapdoorSpider : BaseCreature
         SetSkill(SkillName.Stealth, 110.5, 119.6);
     }
 
+    public override string CorpseName => "труп паука-каменщика";
     public override string DefaultName => "паук-каменщик";
 
     public override void OnDamage(int amount, Mobile from, bool willKill)

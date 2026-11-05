@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/LavaElemental.cs) — the Stygian Abyss
 /// fire elemental, not to be confused with the Lava Lizard or the older Fire Elemental.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a lava elemental corpse")]
 public partial class LavaElemental : BaseCreature
 {
     [Constructible]
@@ -45,6 +44,7 @@ public partial class LavaElemental : BaseCreature
         PackItem(new LesserPoisonPotion());
     }
 
+    public override string CorpseName => "труп лавового элементаля";
     public override string DefaultName => "лавовый элементаль";
 
     public override void GenerateLoot()

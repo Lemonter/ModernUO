@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Server.Commands;
 using Server.Items;
 using Server.Mobiles;
 using Server.Regions;
@@ -68,16 +69,18 @@ public static class PuddleSystem
     /// <summary>Сколько держится вода после того, как дождь кончился.</summary>
     public static readonly TimeSpan DryingDelay = TimeSpan.FromMinutes(1);
 
-    private const int SpawnRadius = 12;        // где ищем низину вокруг игрока
-    private const int MaxAttemptsPerPlayer = 6; // столько мест пробуем за такт
-    private const double SpawnChancePerTick = 0.5;
+    /// <summary>Окно вокруг игрока, которое просматриваем за такт.</summary>
+    private const int SpawnRadius = 10;
 
-    /// <summary>Сколько тайлов дна мы согласны считать одной лужей. Больше — это уже
-    /// равнина, а не котловина, и заливать её не надо.</summary>
-    private const int MaxBasin = 40;
+    /// <summary>Докуда смотрим, ища борт низины. Два-три тайла — это пологий склон
+    /// выкопанной ямы; дальше начинается уже рельеф, а не её край.</summary>
+    private const int Rim = 3;
+
+    /// <summary>Сколько тайлов заливаем за один такт на игрока.</summary>
+    private const int BudgetPerTick = 60;
 
     /// <summary>Предохранитель на весь мир.</summary>
-    private const int MaxPuddles = 600;
+    private const int MaxPuddles = 2000;
 
     private static readonly List<MahaonPuddle> ActivePuddles = new();
     private static readonly HashSet<(int Map, int X, int Y)> Taken = new();
@@ -94,7 +97,58 @@ public static class PuddleSystem
     {
         WeatherSystem.OnWeatherChanged += OnWeatherChanged;
 
+        CommandSystem.Register("Rainwater", AccessLevel.GameMaster, Rainwater_OnCommand);
+
         WarnAboutImpassableGraphics();
+    }
+
+    /// <summary>
+    ///     Погода у нас ПЕРЕЖИВАЕТ перезапуск: она лежит в сохранении. А такт луж
+    ///     заводился только по событию смены погоды — значит сервер, поднятый под уже
+    ///     идущим дождём, не заводил его никогда, и луж не появлялось вовсе, сколько ни
+    ///     лей. Ровно это и было видно в игре.
+    ///
+    ///     Configure для этого не годится: он выполняется ДО загрузки мира, и погода там
+    ///     ещё не прочитана.
+    /// </summary>
+    [CallPriority(90)]
+    public static void Initialize()
+    {
+        if (Raining(WeatherSystem.Current))
+        {
+            _spawnTimer ??= Timer.DelayCall(SpawnTick, SpawnTick, SpawnTick_OnTick);
+        }
+    }
+
+    /// <summary>
+    ///     Залить низины вокруг себя прямо сейчас, не дожидаясь дождя.
+    ///
+    ///     Проверять лужи иначе неудобно: погода у нас не идёт сама, её включает ГМ
+    ///     кнопкой, и «я не увидел луж» может означать и что дождя не было, и что низин не
+    ///     нашлось. Команда разделяет эти два случая — она отвечает числом.
+    /// </summary>
+    [Usage("Rainwater [радиус]")]
+    [Description("Заливает все низины вокруг тебя дождевой водой, не дожидаясь дождя.")]
+    private static void Rainwater_OnCommand(CommandEventArgs e)
+    {
+        var from = e.Mobile;
+        var radius = e.Length >= 1 ? Math.Clamp(e.GetInt32(0), 1, 40) : SpawnRadius;
+
+        ActivePuddles.RemoveAll(p => p.Deleted);
+
+        var placed = FillAround(from.Map, from.X, from.Y, radius, BudgetPerTick * 4);
+
+        from.SendMessage(
+            0x59,
+            placed > 0
+                ? $"Залито тайлов: {placed}. Всего луж в мире: {ActivePuddles.Count}."
+                : $"Низин в {radius} тайлах вокруг не нашлось — заливать нечего."
+        );
+
+        if (!Raining(WeatherSystem.Current))
+        {
+            from.SendMessage(0x3B2, "Дождя сейчас нет, так что эти лужи никто не обновит — высохнут сами.");
+        }
     }
 
     /// <summary>
@@ -185,128 +239,110 @@ public static class PuddleSystem
                 continue;
             }
 
-            if (Utility.RandomDouble() >= SpawnChancePerTick)
-            {
-                continue;
-            }
-
-            TrySpawnNear(pm);
-        }
-    }
-
-    private static void TrySpawnNear(Mobile player)
-    {
-        var map = player.Map;
-
-        for (var attempt = 0; attempt < MaxAttemptsPerPlayer; attempt++)
-        {
-            var x = player.X + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
-            var y = player.Y + Utility.RandomMinMax(-SpawnRadius, SpawnRadius);
-
-            if (!TryFindBasin(map, x, y, out var floor, out var level))
-            {
-                continue;
-            }
-
-            var placed = 0;
-
-            foreach (var (bx, by) in floor)
-            {
-                var puddle = new MahaonPuddle(RainwaterGraphics.RandomElement());
-                puddle.MoveToWorld(new Point3D(bx, by, level), map);
-
-                ActivePuddles.Add(puddle);
-                Taken.Add((map.MapID, bx, by));
-                placed++;
-            }
-
-            if (placed > 0)
-            {
-                return;
-            }
+            FillAround(pm.Map, pm.X, pm.Y, SpawnRadius, BudgetPerTick);
         }
     }
 
     /// <summary>
-    ///     Котловина ли тут, и если да — какое у неё дно.
+    ///     Заливает все низины в окне вокруг точки. Возвращает, сколько тайлов залито.
     ///
-    ///     Разливаемся по соседям РОВНО ТОЙ ЖЕ высоты: это плоское дно ямы. Наткнулись на
-    ///     соседа ниже — значит мы не на дне, настоящее дно где-то там, и эта попытка не
-    ///     наша. Дно разрослось больше MaxBasin — значит это не яма, а равнина.
+    ///     Просматриваем окно целиком, а не тычем наугад: случайные пробы почти всегда
+    ///     попадали в ровное место, и за дождь не находилось ни одной лужи — ровно это и
+    ///     было видно в игре.
     /// </summary>
-    private static bool TryFindBasin(Map map, int x, int y, out List<(int X, int Y)> floor, out int level)
+    public static int FillAround(Map map, int cx, int cy, int radius, int budget)
     {
-        floor = null;
-        level = 0;
-
-        if (map == null || map == Map.Internal || x < 0 || y < 0 || x >= map.Width || y >= map.Height)
+        if (map == null || map == Map.Internal)
         {
-            return false;
+            return 0;
         }
 
-        if (!IsOpenGround(map, x, y))
+        var placed = 0;
+
+        for (var x = cx - radius; x <= cx + radius && placed < budget; x++)
         {
-            return false;
-        }
-
-        level = MahaonExcavation.GroundZ(map, x, y);
-
-        var found = new List<(int X, int Y)>();
-        var seen = new HashSet<(int X, int Y)> { (x, y) };
-        var queue = new Queue<(int X, int Y)>();
-        var walled = false;
-
-        queue.Enqueue((x, y));
-
-        while (queue.Count > 0)
-        {
-            var (cx, cy) = queue.Dequeue();
-            found.Add((cx, cy));
-
-            if (found.Count > MaxBasin)
+            for (var y = cy - radius; y <= cy + radius && placed < budget; y++)
             {
-                return false; // равнина, а не яма
-            }
-
-            Span<(int X, int Y)> around = [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)];
-
-            foreach (var (nx, ny) in around)
-            {
-                if (nx < 0 || ny < 0 || nx >= map.Width || ny >= map.Height || !seen.Add((nx, ny)))
+                if (x < 0 || y < 0 || x >= map.Width || y >= map.Height)
                 {
                     continue;
                 }
 
-                var nz = MahaonExcavation.GroundZ(map, nx, ny);
-
-                if (nz < level)
+                if (!HoldsWater(map, x, y) || !IsOpenGround(map, x, y))
                 {
-                    return false; // ниже нас — значит дно не здесь
-                }
-
-                if (nz > level)
-                {
-                    walled = true; // борт ямы
                     continue;
                 }
 
-                if (!IsOpenGround(map, nx, ny))
-                {
-                    return false; // дно упирается в крышу или в чужую стройку — не наша лужа
-                }
+                var puddle = new MahaonPuddle(RainwaterGraphics.RandomElement());
+                puddle.MoveToWorld(new Point3D(x, y, map.GetAverageZ(x, y)), map);
 
-                queue.Enqueue((nx, ny));
+                ActivePuddles.Add(puddle);
+                Taken.Add((map.MapID, x, y));
+                placed++;
             }
         }
 
-        if (!walled)
-        {
-            return false;
-        }
-
-        floor = found;
-        return true;
+        return placed;
     }
+
+    /// <summary>
+    ///     Держится ли тут вода. Два условия, и оба нужны.
+    ///
+    ///     ПЕРВОЕ: стечь некуда — ни один из восьми соседей не ниже. Это и есть «углубление»
+    ///     в точном смысле: с этого тайла нельзя уйти вниз.
+    ///
+    ///     ВТОРОЕ: выше нас земля минимум с ДВУХ сторон из четырёх, в пределах Rim. Без
+    ///     этого условия залило бы всю ровную карту — на идеально плоском месте ни один
+    ///     сосед тоже не ниже. А проверка именно на две стороны отличает низину от подножия
+    ///     склона: у подножия холма выше только с одной стороны, в яме или в ложбине — с
+    ///     двух и более.
+    ///
+    ///     Прежнее условие было строже: требовалась замкнутая котловина с плоским дном,
+    ///     целиком обведённая бортом. Такого в живом рельефе почти не бывает, и лужи не
+    ///     появлялись вовсе.
+    /// </summary>
+    private static bool HoldsWater(Map map, int x, int y)
+    {
+        var z = MahaonExcavation.GroundZ(map, x, y);
+
+        for (var dx = -1; dx <= 1; dx++)
+        {
+            for (var dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0)
+                {
+                    continue;
+                }
+
+                if (GroundAt(map, x + dx, y + dy) is { } nz && nz < z)
+                {
+                    return false; // вода стечёт сюда
+                }
+            }
+        }
+
+        Span<(int X, int Y)> sides = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+        var walls = 0;
+
+        foreach (var (dx, dy) in sides)
+        {
+            for (var d = 1; d <= Rim; d++)
+            {
+                if (GroundAt(map, x + dx * d, y + dy * d) is { } nz && nz > z)
+                {
+                    walls++;
+                    break;
+                }
+            }
+        }
+
+        return walls >= 2;
+    }
+
+    /// <summary>Высота земли, или null за краем карты. За краем «соседа нет» — это не повод
+    /// считать, что туда стечёт.</summary>
+    private static int? GroundAt(Map map, int x, int y) =>
+        x < 0 || y < 0 || x >= map.Width || y >= map.Height ? null : MahaonExcavation.GroundZ(map, x, y);
 
     /// <summary>Проходимая земля под открытым небом, без своей воды и без чужого добра.</summary>
     private static bool IsOpenGround(Map map, int x, int y)
@@ -322,14 +358,18 @@ public static class PuddleSystem
             return false;
         }
 
-        var land = MapEdits.LandAt(map, x, y);
-
-        if ((TileData.LandTable[land.Graphic & TileData.MaxLandValue].Flags & TileFlag.Impassable) != 0)
+        if ((TileData.LandTable[MapEdits.LandAt(map, x, y).Graphic & TileData.MaxLandValue].Flags
+             & TileFlag.Impassable) != 0)
         {
             return false;
         }
 
-        var z = land.Z;
+        // Высота для «влезет ли сюда» — СРЕДНЯЯ по углам тайла, а не высота самого тайла.
+        // На склоне это разные числа, и CanFit с requireSurface требует поверхности ровно
+        // на запрошенной высоте: на высоте тайла её там нет, и проверка отвергала всё
+        // подряд. Форму рельефа (HoldsWater) при этом считаем по высоте тайлов — это она и
+        // есть.
+        var z = map.GetAverageZ(x, y);
         var loc = new Point3D(x, y, z);
 
         if (!map.CanFit(x, y, z, 16))

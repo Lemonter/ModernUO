@@ -51,7 +51,7 @@ public static class MahaonDigInfoCommand
             var surface = MahaonExcavation.CurrentZ(map, x, y);
 
             from.SendMessage(0x59, $"Тайл ({x}, {y}) на карте {map.Name}:");
-            from.SendMessage(0x3B2, $"  целина {original}, дно {ground}, глубина {original - ground} из {MahaonExcavation.MaxDepth}");
+            from.SendMessage(0x3B2, $"  целина {original}, дно {ground}, глубина {original - ground}, предел карты {MahaonExcavation.MinZ}");
 
             if (surface != ground)
             {
@@ -61,13 +61,11 @@ public static class MahaonDigInfoCommand
             from.SendMessage(
                 0x3B2,
                 MahaonExcavation.CanDigHere(map, x, y, out var why)
-                    ? $"  следующий взмах: {(MahaonExcavation.FillsNext(map, x, y) ? "засыпать" : "копать")}"
+                    ? $"  твой режим: {MahaonDigMode.Name(MahaonDigMode.Of(from))}"
                     : $"  копать нельзя: {why}"
             );
 
-            Nearest(map, x, y, out var waterLevel, out var distance);
-
-            if (distance < 0)
+            if (!MahaonWaterFlow.NearestWater(map, x, y, Look, out var waterLevel, out var distance))
             {
                 from.SendMessage(0x3B2, $"  воды в {Look} тайлах нет — яма останется сухой");
                 return;
@@ -79,45 +77,14 @@ public static class MahaonDigInfoCommand
             from.SendMessage(
                 0x3B2,
                 ground < waterLevel
-                    ? "  это дно ниже воды — вода придёт, если прокопана канава без перемычек"
-                    : $"  это дно НЕ ниже воды: чтобы налилось, нужно глубже {waterLevel}"
+                    ? "  дно ниже воды — по высоте всё в порядке"
+                    : $"  дно НЕ ниже воды: чтобы налилось, нужно ниже {waterLevel}"
             );
-        }
 
-        private static void Nearest(Map map, int x, int y, out int level, out int distance)
-        {
-            level = 0;
-            distance = -1;
-
-            for (var nx = x - Look; nx <= x + Look; nx++)
-            {
-                if (nx < 0 || nx >= map.Width)
-                {
-                    continue;
-                }
-
-                for (var ny = y - Look; ny <= y + Look; ny++)
-                {
-                    if (ny < 0 || ny >= map.Height || nx == x && ny == y)
-                    {
-                        continue;
-                    }
-
-                    // Оба слоя: вода у нас бывает и статикой поверх земли, и самой землёй.
-                    if (MahaonWaterFlow.SurfaceZ(map, nx, ny) is not { } found)
-                    {
-                        continue;
-                    }
-
-                    var d = Utility.Max((nx - x).Abs(), (ny - y).Abs());
-
-                    if (distance < 0 || d < distance)
-                    {
-                        distance = d;
-                        level = found;
-                    }
-                }
-            }
+            // И главный ответ: высоты мало, нужна ещё непрерывная канава. Считаем тем же
+            // обходом, что и сам разлив, — чтобы совет не расходился с поведением.
+            MahaonWaterFlow.Explain(map, x, y, out var trace);
+            from.SendMessage(0x3B2, $"  {trace}");
         }
     }
 }

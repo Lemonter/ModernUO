@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// LootPack.LootItem&lt;T&gt; doesn't exist here — converted to a chance-based OnDeath drop
 /// (see WolfSpider.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a goblin corpse")]
 public partial class GreenGoblin : BaseCreature
 {
     [Constructible]
@@ -44,6 +43,7 @@ public partial class GreenGoblin : BaseCreature
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп гоблина";
     public override string DefaultName => "зелёный гоблин";
 
     public override int GetAngerSound() => 0x600;

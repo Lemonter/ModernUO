@@ -1,6 +1,9 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using ModernUO.CodeGeneratedEvents;
+using Server.Mobiles;
 using Server.Network;
 
 namespace Server.Systems.MahaonMapEdits;
@@ -32,6 +35,23 @@ namespace Server.Systems.MahaonMapEdits;
 ///     Когда правка отменена и блок перестаёт быть изменённым, надо вернуть слепок «как
 ///     было» — и в TileMatrix, и игрокам. Иначе отменённый снос остался бы снесённым у
 ///     всех, кто уже стоит рядом.
+///
+///     ---- Кому и когда (по дальности) ----
+///
+///     Игроку нужны только правки вокруг него, а не все правки карты: стоящему в Магинсии
+///     незачем знать, что копают в Миноке. Поэтому:
+///       - сервер помнит для каждого соединения, какие блоки оно уже получило и в какой
+///         версии (Known);
+///       - при входе и при каждом переходе игрока в новый блок 8×8 досылаются правленые блоки
+///         в радиусе ViewRadiusBlocks — те, которых клиент не знает или знает устаревшими;
+///       - живая правка уходит только тем, кто рядом или уже знает этот блок (знает — значит
+///         держит его в памяти, и устаревшим держать нельзя);
+///       - ушёл и вернулся — получит свежую версию, если блок без него менялся. Откат правки
+///         тоже доходит: для клиента, знающего блок, это просто новая версия (слепок).
+///     Клиент правки хранит в памяти до выхода из мира — отдельным журналом на каждый фасет:
+///     камни переноса в каждом городе гоняют игроков между картами, и вернувшийся на фасет
+///     клиент снова подставляет то, что уже знал. Поэтому и здесь список известного не
+///     чистится при смене карты (он и так по паре «карта + блок»), а только при входе в мир.
 /// </summary>
 public static class MahaonMapLive
 {
@@ -44,21 +64,66 @@ public static class MahaonMapLive
     public static bool Enabled { get; set; } = true;
 
     /// <summary>
-    ///     Сколько блоков выдаём одному входящему игроку.
-    ///
-    ///     Это не оптимизация, а предохранитель. Всё накопленное уходит игроку одним
-    ///     залпом при входе, и если правок наберётся много тысяч (долгая осада, неделя без
-    ///     запекания), залп будет соответствующий. Упёршись в потолок, сервер ругается в
-    ///     консоль — потому что лечится это не здесь, а запеканием с закреплением.
+    ///     Радиус выдачи правок вокруг игрока, блоков 8×8 по каждой оси. Не обзор в 18 тайлов,
+    ///     а дальность ЗАГРУЗКИ клиента Unity: он держит чанки по 20 тайлов на 4 чанка вокруг
+    ///     (~80 тайлов). Правка, пришедшая в уже загруженный чанк, проигрывается как свежая
+    ///     (вода «наливается» в старый пруд), поэтому радиус с запасом: 12 блоков — 96 тайлов.
     /// </summary>
-    private const int MaxBlocksPerLogin = 512;
+    private const int ViewRadiusBlocks = 12;
+
+    /// <summary>Как часто проверять, не перешёл ли игрок в другой блок.</summary>
+    private static readonly TimeSpan SweepInterval = TimeSpan.FromMilliseconds(500);
+
+    /// <summary>Что знает одно соединение: версия каждого полученного блока и где игрок
+    /// стоял при последней проверке.</summary>
+    private sealed class Known
+    {
+        public readonly Dictionary<(int MapId, int BlockId), int> Blocks = new();
+        public int MapId = -1;
+        public int BlockX = int.MinValue;
+        public int BlockY = int.MinValue;
+    }
+
+    /// <summary>Слабая таблица: ушедшее соединение уносит свою запись с собой.</summary>
+    private static readonly ConditionalWeakTable<NetState, Known> KnownByState = new();
+
+    /// <summary>Версия блока растёт на каждой правке — по ней видно, что клиент знает
+    /// устаревшее.</summary>
+    private static readonly Dictionary<(int MapId, int BlockId), int> Versions = new();
 
     public static void Configure()
     {
         Enabled = ServerConfiguration.GetOrUpdateSetting("mapEdits.live", true);
         MahaonMapEdits.BlockChanged += OnBlockChanged;
         EventSink.WorldLoad += ApplyAllToServer;
-        EventSink.Connected += OnConnected;
+        Timer.StartTimer(SweepInterval, SweepInterval, Sweep);
+    }
+
+    /// <summary>
+    ///     Вход в мир — по PlayerLoginEvent, а не по EventSink.Connected.
+    ///
+    ///     Connected срабатывает в момент, когда соединение привязывается к персонажу, — ещё
+    ///     ДО того, как вышедший из игры персонаж вернётся с Map.Internal на свою карту. Проверка
+    ///     «правка для карты игрока» в этот момент отсеивала все правки до единой: клиент входил
+    ///     в мир без ям и насыпей, а сервер ставил игрока на дно ямы. Клиент видел себя под
+    ///     землёй, и канонический потолок прятал вокруг всю землю — чёрные ромбы под водой.
+    ///     Срабатывало не всегда: быстрый перезаход (персонаж ещё в мире) карту не терял.
+    ///
+    ///     Клиент после входа ничего не помнит, поэтому список известного начинается заново.
+    /// </summary>
+    [OnEvent(nameof(PlayerMobile.PlayerLoginEvent))]
+    public static void OnLogin(PlayerMobile pm)
+    {
+        if (!Enabled || pm.NetState == null)
+        {
+            return;
+        }
+
+        var known = KnownByState.GetOrCreateValue(pm.NetState);
+        known.Blocks.Clear();
+        known.MapId = -1;
+
+        SendNearby(pm, known);
     }
 
     /// <summary>
@@ -72,48 +137,130 @@ public static class MahaonMapLive
             return;
         }
 
-        foreach (var ((mapId, blockId), _) in MahaonMapEdits.Derived)
+        foreach (var ((mapId, blockId), _) in MahaonMapEdits.Current)
         {
             ApplyToServer(mapId, blockId);
         }
     }
 
-    private static void OnConnected(Mobile m)
+    /// <summary>
+    ///     Игрок сдвинулся (PlayerMobile.OnLocationChange / OnMapChange): шаг, рекол, гейт,
+    ///     телепорт, смена фасета — всё идёт через MoveToWorld, который зовёт эти хуки уже ПОСЛЕ
+    ///     отправки новой позиции. Правки уходят в том же потоке сразу за ней, и клиент
+    ///     применяет их до того, как отрисует новое место: без мелькания старой земли и без
+    ///     «под землёй» после рекола. Обычный шаг внутри блока отсекается сразу.
+    /// </summary>
+    public static void OnMoved(Mobile m)
     {
-        if (!Enabled || m.NetState == null)
+        if (!Enabled || m.NetState == null || m.Map == null || m.Map == Map.Internal)
         {
             return;
         }
 
-        // Правки живут у клиента в памяти, значит при каждом входе их надо выдать заново.
-        // Это и есть цена отказа от записи в файлы игрока — зато список короткий: всё
-        // старое периодически уходит в запекание и отсюда пропадает.
-        var sent = 0;
+        var known = KnownByState.GetOrCreateValue(m.NetState);
 
-        foreach (var ((mapId, blockId), state) in MahaonMapEdits.Derived)
+        if (known.MapId == m.Map.MapID && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
         {
-            if (mapId != m.Map?.MapID)
+            return;
+        }
+
+        SendNearby(m, known);
+    }
+
+    /// <summary>Обход онлайна — страховка на случай перемещения мимо хуков: кто перешёл в
+    /// другой блок или сменил карту — досылаем правки вокруг.</summary>
+    private static void Sweep()
+    {
+        if (!Enabled)
+        {
+            return;
+        }
+
+        foreach (var ns in NetState.Instances)
+        {
+            if (ns.Mobile is not { Deleted: false } m || m.Map == null || m.Map == Map.Internal)
             {
                 continue;
             }
 
-            if (sent >= MaxBlocksPerLogin)
-            {
-                // Дальше не шлём — но и молчать нельзя: остаток мира игрок увидит
-                // неправленым, и это надо чинить не здесь, а запеканием.
-                Utility.PushColor(System.ConsoleColor.Yellow);
-                Console.WriteLine(
-                    $"[MapEdits] {m.Name}: правок больше {MaxBlocksPerLogin}, остальные не отправлены. " +
-                    "Пора запечь ([MapBake) и закрепить ([MapCommit)."
-                );
-                Utility.PopColor();
+            var known = KnownByState.GetOrCreateValue(ns);
 
-                break;
+            if (known.MapId == m.Map.MapID && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
+            {
+                continue;
             }
 
-            SendBlock(m.NetState, mapId, blockId, state);
-            sent++;
+            SendNearby(m, known);
         }
+    }
+
+    /// <summary>
+    ///     Правленые блоки вокруг игрока, которых клиент не знает или знает устаревшими. Плюс
+    ///     откаченные: блок, которого в журнале больше нет, но клиент держит его правленым, —
+    ///     ему уходит слепок.
+    /// </summary>
+    private static void SendNearby(Mobile m, Known known)
+    {
+        var ns = m.NetState;
+        var map = m.Map;
+
+        if (ns == null || map == null || map == Map.Internal)
+        {
+            return;
+        }
+
+        // Смена фасета: журнал старой карты клиент отложил, а не выбросил — список известного
+        // остаётся, меняется только карта, вокруг которой смотрим.
+        known.MapId = map.MapID;
+
+        known.BlockX = m.X >> 3;
+        known.BlockY = m.Y >> 3;
+
+        var blockHeight = map.Height >> 3;
+
+        foreach (var ((mapId, blockId), state) in MahaonMapEdits.Current)
+        {
+            if (mapId == map.MapID && IsNear(blockId, blockHeight, known) && IsStale(known, mapId, blockId))
+            {
+                Deliver(ns, known, mapId, blockId, state);
+            }
+        }
+
+        // Откаченные рядом — их в журнале нет, но клиент знает их в старой версии.
+        List<(int, int)> reverted = null;
+
+        foreach (var ((mapId, blockId), version) in known.Blocks)
+        {
+            if (mapId == map.MapID && version != VersionOf(mapId, blockId) &&
+                !MahaonMapEdits.Current.ContainsKey((mapId, blockId)) && IsNear(blockId, blockHeight, known))
+            {
+                (reverted ??= new List<(int, int)>()).Add((mapId, blockId));
+            }
+        }
+
+        if (reverted != null)
+        {
+            foreach (var (mapId, blockId) in reverted)
+            {
+                Deliver(ns, known, mapId, blockId, null);
+            }
+        }
+    }
+
+    private static bool IsNear(int blockId, int blockHeight, Known known) =>
+        Math.Abs(blockId / blockHeight - known.BlockX) <= ViewRadiusBlocks &&
+        Math.Abs(blockId % blockHeight - known.BlockY) <= ViewRadiusBlocks;
+
+    private static int VersionOf(int mapId, int blockId) =>
+        Versions.TryGetValue((mapId, blockId), out var version) ? version : 0;
+
+    private static bool IsStale(Known known, int mapId, int blockId) =>
+        !known.Blocks.TryGetValue((mapId, blockId), out var version) || version != VersionOf(mapId, blockId);
+
+    private static void Deliver(NetState ns, Known known, int mapId, int blockId, MahaonMapEdits.BlockState state)
+    {
+        SendBlock(ns, mapId, blockId, state);
+        known.Blocks[(mapId, blockId)] = VersionOf(mapId, blockId);
     }
 
     private static void OnBlockChanged(int mapId, int blockId)
@@ -124,6 +271,8 @@ public static class MahaonMapLive
         }
 
         ApplyToServer(mapId, blockId);
+
+        Versions[(mapId, blockId)] = VersionOf(mapId, blockId) + 1;
         BroadcastBlock(mapId, blockId);
     }
 
@@ -143,7 +292,7 @@ public static class MahaonMapLive
         var bx = blockId / blockHeight;
         var by = blockId % blockHeight;
 
-        MahaonMapEdits.Derived.TryGetValue((mapId, blockId), out var state);
+        MahaonMapEdits.Current.TryGetValue((mapId, blockId), out var state);
 
         // Статика.
         var statics = state?.StaticsTouched == true
@@ -218,15 +367,42 @@ public static class MahaonMapLive
 
     // ---- Клиенты -----------------------------------------------------------------------
 
+    /// <summary>
+    ///     Живая правка — тем, кто рядом, и тем, кто этот блок уже знает (держит в памяти и
+    ///     устаревшим держать не должен). Остальные получат его, когда подойдут.
+    /// </summary>
     private static void BroadcastBlock(int mapId, int blockId)
     {
-        MahaonMapEdits.Derived.TryGetValue((mapId, blockId), out var state);
+        MahaonMapEdits.Current.TryGetValue((mapId, blockId), out var state);
+
+        var map = Map.Maps[mapId];
+
+        if (map == null)
+        {
+            return;
+        }
+
+        var blockHeight = map.Height >> 3;
 
         foreach (var ns in NetState.Instances)
         {
-            if (ns.Mobile?.Map?.MapID == mapId)
+            if (ns.Mobile?.Map?.MapID != mapId)
             {
-                SendBlock(ns, mapId, blockId, state);
+                continue;
+            }
+
+            var known = KnownByState.GetOrCreateValue(ns);
+
+            if (known.MapId != mapId)
+            {
+                known.MapId = mapId;
+                known.BlockX = ns.Mobile.X >> 3;
+                known.BlockY = ns.Mobile.Y >> 3;
+            }
+
+            if (known.Blocks.ContainsKey((mapId, blockId)) || IsNear(blockId, blockHeight, known))
+            {
+                Deliver(ns, known, mapId, blockId, state);
             }
         }
     }

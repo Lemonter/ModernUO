@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/Ortanord.cs). A named wisp of the
 /// Abyss: almost no hit points, almost no combat skill, and 80–90 in every resist.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an ortanord corpse")]
 public partial class Ortanord : BaseCreature
 {
     [Constructible]
@@ -52,6 +51,7 @@ public partial class Ortanord : BaseCreature
         }
     }
 
+    public override string CorpseName => "труп Ортанорда";
     public override string DefaultName => "Ортанорд";
 
     public override bool BardImmune => !Core.AOS;

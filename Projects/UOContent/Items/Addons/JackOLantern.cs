@@ -37,7 +37,7 @@ namespace Server.Items
             new(itemID)
             {
                 Hue = hue,
-                Name = "jack-o-lantern"
+                Name = "светильник Джека"
             };
     }
 }

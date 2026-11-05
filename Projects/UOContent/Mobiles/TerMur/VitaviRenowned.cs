@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Misc;
 
@@ -10,7 +10,6 @@ namespace Server.Mobiles;
 /// VoidInfusedKilt all don't exist anywhere in this codebase — dropped, leaving an empty
 /// list. LootPack.MageryRegs and LootPack.Statue don't exist either — dropped.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Vitavi [Renowned] corpse")]
 public partial class VitaviRenowned : BaseRenowned
 {
     [Constructible]
@@ -46,6 +45,7 @@ public partial class VitaviRenowned : BaseRenowned
         Karma = -7500;
     }
 
+    public override string CorpseName => "труп знаменитого Витави";
     public override string DefaultName => "Витави";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

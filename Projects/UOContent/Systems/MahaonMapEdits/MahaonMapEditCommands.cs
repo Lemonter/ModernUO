@@ -71,41 +71,37 @@ public static class MahaonMapEditCommands
         e.Mobile.Target = new LandTarget(e.GetInt32(0), radius);
     }
 
-    [Usage("MapEdits [сколько]")]
-    [Description("Журнал правок карты: последние записи и сводка по событиям.")]
+    [Usage("MapEdits")]
+    [Description("Сколько блоков карты изменено и чем именно.")]
     private static void MapEdits_OnCommand(CommandEventArgs e)
     {
-        var entries = MahaonMapEdits.Entries;
+        var changed = MahaonMapEdits.Current;
 
-        if (entries.Count == 0)
+        if (changed.Count == 0)
         {
-            e.Mobile.SendMessage(0x3B2, "Журнал правок пуст.");
+            e.Mobile.SendMessage(0x3B2, "Карта не изменена — она ровно такая, как в файлах.");
             return;
         }
 
-        var byReason = new Dictionary<string, int>();
+        var land = 0;
+        var statics = 0;
 
-        foreach (var entry in entries)
+        foreach (var (_, state) in changed)
         {
-            byReason.TryGetValue(entry.Reason, out var n);
-            byReason[entry.Reason] = n + 1;
+            if (state.LandTouched)
+            {
+                land++;
+            }
+
+            if (state.StaticsTouched)
+            {
+                statics++;
+            }
         }
 
-        e.Mobile.SendMessage(0x59, $"Правок всего: {entries.Count}, блоков задето: {MahaonMapEdits.Derived.Count}.");
-
-        foreach (var (reason, n) in byReason)
-        {
-            e.Mobile.SendMessage(0x59, $"  «{reason}»: {n}  —  откат: [MapUndo reason {reason}");
-        }
-
-        var show = e.Length >= 1 ? Math.Clamp(e.GetInt32(0), 1, 20) : 5;
-
-        e.Mobile.SendMessage(0x3B2, "Последние:");
-
-        for (var i = Math.Max(0, entries.Count - show); i < entries.Count; i++)
-        {
-            e.Mobile.SendMessage(0x3B2, $"  {entries[i]}");
-        }
+        e.Mobile.SendMessage(0x59, $"Изменённых блоков: {changed.Count}.");
+        e.Mobile.SendMessage(0x3B2, $"  с правленой землёй: {land}, с правленой статикой: {statics}");
+        e.Mobile.SendMessage(0x3B2, "  сброс одного блока — [MapUndo, всего мира — [MapUndo all");
     }
 
     [Usage("MapHere")]
@@ -116,58 +112,22 @@ public static class MahaonMapEditCommands
         e.Mobile.Target = new HereTarget();
     }
 
-    [Usage("MapUndo <номер | last [N] | reason <текст> | all>")]
-    [Description("Откатывает правки карты.")]
+    [Usage("MapUndo [all]")]
+    [Description("Сбрасывает карту к исходной: без аргумента — указанный блок, с all — весь мир.")]
     private static void MapUndo_OnCommand(CommandEventArgs e)
     {
         var from = e.Mobile;
 
-        if (e.Length == 0)
+        // Отката отдельной правки больше нет, и это осознанно: журнала, из которого её
+        // можно было выдернуть, тоже нет. Хранятся два состояния — исходное и текущее, —
+        // поэтому «отменить» означает вернуться к исходному, целиком или по блоку.
+        if (e.Length >= 1 && e.GetString(0).InsensitiveEquals("all"))
         {
-            from.SendMessage(0x22, "[MapUndo 42 | [MapUndo last 3 | [MapUndo reason осада | [MapUndo all");
-            return;
-        }
-
-        var what = e.GetString(0);
-
-        if (what.InsensitiveEquals("all"))
-        {
-            var n = MahaonMapEdits.UndoAll();
-            from.SendMessage(0x59, $"Откачено правок: {n}. Карта вернулась к исходной.");
-            WarnBakeNeeded(from);
-
-            return;
-        }
-
-        if (what.InsensitiveEquals("last"))
-        {
-            var count = e.Length >= 2 ? Math.Max(1, e.GetInt32(1)) : 1;
-            var n = MahaonMapEdits.UndoLast(count);
-
-            from.SendMessage(n > 0 ? 0x59 : 0x22, n > 0 ? $"Откачено последних правок: {n}." : "Откатывать нечего.");
-
-            if (n > 0)
-            {
-                WarnBakeNeeded(from);
-            }
-
-            return;
-        }
-
-        if (what.InsensitiveEquals("reason"))
-        {
-            if (e.Length < 2)
-            {
-                from.SendMessage(0x22, "Укажи, что откатывать: [MapUndo reason осада Британии");
-                return;
-            }
-
-            var reason = string.Join(' ', e.Arguments, 1, e.Arguments.Length - 1);
-            var n = MahaonMapEdits.UndoByReason(reason);
+            var n = MahaonMapEdits.ResetAll();
 
             from.SendMessage(
-                n > 0 ? 0x59 : 0x22,
-                n > 0 ? $"Откачено правок события «{reason}»: {n}." : $"Правок с пометкой «{reason}» нет."
+                n > 0 ? 0x59 : 0x3B2,
+                n > 0 ? $"Сброшено блоков: {n}. Карта вернулась к исходной." : "Сбрасывать нечего."
             );
 
             if (n > 0)
@@ -178,21 +138,8 @@ public static class MahaonMapEditCommands
             return;
         }
 
-        if (int.TryParse(what, out var id))
-        {
-            var ok = MahaonMapEdits.Undo(id);
-
-            from.SendMessage(ok ? 0x59 : 0x22, ok ? $"Правка #{id} откачена." : $"Правки #{id} в журнале нет.");
-
-            if (ok)
-            {
-                WarnBakeNeeded(from);
-            }
-
-            return;
-        }
-
-        from.SendMessage(0x22, "Не понял. [MapUndo 42 | last N | reason <текст> | all");
+        from.SendMessage(0x3B2, "Укажи блок, который вернуть к исходному виду.");
+        from.Target = new ResetTarget();
     }
 
     private static void WarnBakeNeeded(Mobile from)
@@ -290,15 +237,15 @@ public static class MahaonMapEditCommands
     }
 
     [Usage("MapCommit подтверждаю")]
-    [Description("Закрепляет запечённое: журнал очищается, откат становится невозможен.")]
+    [Description("Закрепляет запечённое: изменённый мир становится исходным, сброс невозможен.")]
     private static void MapCommit_OnCommand(CommandEventArgs e)
     {
         var from = e.Mobile;
-        var pending = MahaonMapEdits.Entries.Count;
+        var pending = MahaonMapEdits.Current.Count;
 
         if (pending == 0)
         {
-            from.SendMessage(0x3B2, "Закреплять нечего — журнал пуст.");
+            from.SendMessage(0x3B2, "Закреплять нечего — карта не изменена.");
             return;
         }
 
@@ -307,7 +254,7 @@ public static class MahaonMapEditCommands
         // вернёт — только новая правка поверх.
         if (e.Length < 1 || !e.GetString(0).InsensitiveEquals("подтверждаю"))
         {
-            from.SendMessage(0x22, $"Это необратимо: {pending} правок перестанут откатываться.");
+            from.SendMessage(0x22, $"Это необратимо: {pending} блоков перестанут сбрасываться.");
             from.SendMessage(0x22, "Делай это ТОЛЬКО после того, как игроки получили новые stadif/mapdif.");
             from.SendMessage(0x35, "Если уверен: [MapCommit подтверждаю");
 
@@ -340,7 +287,6 @@ public static class MahaonMapEditCommands
 
             var map = from.Map;
             var removed = 0;
-            var first = MahaonMapEdits.Entries.Count;
 
             for (var x = p.X - _radius; x <= p.X + _radius; x++)
             {
@@ -348,7 +294,7 @@ public static class MahaonMapEditCommands
                 {
                     if (x >= 0 && y >= 0 && x < map.Width && y < map.Height)
                     {
-                        removed += MahaonMapEdits.RemoveStatics(map, x, y, null, GmReason);
+                        removed += MahaonMapEdits.RemoveStatics(map, x, y, null);
                     }
                 }
             }
@@ -359,11 +305,7 @@ public static class MahaonMapEditCommands
                 return;
             }
 
-            from.SendMessage(
-                0x59,
-                $"Снято статиков: {removed} (правки #{MahaonMapEdits.Entries[first].Id}…" +
-                $"#{MahaonMapEdits.Entries[^1].Id}). Откат: [MapUndo last {removed}"
-            );
+            from.SendMessage(0x59, $"Снято статиков: {removed}. Вернуть блок как было — [MapUndo");
         }
     }
 
@@ -385,12 +327,11 @@ public static class MahaonMapEditCommands
                 return;
             }
 
-            MahaonMapEdits.AddStatic(from.Map, p.X, p.Y, p.Z, _graphic, _hue, GmReason);
+            MahaonMapEdits.AddStatic(from.Map, p.X, p.Y, p.Z, _graphic, _hue);
 
             from.SendMessage(
                 0x59,
-                $"Статик {_graphic:X4} записан в ({p.X}, {p.Y}, {p.Z}) — правка " +
-                $"#{MahaonMapEdits.Entries[^1].Id}. Откат: [MapUndo last"
+                $"Статик {_graphic:X4} записан в ({p.X}, {p.Y}, {p.Z}). Вернуть блок как было — [MapUndo"
             );
         }
     }
@@ -422,7 +363,7 @@ public static class MahaonMapEditCommands
                 {
                     if (x >= 0 && y >= 0 && x < map.Width && y < map.Height)
                     {
-                        MahaonMapEdits.SetLand(map, x, y, _graphic, p.Z, GmReason);
+                        MahaonMapEdits.SetLand(map, x, y, _graphic, p.Z);
                         changed++;
                     }
                 }
@@ -445,20 +386,47 @@ public static class MahaonMapEditCommands
                 return;
             }
 
-            var entries = MahaonMapEdits.EntriesInBlock(from.Map, p.X, p.Y);
+            var map = from.Map;
+            var blockId = MahaonMapEdits.BlockIdFor(map, p.X, p.Y);
 
-            if (entries.Count == 0)
+            if (!MahaonMapEdits.Current.TryGetValue((map.MapID, blockId), out var state))
             {
-                from.SendMessage(0x3B2, "В этом блоке правок нет.");
+                from.SendMessage(0x3B2, "Этот блок не изменён — он такой же, как в файлах карты.");
                 return;
             }
 
-            from.SendMessage(0x59, $"Правок в блоке: {entries.Count}");
+            from.SendMessage(0x59, $"Блок #{blockId} изменён:");
+            from.SendMessage(
+                0x3B2,
+                $"  земля: {(state.LandTouched ? "правлена" : "как была")}, " +
+                $"статика: {(state.StaticsTouched ? $"правлена, сейчас {state.Statics.Count} плиток" : "как была")}"
+            );
+            from.SendMessage(0x3B2, "  вернуть как было — [MapUndo по этому же месту");
+        }
+    }
 
-            foreach (var entry in entries)
+    /// <summary>Сброс одного блока к исходному виду.</summary>
+    private class ResetTarget : Target
+    {
+        public ResetTarget() : base(18, true, TargetFlags.None)
+        {
+        }
+
+        protected override void OnTarget(Mobile from, object targeted)
+        {
+            if (targeted is not IPoint3D p || from.Map == null)
             {
-                from.SendMessage(0x3B2, $"  {entry} ({entry.When:HH:mm dd.MM})");
+                return;
             }
+
+            if (!MahaonMapEdits.ResetBlock(from.Map, p.X, p.Y))
+            {
+                from.SendMessage(0x3B2, "Этот блок и так исходный.");
+                return;
+            }
+
+            from.SendMessage(0x59, "Блок вернулся к исходному виду.");
+            WarnBakeNeeded(from);
         }
     }
 }

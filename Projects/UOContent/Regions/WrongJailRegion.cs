@@ -1,8 +1,11 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace Server.Regions;
 
-// TODO: Implement jail safe zone
+/// <summary>
+///     Ported from ServUO's Wrong Revamped dungeon (Region.cs) — the jail is a safe zone: no player can be
+///     harmed inside it, which is what makes the captured-and-returned loop survivable.
+/// </summary>
 public class WrongJailRegion : DungeonRegion
 {
     [JsonConstructor] // Don't include parent, since it is special
@@ -18,4 +21,6 @@ public class WrongJailRegion : DungeonRegion
         : base(name, map, parent, priority, area)
     {
     }
+
+    public override bool AllowHarmful(Mobile from, Mobile target) => false;
 }

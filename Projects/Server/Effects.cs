@@ -55,6 +55,19 @@ public enum ParticleSupportType
 
 public static class Effects
 {
+    /// <summary>
+    ///     Mahaon: оттенок эффектов заклинания, которое маг сейчас применяет (например, огненный
+    ///     шар в цвет выбранной стихии). Ядро про стихии не знает: контент ставит функцию, она
+    ///     возвращает оттенок или 0 — «не трогать». Вызывается в каждой отправке эффекта.
+    /// </summary>
+    public static Func<int> ActiveHueOverride { get; set; }
+
+    private static int OverrideHue(int hue)
+    {
+        var tint = ActiveHueOverride?.Invoke() ?? 0;
+        return tint != 0 ? tint : hue;
+    }
+
     public static ParticleSupportType ParticleSupportType { get; set; } = ParticleSupportType.Detect;
 
     public static bool SendParticlesTo(NetState state) =>
@@ -85,6 +98,8 @@ public static class Effects
 
     public static void SendBoltEffect(IEntity e, bool sound = true, int hue = 0)
     {
+        hue = OverrideHue(hue);
+
         var map = e.Map;
 
         if (map == null)
@@ -131,6 +146,8 @@ public static class Effects
         Point3D p, Map map, int itemID, int duration, int speed = 10, int hue = 0, int renderMode = 0
     )
     {
+        hue = OverrideHue(hue);
+
         var effect = stackalloc byte[OutgoingEffectPackets.HuedEffectLength].InitializePacket();
         OutgoingEffectPackets.CreateLocationHuedEffect(
             effect,
@@ -154,6 +171,8 @@ public static class Effects
         IEntity e, int itemID, int speed, int duration, int hue, int renderMode, int effect, int unknown
     )
     {
+        hue = OverrideHue(hue);
+
         var map = e.Map;
 
         if (map == null)
@@ -190,6 +209,8 @@ public static class Effects
 
     public static void SendTargetEffect(IEntity target, int itemID, int speed, int duration, int hue = 0, int renderMode = 0)
     {
+        hue = OverrideHue(hue);
+
         (target as Mobile)?.ProcessDelta();
 
         var effect = stackalloc byte[OutgoingEffectPackets.HuedEffectLength].InitializePacket();
@@ -214,6 +235,8 @@ public static class Effects
         int effect, EffectLayer layer, int unknown = 0
     )
     {
+        hue = OverrideHue(hue);
+
         (target as Mobile)?.ProcessDelta();
 
         var map = target.Map;
@@ -363,6 +386,8 @@ public static class Effects
         int speed, int duration, bool fixedDirection = false, bool explodes = false, int hue = 0, int renderMode = 0
     )
     {
+        hue = OverrideHue(hue);
+
         var effect = stackalloc byte[OutgoingEffectPackets.HuedEffectLength].InitializePacket();
         OutgoingEffectPackets.CreateMovingHuedEffect(
             effect,
@@ -425,6 +450,8 @@ public static class Effects
         EffectLayer layer, int unknown
     )
     {
+        hue = OverrideHue(hue);
+
         (from as Mobile)?.ProcessDelta();
         (to as Mobile)?.ProcessDelta();
 

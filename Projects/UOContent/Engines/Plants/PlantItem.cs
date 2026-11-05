@@ -88,6 +88,20 @@ public partial class PlantItem : Item, ISecurable
 
     public override bool ForceShowProperties => ObjectPropertyList.Enabled;
 
+    // Хуки для растений Новой Маджинции (Engines/NewMagincia/MaginciaPlants). Базовая миска использует
+    // значения по умолчанию, поэтому её поведение не меняется.
+    public virtual bool MaginciaPlant => false;
+
+    public virtual int BowlOfDirtID => 0x1602;
+
+    public virtual int GreenBowlID => 0x1600;
+
+    public virtual int ContainerLocalization => 1150435;
+
+    public virtual int OnPlantLocalization => 1061922;
+
+    public virtual int CantUseLocalization => 1061921;
+
     [CommandProperty(AccessLevel.GameMaster)]
     [SerializableProperty(1)]
     [SaveFlag(nameof(ShouldSerializePlantStatus))]
@@ -165,7 +179,7 @@ public partial class PlantItem : Item, ISecurable
     private bool ShouldSerializeShowType() => _showType;
 
     [CommandProperty(AccessLevel.GameMaster)]
-    public bool ValidGrowthLocation
+    public virtual bool ValidGrowthLocation
     {
         get
         {
@@ -234,7 +248,7 @@ public partial class PlantItem : Item, ISecurable
         };
     }
 
-    public static int GetLocalizedContainerType() => 1150435;
+    public int GetLocalizedContainerType() => ContainerLocalization;
 
     private void Update()
     {
@@ -250,12 +264,12 @@ public partial class PlantItem : Item, ISecurable
         }
         else if (_plantStatus >= PlantStatus.Plant)
         {
-            ItemID = 0x1600;
+            ItemID = GreenBowlID;
             Hue = 0;
         }
         else
         {
-            ItemID = 0x1602;
+            ItemID = BowlOfDirtID;
             Hue = 0;
         }
 
@@ -451,7 +465,7 @@ public partial class PlantItem : Item, ISecurable
         }
     }
 
-    public bool IsUsableBy(Mobile from) =>
+    public virtual bool IsUsableBy(Mobile from) =>
         IsChildOf(from.Backpack) || IsChildOf(from.FindBankNoCreate()) || IsLockedDown && IsAccessibleTo(from) ||
         RootParent is Item root && root.IsSecure && root.IsAccessibleTo(from);
 
@@ -482,7 +496,7 @@ public partial class PlantItem : Item, ISecurable
         MainPlantGump.DisplayTo(from, this);
     }
 
-    public void PlantSeed(Mobile from, Seed seed)
+    public virtual bool PlantSeed(Mobile from, Seed seed)
     {
         if (_plantStatus >= PlantStatus.FullGrownPlant)
         {
@@ -490,7 +504,7 @@ public partial class PlantItem : Item, ISecurable
         }
         else if (!IsUsableBy(from))
         {
-            LabelTo(from, 1061921); // The bowl of dirt must be in your pack, or you must lock it down.
+            LabelTo(from, CantUseLocalization); // The bowl of dirt must be in your pack, or you must lock it down.
         }
         else if (_plantStatus != PlantStatus.BowlOfDirt)
         {
@@ -513,11 +527,14 @@ public partial class PlantItem : Item, ISecurable
 
             PlantSystem.Reset(false);
 
-            LabelTo(from, 1061922); // You plant the seed in the bowl of dirt.
+            LabelTo(from, OnPlantLocalization); // You plant the seed in the bowl of dirt.
+            return true;
         }
+
+        return false;
     }
 
-    public void Die()
+    public virtual void Die()
     {
         if (_plantStatus >= PlantStatus.FullGrownPlant)
         {

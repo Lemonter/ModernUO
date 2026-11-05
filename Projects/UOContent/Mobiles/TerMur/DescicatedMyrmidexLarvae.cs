@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// DescicatedMyrmidexLarvae.cs). The misspelling of "desiccated" is the original's, kept so the
 /// spawn data that names this type keeps resolving.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a myrmidex corpse")]
 public partial class DescicatedMyrmidexLarvae : BaseCreature
 {
     [Constructible]
@@ -46,6 +45,7 @@ public partial class DescicatedMyrmidexLarvae : BaseCreature
         Karma = -2500;
     }
 
+    public override string CorpseName => "труп мирмидекса";
     public override string DefaultName => "иссохшая личинка мирмидекса";
 
     public override Poison HitPoison => Poison.Lesser;

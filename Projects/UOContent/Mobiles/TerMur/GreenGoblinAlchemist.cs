@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// Tribe/TribeType dropped (see GrayGoblin.cs). LootPack.LootItem&lt;T&gt; doesn't exist here
 /// — converted to a chance-based OnDeath drop (see WolfSpider.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a goblin corpse")]
 public partial class GreenGoblinAlchemist : BaseCreature
 {
     [Constructible]
@@ -43,6 +42,7 @@ public partial class GreenGoblinAlchemist : BaseCreature
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп гоблина";
     public override string DefaultName => "зелёный гоблин-алхимик";
 
     public override int GetAngerSound() => 0x600;

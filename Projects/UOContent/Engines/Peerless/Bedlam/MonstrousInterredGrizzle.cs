@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -57,7 +57,7 @@ public partial class MonstrousInterredGrizzle : BasePeerless
         Karma = -24000;
     }
 
-    public override string CorpseName => "a monstrous interred grizzle corpse";
+    public override string CorpseName => "труп чудовищного погребённого гризла";
 
     public override int GetDeathSound() => 0x57F;
     public override int GetAttackSound() => 0x580;

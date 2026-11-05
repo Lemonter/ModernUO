@@ -41,8 +41,8 @@ public enum LumberjackingSpecialization : byte
 /// </summary>
 public static class GatheringSpecializationSystem
 {
-    private static readonly Dictionary<(Mobile, MahaonMetalTier), double> MiningValue = new();
-    private static readonly Dictionary<(Mobile, LumberjackingSpecialization), double> LumberValue = new();
+    private static readonly ProgressTable<MahaonMetalTier> MiningValue = new("branch:mining");
+    private static readonly ProgressTable<LumberjackingSpecialization> LumberValue = new("branch:lumberjacking");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -144,6 +144,7 @@ public static class GatheringSpecializationSystem
             MiningValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuMiningName(tier), newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, CraftPerks.MiningLine(tier), current, newValue);
         }
 
         var value = GetMiningValue(from, tier);
@@ -154,6 +155,8 @@ public static class GatheringSpecializationSystem
         {
             ore.Amount += 1;
         }
+
+        CraftPerks.OnHarvested(from, CraftPerks.MiningLine(tier), value, ore); // ступени ветки (этап 8)
     }
 
     /// <summary>Call from Lumberjacking's harvest-finish point whenever harvested is a
@@ -172,6 +175,7 @@ public static class GatheringSpecializationSystem
             LumberValue[key] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuLumberName(spec), newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, CraftPerks.LumberLine(spec), current, newValue);
         }
 
         var value = GetLumberValue(from, spec);
@@ -182,6 +186,8 @@ public static class GatheringSpecializationSystem
         {
             log.Amount += 1;
         }
+
+        CraftPerks.OnHarvested(from, CraftPerks.LumberLine(spec), value, log); // ступени ветки (этап 8)
     }
 
     public static string RuMiningName(MahaonMetalTier tier) => tier switch

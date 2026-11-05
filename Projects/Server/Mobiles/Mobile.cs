@@ -799,16 +799,10 @@ public partial class Mobile : IHued, IComparable<Mobile>, ISpawnable, IObjectPro
             return;
         }
 
-        // Mahaon: Archery > 90 lets a bow/crossbow (BaseRanged only — see IWeapon.
-        // IsRangedWeapon's doc comment) fire past its own MaxRange, out to double that —
-        // BaseWeapon.GetDelay applies a matching speed penalty for shots actually taken
-        // beyond MaxRange, dropping back to normal speed once the target is back within it.
-        var effectiveMaxRange = weapon.MaxRange;
-
-        if (weapon.IsRangedWeapon && Skills[SkillName.Archery].Value > 90.0)
-        {
-            effectiveMaxRange *= 2;
-        }
+        // Mahaon: дальность спрашиваем у оружия — у лучника её меняет стойка (навесной бьёт
+        // вдвое дальше, беглый — ближе). Раньше здесь стояло правило «лук выше 90 — вдвое
+        // дальше»; теперь это стойка «Навесной», и живёт она в UOContent (ArcheryStanceSystem).
+        var effectiveMaxRange = weapon.GetCombatRange(this);
 
         if (!InRange(combatant, effectiveMaxRange))
         {

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Server.Items;
 
 namespace Server.Engines.Craft;
@@ -678,6 +678,9 @@ public class DefBlacksmithy : CraftSystem
             index = AddCraft(typeof(SoulGlaive), 1079508, 1095363, 75.0, 125.0, typeof(IronIngot), 1044036, 9, 1044037);
             SetNeededExpansion(index, Expansion.SA);
         }
+
+        // Винокурение: металлический бочонок для перегонки.
+        AddCraft(typeof(MetalKeg), 1011173, 1150675, 85.0, 100.0, typeof(IronIngot), 1044036, 25, 1044253);
 
         // Set the overridable material
         SetSubRes(typeof(IronIngot), 1044022);

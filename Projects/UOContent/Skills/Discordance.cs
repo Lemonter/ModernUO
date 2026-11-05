@@ -173,12 +173,7 @@ namespace Server.SkillHandlers
                             m_Instrument.PlayInstrumentBadly(from);
                             m_Instrument.ConsumeUse(from);
                         }
-                        else if (from.CheckTargetSkill(
-                            SkillName.Discordance, targ,
-                            diff - 25.0 - Systems.MahaonCombat.BardSpecializationSystem.GetWindowBonus(
-                                from, Systems.MahaonCombat.BardSpecialization.Discordance
-                            ), diff + 25.0
-                        ))
+                        else if (from.CheckTargetSkill(SkillName.Discordance, targ, diff - 25.0, diff + 25.0))
                         {
                             Systems.MahaonCombat.BardSpecializationSystem.Train(
                                 from, Systems.MahaonCombat.BardSpecialization.Discordance
@@ -208,6 +203,11 @@ namespace Server.SkillHandlers
                                 {
                                     effect /= 2;
                                 }
+
+                                // Мастер дисгармонии: при успехе дисгармония сильнее.
+                                effect = (int)(effect * Systems.MahaonCombat.BardSpecializationSystem.EffectScale(
+                                    from, Systems.MahaonCombat.BardSpecialization.Discordance
+                                ));
 
                                 scalar = effect * 0.01;
 

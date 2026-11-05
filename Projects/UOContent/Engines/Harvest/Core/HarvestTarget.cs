@@ -207,6 +207,16 @@ namespace Server.Engines.Harvest
                 return;
             }
 
+            // Пень рубить нечего: дерево уже увела копка, остался корень в земле. Ветка
+            // стоит перед лесорубской, иначе пень ушёл бы в обычную рубку — он и в списке
+            // деревьев не значится, но сказать это вслух лучше, чем промолчать.
+            if (m_System is Lumberjacking && targeted is StaticTarget stump &&
+                Systems.MahaonMapEdits.MahaonSuccession.IsStump(stump.ItemID))
+            {
+                from.SendMessage("Это пень — рубить тут нечего. Засыпь яму, и место снова зарастёт.");
+                return;
+            }
+
             if (m_System is Lumberjacking && targeted is StaticTarget treeStatic)
             {
                 var loc = new Point3D(treeStatic.X, treeStatic.Y, treeStatic.Z);

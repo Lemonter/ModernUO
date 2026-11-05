@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Misc;
 
@@ -9,7 +9,6 @@ namespace Server.Mobiles;
 /// SharedSAList: BasiliskHideBreastplate, LegacyOfDespair, MysticsGarb all don't exist
 /// anywhere in this codebase — dropped, leaving both lists empty.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Tikitavi [Renowned] corpse")]
 public partial class TikitaviRenowned : BaseRenowned
 {
     [Constructible]
@@ -45,6 +44,7 @@ public partial class TikitaviRenowned : BaseRenowned
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп знаменитого Тикитави";
     public override string DefaultName => "Тикитави";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

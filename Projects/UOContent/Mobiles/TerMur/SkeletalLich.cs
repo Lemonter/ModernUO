@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// here. SetWeaponAbility converted to a GetWeaponAbility()
 /// override.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a skeletal corpse")]
 public partial class SkeletalLich : BaseCreature
 {
     [Constructible]
@@ -49,6 +48,7 @@ public partial class SkeletalLich : BaseCreature
         Karma = -6000;
     }
 
+    public override string CorpseName => "труп скелета";
     public override string DefaultName => "скелет-лич";
 
     public override bool BleedImmune => true;

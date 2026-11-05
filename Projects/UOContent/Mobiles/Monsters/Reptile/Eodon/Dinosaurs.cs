@@ -1,16 +1,17 @@
 using ModernUO.Serialization;
+using Server.Items;
 
 namespace Server.Mobiles;
 
 // Ported from real OSI/ServUO content (github.com/ServUO/ServUO, Scripts/Mobiles/Normal/*.cs
-// and Scripts/Quests/Eodon/Valley of One Quest/Creatures.cs) — an earlier search of this repo's
-// tree missed these files due to a grep pattern bug (see session notes), which led to an
-// original from-scratch bestiary being written first; this replaces that with the real thing.
-// Simplifications: RunUO-era `SetWeaponAbility`/`SetSpecialAbility`/`SetAreaEffect`/
-// `SetMagicalAbility` creature special-move framework doesn't exist in this codebase (only the
-// player-facing WeaponAbility system does), so those calls are dropped; `AttacksFocus`,
+// and Scripts/Quests/Eodon/Valley of One Quest/Creatures.cs).
+// ServUO's per-creature weapon abilities come back through GetWeaponAbility; where the original
+// registered several, one is picked at random per swing, which is exactly what ServUO's ability
+// profile did. Its SetSpecialAbility/SetAreaEffect registrations map onto the monster-ability
+// framework: GraspingClaw and TailSwipe keep their names, LifeLeech becomes DrainLifeAttack, and
+// AreaEffect.PoisonBreath becomes PoisonGasAreaAttack. `AttacksFocus`,
 // `IsChampionSpawn`/`SetToChampionSpawn`, `DragonBlood`, and TRex's elaborate "freeze wall"
-// OnThink spectacle (MovementPath-based, RunUO-era `IPooledEnumerable`) are dropped too —
+// OnThink spectacle (MovementPath-based, RunUO-era `IPooledEnumerable`) are dropped —
 // all flavor/rare-mechanic loss, not core combat stats.
 [SerializationGenerator(0, false)]
 public partial class Anchisaur : BaseCreature
@@ -50,6 +51,12 @@ public partial class Anchisaur : BaseCreature
     }
 
     public override string CorpseName => "труп анхизавра";
+
+    public override WeaponAbility GetWeaponAbility() => Utility.Random(2) switch
+    {
+        0 => WeaponAbility.Disarm,
+        _ => WeaponAbility.ParalyzingBlow
+    };
     public override int Meat => 6;
     public override MeatType MeatType => MeatType.Ribs;
     public override int Hides => 11;
@@ -97,6 +104,12 @@ public partial class Archaeosaurus : BaseCreature
     }
 
     public override string CorpseName => "труп археозавра";
+
+    public override WeaponAbility GetWeaponAbility() => Utility.Random(2) switch
+    {
+        0 => WeaponAbility.BleedAttack,
+        _ => WeaponAbility.TalonStrike
+    };
     public override int Meat => 1;
     public override MeatType MeatType => MeatType.Ribs;
     public override int Hides => 7;
@@ -147,6 +160,16 @@ public partial class Dimetrosaur : BaseCreature
     }
 
     public override string CorpseName => "труп диметрозавра";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.PoisonGasAreaAttack];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
+
+    public override WeaponAbility GetWeaponAbility() => Utility.Random(2) switch
+    {
+        0 => WeaponAbility.MortalStrike,
+        _ => WeaponAbility.Dismount
+    };
 
     public override bool CanAngerOnTame => true;
     public override bool StatLossAfterTame => true;
@@ -201,6 +224,12 @@ public partial class Gallusaurus : BaseCreature
     }
 
     public override string CorpseName => "труп галлюзавра";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.GraspingClaw];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
+
+    public override WeaponAbility GetWeaponAbility() => WeaponAbility.Block;
     public override int Meat => 3;
     public override MeatType MeatType => MeatType.Ribs;
     public override bool CanAngerOnTame => true;
@@ -305,6 +334,16 @@ public partial class Saurosaurus : BaseCreature
 
     public override string CorpseName => "труп заврозавра";
 
+    private static readonly MonsterAbility[] _abilities =
+    [
+        MonsterAbilities.TailSwipe,
+        MonsterAbilities.DrainLifeAttack
+    ];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
+
+    public override WeaponAbility GetWeaponAbility() => WeaponAbility.ConcussionBlow;
+
     public override bool CanAngerOnTame => true;
     public override bool StatLossAfterTame => true;
     public override int Meat => 5;
@@ -355,6 +394,13 @@ public partial class Allosaurus : BaseCreature
     }
 
     public override string CorpseName => "труп аллозавра";
+
+    public override WeaponAbility GetWeaponAbility() => Utility.Random(3) switch
+    {
+        0 => WeaponAbility.ArmorPierce,
+        1 => WeaponAbility.CrushingBlow,
+        _ => WeaponAbility.Disarm
+    };
     public override int Meat => 3;
     public override MeatType MeatType => MeatType.Ribs;
     public override int Hides => 11;
@@ -404,6 +450,12 @@ public partial class TRex : BaseCreature
     }
 
     public override string CorpseName => "труп тираннозавра";
+
+    private static readonly MonsterAbility[] _abilities = [MonsterAbilities.TailSwipe];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
+
+    public override WeaponAbility GetWeaponAbility() => WeaponAbility.ArmorIgnore;
 
     public override bool AutoDispel => true;
     public override Poison PoisonImmune => Poison.Lethal;

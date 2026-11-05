@@ -93,7 +93,7 @@ public static class MahaonSkillTreePackets
         writer.Dispose();
     }
 
-    private static void WriteShortUtf8(ref SpanWriter writer, string value)
+    internal static void WriteShortUtf8(ref SpanWriter writer, string value)
     {
         var byteCount = Encoding.UTF8.GetByteCount(value);
 
@@ -107,7 +107,7 @@ public static class MahaonSkillTreePackets
         writer.Write(value, Encoding.UTF8);
     }
 
-    private static void WriteLongUtf8(ref SpanWriter writer, string value)
+    internal static void WriteLongUtf8(ref SpanWriter writer, string value)
     {
         var byteCount = Encoding.UTF8.GetByteCount(value);
 

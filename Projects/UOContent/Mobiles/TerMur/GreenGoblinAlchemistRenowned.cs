@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 
 namespace Server.Mobiles;
@@ -8,7 +8,6 @@ namespace Server.Mobiles;
 /// exist anywhere in this codebase — dropped, leaving an empty list. AllureImmune dropped (no
 /// such virtual here).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Green Goblin Alchemist [Renowned] corpse")]
 public partial class GreenGoblinAlchemistRenowned : BaseRenowned
 {
     [Constructible]
@@ -42,6 +41,7 @@ public partial class GreenGoblinAlchemistRenowned : BaseRenowned
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп знаменитого зелёного гоблина-алхимика";
     public override string DefaultName => "зелёный гоблин-алхимик";
 
     public override Type[] UniqueSAList => Array.Empty<Type>();

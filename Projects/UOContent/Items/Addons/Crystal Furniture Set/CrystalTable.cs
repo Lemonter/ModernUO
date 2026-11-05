@@ -1,0 +1,74 @@
+using ModernUO.Serialization;
+using System;
+using Server.Gumps;
+
+namespace Server.Items;
+
+/// <summary>
+///     Ported from ServUO (Scripts/Items/Addons/Crystal Furniture Set/CrystalTable.cs).
+/// </summary>
+[SerializationGenerator(0, false)]
+public partial class CrystalTableAddon : BaseAddon
+{
+    public CrystalTableAddon(DirectionType type)
+    {
+        switch (type)
+        {
+            case DirectionType.South:
+                AddComponent(new LocalizedAddonComponent(0x3607, 1076673), 1, 0, 0);
+                AddComponent(new LocalizedAddonComponent(0x3608, 1076673), 0, 0, 0);
+                break;
+            case DirectionType.East:
+                AddComponent(new LocalizedAddonComponent(0x3605, 1076673), 0, 1, 0);
+                AddComponent(new LocalizedAddonComponent(0x3606, 1076673), 0, 0, 0);
+                break;
+        }
+    }
+
+    public override BaseAddonDeed Deed => new CrystalTableDeed();
+}
+
+[SerializationGenerator(0, false)]
+public partial class CrystalTableDeed : BaseAddonDeed, IRewardOption
+{
+    public override int LabelNumber => 1076673; // Crystal Table
+
+    public override BaseAddon Addon => new CrystalTableAddon(_Direction);
+
+    private DirectionType _Direction;
+
+    [Constructible]
+    public CrystalTableDeed()
+        : base()
+    {
+        LootType = LootType.Blessed;
+        Hue = 1173;
+    }
+
+    public void GetOptions(RewardOptionList list)
+    {
+        list.Add((int)DirectionType.South, 1075386); // South
+        list.Add((int)DirectionType.East, 1075387); // East
+    }
+
+    public void OnOptionSelected(Mobile from, int choice)
+    {
+        _Direction = (DirectionType)choice;
+
+        if (!Deleted)
+            base.OnDoubleClick(from);
+    }
+
+    public override void OnDoubleClick(Mobile from)
+    {
+        if (IsChildOf(from.Backpack))
+        {
+            from.CloseGump<RewardOptionGump>();
+            RewardOptionGump.DisplayTo(from, this, 1076727); // Please select your crystal table position
+        }
+        else
+        {
+            from.SendLocalizedMessage(1062334); // This item must be in your backpack to be used.
+        }
+    }
+}

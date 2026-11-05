@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -7,7 +7,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ChickenLizard.cs). LootPack.LootItem&lt;T&gt;
 /// doesn't exist here — converted to a chance-based OnDeath drop (see WolfSpider.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a chicken lizard corpse")]
 public partial class ChickenLizard : BaseCreature
 {
     [SerializableField(0)]
@@ -43,6 +42,7 @@ public partial class ChickenLizard : BaseCreature
         MinTameSkill = 0.0;
     }
 
+    public override string CorpseName => "труп куриной ящерицы";
     public override string DefaultName => "куриная ящерица";
 
     public override void OnDeath(Container c)

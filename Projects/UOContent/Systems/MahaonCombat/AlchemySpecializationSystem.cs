@@ -14,7 +14,7 @@ namespace Server.Systems.MahaonCombat;
 /// </summary>
 public static class AlchemySpecializationSystem
 {
-    private static readonly Dictionary<Mobile, double> Value = new();
+    private static readonly ProgressTable Value = new("branch:alchemy");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -45,6 +45,7 @@ public static class AlchemySpecializationSystem
             Value[from] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuSpecializationName, newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, "craft:alchemy", current, newValue);
         }
 
         var value = GetValue(from);

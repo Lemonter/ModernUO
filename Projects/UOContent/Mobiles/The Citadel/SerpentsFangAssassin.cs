@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -9,7 +9,6 @@ namespace Server.Mobiles;
 /// SetWearable helper in this codebase). ShowFameTitle dropped — no such override exists
 /// on BaseCreature here.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a black order assassin corpse")]
 public partial class SerpentsFangAssassin : BaseCreature
 {
     [Constructible]
@@ -62,6 +61,7 @@ public partial class SerpentsFangAssassin : BaseCreature
         Karma = -13000;
     }
 
+    public override string CorpseName => "труп убийцы Чёрного ордена";
     public override string DefaultName => "убийца Чёрного ордена";
 
     public override bool AlwaysMurderer => true;

@@ -1,10 +1,9 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 
 namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ClanRC.cs).</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clan ribbon courtier corpse")]
 public partial class ClanRibbonCourtier : BaseCreature
 {
     [Constructible]
@@ -38,6 +37,7 @@ public partial class ClanRibbonCourtier : BaseCreature
         Karma = -1500;
     }
 
+    public override string CorpseName => "труп придворного клана Лента";
     public override string DefaultName => "придворный клана Лента";
 
     public override bool CanRummageCorpses => true;

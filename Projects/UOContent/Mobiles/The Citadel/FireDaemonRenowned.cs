@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -6,10 +6,9 @@ namespace Server.Mobiles;
 
 /// <summary>Ported from ServUO (Scripts/Mobiles/Named/FireDaemonRenowned.cs) — Citadel
 /// "Renowned" tier fire daemon; see BaseRenowned for the artifact-award mechanic.
-/// SetWeaponAbility(x) converted to a GetWeaponAbility() override — see this session's
-/// other ports for why (no SetWeaponAbility helper in this codebase).</summary>
+/// ServUO's <c>SetWeaponAbility(ConcussionBlow)</c> comes back through
+/// <see cref="GetWeaponAbility" />.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("Fire Daemon [Renowned] corpse")]
 public partial class FireDaemonRenowned : BaseRenowned
 {
     [Constructible]
@@ -51,6 +50,7 @@ public partial class FireDaemonRenowned : BaseRenowned
         Karma = -10000;
     }
 
+    public override string CorpseName => "труп знаменитого огненного демона";
     public override string DefaultName => "огненный демон";
 
     public override WeaponAbility GetWeaponAbility() => WeaponAbility.ConcussionBlow;

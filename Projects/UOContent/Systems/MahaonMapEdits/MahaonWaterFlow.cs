@@ -42,9 +42,6 @@ public static class MahaonWaterFlow
     /// <summary>Предохранитель: столько тайлов за один пересчёт мы согласны залить.</summary>
     private const int MaxFlooded = 4000;
 
-    /// <summary>Слово, с которого начинается причина: по нему своя вода отличается от речной.</summary>
-    public const string FlowTag = "разлив";
-
     /// <summary>Полупрозрачная вода-статика нашей тайлдаты. Высота у всех ноль.</summary>
     private static readonly int[] WaterStatics =
     {
@@ -114,37 +111,68 @@ public static class MahaonWaterFlow
     }
 
     /// <summary>
-    ///     Где в этой области стоит НАША вода. Одним проходом по журналу: у каждой правки
-    ///     есть причина, и по последней правке с нашей пометкой видно, налили мы тут или
-    ///     убрали.
+    ///     Где в этой области стоит НАША вода — то есть та, которой в исходном мире не было.
+    ///
+    ///     Раньше это выяснялось проходом по журналу правок: у каждой записи была пометка,
+    ///     и по последней записи с нашей было видно, налили мы тут или убрали. Проход был
+    ///     по ВСЕМУ журналу и повторялся на каждый взмах лопаты, так что копка замедлялась
+    ///     тем сильнее, чем больше уже выкопано.
+    ///
+    ///     Теперь вопрос решается сравнением двух миров, которые и так хранятся: водяная
+    ///     статика, которой нет в слепке «как было», — наша. Это и дешевле, и честнее:
+    ///     прежний ответ зависел от того, какие слова написали в причине правки.
+    ///
+    ///     Текучую воду (MahaonFluids) отличаем по её собственному списку клеток: графика у
+    ///     неё та же, и без этого разлив осушал бы ручей на первом же пересчёте.
     /// </summary>
     private static Dictionary<(int X, int Y), int> Ours(Map map, int x0, int y0, int x1, int y1)
     {
-        var last = new Dictionary<(int X, int Y), MapEditEntry>();
-
-        foreach (var e in MahaonMapEdits.Entries)
-        {
-            if (e.MapId != map.MapID || e.X < x0 || e.X > x1 || e.Y < y0 || e.Y > y1 ||
-                e.Kind == MapEditKind.SetLand ||
-                !e.Reason.StartsWith(FlowTag, StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            last[(e.X, e.Y)] = e;
-        }
-
         var ours = new Dictionary<(int X, int Y), int>();
 
-        foreach (var (key, entry) in last)
+        for (var x = x0; x <= x1; x++)
         {
-            if (entry.Kind == MapEditKind.AddStatic)
+            for (var y = y0; y <= y1; y++)
             {
-                ours[key] = entry.Z;
+                if (!MahaonMapEdits.IsChanged(map, x, y) || MahaonFluids.Holds(map, x, y))
+                {
+                    continue;
+                }
+
+                foreach (var s in MahaonMapEdits.StaticsAt(map, x, y))
+                {
+                    if (!IsWaterStatic(s.Graphic) || WasThereBefore(map, x, y, s))
+                    {
+                        continue;
+                    }
+
+                    if (!ours.TryGetValue((x, y), out var have) || s.Z > have)
+                    {
+                        ours[(x, y)] = s.Z;
+                    }
+                }
             }
         }
 
         return ours;
+    }
+
+    /// <summary>Стоял ли этот самый статик здесь изначально.</summary>
+    private static bool WasThereBefore(Map map, int x, int y, MapStatic s)
+    {
+        if (!MahaonMapEdits.TryGetOriginalStatics(map.MapID, MahaonMapEdits.BlockIdFor(map, x, y), out var before))
+        {
+            return false;
+        }
+
+        foreach (var o in before)
+        {
+            if (o.X == s.X && o.Y == s.Y && o.Graphic == s.Graphic && o.Z == s.Z)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -269,7 +297,7 @@ public static class MahaonWaterFlow
                     Drain(map, x, y);
                 }
 
-                MahaonMapEdits.AddStatic(map, x, y, z, RandomWaterStatic(), 0, FlowTag);
+                MahaonMapEdits.AddStatic(map, x, y, z, RandomWaterStatic(), 0);
                 changed++;
             }
 
@@ -302,8 +330,135 @@ public static class MahaonWaterFlow
         {
             if (IsWaterStatic(s.Graphic))
             {
-                MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic, FlowTag);
+                MahaonMapEdits.RemoveStatics(map, x, y, s.Graphic);
             }
         }
+    }
+    // ---- Почему тут сухо -------------------------------------------------------------
+
+    /// <summary>Ближайшая вода любого рода и её уровень. distance — по Чебышёву, −1 если нет.</summary>
+    public static bool NearestWater(Map map, int x, int y, int look, out int level, out int distance)
+    {
+        level = 0;
+        distance = -1;
+
+        if (map == null || map == Map.Internal)
+        {
+            return false;
+        }
+
+        for (var nx = Math.Max(0, x - look); nx <= Math.Min(map.Width - 1, x + look); nx++)
+        {
+            for (var ny = Math.Max(0, y - look); ny <= Math.Min(map.Height - 1, y + look); ny++)
+            {
+                if (nx == x && ny == y || SurfaceZ(map, nx, ny) is not { } found)
+                {
+                    continue;
+                }
+
+                var d = Math.Max(Math.Abs(nx - x), Math.Abs(ny - y));
+
+                if (distance < 0 || d < distance)
+                {
+                    distance = d;
+                    level = found;
+                }
+            }
+        }
+
+        return distance >= 0;
+    }
+
+    /// <summary>
+    ///     Докуда дойдёт вода и что её держит.
+    ///
+    ///     Отвечает на единственный вопрос, который задают этой системе: почему в яме
+    ///     сухо. Считает ТЕМ ЖЕ обходом, что и сам разлив, — иначе объяснение и поведение
+    ///     разошлись бы, и команда уверяла бы, что всё хорошо, пока вода не идёт.
+    /// </summary>
+    public static bool Explain(Map map, int tx, int ty, out string reason)
+    {
+        reason = "здесь не считается";
+
+        if (map == null || map == Map.Internal)
+        {
+            return false;
+        }
+
+        var x0 = Math.Max(0, tx - Reach);
+        var y0 = Math.Max(0, ty - Reach);
+        var x1 = Math.Min(map.Width - 1, tx + Reach);
+        var y1 = Math.Min(map.Height - 1, ty + Reach);
+
+        var ours = Ours(map, x0, y0, x1, y1);
+        var flooded = Spread(map, x0, y0, x1, y1, ours);
+
+        if (IsFlooded(map, tx, ty) || flooded.ContainsKey((tx, ty)))
+        {
+            reason = "вода сюда доходит";
+            return true;
+        }
+
+        // Кромка: ближайший к цели тайл, до которого вода дошла. Сперва среди залитых —
+        // это и есть голова канавы; если не залито ничего, берём сам источник.
+        (int X, int Y, int Z)? edge = null;
+        var best = int.MaxValue;
+
+        foreach (var ((fx, fy), fz) in flooded)
+        {
+            var d = Math.Max(Math.Abs(fx - tx), Math.Abs(fy - ty));
+
+            if (d < best)
+            {
+                best = d;
+                edge = (fx, fy, fz);
+            }
+        }
+
+        if (edge == null)
+        {
+            for (var x = x0; x <= x1; x++)
+            {
+                for (var y = y0; y <= y1; y++)
+                {
+                    if (SurfaceZ(map, x, y) is not { } sz)
+                    {
+                        continue;
+                    }
+
+                    var d = Math.Max(Math.Abs(x - tx), Math.Abs(y - ty));
+
+                    if (d < best)
+                    {
+                        best = d;
+                        edge = (x, y, sz);
+                    }
+                }
+            }
+        }
+
+        if (edge is not { } stop)
+        {
+            reason = $"воды в {Reach} тайлах вокруг нет — наливаться нечему";
+            return false;
+        }
+
+        // Что держит: сосед кромки, который ближе к цели и воду не пустил.
+        var bx = stop.X + Math.Sign(tx - stop.X);
+        var by = stop.Y + Math.Sign(ty - stop.Y);
+
+        if (bx < 0 || by < 0 || bx >= map.Width || by >= map.Height)
+        {
+            reason = $"вода стоит на ({stop.X}, {stop.Y}), уровень {stop.Z} — дальше край карты";
+            return false;
+        }
+
+        var bz = MahaonMapEdits.LandAt(map, bx, by).Z;
+
+        reason =
+            $"вода доходит до ({stop.X}, {stop.Y}), уровень {stop.Z}, это в {best} тайлах от цели; " +
+            $"держит ({bx}, {by}): дно {bz}, нужно ниже {stop.Z}";
+
+        return false;
     }
 }

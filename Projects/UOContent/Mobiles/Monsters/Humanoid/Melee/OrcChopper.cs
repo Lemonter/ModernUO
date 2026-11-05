@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 using Server.Misc;
 
@@ -12,7 +12,6 @@ namespace Server.Mobiles;
 /// which are ServUO's pet-training table — the ability comes back through GetWeaponAbility.
 /// TribeType is not part of this codebase either, as with the other orcs already here.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("an orcish corpse")]
 public partial class OrcChopper : BaseCreature
 {
     [Constructible]
@@ -71,6 +70,7 @@ public partial class OrcChopper : BaseCreature
         }
     }
 
+    public override string CorpseName => "труп орка";
     public override string DefaultName => "орк-дровосек";
 
     public override InhumanSpeech SpeechType => InhumanSpeech.Orc;

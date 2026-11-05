@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using ModernUO.Serialization;
+using Server.Engines.CleanUpBritannia;
 using Server.Multis;
 
 namespace Server.Items;
@@ -8,6 +10,9 @@ namespace Server.Items;
 public partial class TrashBarrel : Container, IChoppable
 {
     private Timer _timer;
+
+    // Сдаваемые предметы и их стоимость: очки выдаются при опустошении бочки, как в ServUO.
+    private readonly List<(Mobile From, Item Item, double Points)> _pending = new();
 
     [Constructible]
     public TrashBarrel() : base(0xE77)
@@ -71,6 +76,7 @@ public partial class TrashBarrel : Container, IChoppable
     {
         if (base.OnDragDrop(from, dropped))
         {
+            RecordForCleanup(from, dropped);
             InvalidateContents(from);
             return true;
         }
@@ -82,11 +88,27 @@ public partial class TrashBarrel : Container, IChoppable
     {
         if (base.OnDragDropInto(from, item, p))
         {
+            RecordForCleanup(from, item);
             InvalidateContents(from);
             return true;
         }
 
         return false;
+    }
+
+    private void RecordForCleanup(Mobile from, Item item)
+    {
+        if (!CleanUpBritanniaData.Enabled)
+        {
+            return;
+        }
+
+        var points = TrashTurnIn.Collect(item);
+
+        if (points > 0)
+        {
+            _pending.Add((from, item, points));
+        }
     }
 
     public void Empty(int message)
@@ -96,6 +118,8 @@ public partial class TrashBarrel : Container, IChoppable
         if (items.Count > 0)
         {
             PublicOverheadMessage(MessageType.Regular, 0x3B2, message);
+
+            TrashTurnIn.AwardPending(this, _pending);
 
             for (var i = items.Count - 1; i >= 0; --i)
             {
@@ -107,6 +131,8 @@ public partial class TrashBarrel : Container, IChoppable
                 items[i].Delete();
             }
         }
+
+        _pending.Clear();
 
         _timer?.Stop();
         _timer = null;

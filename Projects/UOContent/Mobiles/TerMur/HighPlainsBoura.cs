@@ -4,11 +4,11 @@ using Server.Network;
 
 namespace Server.Mobiles;
 
-/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/HighPlainsBoura.cs).
-/// SetSpecialAbility dropped (see Rotworm.cs). The fur and dragon-blood carving it wanted has
+/// <summary>Ported from ServUO (Scripts/Mobiles/Normal/HighPlainsBoura.cs). ServUO's
+/// <c>SetSpecialAbility(TailSwipe)</c> and <c>SetSpecialAbility(ColossalBlow)</c> come through
+/// <see cref="GetMonsterAbilities" />. The fur and dragon-blood carving it wanted has
 /// since been built (Items/Resources/Fur.cs, BaseCreature.OnCarve) and is restored.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a boura corpse")]
 public partial class HighPlainsBoura : BaseCreature, ICarvable
 {
     [SerializableField(0)]
@@ -49,7 +49,16 @@ public partial class HighPlainsBoura : BaseCreature, ICarvable
         Karma = -5000;
     }
 
+    public override string CorpseName => "труп боуры";
     public override string DefaultName => "боура высоких равнин";
+
+    private static readonly MonsterAbility[] _abilities =
+    [
+        MonsterAbilities.TailSwipe,
+        MonsterAbilities.ColossalBlow
+    ];
+
+    public override MonsterAbility[] GetMonsterAbilities() => _abilities;
 
     public override int Meat => 10;
     public override int Hides => 22;

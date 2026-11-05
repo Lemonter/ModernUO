@@ -29,7 +29,7 @@ public enum WeaponCategory : byte
 /// </summary>
 public static class WeaponStyleSystem
 {
-    private static readonly Dictionary<(Mobile, WeaponCategory, byte), double> StyleValue = new();
+    private static readonly ProgressTable<WeaponCategory, byte> StyleValue = new("branch:style");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -54,12 +54,64 @@ public static class WeaponStyleSystem
         _                   => null
     };
 
-    /// <summary>Style is no longer picked directly — it's derived from whichever
-    /// HitLocationSystem stance the player is currently holding ("стиль теперь идёт от
-    /// места удара"). No favored-location match for the current stance (nothing chosen
-    /// yet, aiming Head, or Tactics dropped below the zone's requirement) falls back to 0,
-    /// the baseline style.</summary>
+    /// <summary>Сколько стилей у каждого вида оружия: 0 — классический, 1–6 — именные.</summary>
+    public const int StyleCount = 7;
+
+    private static string ChoiceTrack(WeaponCategory category) => $"choice:style/{category}";
+
+    /// <summary>
+    ///     Активный стиль — тот, что выбрал игрок, отдельно от места удара.
+    ///
+    ///     ---- Как было ----
+    ///
+    ///     По прежней договорённости («стиль теперь идёт от места удара») стиль выводился из
+    ///     выбранного места: целишься в шею — у тебя стиль, которому шея любимое место.
+    ///     Теперь решено иначе: стиль и место — два независимых выбора, стиль даёт свою плюшку
+    ///     и платит за неё сам (COMBAT-PROGRESSION.md, раздел 7.1).
+    ///
+    ///     ---- Переезд ----
+    ///
+    ///     Выбор хранится в общем хранилище (MahaonProgress, дорожка «choice:style/вид»).
+    ///     У того, кто ещё ничего не выбирал, при первом обращении записывается ровно тот стиль,
+    ///     который у него и так получался от места удара. Так обновление ничего не меняет у
+    ///     игрока молча: дальше стиль просто перестаёт ходить за местом.
+    /// </summary>
     public static byte GetActiveStyle(Mobile m, WeaponCategory category)
+    {
+        if (m == null)
+        {
+            return 0;
+        }
+
+        var track = ChoiceTrack(category);
+
+        if (MahaonProgress.TryGet(m, track, out var chosen))
+        {
+            return chosen >= 0 && chosen < StyleCount ? (byte)chosen : (byte)0;
+        }
+
+        var legacy = LegacyStyleFromLocation(m, category);
+        MahaonProgress.Set(m, track, legacy);
+
+        return legacy;
+    }
+
+    /// <summary>Выбрать стиль. Номер вне 0..6 — отказ.</summary>
+    public static bool SetActiveStyle(Mobile m, WeaponCategory category, byte style)
+    {
+        if (m == null || style >= StyleCount)
+        {
+            return false;
+        }
+
+        MahaonProgress.Set(m, ChoiceTrack(category), style);
+        MahaonSkillTree.NotifyChanged(m);
+
+        return true;
+    }
+
+    /// <summary>Каким был бы стиль по старому правилу — нужен только для переезда.</summary>
+    private static byte LegacyStyleFromLocation(Mobile m, WeaponCategory category)
     {
         var location = HitLocationSystem.GetChosenLocation(m);
 
@@ -72,6 +124,18 @@ public static class WeaponStyleSystem
         return 0;
     }
 
+    /// <summary>Ванильный навык, на котором стоит этот вид оружия.</summary>
+    public static SkillName SkillOf(WeaponCategory category) => category switch
+    {
+        WeaponCategory.Wrestling => SkillName.Wrestling,
+        WeaponCategory.Swords    => SkillName.Swords,
+        WeaponCategory.Macing    => SkillName.Macing,
+        WeaponCategory.Fencing   => SkillName.Fencing,
+        WeaponCategory.Archery   => SkillName.Archery,
+        WeaponCategory.Throwing  => SkillName.Throwing,
+        _                        => SkillName.Wrestling
+    };
+
     public static double GetValue(Mobile m, WeaponCategory category, byte style)
     {
         // Style 0 ("Классический"/baseline) rides on the REAL underlying vanilla skill
@@ -79,32 +143,17 @@ public static class WeaponStyleSystem
         // tracked the true SkillName.Wrestling value, not a separate counter).
         if (style == 0)
         {
-            var skillName = category switch
-            {
-                WeaponCategory.Wrestling => SkillName.Wrestling,
-                WeaponCategory.Swords    => SkillName.Swords,
-                WeaponCategory.Macing    => SkillName.Macing,
-                WeaponCategory.Fencing   => SkillName.Fencing,
-                WeaponCategory.Archery   => SkillName.Archery,
-                WeaponCategory.Throwing  => SkillName.Throwing,
-                _                        => SkillName.Wrestling
-            };
-
-            return m.Skills[skillName].Value;
+            return m.Skills[SkillOf(category)].Value;
         }
 
         return StyleValue.GetValueOrDefault((m, category, style), 0.0);
     }
 
-    /// <summary>Call right after a successful hit — see BaseWeapon.OnHit's call site.
-    /// Trains whichever style favors the location the attacker actually aimed for this
-    /// swing (via HitLocationSystem's called-shot, already resolved by ConsumeHitBonus
-    /// earlier in OnHit) — NOT whichever style happens to be "active". Deliberately
-    /// decoupled: "active" style only controls the flat BaseBonus/GetDamageBonus for now;
-    /// training comes from where you actually chose to hit, per the shard owner's own
-    /// design ("от выбора места удара качается стиль, связанный с ним"). An unaimed swing
-    /// (no called shot) trains nothing here — the baseline style trains through the
-    /// normal vanilla skill-check path instead.</summary>
+    /// <summary>
+    ///     После удачного удара (зовётся из BaseWeapon.OnHit): шанс прироста ВЫБРАННОГО стиля,
+    ///     тем выше, чем больнее был удар. Раньше качался стиль, чьё любимое место попалось под
+    ///     удар, — пока стиль жил от места удара; теперь стиль выбирают отдельно, и качается он.
+    /// </summary>
     private const double GainChancePerDamage = 0.01;
     private const double MaxExtraGainChance = 0.5;
 
@@ -117,9 +166,12 @@ public static class WeaponStyleSystem
             return;
         }
 
-        var location = HitLocationSystem.GetLastConsumedLocation(attacker);
+        // Качается выбранный стиль. Раньше — тот, чьё любимое место попалось под удар: стиль
+        // жил от места удара, и тренировка шла за ним же.
+        var style = GetActiveStyle(attacker, category.Value);
 
-        if (location == null || !StyleByFavoredLocation.TryGetValue((category.Value, location.Value), out var style))
+        // Классический стиль — это сам навык оружия, его тренирует ванильная проверка навыка.
+        if (style == 0)
         {
             return;
         }
@@ -160,11 +212,10 @@ public static class WeaponStyleSystem
         return percent;
     }
 
-    private static WeaponCategory? CategoryOf(Item weapon) =>
+    public static WeaponCategory? CategoryOf(Item weapon) =>
         weapon is BaseWeapon w ? GetCategory(w.DefSkill) : null;
 
-    /// <summary>Added to BaseWeapon.OnHit's percentageBonus chain — covers every weapon
-    /// category now, not just unarmed.</summary>
+    /// <summary>Ширина: +1% урона за каждые 20 очков в других стилях этого оружия, до 10%.</summary>
     public static int GetDamageBonus(Mobile attacker, Item weapon)
     {
         var category = CategoryOf(weapon);
@@ -174,11 +225,9 @@ public static class WeaponStyleSystem
             return 0;
         }
 
-        var style = GetActiveStyle(attacker, category.Value);
-        var bonus = BaseBonus(category.Value, style);
-        bonus += GetBreadthBonus(attacker, category.Value, style);
-
-        return bonus;
+        // Плюшка и цена самого стиля — вкладом в профиль удара (WeaponStylePerks). Здесь
+        // осталась только «ширина»: очки в других стилях того же оружия.
+        return GetBreadthBonus(attacker, category.Value, GetActiveStyle(attacker, category.Value));
     }
 
     private static int GetBreadthBonus(Mobile m, WeaponCategory category, byte activeStyle)
@@ -198,223 +247,21 @@ public static class WeaponStyleSystem
         return (int)System.Math.Min(BreadthCap, total / BreadthUnitsPerPercent);
     }
 
-    private static int BaseBonus(WeaponCategory category, byte style) => category switch
+    /// <summary>После удачного удара — особые механики стилей (контрудар, выбить оружие,
+    /// задеть соседа, кровь). Зовётся из BaseWeapon.OnHit.</summary>
+    public static void OnAfterHit(Mobile attacker, Mobile defender, Item weapon, int damage)
     {
-        WeaponCategory.Wrestling => style switch
-        {
-            1 => 10,  // Бокс
-            2 => 20,  // Муай-тай
-            3 => 5,   // Карате
-            4 => -5,  // Айкидо — makes it up via counter-attack
-            5 => 14,  // Самбо
-            6 => 17,  // Греко-римская борьба
-            _ => 0    // Борьба (baseline)
-        },
-        WeaponCategory.Swords => style switch
-        {
-            1 => 15,  // Кендзюцу
-            2 => 8,   // Дуэльный
-            3 => 18,  // Берсерк
-            4 => 12,  // Клинок тени
-            5 => 16,  // Двуручный размах
-            6 => 13,  // Стиль возмездия
-            _ => 0    // Классический
-        },
-        WeaponCategory.Macing => style switch
-        {
-            1 => 16,  // Молот войны
-            2 => 9,   // Цепной
-            3 => 6,   // Оглушающий удар — value is in the disarm proc
-            4 => 14,  // Рунный кузнец
-            5 => 19,  // Палач
-            6 => 15,  // Штурмовой таран
-            _ => 0    // Классический
-        },
-        WeaponCategory.Fencing => style switch
-        {
-            1 => 13,  // Копейщик
-            2 => 8,   // Ассасин — value is in the ambush bonus
-            3 => 17,  // Пронзающий
-            4 => 11,  // Вихрь клинков
-            5 => 10,  // Дуэлянт-фехтовальщик
-            6 => 14,  // Ночной клинок
-            _ => 0    // Классический
-        },
-        WeaponCategory.Archery => style switch
-        {
-            1 => 6,   // Снайпер — value is in the distance bonus
-            2 => 10,  // Шквальный огонь
-            3 => 14,  // Следопыт
-            4 => 12,  // Эльфийская стрельба
-            5 => 15,  // Охотник за головами
-            6 => 13,  // Тёмный лучник
-            _ => 0    // Классический
-        },
-        WeaponCategory.Throwing => style switch
-        {
-            1 => 14,  // Меткий бросок
-            2 => 9,   // Отравленные лезвия
-            3 => 17,  // Шквал клинков
-            4 => 19,  // Смертельный вихрь
-            5 => 7,   // Дальнобойный бросок — value is in the distance bonus, like Archery's Sniper
-            6 => 12,  // Теневой метатель
-            _ => 0    // Классический
-        },
-        _ => 0
-    };
-
-    // Signature mechanics — one per category (matches Aikido's counter-attack from the
-    // original martial-arts-only version). Checked from BaseWeapon.OnHit right after
-    // damage is dealt — see the call site there.
-
-    public static void OnAfterHit(Mobile attacker, Mobile defender, Item weapon)
-    {
-        var category = CategoryOf(weapon);
-
-        if (category == null)
+        if (attacker == null || defender == null || weapon is not BaseWeapon w)
         {
             return;
         }
 
-        switch (category.Value)
-        {
-            case WeaponCategory.Wrestling:
-                TryWrestlingCounter(attacker, defender);
-                break;
-            case WeaponCategory.Macing:
-                TryMacingDisarm(attacker, defender);
-                break;
-        }
+        WeaponStylePerks.OnAfterHit(attacker, defender, w, damage);
     }
 
-    private const double AikidoCounterChance = 0.20;
-
-    private static void TryWrestlingCounter(Mobile attacker, Mobile defender)
-    {
-        if (defender.Weapon is not Fists || GetActiveStyle(defender, WeaponCategory.Wrestling) != 4)
-        {
-            return;
-        }
-
-        if (!defender.Alive || Utility.RandomDouble() > AikidoCounterChance)
-        {
-            return;
-        }
-
-        var damage = Utility.RandomMinMax(4, 10);
-        attacker.Damage(damage, defender);
-        defender.FixedParticles(0x3735, 1, 30, 0x26B8, EffectLayer.Waist);
-        defender.PlaySound(0x23A);
-        defender.PublicOverheadMessage(MessageType.Regular, 0x59, false, "Контрудар!");
-    }
-
-    private const double DisarmChance = 0.12;
-
-    private static void TryMacingDisarm(Mobile attacker, Mobile defender)
-    {
-        if (attacker.Weapon is not BaseWeapon aw || GetCategory(aw.DefSkill) != WeaponCategory.Macing)
-        {
-            return;
-        }
-
-        if (GetActiveStyle(attacker, WeaponCategory.Macing) != 3) // Оглушающий удар
-        {
-            return;
-        }
-
-        if (defender.Weapon is not BaseWeapon || Utility.RandomDouble() > DisarmChance)
-        {
-            return;
-        }
-
-        var weapon = defender.FindItemOnLayer(Layer.OneHanded) ?? defender.FindItemOnLayer(Layer.TwoHanded);
-
-        if (weapon == null || defender.Backpack == null || !defender.Backpack.TryDropItem(defender, weapon, false))
-        {
-            return;
-        }
-
-        attacker.PublicOverheadMessage(MessageType.Regular, 0x59, false, "Оглушающий удар выбивает оружие!");
-        defender.PlaySound(0x3B9);
-    }
-
-    // Ассасин (Fencing style 2) — bonus vs a target this attacker hasn't hit before this
-    // fight. Checked via BaseWeapon.GetDamageBonus chain isn't enough (needs per-pair
-    // state), so this is a separate hook — see the call site in BaseWeapon.OnHit.
-    //
-    // "Before this fight" is approximated as a time window rather than a real combat-
-    // start/end hook (none exists in this codebase to tie into) — a pair that hasn't
-    // traded a hit in AmbushWindow is treated as a fresh engagement again. This used to be
-    // a HashSet that only ever grew (Add, never Remove) — once any pair landed one hit,
-    // the bonus was gone forever for that pair, not per fight, for the rest of the
-    // server's uptime, and every pair that ever fought (including long-deleted monsters)
-    // stayed in the set permanently.
-    private const int AmbushWindowSeconds = 30;
-    private static readonly Dictionary<(Mobile, Mobile), DateTime> LastAmbushHit = new();
-
-    public static int GetAmbushBonus(Mobile attacker, Mobile defender, Item weapon)
-    {
-        if (weapon is not BaseWeapon w || GetCategory(w.DefSkill) != WeaponCategory.Fencing)
-        {
-            return 0;
-        }
-
-        if (GetActiveStyle(attacker, WeaponCategory.Fencing) != 2) // Ассасин
-        {
-            return 0;
-        }
-
-        var key = (attacker, defender);
-
-        if (LastAmbushHit.TryGetValue(key, out var last) &&
-            Core.Now - last < TimeSpan.FromSeconds(AmbushWindowSeconds))
-        {
-            return 0;
-        }
-
-        LastAmbushHit[key] = Core.Now;
-        return 25; // first hit on a fresh target hits noticeably harder
-    }
-
-    // Снайпер (Archery style 1) — the further away the target was when the shot landed,
-    // the bigger the bonus. Capped so point-blank archery isn't heavily penalized, just
-    // not specially rewarded.
-    public static int GetDistanceBonus(Mobile attacker, Mobile defender, Item weapon)
-    {
-        if (weapon is not BaseWeapon w)
-        {
-            return 0;
-        }
-
-        var category = GetCategory(w.DefSkill);
-
-        if (category != WeaponCategory.Archery && category != WeaponCategory.Throwing)
-        {
-            return 0;
-        }
-
-        var sniperStyle = category == WeaponCategory.Archery ? 1 : 5; // Снайпер / Дальнобойный бросок
-
-        if (GetActiveStyle(attacker, category.Value) != sniperStyle)
-        {
-            return 0;
-        }
-
-        var distance = attacker.GetDistanceToSqrt(defender);
-        return (int)System.Math.Min(20, distance * 2.5);
-    }
-
-    // Location affinity — ties into the EXISTING called-shot system (HitLocationSystem)
-    // rather than inventing a parallel mechanic. Each non-baseline style favors one body
-    // slot thematically (Кендзюцу = decisive Neck strikes, Муай-тай = Leg kicks, etc).
-    // Two effects, both keyed off HitLocationSystem.GetLastConsumedLocation (only ever
-    // set when the attacker actually called a shot this swing — passive/unaimed hits get
-    // neither bonus nor penalty from this):
-    //   1. Attacking your OWN favored location = bonus (you're playing to your strength).
-    //   2. Hitting a DEFENDER whose active style favors a DIFFERENT location than where
-    //      you just hit them = extra bonus (their specialization left this zone weaker).
-    // Baseline ("Классический"/style 0) styles have no favored location — balanced,
-    // no bonus either way, matching their role as the safe all-rounder pick.
+    // Любимые места стилей — остались только для переезда: у того, кто ещё не выбирал
+    // стиль, он выводится из выбранного места по старому правилу (LegacyStyleFromLocation).
+    // Бонусов они больше не дают: стиль и место — два независимых выбора (раздел 7.1).
     private static readonly Dictionary<(WeaponCategory, byte), HitLocation> FavoredLocation = new()
     {
         // Рукопашный бой
@@ -484,41 +331,6 @@ public static class WeaponStyleSystem
         return map;
     }
 
-    private const int ExploitWeakZoneBonus = 10;
-
-    // The old attacker-side "hit your own favored zone" bonus is gone — now that style IS
-    // derived from the chosen location (see GetActiveStyle), the attacker's active style
-    // trivially always favors wherever they're aiming, by construction. Keeping it would
-    // just be a second copy of BaseBonus stacked on top of itself for free. The defender-
-    // side check below is still real: it's about the DEFENDER's own stance, independent of
-    // what the attacker chose.
-    public static int GetLocationSynergyBonus(Mobile attacker, Mobile defender, Item weapon)
-    {
-        var location = HitLocationSystem.GetLastConsumedLocation(attacker);
-
-        if (location == null)
-        {
-            return 0; // unaimed swing — no location synergy either way
-        }
-
-        var bonus = 0;
-
-        var defenderCategory = defender.Weapon is Item defenderWeaponItem ? CategoryOf(defenderWeaponItem) : null;
-
-        if (defenderCategory != null)
-        {
-            var defenderStyle = GetActiveStyle(defender, defenderCategory.Value);
-
-            if (FavoredLocation.TryGetValue((defenderCategory.Value, defenderStyle), out var defenderFavored) &&
-                defenderFavored != location)
-            {
-                bonus += ExploitWeakZoneBonus; // defender's specialization doesn't cover this zone
-            }
-        }
-
-        return bonus;
-    }
-
     public static string RuLocationName(HitLocation location) => location switch
     {
         HitLocation.Chest => "грудь",
@@ -579,12 +391,56 @@ public static class WeaponStyleSystem
             _ => style.ToString()
         };
 
-        // Surfacing the favored zone right in the name — the location-synergy bonus above
-        // is invisible/unplannable otherwise. Baseline styles (no entry in the map) show
-        // with no suffix, matching their "balanced, no specialty" role.
-        return FavoredLocation.TryGetValue((category, style), out var loc)
-            ? $"{baseName} ({RuLocationName(loc)})"
-            : baseName;
+        return baseName;
+    }
+
+    /// <summary>
+    ///     Прежнее имя — с любимым местом в скобках («Кендзюцу (шею)»). Под ним лежат уже
+    ///     поднятые свитками потолки; при запуске они переезжают на новое имя (MigrateCaps).
+    /// </summary>
+    private static string LegacyName(WeaponCategory category, byte style) =>
+        FavoredLocation.TryGetValue((category, style), out var loc)
+            ? $"{StyleName(category, style)} ({RuLocationName(loc)})"
+            : StyleName(category, style);
+
+    /// <summary>Потолки стилей, поднятые под старыми именами, — на новые имена.</summary>
+    public static void Initialize()
+    {
+        var moved = 0;
+
+        foreach (var m in World.Mobiles.Values)
+        {
+            if (m is not Mobiles.PlayerMobile)
+            {
+                continue;
+            }
+
+            for (var c = WeaponCategory.Wrestling; c <= WeaponCategory.Throwing; c++)
+            {
+                for (byte s = 1; s < StyleCount; s++)
+                {
+                    var legacy = LegacyName(c, s);
+                    var current = StyleName(c, s);
+
+                    if (legacy == current || !MahaonProgress.TryGet(m, "cap/" + legacy, out var cap))
+                    {
+                        continue;
+                    }
+
+                    if (MahaonMasteryCapSystem.RaiseCap(m, current, cap))
+                    {
+                        moved++;
+                    }
+
+                    MahaonProgress.Set(m, "cap/" + legacy, 0); // переехало — старую запись гасим
+                }
+            }
+        }
+
+        if (moved > 0)
+        {
+            Console.WriteLine($"Стили: потолков переехало на новые имена — {moved}.");
+        }
     }
 
     private sealed class Persistence : GenericPersistence

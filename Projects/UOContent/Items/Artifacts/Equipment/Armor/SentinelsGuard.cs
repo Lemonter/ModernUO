@@ -1,0 +1,36 @@
+using ModernUO.Serialization;
+using System;
+
+namespace Server.Items;
+
+/// <summary>
+///     Ported from ServUO (Scripts/Items/Artifacts/Equipment/Armor/SentinelsGuard.cs).
+/// </summary>
+[SerializationGenerator(0, false)]
+public partial class SentinelsGuard : OrderShield
+{
+    [Constructible]
+    public SentinelsGuard()
+        : base()
+    {
+        Hue = 0x21;
+    }
+
+    public override int LabelNumber => 1079792; // Sentinel's Guard
+
+    public override int ArtifactRarity => 11;
+
+    public override int BasePhysicalResistance => 16;
+
+    public override int BaseFireResistance => 10;
+
+    public override int BaseColdResistance => 10;
+
+    public override int BasePoisonResistance => 5;
+
+    public override int BaseEnergyResistance => 10;
+
+    public override int InitMinHits => 150;
+
+    public override int InitMaxHits => 150;
+}

@@ -16,7 +16,7 @@ namespace Server.Systems.MahaonCombat;
 /// </summary>
 public static class TinkeringSpecializationSystem
 {
-    private static readonly Dictionary<Mobile, double> Value = new();
+    private static readonly ProgressTable Value = new("branch:tinkering");
 
     public const double MaxValue = 100.0;
     private const double GainChance = 0.15;
@@ -47,6 +47,7 @@ public static class TinkeringSpecializationSystem
             Value[from] = newValue;
             MahaonSkillTree.NotifyChanged(from);
             MahaonSkillTree.AnnounceGain(from, RuSpecializationName, newValue - current, newValue);
+            CraftPerks.AnnounceUnlock(from, "craft:tinkering", current, newValue);
         }
 
         var value = GetValue(from);

@@ -24,7 +24,10 @@ public enum FractureLocation
 /// </summary>
 public static class BoneFractureSystem
 {
-    private const double FractureChance = 0.15; // checked once per successful called-shot hit to a fracturable location
+    public const double FractureChance = 0.15; // checked once per successful called-shot hit to a fracturable location
+
+    /// <summary>Может ли это место сломаться — для чека удара.</summary>
+    public static bool CanFracture(HitLocation location) => location is HitLocation.Arms or HitLocation.Legs or HitLocation.Hands;
     private static readonly TimeSpan BaseDuration = TimeSpan.FromSeconds(90);
 
     private class FractureEntry
@@ -39,9 +42,9 @@ public static class BoneFractureSystem
     /// <summary>Call from wherever a called shot successfully lands (see
     /// HitLocationSystem.ConsumeHitBonus) — location must already be Arms/Legs/Hands;
     /// Chest/Neck never fracture.</summary>
-    public static void RollFracture(Mobile victim, HitLocation location)
+    public static void RollFracture(Mobile victim, HitLocation location, Mobile attacker = null)
     {
-        if (location is not (HitLocation.Arms or HitLocation.Legs or HitLocation.Hands))
+        if (victim == null || !victim.Alive || !CanFracture(location))
         {
             return;
         }
@@ -59,6 +62,9 @@ public static class BoneFractureSystem
         };
 
         Apply(victim, fractureLocation);
+
+        // Раньше о переломе узнавал только тот, кому сломали.
+        attacker?.SendMessage(0x22, $"Ты слышишь хруст — {victim.Name}: {RuLocationName(fractureLocation)} сломана.");
     }
 
     private static void Apply(Mobile victim, FractureLocation location)
@@ -79,16 +85,32 @@ public static class BoneFractureSystem
         Active[victim] = entry;
 
         victim.SendMessage(0x22, LocationMessage(location));
+        MahaonStatusEffects.Broadcast(victim, MahaonStatus.Fracture, true, (int)duration.TotalSeconds, (byte)location);
     }
 
     private static void Heal(Mobile victim)
     {
-        if (!Active.Remove(victim))
+        if (!Active.Remove(victim, out var entry))
         {
             return;
         }
 
         victim.SendMessage(0x59, "Перелом наконец сросся.");
+        MahaonStatusEffects.Broadcast(victim, MahaonStatus.Fracture, false, 0, (byte)entry.Location);
+    }
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Mobile, object> LastRunWarning = new();
+
+    /// <summary>«Сломанная нога не даёт бежать» — не чаще раза в 5 секунд.</summary>
+    public static void TellCannotRun(Mobile m)
+    {
+        if (LastRunWarning.TryGetValue(m, out var last) && last is DateTime when && Core.Now - when < TimeSpan.FromSeconds(5))
+        {
+            return;
+        }
+
+        LastRunWarning.AddOrUpdate(m, Core.Now);
+        m.SendMessage(0x22, "Сломанная нога не даёт бежать — иди шагом.");
     }
 
     public static bool HasFracture(Mobile m, FractureLocation location) =>

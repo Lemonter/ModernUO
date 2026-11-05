@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/DragonsFlameGrandMage.cs) — the
 /// Dragon's Flame Sect's leader; drops the key needed for its own quest chest.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a black order grand mage corpse")]
 public partial class DragonsFlameGrandMage : DragonsFlameMage
 {
     [Constructible]
@@ -26,6 +25,7 @@ public partial class DragonsFlameGrandMage : DragonsFlameMage
         Karma = -25000;
     }
 
+    public override string CorpseName => "труп великого мага Чёрного ордена";
     public override string DefaultName => "великий маг Чёрного ордена";
 
     public override void GenerateLoot()

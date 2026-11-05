@@ -1,4 +1,4 @@
-using ModernUO.Serialization;
+﻿using ModernUO.Serialization;
 using Server.Items;
 
 namespace Server.Mobiles;
@@ -6,7 +6,6 @@ namespace Server.Mobiles;
 /// <summary>Ported from ServUO (Scripts/Mobiles/Normal/ClanSSW.cs). SetWeaponAbility
 /// converted to a GetWeaponAbility() override.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a clan scratch savage wolf corpse")]
 public partial class ClanScratchSavageWolf : BaseCreature
 {
     [Constructible]
@@ -41,6 +40,7 @@ public partial class ClanScratchSavageWolf : BaseCreature
         Karma = -3400;
     }
 
+    public override string CorpseName => "труп дикого волка клана Царапина";
     public override string DefaultName => "дикий волк клана Царапина";
 
     public override int Meat => 1;

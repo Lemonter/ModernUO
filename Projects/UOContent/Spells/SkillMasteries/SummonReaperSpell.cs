@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 using Server.Mobiles;
@@ -70,7 +70,6 @@ public class SummonReaperSpell : SkillMasterySpell
     }
 }
 
-[CorpseName("останки жнеца")]
 [SerializationGenerator(0, false)]
 public partial class SummonedReaper : BaseCreature
 {
@@ -119,6 +118,8 @@ public partial class SummonedReaper : BaseCreature
         DispelDifficulty = 91 + caster.Skills[SkillName.Spellweaving].Base * 83 / 5.2;
         _nextAura = Core.TickCount + 3000;
     }
+
+    public override string CorpseName => "останки жнеца";
 
     public override Poison PoisonImmune => Poison.Greater;
     public override bool DisallowAllMoves => true;

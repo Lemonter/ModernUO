@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using ModernUO.Serialization;
 using Server.Items;
 
@@ -13,7 +13,6 @@ namespace Server.Mobiles;
 /// global sweep. Its `msgevery` field is a hardcoded constant it calls configurable — kept as a
 /// real constant, and the "0 disables" branch with it.</summary>
 [SerializationGenerator(0, false)]
-[CorpseName("a corpse of Drelgor the Impaler")]
 public partial class Drelgor : BaseCreature
 {
     private static readonly TimeSpan MessageInterval = TimeSpan.FromMinutes(1.0);
@@ -67,6 +66,7 @@ public partial class Drelgor : BaseCreature
         );
     }
 
+    public override string CorpseName => "труп Дрелгора Пронзателя";
     public override string DefaultName => "Дрелгор Пронзатель";
 
     public override bool BleedImmune => true;
