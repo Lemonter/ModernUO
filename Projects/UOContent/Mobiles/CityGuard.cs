@@ -8,7 +8,7 @@ using Server.Systems.MahaonCities;
 namespace Server.Mobiles;
 
 [SerializationGenerator(1, false)]
-public partial class CityGuard : BaseCreature
+public partial class CityGuard : BaseCreature, Systems.MahaonRaids.IMahaonTownDefender
 {
     // The city keys the guard registry, so it is set once.
     [SerializableField(0, setter: "private")]
@@ -347,7 +347,17 @@ public partial class CityGuard : BaseCreature
 
     public override bool AlwaysMurderer => false;
 
+    // Налётчики: бьём, пока они у ворот; на прорыве к банку стража их уже не держит.
     public override bool IsEnemy(Mobile m) =>
+        Systems.MahaonRaids.MahaonRaidCombat.IsRaidRelated(m)
+            ? Systems.MahaonRaids.MahaonRaidCombat.IsRaiderForGuard(m)
+            : IsCityEnemy(m);
+
+    // Драка с налётчиками — зрелище: удар снимает единицу и никого не добивает.
+    public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
+        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+
+    private bool IsCityEnemy(Mobile m) =>
         (_controllingGuild != null && CityControlSystem.IsHostileToCity(_city, m)) ||
         IsGuardTarget(m) ||
         base.IsEnemy(m);

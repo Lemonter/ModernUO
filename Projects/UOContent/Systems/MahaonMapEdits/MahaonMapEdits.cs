@@ -137,6 +137,32 @@ public sealed class MahaonMapEdits : GenericPersistence
         return removed;
     }
 
+    /// <summary>
+    ///     Убирает один статик — с этой картинкой и на этой высоте. Нужно там, где в одном
+    ///     столбце стоят этажи: та же картинка этажом выше трогаться не должна. Отвечает,
+    ///     нашёлся ли он.
+    /// </summary>
+    public static bool RemoveStatic(Map map, int x, int y, int graphic, int z)
+    {
+        var state = TouchStatics(map, x, y);
+        var ox = (byte)(x & 7);
+        var oy = (byte)(y & 7);
+
+        for (var i = state.Statics.Count - 1; i >= 0; i--)
+        {
+            var s = state.Statics[i];
+
+            if (s.X == ox && s.Y == oy && s.Graphic == graphic && s.Z == z)
+            {
+                state.Statics.RemoveAt(i);
+                Touched(map, x, y);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static void AddStatic(Map map, int x, int y, int z, int graphic, int hue)
     {
         var state = TouchStatics(map, x, y);

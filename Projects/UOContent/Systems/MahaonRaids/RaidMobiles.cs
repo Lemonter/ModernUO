@@ -1,11 +1,16 @@
 using ModernUO.Serialization;
+using Server.Systems.MahaonRaids;
 
 namespace Server.Mobiles;
 
-// -- Bandit raid (base reward) --------------------------------------------------------------
+// Все налётчики ведут себя одинаково (см. RaidDirector/MahaonRaid): идут по маршруту набега,
+// когда ни с кем не дерутся; бьют стражу у ворот, пока не начался прорыв; работают и без
+// игроков рядом — набег идёт, даже если на него никто не смотрит.
+
+// -- Пиратские бароны ---------------------------------------------------------------------
 
 [SerializationGenerator(0, false)]
-public partial class RaidBandit : Brigand, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidBandit : Brigand, IRaidSpawn
 {
     public int RewardMultiplier => 1;
 
@@ -15,15 +20,22 @@ public partial class RaidBandit : Brigand, Systems.MahaonRaids.IRaidSpawn
         Title = "налётчик";
     }
 
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
+    }
+
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
-// -- Pirate raid (base reward; placeholder reusing Brigand stats until a dedicated --
-// -- Pirate creature/graphics set is built) -----------------------------------------
-
 [SerializationGenerator(0, false)]
-public partial class RaidPirate : Brigand, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidPirate : Brigand, IRaidSpawn
 {
     public int RewardMultiplier => 1;
 
@@ -31,17 +43,27 @@ public partial class RaidPirate : Brigand, Systems.MahaonRaids.IRaidSpawn
     public RaidPirate()
     {
         Title = "пират-налётчик";
-        Hue = 0x8A0; // bluish tint to visually distinguish from bandits until real art exists
+        Hue = 0x8A0;
+    }
+
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
     }
 
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
-// -- Undead raid (slightly higher reward) -------------------------------------------
+// -- Некромант ------------------------------------------------------------------------------
 
 [SerializationGenerator(0, false)]
-public partial class RaidSkeleton : Skeleton, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidSkeleton : Skeleton, IRaidSpawn
 {
     public int RewardMultiplier => 2;
 
@@ -50,12 +72,22 @@ public partial class RaidSkeleton : Skeleton, Systems.MahaonRaids.IRaidSpawn
     {
     }
 
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
+    }
+
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
 [SerializationGenerator(0, false)]
-public partial class RaidZombie : Zombie, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidZombie : Zombie, IRaidSpawn
 {
     public int RewardMultiplier => 2;
 
@@ -64,15 +96,49 @@ public partial class RaidZombie : Zombie, Systems.MahaonRaids.IRaidSpawn
     {
     }
 
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
+    }
+
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
-// -- Orc mega-raid ("hundreds of orcs under cover") — base reward, but sheer numbers --
-// -- are the point ------------------------------------------------------------------
+[SerializationGenerator(0, false)]
+public partial class RaidLich : Lich, IRaidSpawn
+{
+    public int RewardMultiplier => 3;
+
+    [Constructible]
+    public RaidLich()
+    {
+        Title = "некромант-налётчик";
+    }
+
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
+    }
+
+    public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+}
+
+// -- Орда -----------------------------------------------------------------------------------
 
 [SerializationGenerator(0, false)]
-public partial class RaidOrc : Orc, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidOrc : Orc, IRaidSpawn
 {
     public int RewardMultiplier => 1;
 
@@ -81,14 +147,24 @@ public partial class RaidOrc : Orc, Systems.MahaonRaids.IRaidSpawn
     {
     }
 
+    public override bool PlayerRangeSensitive => false;
+    public override void OnActionWander() => RaidDirector.OnRaiderWander(this);
+    public override bool IsEnemy(Mobile m) => MahaonRaidCombat.RaiderIsEnemy(this, m) ?? base.IsEnemy(m);
+
+    public override void OnDelete()
+    {
+        RaidDirector.OnRaiderDeleted(this);
+        base.OnDelete();
+    }
+
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
-// -- Dragon raid (x20 reward, per Mahaon's original rule) ---------------------------
+// -- Дракон: в расписание набегов не входит, остался для [add и старых спаунеров ------------
 
 [SerializationGenerator(0, false)]
-public partial class RaidDragon : Dragon, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidDragon : Dragon, IRaidSpawn
 {
     public int RewardMultiplier => 20;
 
@@ -99,23 +175,32 @@ public partial class RaidDragon : Dragon, Systems.MahaonRaids.IRaidSpawn
     }
 
     public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+        base.Damage(MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
 }
 
-// -- Necromancer raid (summons more undead mid-fight via MahaonNecroSummonerAI — those --
-// -- summons count as raid-related too, see MahaonRaidCombat.IsRaidRelated) ---------
+// -- Стража у ворот на время набега ---------------------------------------------------------
 
+/// <summary>Защитник, которого набег ставит у ворот и убирает, когда бой кончился.</summary>
 [SerializationGenerator(0, false)]
-public partial class RaidLich : Lich, Systems.MahaonRaids.IRaidSpawn
+public partial class RaidGateDefender : MahaonTownDefender
 {
-    public int RewardMultiplier => 3;
-
     [Constructible]
-    public RaidLich()
+    public RaidGateDefender()
     {
-        Title = "некромант-налётчик";
+        Name = "стражник у ворот";
     }
 
-    public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false) =>
-        base.Damage(Systems.MahaonRaids.MahaonRaidCombat.CapIfSpectacleFight(from, this, amount), from, informMount, ignoreEvilOmen);
+    public override bool PlayerRangeSensitive => false;
+}
+
+[SerializationGenerator(0, false)]
+public partial class RaidGateDefenderMage : MahaonTownDefenderMage
+{
+    [Constructible]
+    public RaidGateDefenderMage()
+    {
+        Name = "боевой маг у ворот";
+    }
+
+    public override bool PlayerRangeSensitive => false;
 }

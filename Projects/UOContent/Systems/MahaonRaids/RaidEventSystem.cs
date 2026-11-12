@@ -8,11 +8,9 @@ using Server.Systems.MahaonGuard;
 namespace Server.Systems.MahaonRaids;
 
 /// <summary>
-///     Mahaon "Raid" mechanic: every ~12 hours a pack of mobs runs into a city and holds
-///     position there. Killing them grants guard points (no gold — removed per the shard
-///     owner's ask). Dragon raids pay x20. Per the project's "world pauses without the
-///     player" design goal, raids are only rolled while at least one player is online — no
-///     one is progressing/farming while you're away.
+///     Расписание набегов: раз в 10–14 часов (пока кто-то в игре) на случайный город с
+///     готовыми подходами идёт отряд одной из сторон — сам набег ведёт RaidDirector.
+///     Убийство налётчика даёт очки гвардии. Здесь же хранится сила сторон.
 /// </summary>
 public class RaidEventSystem : GenericPersistence
 {
@@ -33,51 +31,6 @@ public class RaidEventSystem : GenericPersistence
 
     private static DateTime _nextRaidTime;
     private static Timer _pollTimer;
-
-    private static readonly List<RaidDefinition> RaidTypes =
-    [
-        new RaidDefinition(
-            "набег бандитов",
-            [typeof(RaidBandit)],
-            countMin: 6,
-            countMax: 10
-        ),
-        new RaidDefinition(
-            "высадка пиратов",
-            [typeof(RaidPirate)],
-            countMin: 6,
-            countMax: 10
-        ),
-        new RaidDefinition(
-            "вторжение нежити",
-            [typeof(RaidSkeleton), typeof(RaidZombie)],
-            countMin: 8,
-            countMax: 14
-        ),
-        new RaidDefinition(
-            "орочья орда",
-            [typeof(RaidOrc)],
-            countMin: 60,
-            countMax: 150 // "hundreds" — start big but not server-melting; tune upward once load-tested
-        ),
-        new RaidDefinition(
-            "атака дракона",
-            [typeof(RaidDragon)],
-            countMin: 1,
-            countMax: 2
-        )
-    ];
-
-    // Candidate city spawn points. Fill in real Mahaon-relevant coordinates as they're decided;
-    // these are stock Felucca town locations as placeholders.
-    private static readonly (Point3D loc, Map map, string cityName)[] RaidLocations =
-    [
-        (new Point3D(1438, 1613, 10), Map.Felucca, "Britain"),
-        (new Point3D(2500, 634, 0), Map.Felucca, "Minoc"),
-        (new Point3D(561, 964, 0), Map.Felucca, "Yew"),
-        (new Point3D(4408, 1173, 0), Map.Felucca, "Moonglow"),
-        (new Point3D(3697, 2218, 20), Map.Felucca, "Magincia")
-    ];
 
     public RaidEventSystem() : base("MahaonRaids", 1)
     {
@@ -142,63 +95,21 @@ public class RaidEventSystem : GenericPersistence
             return;
         }
 
-        SpawnRaid(RaidTypes.RandomElement());
+        var sites = new List<RaidSite>();
+        foreach (var site in RaidSites.All)
+        {
+            if (site.Approaches.Count > 0 && !RaidDirector.IsBusy(site))
+            {
+                sites.Add(site);
+            }
+        }
+
+        if (sites.Count > 0)
+        {
+            RaidDirector.Start(sites.RandomElement());
+        }
+
         _nextRaidTime = Core.Now + RandomInterval();
-    }
-
-    private static void SpawnRaid(RaidDefinition raid)
-    {
-        var (loc, map, cityName) = RaidLocations.RandomElement();
-        var count = Utility.RandomMinMax(raid.CountMin, raid.CountMax);
-
-        for (var i = 0; i < count; i++)
-        {
-            var type = raid.MobTypes.RandomElement();
-
-            if (Activator.CreateInstance(type) is not BaseCreature creature)
-            {
-                continue;
-            }
-
-            // Scatter within a small radius of the target point so they don't all stack
-            // on one tile, but keep them holding the city rather than wandering off.
-            var spawnLoc = FindNearbySpawnPoint(loc, map, 8);
-            creature.MoveToWorld(spawnLoc, map);
-            creature.RangeHome = 6;
-            creature.Home = spawnLoc;
-        }
-
-        RaidAlarm.Raise(map, loc, cityName);
-        BroadcastRaidAlert(raid.Name, cityName);
-    }
-
-    private static Point3D FindNearbySpawnPoint(Point3D center, Map map, int radius)
-    {
-        for (var attempt = 0; attempt < 10; attempt++)
-        {
-            var x = center.X + Utility.RandomMinMax(-radius, radius);
-            var y = center.Y + Utility.RandomMinMax(-radius, radius);
-            var z = map.GetAverageZ(x, y);
-            var candidate = new Point3D(x, y, z);
-
-            if (map.CanSpawnMobile(candidate))
-            {
-                return candidate;
-            }
-        }
-
-        return center;
-    }
-
-    private static void BroadcastRaidAlert(string raidName, string cityName)
-    {
-        foreach (var ns in NetState.Instances)
-        {
-            if (ns.Mobile is PlayerMobile player)
-            {
-                player.SendMessage(0x22, $"Приходит весть: {raidName} обрушился на {cityName}!");
-            }
-        }
     }
 
     /// <summary>
@@ -231,29 +142,33 @@ public class RaidEventSystem : GenericPersistence
 
     public override void Serialize(IGenericWriter writer)
     {
-        writer.WriteEncodedInt(0); // version
+        writer.WriteEncodedInt(1); // version
         writer.Write(_nextRaidTime);
+
+        // v1: сила сторон набегов
+        writer.WriteEncodedInt(RaidDirector.Strength.Length);
+        foreach (var strength in RaidDirector.Strength)
+        {
+            writer.WriteEncodedInt(strength);
+        }
     }
 
     public override void Deserialize(IGenericReader reader)
     {
         var version = reader.ReadEncodedInt();
         _nextRaidTime = reader.ReadDateTime();
-    }
 
-    private readonly struct RaidDefinition
-    {
-        public readonly string Name;
-        public readonly Type[] MobTypes;
-        public readonly int CountMin;
-        public readonly int CountMax;
-
-        public RaidDefinition(string name, Type[] mobTypes, int countMin, int countMax)
+        if (version >= 1)
         {
-            Name = name;
-            MobTypes = mobTypes;
-            CountMin = countMin;
-            CountMax = countMax;
+            var count = reader.ReadEncodedInt();
+            for (var i = 0; i < count; i++)
+            {
+                var strength = reader.ReadEncodedInt();
+                if (i < RaidDirector.Strength.Length)
+                {
+                    RaidDirector.Strength[i] = strength;
+                }
+            }
         }
     }
 }

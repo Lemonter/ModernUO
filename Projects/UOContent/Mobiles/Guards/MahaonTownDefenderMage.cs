@@ -56,7 +56,9 @@ public partial class MahaonTownDefenderMage : BaseCreature, IMahaonTownDefender
     public override int AcquireOnApproachRange => 10;
 
     public override bool IsEnemy(Mobile m) =>
-        m.Alive && m.Murderer && (m as BaseCreature)?.IsInvulnerable != true;
+        MahaonRaidCombat.IsRaidRelated(m)
+            ? MahaonRaidCombat.IsRaiderForGuard(m)
+            : m.Alive && m.Murderer && (m as BaseCreature)?.IsInvulnerable != true;
 
     // Та же логика "спектакля" боя с рейд-мобами, что и у обычного защитника — иначе
     // маг либо мгновенно убивал бы рейдовых мобов заклинаниями, либо не наносил бы им

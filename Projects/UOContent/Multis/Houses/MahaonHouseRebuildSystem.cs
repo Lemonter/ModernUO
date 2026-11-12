@@ -62,6 +62,9 @@ public static class MahaonHouseRebuildSystem
         var fenceRadius = MahaonHouseFenceSystem.GetFenceRadius(oldHouse);
         MahaonHouseFenceSystem.Remove(oldHouse);
 
+        // Подвал тоже уже оплачен — под новым домом он выкапывается заново, по новой площадке.
+        var hadBasement = MahaonHouseBasementSystem.HasBasement(oldHouse);
+
         oldHouse.RemoveKeys(from);
         oldHouse.Delete(); // everything inside — locked down or not — goes with it
 
@@ -88,6 +91,11 @@ public static class MahaonHouseRebuildSystem
         if (fenceRadius > 0)
         {
             MahaonHouseFenceSystem.Construct(newHouse, fenceRadius);
+        }
+
+        if (hadBasement)
+        {
+            MahaonHouseBasementSystem.Build(newHouse);
         }
 
         return $"Дом перестроен. Списано {cost} золота.";

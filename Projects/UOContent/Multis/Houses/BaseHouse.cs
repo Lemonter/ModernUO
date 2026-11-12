@@ -1530,6 +1530,12 @@ namespace Server.Multis
                 return false;
             }
 
+            // Подвал под домом — тоже дом (MahaonHouseBasementSystem).
+            if (p.Z < Z && Systems.MahaonWorld.MahaonHouseBasementSystem.InCellar(this, p))
+            {
+                return true;
+            }
+
             if (this is HouseFoundation && y < mcl.Height - 1 && p.Z >= Z)
             {
                 return true;
@@ -3355,6 +3361,9 @@ namespace Server.Multis
 
             // The fence goes with the house, whatever deleted it.
             Systems.MahaonWorld.MahaonHouseFenceSystem.Remove(this);
+
+            // И подвал; вещи и люди из него поднимаются к порогу.
+            Systems.MahaonWorld.MahaonHouseBasementSystem.OnHouseDeleted(this);
 
             // Invalidate spawn position cache for affected sectors before deletion
             if (Map != null && Map != Map.Internal)

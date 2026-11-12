@@ -7,10 +7,10 @@ namespace Server.Systems.MahaonWorld;
 
 /// <summary>
 ///     Builds/removes a house's fence and tracks the "fenced territory" bonus area it
-///     encloses. The fence line follows the house's real footprint shape (via a Chebyshev
-///     distance transform against BaseHouse.Components — see ComputeContour), not just its
-///     rectangular bounding box, so an L-shaped or irregular house gets a fence that hugs
-///     its actual walls instead of cutting through them.
+///     encloses. The fence follows the ground: it stops at cliffs, mountains, water and
+///     neighbouring houses and runs along them, each piece at its own tile's height, and the
+///     trees standing on its line are cleared (MahaonFenceClearing) until the fence comes down. The ring is a distance transform from the house's plot
+///     (see ComputeContour) — a straight rectangle on flat ground.
 ///
 ///     Only one fence per house at a time — building a new radius removes the old one
 ///     first. The registry below (ByHouse) is memory-only, same pattern as
@@ -207,7 +207,8 @@ public static class MahaonHouseFenceSystem
     }
 
     /// <summary>Puts up the fence without charging: <see cref="Build"/> after payment, and a
-    /// rebuilt house getting back the fence its owner already paid for.</summary>
+    /// rebuilt house getting back the fence its owner already paid for. Деревья на линии ограды
+    /// убираются (MahaonFenceClearing) и вернутся, когда ограду снимут или дом снесут.</summary>
     internal static bool Construct(BaseHouse house, int radius)
     {
         Remove(house); // one fence at a time — clear whatever was there first (already paid for is already paid for)
@@ -216,43 +217,101 @@ public static class MahaonHouseFenceSystem
 
         if (ringPlacements.Count == 0)
         {
+            logger.Warning(
+                "Fence around {House} at {Location}: no ring (cells refused — land {Land}, obstacle {Obstacle}, house {OtherHouse}, step {Step})",
+                house.Serial, house.Location, _refusedLand, _refusedObstacle, _refusedHouse, _refusedStep
+            );
             return false;
         }
 
         var gateSpot = PickGateSpot(house, ringPlacements);
+        var clearing = new MahaonFenceClearing(house, house.Map);
 
-        foreach (var (pos, kind) in ringPlacements)
+        Systems.MahaonMapEdits.MahaonMapEdits.BeginBatch();
+        try
         {
-            // Don't fence into a neighboring house's plot — skip any ring tile that
-            // already belongs to a different house.
-            var loc = new Point3D(pos.X, pos.Y, house.Location.Z);
-            var thereAlready = BaseHouse.FindHouseAt(loc, house.Map, 16);
-            if (thereAlready != null && thereAlready != house)
+            foreach (var (pos, kind, z) in ringPlacements)
             {
-                continue;
-            }
+                // Don't fence into a neighboring house's plot — skip any ring tile that
+                // already belongs to a different house.
+                var loc = new Point3D(pos.X, pos.Y, z);
+                var thereAlready = BaseHouse.FindHouseAt(loc, house.Map, 16);
+                if (thereAlready != null && thereAlready != house)
+                {
+                    continue;
+                }
 
-            if (pos == gateSpot.pos)
-            {
-                var gate = new MahaonHouseFenceGate(gateSpot.facing, house);
-                gate.MoveToWorld(loc, house.Map);
+                clearing.Clear(pos.X, pos.Y, z);
+
+                if (pos == gateSpot.pos)
+                {
+                    var gate = new MahaonHouseFenceGate(gateSpot.facing, house);
+                    gate.MoveToWorld(loc, house.Map);
+                }
+                else
+                {
+                    var fence = new MahaonHouseFence(kind, house, radius);
+                    fence.MoveToWorld(loc, house.Map);
+                }
             }
-            else
-            {
-                var fence = new MahaonHouseFence(kind, house, radius);
-                fence.MoveToWorld(loc, house.Map);
-            }
+        }
+        finally
+        {
+            Systems.MahaonMapEdits.MahaonMapEdits.EndBatch();
+        }
+
+        if (clearing.IsEmpty)
+        {
+            clearing.Delete();
+        }
+        else
+        {
+            clearing.MoveToWorld(house.Location, Map.Internal);
+            RegisterClearing(clearing);
         }
 
         ByHouse[house] = new Territory { Radius = radius, Map = house.Map, Tiles = territoryTiles };
         return true;
     }
 
+    // ---- Убранные деревья ---------------------------------------------------------------------
+
+    private static readonly Dictionary<BaseHouse, MahaonFenceClearing> Clearings = new();
+
+    internal static void RegisterClearing(MahaonFenceClearing clearing)
+    {
+        if (clearing.House != null)
+        {
+            Clearings[clearing.House] = clearing;
+        }
+    }
+
+    internal static void UnregisterClearing(MahaonFenceClearing clearing)
+    {
+        if (clearing.House != null && Clearings.TryGetValue(clearing.House, out var known) && known == clearing)
+        {
+            Clearings.Remove(clearing.House);
+        }
+    }
+
+    private static void RestoreTrees(BaseHouse house)
+    {
+        if (house != null && Clearings.TryGetValue(house, out var clearing))
+        {
+            Clearings.Remove(house);
+            if (!clearing.Deleted)
+            {
+                clearing.Restore();
+            }
+        }
+    }
+
     // Widest fence ring plus a tile: a fence piece is never further than this from the house.
     private static readonly int FenceReach = AllowedRadii[^1] + 2;
 
     /// <summary>Removes every fence piece (and the gate) belonging to this house — found around
-    /// the house itself, so this also cleans up a fence built in a previous server session.
+    /// the house itself, so this also cleans up a fence built in a previous server session —
+    /// and puts back the trees the fence had cleared.
     /// Called when the house is deleted (demolished, decayed, rebuilt), so no fence outlives it.</summary>
     public static void Remove(BaseHouse house)
     {
@@ -261,6 +320,7 @@ public static class MahaonHouseFenceSystem
             if (house != null)
             {
                 ByHouse.Remove(house);
+                RestoreTrees(house);
             }
 
             return;
@@ -293,6 +353,7 @@ public static class MahaonHouseFenceSystem
         }
 
         ByHouse.Remove(house);
+        RestoreTrees(house);
     }
 
     private static void RegisterTerritory(BaseHouse house, int radius)
@@ -301,23 +362,44 @@ public static class MahaonHouseFenceSystem
         ByHouse[house] = new Territory { Radius = radius, Map = house.Map, Tiles = tiles };
     }
 
+    // Почему волна не пошла дальше — для журнала, когда ограды не вышло вовсе.
+    private static int _refusedLand, _refusedObstacle, _refusedHouse, _refusedStep;
+
+    private static readonly Server.Logging.ILogger logger = Server.Logging.LogFactory.GetLogger(typeof(MahaonHouseFenceSystem));
+
+    // Шаг между соседними клетками, который ещё можно пройти: склон холма — да, обрыв — нет.
+    private const int MaxStep = 12;
+
+    // С площадки дома на землю рядом — дом стоит на фундаменте, ступенька выше.
+    private const int HouseStep = 16;
+
     /// <summary>The heart of the system — an 8-directional (Chebyshev) multi-source
-    /// distance transform from the house's real footprint (BaseHouse.Components, not its
-    /// bounding box), computed on a grid padded by radius+1 in every direction. Cells at
-    /// distance == radius become the fence ring (classified into wall/post pieces by which
-    /// neighboring ring cells they touch); cells at distance &lt;= radius (footprint
-    /// included) become the enclosed "territory" used by the bonus systems.</summary>
-    private static (HashSet<Point2D> territory, List<(Point2D pos, MahaonFenceKind kind)> ring) ComputeContour(
+    /// distance transform from the house's plot, computed on a grid padded by radius+1 in every
+    /// direction.
+    ///
+    /// Рельеф учитывается: волна идёт только по клеткам, куда можно ступить, — не в скалу, не в
+    /// воду, не с обрыва и не на обрыв (перепад больше <see cref="MaxStep"/>), не в чужой дом.
+    /// Поэтому территория упирается в гору или край обрыва, а ограда идёт вдоль такой преграды,
+    /// а не сквозь неё; на ровном месте всё как прежде — ровный прямоугольник.
+    ///
+    /// Ограда — это край территории: её клетки, у которых сосед по стороне уже вне её
+    /// (дальше радиуса или за преградой). Каждая деталь стоит на высоте своей клетки.
+    /// Cells at distance &lt;= radius (plot included) become the enclosed "territory" used by
+    /// the bonus systems.</summary>
+    private static (HashSet<Point2D> territory, List<(Point2D pos, MahaonFenceKind kind, int z)> ring) ComputeContour(
         BaseHouse house, int radius, bool ringOnly = false
     )
     {
+        var map = house.Map;
         var mcl = house.Components;
         var pad = radius + 1;
+        _refusedLand = _refusedObstacle = _refusedHouse = _refusedStep = 0;
         var gridW = mcl.Width + pad * 2;
         var gridH = mcl.Height + pad * 2;
 
-        // dist[x,y] in this padded grid — -1 means "not yet visited".
+        // dist[x,y] in this padded grid — -1 means "not reached"; zs — где на клетке стоят.
         var dist = new int[gridW, gridH];
+        var zs = new int[gridW, gridH];
         for (var x = 0; x < gridW; x++)
         {
             for (var y = 0; y < gridH; y++)
@@ -328,15 +410,9 @@ public static class MahaonHouseFenceSystem
 
         var frontier = new List<(int x, int y)>();
 
-        // Отсчёт идёт от ВСЕЙ площадки дома, а не от занятых тайлов постройки.
-        //
-        // Раньше засев шёл по mcl.Tiles[x][y].Length > 0, то есть по силуэту здания. Силуэт
-        // у мультей рваный — выступы крыльца, свесы крыши, пустоты внутри плана, — и забор
-        // послушно повторял каждую выемку. Отсюда «неровные заборы»: они были не кривые, а
-        // слишком точные.
-        //
-        // Площадка же прямоугольная, поэтому кольцо на равном расстоянии от неё — тоже
-        // ровный прямоугольник, как и ждёшь от ограды усадьбы.
+        // Отсчёт идёт от ВСЕЙ площадки дома, а не от занятых тайлов постройки: силуэт у мультей
+        // рваный (крыльцо, свесы крыши), и забор повторял бы каждую выемку. Площадка же
+        // прямоугольная, и кольцо на равном расстоянии от неё — ровный прямоугольник.
         for (var x = 0; x < mcl.Width; x++)
         {
             for (var y = 0; y < mcl.Height; y++)
@@ -344,12 +420,11 @@ public static class MahaonHouseFenceSystem
                 var gx = x + pad;
                 var gy = y + pad;
                 dist[gx, gy] = 0;
+                zs[gx, gy] = house.Z;
                 frontier.Add((gx, gy));
             }
         }
 
-        // Standard multi-source BFS ring-by-ring — cheap enough here since even a big
-        // castle plot padded by 6 is well under a few thousand cells.
         var current = frontier;
         var d = 0;
 
@@ -360,6 +435,8 @@ public static class MahaonHouseFenceSystem
 
             foreach (var (x, y) in current)
             {
+                var step = dist[x, y] == 0 ? HouseStep : MaxStep;
+
                 for (var dx = -1; dx <= 1; dx++)
                 {
                     for (var dy = -1; dy <= 1; dy++)
@@ -377,7 +454,20 @@ public static class MahaonHouseFenceSystem
                             continue;
                         }
 
+                        var w = ToWorld(house, mcl, pad, nx, ny);
+                        if (map == null || !TryStand(map, house, w.X, w.Y, zs[x, y], out var nz))
+                        {
+                            continue;
+                        }
+
+                        if ((nz - zs[x, y]).Abs() > step)
+                        {
+                            _refusedStep++;
+                            continue; // сюда не ступить отсюда — может, дойдём с другой стороны
+                        }
+
                         dist[nx, ny] = d;
+                        zs[nx, ny] = nz;
                         next.Add((nx, ny));
                     }
                 }
@@ -386,38 +476,79 @@ public static class MahaonHouseFenceSystem
             current = next;
         }
 
-        // "current" now holds every cell at exactly Radius (the last ring BFS reached) —
-        // that's the fence line itself.
+        bool Inside(int x, int y) => x >= 0 && y >= 0 && x < gridW && y < gridH && dist[x, y] >= 0;
+
+        // Край территории: клетка за площадкой дома, у которой сосед по стороне — снаружи.
         var ringSet = new HashSet<Point2D>();
-        foreach (var (x, y) in current)
+        var ringCells = new List<(int x, int y)>();
+        for (var x = 0; x < gridW; x++)
         {
-            ringSet.Add(ToWorld(house, mcl, pad, x, y));
+            for (var y = 0; y < gridH; y++)
+            {
+                if (dist[x, y] < 1)
+                {
+                    continue;
+                }
+
+                if (!Inside(x + 1, y) || !Inside(x - 1, y) || !Inside(x, y + 1) || !Inside(x, y - 1))
+                {
+                    ringSet.Add(ToWorld(house, mcl, pad, x, y));
+                    ringCells.Add((x, y));
+                }
+            }
         }
 
         // Fence art stands on a tile's south or east edge (see MahaonFenceKind), so a piece
         // joins its tile to the WEST or NORTH neighbour: the fence line runs through the
         // south-east corners of the ring tiles and closes at every corner, convex or concave.
-        // A tile with neither neighbour (the north-west corner of a run) gets no piece — the
-        // lines of its neighbours already meet at its corner, as on the original map; a
-        // diagonal step through it stays shut, since a diagonal move needs both sides free.
-        var ringPlacements = new List<(Point2D pos, MahaonFenceKind kind)>();
-        foreach (var (x, y) in current)
+        //
+        // Клетка без соседей с запада и севера, но с соседями с востока и юга — северо-западный
+        // угол прогона: детали ей не нужно, линии соседей сходятся в её углу, как на исходной
+        // карте, а шаг наискосок сквозь неё закрыт — ему нужны свободными обе стороны.
+        // У края вдоль скалы или обрыва бывают и клетки, касающиеся линии только с одной
+        // стороны или углом: им деталь ставится, иначе в ограде осталась бы дыра.
+        var ringPlacements = new List<(Point2D pos, MahaonFenceKind kind, int z)>();
+        foreach (var (x, y) in ringCells)
         {
             var pos = ToWorld(house, mcl, pad, x, y);
 
             var north = ringSet.Contains(new Point2D(pos.X, pos.Y - 1));
             var west = ringSet.Contains(new Point2D(pos.X - 1, pos.Y));
+            var east = ringSet.Contains(new Point2D(pos.X + 1, pos.Y));
+            var south = ringSet.Contains(new Point2D(pos.X, pos.Y + 1));
 
-            if (!north && !west)
+            MahaonFenceKind kind;
+
+            if (north && west)
+            {
+                kind = MahaonFenceKind.Corner;
+            }
+            else if (west)
+            {
+                kind = MahaonFenceKind.WallX;
+            }
+            else if (north)
+            {
+                kind = MahaonFenceKind.WallY;
+            }
+            else if (east && south)
             {
                 continue;
             }
+            else if (east)
+            {
+                kind = MahaonFenceKind.WallX;
+            }
+            else if (south)
+            {
+                kind = MahaonFenceKind.WallY;
+            }
+            else
+            {
+                kind = MahaonFenceKind.Corner;
+            }
 
-            var kind = north && west ? MahaonFenceKind.Corner
-                : west ? MahaonFenceKind.WallX
-                : MahaonFenceKind.WallY;
-
-            ringPlacements.Add((pos, kind));
+            ringPlacements.Add((pos, kind, zs[x, y]));
         }
 
         var territory = new HashSet<Point2D>();
@@ -439,6 +570,73 @@ public static class MahaonHouseFenceSystem
         return (territory, ringPlacements);
     }
 
+    /// <summary>
+    ///     Можно ли встать на клетку и на какой высоте — ближайшей к <paramref name="refZ"/>.
+    ///     Нельзя: скала и вода (непроходимая земля без настила), что-то непроходимое на уровне
+    ///     роста (камень, стена, чужая ограда), чужой дом. Деревья не преграда — с линии ограды
+    ///     их убирают.
+    /// </summary>
+    private static bool TryStand(Map map, BaseHouse house, int x, int y, int refZ, out int z)
+    {
+        z = 0;
+        int? best = null;
+
+        var land = map.Tiles.GetLandTile(x, y);
+        var landFlags = TileData.LandTable[land.ID & TileData.MaxLandValue].Flags;
+        if ((landFlags & TileFlag.Impassable) == 0)
+        {
+            best = map.GetAverageZ(x, y);
+        }
+
+        var statics = Systems.MahaonMapEdits.MahaonMapEdits.StaticsAt(map, x, y);
+
+        foreach (var s in statics)
+        {
+            var data = TileData.ItemTable[s.Graphic & TileData.MaxItemValue];
+            if (!data.Surface || data.Impassable || data.Wet || MahaonFenceClearing.IsTreePart(s.Graphic))
+            {
+                continue;
+            }
+
+            var top = s.Z + data.CalcHeight;
+            if ((top - refZ).Abs() <= MaxStep + 4 && (best == null || (top - refZ).Abs() < (best.Value - refZ).Abs()))
+            {
+                best = top;
+            }
+        }
+
+        if (best == null)
+        {
+            _refusedLand++;
+            return false;
+        }
+
+        foreach (var s in statics)
+        {
+            var data = TileData.ItemTable[s.Graphic & TileData.MaxItemValue];
+            if (!data.Impassable || MahaonFenceClearing.IsTreePart(s.Graphic))
+            {
+                continue;
+            }
+
+            if (s.Z + data.CalcHeight > best.Value && s.Z < best.Value + 16)
+            {
+                _refusedObstacle++;
+                return false;
+            }
+        }
+
+        var other = BaseHouse.FindHouseAt(new Point3D(x, y, best.Value), map, 16);
+        if (other != null && other != house)
+        {
+            _refusedHouse++;
+            return false;
+        }
+
+        z = best.Value;
+        return true;
+    }
+
     private static Point2D ToWorld(BaseHouse house, Server.MultiComponentList mcl, int pad, int gx, int gy) =>
         new(
             house.Location.X + (gx - pad) - mcl.Center.X,
@@ -448,7 +646,7 @@ public static class MahaonHouseFenceSystem
     /// <summary>Picks whichever ring tile sits closest to the house's own front door, so
     /// the gate always opens onto the same side the owner actually walks out of.</summary>
     private static (Point2D pos, DoorFacing facing) PickGateSpot(
-        BaseHouse house, List<(Point2D pos, MahaonFenceKind kind)> ring
+        BaseHouse house, List<(Point2D pos, MahaonFenceKind kind, int z)> ring
     )
     {
         Point3D doorLoc = house.Doors?.Count > 0 ? house.Doors[0].GetWorldLocation() : house.Location;
@@ -476,20 +674,9 @@ public static class MahaonHouseFenceSystem
         }
 
         // Куда калитка смотрит, решает СТОРОНА кольца, на которой она стоит, а не только
-        // направление прогона стены.
-        //
-        // Раньше выбор был из двух: вертикальный прогон — WestCW, горизонтальный — SouthCW.
-        // Направление створки при этом угадывалось верно ровно в двух случаях из четырёх:
-        // калитка на северной стороне получала южную створку, на восточной — западную, и
-        // смотрела внутрь двора вместо улицы. Отсюда и «калитка смотрит в другую сторону».
-        //
-        // Сторону определяем по положению относительно центра дома.
-        //
-        // И пара направлений для прогона была перепутана: West/East — створки ГОРИЗОНТАЛЬНОГО
-        // прогона (вдоль X), South/North — вертикального. Так стоят железные калитки в
-        // декорациях ModernUO (Мунглоу: WestCW/EastCCW рядом по X; кладбище Веспера:
-        // SouthCW/NorthCCW рядом по Y), и так их закрытая графика ложится в линию ограды.
-        // Внутри пары выбирается та, чья створка уходит НАРУЖУ (BaseDoor.GetOffset):
+        // направление прогона стены: West/East — створки ГОРИЗОНТАЛЬНОГО прогона (вдоль X),
+        // South/North — вертикального (так стоят железные калитки в декорациях: Мунглоу,
+        // кладбище Веспера). Внутри пары — та, чья створка уходит НАРУЖУ (BaseDoor.GetOffset):
         // линия ограды идёт по южному и восточному краю клеток кольца, поэтому северный и
         // западный ряды стоят снаружи линии, а южный и восточный — внутри.
         var vertical = best.kind == MahaonFenceKind.WallY;

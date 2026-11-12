@@ -3906,6 +3906,12 @@ namespace Server.Mobiles
                 return false;
             }
 
+            // Набег на прорыве к банку: налётчики и стража друг друга больше не трогают.
+            if (Systems.MahaonRaids.MahaonRaidCombat.IsTruce(this, target))
+            {
+                return false;
+            }
+
             if (target is BaseCreature creature && creature.IsInvulnerable || target is PlayerVendor or TownCrier)
             {
                 if (message)

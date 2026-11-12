@@ -14,6 +14,11 @@ public static class MahaonCityHouseSystem
 
     // Every marked floor column, for the movement hot path and for finding a house by spot.
     private static readonly Dictionary<(Map, int, int), List<MahaonCityHouse>> ByColumn = new();
+
+    // Столбцы, где у дома только подвал — он добран до минимума и ушёл под улицу или чужие
+    // стены. Для поиска дома по месту они нужны, а для прохода сквозь мебель — нет: иначе
+    // наверху стали бы проходимы чужие стены и уличные бочки.
+    private static readonly Dictionary<(Map, int, int), List<MahaonCityHouse>> CellarColumns = new();
     private static bool _scanned;
 
     /// <summary>Price of an apartment per tile of floor, unless the house has its own.</summary>
@@ -46,6 +51,8 @@ public static class MahaonCityHouseSystem
         Timer.DelayCall(MigrateLegacyFixtures);
     }
 
+    private const string ClearOwnedSetting = "cityHouses.clearOwnedFurniture";
+
     private static void MigrateLegacyFixtures()
     {
         var basements = 0;
@@ -70,14 +77,29 @@ public static class MahaonCityHouseSystem
             }
         }
 
+        // Дома, купленные до ноября 2026, — с городской мебелью внутри: вынести один раз.
+        var cleared = 0;
+        if (ServerConfiguration.GetOrUpdateSetting(ClearOwnedSetting, true))
+        {
+            foreach (var house in All())
+            {
+                if (!house.Deleted && house.Owner != null)
+                {
+                    cleared += house.ClearFurniture();
+                }
+            }
+
+            ServerConfiguration.SetSetting(ClearOwnedSetting, false);
+        }
+
         // Таблички, поставленные на землю перед дверью прежним генератором, — на стену.
         var (moved, orphaned) = MahaonCityHouseSignPlacement.MigrateAll();
 
-        if (basements > 0 || moved > 0 || orphaned > 0)
+        if (basements > 0 || moved > 0 || orphaned > 0 || cleared > 0)
         {
             logger.Information(
-                "City houses: {Rebuilt} of {WithCellar} cellars rebuilt, {Moved} signs hung on walls, {Orphaned} signs left (no door beside)",
-                basements, withCellar, moved, orphaned
+                "City houses: {Rebuilt} of {WithCellar} cellars rebuilt, {Moved} signs hung on walls, {Orphaned} signs left (no door beside), {Cleared} furnishings carried out of owned houses",
+                basements, withCellar, moved, orphaned, cleared
             );
         }
     }
@@ -134,12 +156,15 @@ public static class MahaonCityHouseSystem
             return;
         }
 
+        var above = house.AboveGroundColumns();
+
         foreach (var t in house.Tiles)
         {
             var key = (house.AreaMap, t.X, t.Y);
-            if (!ByColumn.TryGetValue(key, out var list))
+            var index = above.Contains(new Point2D(t.X, t.Y)) ? ByColumn : CellarColumns;
+            if (!index.TryGetValue(key, out var list))
             {
-                ByColumn[key] = list = [];
+                index[key] = list = [];
             }
 
             if (!list.Contains(house))
@@ -151,8 +176,14 @@ public static class MahaonCityHouseSystem
 
     private static void Unindex(MahaonCityHouse house)
     {
+        Unindex(ByColumn, house);
+        Unindex(CellarColumns, house);
+    }
+
+    private static void Unindex(Dictionary<(Map, int, int), List<MahaonCityHouse>> index, MahaonCityHouse house)
+    {
         var empty = new List<(Map, int, int)>();
-        foreach (var (key, list) in ByColumn)
+        foreach (var (key, list) in index)
         {
             if (list.Remove(house) && list.Count == 0)
             {
@@ -162,8 +193,33 @@ public static class MahaonCityHouseSystem
 
         foreach (var key in empty)
         {
-            ByColumn.Remove(key);
+            index.Remove(key);
         }
+    }
+
+    /// <summary>Есть ли в этом столбце у какого-то дома, кроме <paramref name="except"/>, клетка
+    /// не дальше <paramref name="zRange"/> от <paramref name="z"/> — например, чужой подвал.</summary>
+    public static bool IsClaimed(Map map, int x, int y, int z, int zRange, MahaonCityHouse except)
+    {
+        EnsureScanned();
+
+        foreach (var index in new[] { ByColumn, CellarColumns })
+        {
+            if (!index.TryGetValue((map, x, y), out var list))
+            {
+                continue;
+            }
+
+            foreach (var house in list)
+            {
+                if (house != except && !house.Deleted && house.HasTileNear(x, y, z, zRange))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static IReadOnlyList<MahaonCityHouse> All()
@@ -176,16 +232,24 @@ public static class MahaonCityHouseSystem
     {
         EnsureScanned();
 
-        if (map == null || !ByColumn.TryGetValue((map, loc.X, loc.Y), out var list))
+        if (map == null)
         {
             return null;
         }
 
-        foreach (var house in list)
+        foreach (var index in new[] { ByColumn, CellarColumns })
         {
-            if (!house.Deleted && house.Contains(loc, map))
+            if (!index.TryGetValue((map, loc.X, loc.Y), out var list))
             {
-                return house;
+                continue;
+            }
+
+            foreach (var house in list)
+            {
+                if (!house.Deleted && house.Contains(loc, map))
+                {
+                    return house;
+                }
             }
         }
 
@@ -315,15 +379,19 @@ public static class MahaonCityHouseSystem
             return $"Не хватает золота в банке — дом стоит {price}.";
         }
 
+        // Обстановку города покупатель не покупает: мебель, посуду и прочее — вон.
+        var cleared = house.ClearFurniture();
+        var clearedNote = cleared > 0 ? $" Городская обстановка вынесена ({cleared})." : "";
+
         if (own != null && own.Adjoins(house))
         {
             Merge(own, house);
-            return $"Соседний дом присоединён к «{own.Label}». Списано {price} золота.";
+            return $"Соседний дом присоединён к «{own.Label}». Списано {price} золота.{clearedNote}";
         }
 
         house.Owner = buyer;
         sign?.RefreshName();
-        return $"Дом «{house.Label}» твой. Списано {price} золота.";
+        return $"Дом «{house.Label}» твой. Списано {price} золота.{clearedNote}";
     }
 
     /// <summary>Gives the house back to the city for half its price: everything fixed in it is let

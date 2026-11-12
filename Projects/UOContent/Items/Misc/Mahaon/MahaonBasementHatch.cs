@@ -7,6 +7,7 @@ namespace Server.Items;
 /// The way into a city house's cellar and back: double-click within a step of it and you are at
 /// the other end — the hatch in the ground floor leads down, the ladder in the cellar up. Only the
 /// household goes down; anyone caught in the cellar can still climb out. Pets come along.
+/// City houses use this class; placed houses use MahaonHouseBasementHatch.
 /// </summary>
 [SerializationGenerator(0, false)]
 public partial class MahaonBasementHatch : Item
@@ -36,6 +37,10 @@ public partial class MahaonBasementHatch : Item
 
     private bool LeadsDown => _destination.Z < Z;
 
+    /// <summary>Пускать ли вниз: хозяин и друзья дома. У подвала ставящегося дома — свой дом
+    /// (MahaonHouseBasementHatch).</summary>
+    protected virtual bool IsHousehold(Mobile m) => House?.IsFriend(m) == true;
+
     public override void OnDoubleClick(Mobile from)
     {
         if (!from.InRange(GetWorldLocation(), 1) || from.Map != Map)
@@ -44,7 +49,7 @@ public partial class MahaonBasementHatch : Item
             return;
         }
 
-        if (LeadsDown && House?.IsFriend(from) != true)
+        if (LeadsDown && !IsHousehold(from))
         {
             from.SendMessage(0x22, "Люк заперт — в подвал пускают только своих.");
             return;

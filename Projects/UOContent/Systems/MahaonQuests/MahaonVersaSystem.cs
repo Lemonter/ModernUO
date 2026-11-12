@@ -115,44 +115,11 @@ public static class MahaonVersaSystem
 
     private static void TriggerRaidNear(string city, Point3D center, Map map)
     {
-        MahaonRaidSpawner nearestSpawner = null;
-        var nearestDistSq = double.MaxValue;
-
-        foreach (var item in World.Items.Values)
+        // Набег идёт по точкам города (RaidSites): лагерь за стенами, ворота, банк.
+        if (Server.Systems.MahaonRaids.RaidDirector.Start(Server.Systems.MahaonRaids.RaidSites.Get(city)) == null)
         {
-            if (item is not MahaonRaidSpawner spawner || spawner.Deleted || spawner.Map != map)
-            {
-                continue;
-            }
-
-            var distSq = Utility.GetDistanceToSqrt(spawner.Location, center);
-
-            if (distSq < nearestDistSq)
-            {
-                nearestDistSq = distSq;
-                nearestSpawner = spawner;
-            }
-        }
-
-        if (nearestSpawner == null)
-        {
-            // No spawner placed near this city at all — a GM hasn't set one up here yet,
-            // nothing to actually trigger. Still worth the rumor/atmosphere even without
-            // a real event, same as any other "quiet night" outcome.
             MahaonBots.BotRumors.Spread($"Дозорные {city} что-то заметили у стен, но тревога оказалась ложной.");
-            return;
         }
-
-        var (raiderCount, cityLabel) = nearestSpawner.TriggerSpawn();
-
-        if (raiderCount == 0)
-        {
-            return;
-        }
-
-        MahaonBots.BotRumors.Spread($"Набег на {cityLabel}! {raiderCount} врагов у стен.");
-        World.Broadcast(0x22, true, $"[Версаль] {city} подвергается набегу!");
-        Server.Systems.MahaonAi.MahaonForumBridge.OnRaidTriggered(cityLabel, raiderCount);
     }
 
     private static void TriggerMeteor(string city, Point3D center, Map map)

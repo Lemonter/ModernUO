@@ -93,19 +93,44 @@ public partial class MahaonCityHouse : Item
     private const int LowestZ = -120;
     private const int BasementFloorId = 0x0515; // cobblestones, as the town roads are laid
 
-    /// <summary>The ground floor: the tiles at the house's lowest level.</summary>
+    /// <summary>Высота пола подвала, или null, если подвала нет.</summary>
+    public int? CellarZ
+    {
+        get
+        {
+            foreach (var item in Basement)
+            {
+                if (item is Static { Deleted: false, ItemID: BasementFloorId } floor)
+                {
+                    return floor.Z;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// The ground floor: the tiles at the house's lowest level above the cellar. Клетки подвала
+    /// сюда не входят: раньше «самым нижним этажом» после покупки подвала становился он сам, и
+    /// перестройка ставила люк «в первый этаж» — то есть в подвал.
+    /// </summary>
     public List<Point3D> GroundTiles()
     {
+        var cellarZ = CellarZ;
         var minZ = int.MaxValue;
         foreach (var t in Tiles)
         {
-            minZ = System.Math.Min(minZ, t.Z);
+            if (!IsCellar(t, cellarZ))
+            {
+                minZ = System.Math.Min(minZ, t.Z);
+            }
         }
 
         var ground = new List<Point3D>();
         foreach (var t in Tiles)
         {
-            if (t.Z - minZ <= ZTolerance)
+            if (!IsCellar(t, cellarZ) && t.Z - minZ <= ZTolerance)
             {
                 ground.Add(t);
             }
@@ -114,23 +139,48 @@ public partial class MahaonCityHouse : Item
         return ground;
     }
 
-    /// <summary>A cellar costs half what the ground floor above it does.</summary>
-    public int BasementPrice => GroundTiles().Count * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile / 2;
+    private static bool IsCellar(Point3D t, int? cellarZ) => cellarZ is { } z && (t.Z - z).Abs() <= ZTolerance;
+
+    /// <summary>Столбцы, где у дома есть что-то кроме подвала: туда смотрит проход сквозь мебель
+    /// (MahaonCityHouseSystem.IsInsideAnyHouse). Подвал, добранный до минимума, уходит под улицу
+    /// и чужие стены — делать их проходимыми наверху нельзя.</summary>
+    public HashSet<Point2D> AboveGroundColumns()
+    {
+        var cellarZ = CellarZ;
+        var columns = new HashSet<Point2D>();
+        foreach (var t in Tiles)
+        {
+            if (!IsCellar(t, cellarZ))
+            {
+                columns.Add(new Point2D(t.X, t.Y));
+            }
+        }
+
+        return columns;
+    }
+
+    /// <summary>A cellar costs half what the ground floor above it does — but never less than the
+    /// smallest cellar dug (<see cref="Systems.MahaonWorld.MahaonBasementLayout.MinSide"/> squared).</summary>
+    public int BasementPrice
+    {
+        get
+        {
+            var min = Systems.MahaonWorld.MahaonBasementLayout.MinSide * Systems.MahaonWorld.MahaonBasementLayout.MinSide;
+            return System.Math.Max(GroundTiles().Count, min) * Systems.MahaonWorld.MahaonCityHouseSystem.PricePerTile / 2;
+        }
+    }
 
     // Люк в полу первого этажа (корабельный люк — поверхность, по нему ходят) и каменные
     // ступени выхода в углу подвала.
     private const int HatchGraphic = 0x3EAE;
     private const int ExitStepsGraphic = 0x079E;
 
-    // Тонкая каменная стена — те же детали, что у старой ограды: «\» идёт вдоль X, «/» вдоль Y.
-    private const int WallAlongX = 0x001C;
-    private const int WallAlongY = 0x001B;
-
     /// <summary>
-    /// Digs the cellar: a floor under the whole ground floor <see cref="BasementDepth"/> Z down,
-    /// walls along its north and west sides, a hatch in the ground floor and steps back up in a
-    /// corner. The cellar's tiles join the house, so its region, lockdowns and furniture work
-    /// down there too.
+    /// Digs the cellar: a floor under the whole ground floor <see cref="BasementDepth"/> Z down —
+    /// at least <see cref="Systems.MahaonWorld.MahaonBasementLayout.MinSide"/> tiles each way,
+    /// however narrow the rooms above — walls along its north and west sides with torches on them,
+    /// a hatch in the ground floor and steps back up in a corner. The cellar's tiles join the
+    /// house, so its region, lockdowns and furniture work down there too.
     /// </summary>
     public bool BuildBasement()
     {
@@ -145,20 +195,25 @@ public partial class MahaonCityHouse : Item
             return false;
         }
 
-        var groundZ = ground[0].Z;
-        var z = System.Math.Max(LowestZ, groundZ - BasementDepth);
         var columns = new HashSet<Point2D>();
-        var cellar = new List<Point3D>();
 
         foreach (var t in ground)
         {
             columns.Add(new Point2D(t.X, t.Y));
-            var floor = new Static(BasementFloorId);
-            floor.MoveToWorld(new Point3D(t.X, t.Y, z), AreaMap);
-            Basement.Add(floor);
-            cellar.Add(new Point3D(t.X, t.Y, z));
         }
 
+        var z = System.Math.Max(LowestZ, Systems.MahaonWorld.MahaonBasementLayout.Below(AreaMap, columns, ground[0].Z) - BasementDepth);
+
+        Systems.MahaonWorld.MahaonBasementLayout.ExpandToMinimum(columns, p => CellarFree(p, z));
+
+        var cellar = new List<Point3D>();
+        foreach (var c in columns)
+        {
+            LayFloor(c, z);
+            cellar.Add(new Point3D(c.X, c.Y, z));
+        }
+
+        // Пол — первым: по нему узнаётся высота подвала (CellarZ), а по ней — первый этаж.
         BuildFixtures(ground, columns, z);
 
         HasBasement = true;
@@ -166,66 +221,41 @@ public partial class MahaonCityHouse : Item
         return true;
     }
 
+    private void LayFloor(Point2D c, int z)
+    {
+        var floor = new Static(BasementFloorId);
+        floor.MoveToWorld(new Point3D(c.X, c.Y, z), AreaMap);
+        Basement.Add(floor);
+    }
+
+    // Под добранной клеткой не должно быть чужого подвала (свой и так в списке).
+    private bool CellarFree(Point2D p, int z) =>
+        !Systems.MahaonWorld.MahaonCityHouseSystem.IsClaimed(AreaMap, p.X, p.Y, z, 10, this);
+
     /// <summary>
-    /// Стены, люк и ступени подвала поверх готового пола.
-    ///
-    /// Стены — только северная и западная. Каменная стена UO стоит на ЮЖНОМ или ВОСТОЧНОМ
-    /// ребре своей клетки, поэтому северную стену пола несут клетки к северу от него («\»), а
-    /// западную — клетки к западу («/»); в северо-западном углу линии сходятся сами, без
-    /// столбика. Южную и восточную стены камера видит спереди, и они закрывали бы подвал —
-    /// их нет, а уйти с пола всё равно некуда: земля в пятидесяти единицах выше.
+    /// Стены, факелы, люк и ступени подвала поверх готового пола (MahaonBasementLayout).
     ///
     /// Люк — в полу первого этажа, по нему ходят; двойной щелчок — вниз, к ступеням. Ступени
-    /// стоят в северо-западном углу подвала, а не под люком: под люком игрок появляется сам,
+    /// стоят в северо-западном углу подвала, а не под люком: под люком игрок появлялся сам,
     /// и щёлкнуть по ступеням у себя под ногами было нельзя — щелчок попадал в персонажа.
     /// </summary>
     private void BuildFixtures(List<Point3D> ground, HashSet<Point2D> columns, int z)
     {
-        foreach (var c in columns)
-        {
-            if (!columns.Contains(new Point2D(c.X, c.Y - 1)))
-            {
-                AddWall(WallAlongX, c.X, c.Y - 1, z);
-            }
-
-            if (!columns.Contains(new Point2D(c.X - 1, c.Y)))
-            {
-                AddWall(WallAlongY, c.X - 1, c.Y, z);
-            }
-        }
+        Systems.MahaonWorld.MahaonBasementLayout.BuildWalls(columns, z, AreaMap, Basement);
 
         // Люк — на свободной клетке первого этажа подальше от стен.
         var spot = ground[ground.Count / 2];
         foreach (var t in ground)
         {
-            if (AreaMap.CanFit(t, 16, false, false) && CountColumns(columns, t) == 9)
+            if (AreaMap.CanFit(t, 16, false, false) && Systems.MahaonWorld.MahaonBasementLayout.CountColumns(columns, t.X, t.Y) == 9)
             {
                 spot = t;
                 break;
             }
         }
 
-        // Ступени — в северо-западном углу, игрок появляется рядом с ними.
-        var corner = default(Point2D);
-        var best = int.MaxValue;
-        foreach (var c in columns)
-        {
-            if (c.X + c.Y < best || c.X + c.Y == best && c.X < corner.X)
-            {
-                best = c.X + c.Y;
-                corner = c;
-            }
-        }
-
-        var arrival = new Point3D(corner.X, corner.Y, z);
-        foreach (var (dx, dy) in new[] { (1, 0), (0, 1), (1, 1) })
-        {
-            if (columns.Contains(new Point2D(corner.X + dx, corner.Y + dy)))
-            {
-                arrival = new Point3D(corner.X + dx, corner.Y + dy, z);
-                break;
-            }
-        }
+        var corner = Systems.MahaonWorld.MahaonBasementLayout.Corner(columns);
+        var arrival = Systems.MahaonWorld.MahaonBasementLayout.Arrival(columns, corner, z);
 
         var down = new MahaonBasementHatch(this, arrival, "люк в подвал", HatchGraphic);
         down.MoveToWorld(spot, AreaMap);
@@ -233,20 +263,22 @@ public partial class MahaonCityHouse : Item
         up.MoveToWorld(new Point3D(corner.X, corner.Y, z), AreaMap);
         Basement.Add(down);
         Basement.Add(up);
-    }
 
-    private void AddWall(int graphic, int x, int y, int z)
-    {
-        var wall = new Static(graphic);
-        wall.MoveToWorld(new Point3D(x, y, z), AreaMap);
-        Basement.Add(wall);
+        Systems.MahaonWorld.MahaonBasementLayout.PlaceTorches(columns, z, AreaMap, corner, Basement);
+        this.MarkDirty();
     }
 
     /// <summary>
-    /// Подвал, выкопанный до октября 2026 (стены по всему периметру с углами-столбиками,
-    /// ступени вместо люка, выход под самим люком), перестраивается по-новому: пол остаётся,
-    /// стены, люк и ступени ставятся заново. Узнаётся по люку — у старого он был ступенями.
-    /// Зовётся при загрузке мира; у нового подвала ничего не делает. Возвращает, перестроен ли.
+    /// Приводит выкопанный раньше подвал к нынешнему виду, один раз при загрузке мира:
+    /// <list type="bullet">
+    /// <item>подвал до октября 2026 (стены по всему периметру, ступени вместо люка, выход под
+    /// самим люком) — узнаётся по люку;</item>
+    /// <item>подвал без факелов — до ноября 2026;</item>
+    /// <item>подвал уже <see cref="Systems.MahaonWorld.MahaonBasementLayout.MinSide"/> клеток —
+    /// добирается до минимума бесплатно.</item>
+    /// </list>
+    /// Пол остаётся, стены, факелы, люк и ступени ставятся заново. У нового подвала ничего не
+    /// делает. Возвращает, перестроен ли.
     /// </summary>
     public bool RefreshBasementFixtures()
     {
@@ -256,7 +288,9 @@ public partial class MahaonCityHouse : Item
         }
 
         var legacy = false;
+        var hasTorch = false;
         var floorZ = int.MinValue;
+        var columns = new HashSet<Point2D>();
 
         foreach (var item in Basement)
         {
@@ -266,15 +300,43 @@ public partial class MahaonCityHouse : Item
                 legacy = true;
             }
 
+            if (item is { Deleted: false } && Systems.MahaonWorld.MahaonBasementLayout.IsTorch(item))
+            {
+                hasTorch = true;
+            }
+
             if (item is Static { Deleted: false } floor && floor.ItemID == BasementFloorId)
             {
                 floorZ = floor.Z;
+                columns.Add(new Point2D(floor.X, floor.Y));
             }
         }
 
-        if (!legacy || floorZ == int.MinValue)
+        var undersized = Systems.MahaonWorld.MahaonBasementLayout.IsUndersized(columns);
+
+        // Подвал квартиры второго этажа, выкопанный до ноября 2026, лёг «на пятьдесят ниже
+        // пола» — то есть на мостовую. Такой опускается под землю целиком.
+        var ground = GroundTiles();
+        var properZ = floorZ;
+        if (floorZ != int.MinValue && ground.Count > 0)
+        {
+            properZ = System.Math.Max(
+                LowestZ,
+                Systems.MahaonWorld.MahaonBasementLayout.Below(AreaMap, columns, ground[0].Z) - BasementDepth
+            );
+        }
+
+        var misplaced = floorZ - properZ >= 20;
+
+        if (floorZ == int.MinValue || !legacy && hasTorch && !undersized && !misplaced)
         {
             return false;
+        }
+
+        if (misplaced)
+        {
+            LowerCellar(columns, floorZ, properZ);
+            floorZ = properZ;
         }
 
         var keep = new List<Item>();
@@ -296,13 +358,18 @@ public partial class MahaonCityHouse : Item
             Basement.Add(item);
         }
 
-        var columns = new HashSet<Point2D>();
-        foreach (var floor in keep)
+        if (undersized)
         {
-            columns.Add(new Point2D(floor.X, floor.Y));
+            var cellar = new List<Point3D>();
+            foreach (var c in Systems.MahaonWorld.MahaonBasementLayout.ExpandToMinimum(columns, p => CellarFree(p, floorZ)))
+            {
+                LayFloor(c, floorZ);
+                cellar.Add(new Point3D(c.X, c.Y, floorZ));
+            }
+
+            AddTiles(cellar);
         }
 
-        var ground = GroundTiles();
         if (ground.Count > 0 && columns.Count > 0)
         {
             BuildFixtures(ground, columns, floorZ);
@@ -311,34 +378,60 @@ public partial class MahaonCityHouse : Item
         return true;
     }
 
-    private bool HasItemAt(Point2D p, int z)
+    /// <summary>
+    /// Опускает подвал с <paramref name="fromZ"/> на <paramref name="toZ"/>: плиты пола, клетки дома
+    /// и своё у хозяина внизу — закреплённое, сундуки под замком, мебель из грамот. Чужое, что
+    /// стоит на этой высоте (это же мостовая), не трогается. Стены, факелы и люки потом ставятся
+    /// заново.
+    /// </summary>
+    private void LowerCellar(HashSet<Point2D> columns, int fromZ, int toZ)
     {
-        foreach (var item in AreaMap.GetItemsAt(p))
+        var shift = toZ - fromZ;
+
+        bool InOldCellar(Item item) =>
+            item?.Deleted == false && item.Parent == null && item.Map == AreaMap &&
+            columns.Contains(new Point2D(item.X, item.Y)) && item.Z >= fromZ - ZTolerance && item.Z < fromZ + 20;
+
+        foreach (var item in Basement)
         {
-            if ((item.Z - z).Abs() < 16)
+            if (item is Static { ItemID: BasementFloorId } floor && !floor.Deleted)
             {
-                return true;
+                floor.Z = toZ;
             }
         }
 
-        return false;
-    }
+        var own = new HashSet<Item>();
+        own.UnionWith(Lockdowns);
+        own.UnionWith(Secures);
+        own.UnionWith(Addons);
 
-    private static int CountColumns(HashSet<Point2D> columns, Point3D t)
-    {
-        var count = 0;
-        for (var dx = -1; dx <= 1; dx++)
+        foreach (var item in own)
         {
-            for (var dy = -1; dy <= 1; dy++)
+            if (InOldCellar(item))
             {
-                if (columns.Contains(new Point2D(t.X + dx, t.Y + dy)))
-                {
-                    count++;
-                }
+                item.Location = new Point3D(item.X, item.Y, item.Z + shift);
             }
         }
 
-        return count;
+        var old = new List<Point3D>();
+        var moved = new List<Point3D>();
+        foreach (var t in Tiles)
+        {
+            if ((t.Z - fromZ).Abs() <= ZTolerance && columns.Contains(new Point2D(t.X, t.Y)))
+            {
+                old.Add(t);
+                moved.Add(new Point3D(t.X, t.Y, toZ));
+            }
+        }
+
+        // Напрямую, а не через RemoveTiles: тот отпустил бы закреплённое внизу и вернул мебель в
+        // банк — а она едет вниз вместе с подвалом.
+        foreach (var t in old)
+        {
+            Tiles.Remove(t);
+        }
+
+        AddTiles(moved);
     }
 
     private void DeleteBasement()
@@ -772,5 +865,144 @@ public partial class MahaonCityHouse : Item
         }
 
         FurnitureOverrideIds.Clear();
+    }
+
+    // ---- Очистка при покупке ------------------------------------------------------------------
+
+    // Вещи этажа — от самого пола и до следующего этажа (он на двадцать выше): посуда стоит на
+    // столе, а не на полу, и прежний допуск в три единицы её не видел.
+    private const int FurnitureHeadroom = 18;
+
+    // Что от здания, а не обстановка: стены, крыша, окна, двери, ступени и мосты.
+    private const TileFlag StructureFlags = TileFlag.Wall | TileFlag.Roof | TileFlag.Window | TileFlag.Door |
+                                            TileFlag.Bridge | TileFlag.StairBack | TileFlag.StairRight;
+
+    /// <summary>
+    /// Выносит из купленного дома всю обстановку города: мебель, посуду, светильники, сундуки —
+    /// и нарисованную в карте статику (по-настоящему, через MahaonMapEdits, у сервера и у всех
+    /// клиентов), и предметы декораций. Здание остаётся: стены, пол, ступени, окна, двери,
+    /// ковры-полы. Своё у дома не трогается — закреплённое, сундуки под замком, мебель из
+    /// грамот, подвал. Отвечает, сколько вынесено.
+    /// </summary>
+    public int ClearFurniture()
+    {
+        if (AreaMap == null || AreaMap == Map.Internal)
+        {
+            return 0;
+        }
+
+        var cellarZ = CellarZ;
+        var removed = 0;
+
+        var own = new HashSet<Item>();
+        own.UnionWith(Lockdowns);
+        own.UnionWith(Secures);
+        own.UnionWith(Addons);
+        own.UnionWith(Basement);
+
+        Systems.MahaonMapEdits.MahaonMapEdits.BeginBatch();
+        try
+        {
+            foreach (var t in Tiles)
+            {
+                if (IsCellar(t, cellarZ))
+                {
+                    continue;
+                }
+
+                foreach (var st in Systems.MahaonMapEdits.MahaonMapEdits.StaticsAt(AreaMap, t.X, t.Y))
+                {
+                    if (st.Z < t.Z - ZTolerance || st.Z >= t.Z + FurnitureHeadroom || IsStructure(st.Graphic))
+                    {
+                        continue;
+                    }
+
+                    if (Systems.MahaonMapEdits.MahaonMapEdits.RemoveStatic(AreaMap, t.X, t.Y, st.Graphic, st.Z))
+                    {
+                        removed++;
+                    }
+                }
+            }
+        }
+        finally
+        {
+            Systems.MahaonMapEdits.MahaonMapEdits.EndBatch();
+        }
+
+        // Сперва собрать, потом удалять: перебор секторов карты ленивый.
+        var doomed = new HashSet<Item>();
+        foreach (var t in Tiles)
+        {
+            if (IsCellar(t, cellarZ))
+            {
+                continue;
+            }
+
+            foreach (var item in AreaMap.GetItemsAt(t.X, t.Y))
+            {
+                if (item.Z >= t.Z - ZTolerance && item.Z < t.Z + FurnitureHeadroom && IsDecoration(item, own))
+                {
+                    doomed.Add(item);
+                }
+            }
+        }
+
+        foreach (var item in doomed)
+        {
+            if (!item.Deleted)
+            {
+                item.Delete();
+                removed++;
+            }
+        }
+
+        if (removed > 0)
+        {
+            // Подмены «не рисовать» указывали на уже вынесенное — пересобрать по тому, что осталось.
+            ApplyFurnitureHiding();
+        }
+
+        return removed;
+    }
+
+    private static bool IsStructure(int graphic)
+    {
+        var data = TileData.ItemTable[graphic & TileData.MaxItemValue];
+
+        if ((data.Flags & StructureFlags) != 0)
+        {
+            return true;
+        }
+
+        // Пол, лестница, настил — по ним ходят.
+        if (data.Surface && !data.Impassable)
+        {
+            return true;
+        }
+
+        // Ковёр, выложенный вместо пола: плоский и рисуется под всем остальным.
+        return (data.Flags & TileFlag.Background) != 0 && data.Height <= 1;
+    }
+
+    private static bool IsDecoration(Item item, HashSet<Item> own)
+    {
+        if (item.Movable || item.IsLockedDown || item.IsSecure || own.Contains(item))
+        {
+            return false;
+        }
+
+        if (item is AddonComponent { Addon: { } addon } && own.Contains(addon))
+        {
+            return false;
+        }
+
+        if (item is BaseDoor or ISpawner or MahaonCityHouse or MahaonCityHouseSign or MahaonBasementHatch
+            or BaseMulti)
+        {
+            return false;
+        }
+
+        return item is Static or LocalizedStatic or BaseLight or Container or BaseAddon or AddonComponent ||
+               FurnitureAttribute.Check(item);
     }
 }

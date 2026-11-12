@@ -28,8 +28,8 @@ public class MahaonHouseMenuGump : StaticGump<MahaonHouseMenuGump>
         var radius = MahaonHouseFenceSystem.GetFenceRadius(_house);
 
         builder.AddPage();
-        builder.AddBackground(0, 0, 300, 230, 5054);
-        builder.AddAlphaRegion(10, 10, 280, 210);
+        builder.AddBackground(0, 0, 300, 260, 5054);
+        builder.AddAlphaRegion(10, 10, 280, 240);
 
         builder.AddHtml(20, 15, 260, 20, "Управление усадьбой");
 
@@ -47,11 +47,21 @@ public class MahaonHouseMenuGump : StaticGump<MahaonHouseMenuGump>
         builder.AddButton(20, 130, 4005, 4007, 3);
         builder.AddHtml(55, 132, 220, 20, "Перестройка");
 
-        builder.AddButton(20, 170, 4005, 4007, 4);
-        builder.AddHtml(55, 172, 220, 20, "Открыть управление домом (обычное)");
+        if (MahaonHouseBasementSystem.HasBasement(_house))
+        {
+            builder.AddHtml(55, 162, 220, 20, "Подвал: выкопан");
+        }
+        else
+        {
+            builder.AddButton(20, 160, 4005, 4007, 5);
+            builder.AddHtml(55, 162, 230, 20, $"Выкопать подвал ({MahaonHouseBasementSystem.PriceOf(_house)} золота)");
+        }
 
-        builder.AddButton(20, 200, 4017, 4019, 0);
-        builder.AddHtml(55, 200, 150, 20, "Закрыть");
+        builder.AddButton(20, 200, 4005, 4007, 4);
+        builder.AddHtml(55, 202, 220, 20, "Открыть управление домом (обычное)");
+
+        builder.AddButton(20, 230, 4017, 4019, 0);
+        builder.AddHtml(55, 230, 150, 20, "Закрыть");
     }
 
     public override void OnResponse(NetState sender, in RelayInfo info)
@@ -75,6 +85,10 @@ public class MahaonHouseMenuGump : StaticGump<MahaonHouseMenuGump>
 
             case 3:
                 from.SendGump(new MahaonHouseRebuildGump(_house));
+                break;
+
+            case 5:
+                from.SendMessage(0x59, MahaonHouseBasementSystem.TryBuy(from, _house));
                 break;
 
             case 4:

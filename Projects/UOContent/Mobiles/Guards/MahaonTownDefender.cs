@@ -72,7 +72,9 @@ namespace Server.Mobiles
         public override int AcquireOnApproachRange => 10;
 
         public override bool IsEnemy(Mobile m) =>
-            m.Alive && m.Murderer && (m as BaseCreature)?.IsInvulnerable != true;
+            MahaonRaidCombat.IsRaidRelated(m)
+                ? MahaonRaidCombat.IsRaiderForGuard(m)
+                : m.Alive && m.Murderer && (m as BaseCreature)?.IsInvulnerable != true;
 
         // Real fighting stats above still matter for who "wins" the visual duel/animations
         // — this only caps the actual Hits damage exchanged specifically against raid
