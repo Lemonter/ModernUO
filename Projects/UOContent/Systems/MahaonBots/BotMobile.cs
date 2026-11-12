@@ -42,7 +42,14 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     }
 
     [AfterDeserialization]
-    private void AfterDeserialization() => Systems.Bots.BotSystem.OnBotLoaded(this);
+    private void AfterDeserialization()
+    {
+        BeginSession();
+        Systems.Bots.BotSystem.OnBotLoaded(this);
+    }
+
+    // Бот играет всё время, пока жив сервер: игровое время (и остывание убийств) идёт и у него.
+    protected override bool AlwaysInSession => true;
 
     public bool OpensDoors => Systems.Bots.BotSystem.IsActive(this);
 
@@ -101,6 +108,26 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         }
     }
 
+    /// <summary>
+    ///     Все рецепты одного ремесла — так же, как оружейник получает всё оружие и броню в
+    ///     GrantStartingRecipes: бот рождается мастером своего дела, а не учеником.
+    /// </summary>
+    private static void GrantRecipesOf(PlayerMobile bot, Engines.Craft.CraftSystem system)
+    {
+        if (system == null)
+        {
+            return;
+        }
+
+        foreach (var craftItem in system.CraftItems)
+        {
+            if (craftItem.Recipe is { } recipe && !bot.HasRecipe(recipe))
+            {
+                bot.AcquireRecipe(recipe);
+            }
+        }
+    }
+
     public static bool IsProfessionCategory(Mobile m, Systems.MahaonProfessions.ProfessionCategory category) =>
         Systems.MahaonProfessions.ProfessionSystem.GetProfession(m) is { } profession &&
         Systems.MahaonProfessions.ProfessionData.All[profession].Category == category;
@@ -134,100 +161,11 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         }
     }
 
-    // Shared memory — every bot reads and writes the SAME pool of known spots, keyed by
-    // map. One bot finding a good mine/tree/fish/hunting spot means every other bot
-    // benefits immediately, instead of each one rediscovering the world from scratch.
-    // Deliberately not [SerializableField] — in-memory only, same as the rest of the bot
-    // system; a fresh pool after a restart is cheap to rebuild.
-    private static readonly Dictionary<Map, List<Point3D>> SharedMineSpots = new();
-    private static readonly Dictionary<Map, List<Point3D>> SharedTreeSpots = new();
-    private static readonly Dictionary<Map, List<Point3D>> SharedFishSpots = new();
-    private static readonly Dictionary<Map, List<Point3D>> SharedHuntingSpots = new();
-
-    private const int MaxKnownSpots = 5000;
-
-    public void RememberMineSpot(Point3D loc) => Remember(SharedMineSpots, Map, loc);
-    public void RememberTreeSpot(Point3D loc) => Remember(SharedTreeSpots, Map, loc);
-    public void RememberFishSpot(Point3D loc) => Remember(SharedFishSpots, Map, loc);
-    public void RememberHuntingSpot(Point3D loc) => Remember(SharedHuntingSpots, Map, loc);
-
-    public Point3D? PickKnownMineSpot() => PickKnown(SharedMineSpots, Map);
-    public Point3D? PickKnownTreeSpot() => PickKnown(SharedTreeSpots, Map);
-    public Point3D? PickKnownFishSpot() => PickKnown(SharedFishSpots, Map);
-    public Point3D? PickKnownHuntingSpot() => PickKnown(SharedHuntingSpots, Map);
-
-    /// <summary>
-    ///     Вычёркивает из общей памяти всё, что лежит рядом с этой точкой.
-    ///
-    ///     Зовётся, когда до места так и не удалось дойти. Память общая, и попала туда
-    ///     жила, возможно, от бота, стоявшего по ту сторону реки: без вычёркивания
-    ///     недостижимое место оставалось бы в списке навсегда и раз за разом выпадало бы
-    ///     следующему.
-    /// </summary>
-    public void ForgetSpotNear(Point3D loc)
-    {
-        Forget(SharedMineSpots, Map, loc);
-        Forget(SharedTreeSpots, Map, loc);
-        Forget(SharedFishSpots, Map, loc);
-        Forget(SharedHuntingSpots, Map, loc);
-    }
-
-    private static void Forget(Dictionary<Map, List<Point3D>> pool, Map map, Point3D loc)
-    {
-        if (map == null || !pool.TryGetValue(map, out var list))
-        {
-            return;
-        }
-
-        list.RemoveAll(known => Math.Abs(known.X - loc.X) <= ForgetRadius && Math.Abs(known.Y - loc.Y) <= ForgetRadius);
-    }
-
-    /// <summary>Насколько широко вычёркивать вокруг недостижимой точки.</summary>
-    private const int ForgetRadius = 6;
-
-    private static void Remember(Dictionary<Map, List<Point3D>> pool, Map map, Point3D loc)
-    {
-        if (map == null)
-        {
-            return;
-        }
-
-        if (!pool.TryGetValue(map, out var list))
-        {
-            list = new List<Point3D>();
-            pool[map] = list;
-        }
-
-        if (list.Contains(loc))
-        {
-            return;
-        }
-
-        list.Add(loc);
-
-        if (list.Count > MaxKnownSpots)
-        {
-            list.RemoveAt(0);
-        }
-    }
-
-    private static Point3D? PickKnown(Dictionary<Map, List<Point3D>> pool, Map map)
-    {
-        if (map == null || !pool.TryGetValue(map, out var list) || list.Count == 0)
-        {
-            return null;
-        }
-
-        return list[Utility.Random(list.Count)];
-    }
-
     // Share of outlaws among new bots.
     private const double PkChance = 0.12;
 
     [Constructible]
-    public BotMobile()
-    {
-    }
+    public BotMobile() => BeginSession();
 
     public static BotMobile Create(string name, Point3D location, Map map, BotArchetype? archetype = null, bool forceThief = false)
     {
@@ -253,7 +191,6 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         bot.Backpack.DropItem(new FishingPole());
         ApplyArchetype(bot, type);
         AssignProfession(bot, type, forceThief);
-        AdaptWeaponToProfession(bot, type);
         GiveInstrumentIfBard(bot);
         Systems.MahaonSoulStones.TattooSystem.ApplyTattoo(bot, Systems.MahaonSoulStones.TattooType.SoulCatcher, TimeSpan.FromDays(3650));
 
@@ -521,15 +458,6 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
         }
     }
 
-    private static void AdaptWeaponToProfession(BotMobile bot, BotArchetype type)
-    {
-        // No-op now — warrior professions train the full Fencing/Macing/Swords/Wrestling/
-        // Tactics kit to 120 (not one or two signature skills), so there's no longer a
-        // single "correct" weapon skill to match against. Real per-profession weapon
-        // restrictions (e.g. Mercenary can't use axes) from the source data aren't wired
-        // in yet — worth a follow-up pass.
-    }
-
     private static void ApplyArchetype(BotMobile bot, BotArchetype type)
     {
         switch (type)
@@ -586,6 +514,9 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
                 SetSkill(bot, SkillName.Tracking, 30, 60);
                 SetSkill(bot, SkillName.Spellweaving, 30, 65);
 
+                // Следопыт знает травы — собирает между охотами и продаёт травникам.
+                SetSkill(bot, SkillName.Herbalism, 15, 45);
+
                 EquipRandomLeatherSet(bot);
                 Wear(bot, RandomArcherWeapon());
                 bot.Backpack?.DropItem(new Arrow(Utility.RandomMinMax(50, 200)));
@@ -597,11 +528,22 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
                 SetInt(bot, 50, 65);
 
                 var craftSkill = Utility.RandomList(
-                    SkillName.Blacksmith, SkillName.Carpentry, SkillName.Tailoring, SkillName.Tinkering
+                    SkillName.Blacksmith, SkillName.Carpentry, SkillName.Tailoring, SkillName.Tinkering,
+                    SkillName.Herbalism
                 );
                 SetSkill(bot, craftSkill, 60, 95);
-                SetSkill(bot, SkillName.Mining, 40, 75);
-                SetSkill(bot, SkillName.Lumberjacking, 40, 75);
+
+                // Травнику руда и брёвна ни к чему — его поле и лес другие.
+                if (craftSkill == SkillName.Herbalism)
+                {
+                    SetSkill(bot, SkillName.Healing, 30, 60);
+                    SetSkill(bot, SkillName.Anatomy, 20, 50);
+                }
+                else
+                {
+                    SetSkill(bot, SkillName.Mining, 40, 75);
+                    SetSkill(bot, SkillName.Lumberjacking, 40, 75);
+                }
 
                 Wear(bot, new LeatherChest());
                 Wear(bot, new LeatherLegs());
@@ -615,6 +557,7 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
                     SkillName.Carpentry  => new Saw(),
                     SkillName.Tailoring  => new SewingKit(),
                     SkillName.Tinkering  => new TinkerTools(),
+                    SkillName.Herbalism  => new MahaonHerbalistMortar(),
                     _                    => null
                 };
 
@@ -624,6 +567,13 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
                 }
 
                 GrantStartingRecipes(bot);
+
+                if (craftSkill == SkillName.Herbalism)
+                {
+                    GrantRecipesOf(bot, Engines.Craft.DefHerbalism.CraftSystem);
+                    bot.Backpack?.DropItem(new Garlic(10));
+                    bot.Backpack?.DropItem(new Bandage(10));
+                }
                 break;
 
             case BotArchetype.Trader:

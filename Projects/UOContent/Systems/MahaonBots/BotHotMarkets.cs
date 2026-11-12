@@ -39,8 +39,7 @@ public static class BotHotMarkets
         BotRumors.Spread($"В {city} продали {itemName} за {price} золота — вот это рынок!");
     }
 
-    /// <summary>Currently-hot cities, freshest first. PickTravelDestination biases toward
-    /// the top of this list for trader bots specifically.</summary>
+    /// <summary>Currently-hot cities, freshest first. TravelGoal sends greedy bots there.</summary>
     public static List<string> ActiveCities()
     {
         var now = Core.Now;

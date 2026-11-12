@@ -175,7 +175,7 @@ public static class ProfessionData
         {
             SkillName.Blacksmith, SkillName.Carpentry, SkillName.Tailoring, SkillName.Tinkering,
             SkillName.ArmsLore, SkillName.Fletching, SkillName.Alchemy, SkillName.Cooking, SkillName.Mining,
-            SkillName.Lumberjacking
+            SkillName.Lumberjacking, SkillName.Farming
         },
         [ProfessionCategory.Warrior] = new[]
         {
@@ -195,7 +195,8 @@ public static class ProfessionData
         [ProfessionCategory.Ranger] = new[]
         {
             SkillName.Archery, SkillName.Tracking, SkillName.AnimalTaming, SkillName.AnimalLore,
-            SkillName.Veterinary, SkillName.Herding, SkillName.Camping, SkillName.Cartography, SkillName.Fishing
+            SkillName.Veterinary, SkillName.Herding, SkillName.Camping, SkillName.Cartography, SkillName.Fishing,
+            SkillName.Herbalism
         },
         [ProfessionCategory.Necromancy] = new[]
         {
@@ -207,7 +208,9 @@ public static class ProfessionData
         },
         [ProfessionCategory.Mysticism] = new[]
         {
-            SkillName.Mysticism, SkillName.Focus, SkillName.Imbuing, SkillName.MagicResist
+            // Шаманство — навык шарда (dev-docs/shamanism): у Мистицизма живёт профессия
+            // «Шаман», и духовная магия ближе всего к этой категории.
+            SkillName.Mysticism, SkillName.Focus, SkillName.Imbuing, SkillName.MagicResist, SkillName.Shamanism
         },
         [ProfessionCategory.Weaving] = new[] { SkillName.Spellweaving, SkillName.Meditation, SkillName.AnimalLore },
         [ProfessionCategory.Bushido] = new[]

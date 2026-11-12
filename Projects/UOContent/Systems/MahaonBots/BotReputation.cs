@@ -48,7 +48,12 @@ public sealed class BotReputation : GenericPersistence
         RefreshTitle(bot);
     }
 
-    private static void RefreshTitle(Mobile bot)
+    /// <summary>
+    ///     Ставит титул репутации, сверяясь с настоящим NameMod, а не с запомненным: смерть
+    ///     сбрасывает NameMod, и кеш «уже стоит» оставлял бота без титула до следующего порога.
+    ///     Чужой NameMod (маскировка, инкогнито, полиморф) не трогаем.
+    /// </summary>
+    public static void RefreshTitle(Mobile bot)
     {
         var score = Score.GetValueOrDefault(bot);
 
@@ -59,13 +64,19 @@ public sealed class BotReputation : GenericPersistence
             _                => null
         };
 
-        if (AppliedTitle.TryGetValue(bot, out var current) && current == desiredTitle)
+        AppliedTitle.TryGetValue(bot, out var ours);
+        if (bot.NameMod != null && bot.NameMod != ours)
         {
-            return; // no change, don't touch NameMod for nothing
+            return; // чужое имя поверх — не наше дело
         }
 
-        bot.NameMod = desiredTitle == null ? null : $"{desiredTitle} {bot.RawName}";
-        AppliedTitle[bot] = desiredTitle;
+        var desired = desiredTitle == null ? null : $"{desiredTitle} {bot.RawName}";
+        if (bot.NameMod != desired)
+        {
+            bot.NameMod = desired;
+        }
+
+        AppliedTitle[bot] = desired;
     }
 
     public override void Serialize(IGenericWriter writer)

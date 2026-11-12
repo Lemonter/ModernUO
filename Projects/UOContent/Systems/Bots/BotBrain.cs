@@ -6,11 +6,12 @@ using Server.Mobiles;
 namespace Server.Systems.Bots;
 
 /// <summary>
-/// Everything a bot wants, knows and is doing. The persistent part — home, character, needs — is
-/// serialized with the bot; the plan and current action are rebuilt from the goal after a restart,
-/// because a half-walked route or a half-told sentence is not worth carrying across one.
+/// Everything a bot wants, knows and is doing. The persistent part — home, character, needs, and
+/// everything money and belongings depend on (loot marks, its own corpse, a paid hire) — is
+/// serialized with the bot. The goal and plan are not: after a restart the brain picks a goal
+/// afresh, because a half-walked route or a half-told sentence is not worth carrying across one.
 /// </summary>
-[SerializationGenerator(0)]
+[SerializationGenerator(1)]
 public partial class BotBrain
 {
     [DirtyTrackingEntity]
@@ -56,6 +57,38 @@ public partial class BotBrain
     [SerializableField(11)]
     private Item _ownerBeacon;
 
+    // Добыча с трупов продаётся только с меткой, а без сохранения метки после рестарта всё
+    // взятое лежало в сумке «ничьим»: не продавалось и не выбрасывалось, только давило весом.
+    [Tidy]
+    [SerializableField(12, setter: "private")]
+    private HashSet<Item> _loot = [];
+
+    /// <summary>The bot's own corpse after a death, until its belongings are recovered. Saved: a
+    /// restart must not leave everything the bot carried on the ground.</summary>
+    [SerializableField(13)]
+    private Items.Corpse _ownCorpse;
+
+    // Наём оплачен золотом, поэтому переживает рестарт; отряд — нет, его игрок соберёт заново.
+    [SerializableField(14)]
+    private Mobile _hireEmployer;
+
+    // Срок по часам мира; в работе бот сверяется с тиками (tick-counts.md), а при загрузке срок
+    // переводится в тик заново.
+    [SerializableField(15, setter: "private")]
+    private DateTime _hireUntil;
+
+    private long _hireUntilTick;
+
+    [AfterDeserialization]
+    private void AfterDeserialization()
+    {
+        if (_hireEmployer != null)
+        {
+            var left = Math.Max(0, (long)(_hireUntil - Core.Now).TotalMilliseconds);
+            _hireUntilTick = Core.TickCount + left;
+        }
+    }
+
     // Declared first: the generator picks the first matching constructor, and a deserialized brain
     // must know its bot to mark it dirty.
     public BotBrain(PlayerMobile bot) => _bot = bot;
@@ -74,6 +107,22 @@ public partial class BotBrain
 
         _restlessness = Utility.RandomDouble() * 0.5;
         _loneliness = Utility.RandomDouble() * 0.5;
+    }
+
+    private void MigrateFrom(V0Content content)
+    {
+        _homeMap = content.HomeMap;
+        _home = content.Home;
+        _homeCity = content.HomeCity;
+        _greed = content.Greed;
+        _caution = content.Caution;
+        _sociability = content.Sociability;
+        _wanderlust = content.Wanderlust;
+        _diligence = content.Diligence;
+        _fatigue = content.Fatigue;
+        _loneliness = content.Loneliness;
+        _restlessness = content.Restlessness;
+        _ownerBeacon = content.OwnerBeacon;
     }
 
     // Bell-ish: most characters are moderate, a few are extreme.
@@ -132,14 +181,30 @@ public partial class BotBrain
     public BotGroup Group { get; internal set; }
 
     // Loot taken from kills, sold on the next market round; corpses already searched.
-    private readonly HashSet<Serial> _loot = [];
     private readonly HashSet<Serial> _lootedCorpses = [];
 
-    public void MarkLoot(Item item) => _loot.Add(item.Serial);
+    public void MarkLoot(Item item)
+    {
+        // Без потолка метки копились бы вечно: проданное ушло, а запись осталась. Чистим то, что
+        // удалено или уже не у бота (продано, выброшено, отдано).
+        if (_loot.Count > 128)
+        {
+            _loot.RemoveWhere(i => i.Deleted || i.RootParent != _bot);
+        }
 
-    public bool IsLoot(Item item) => _loot.Contains(item.Serial);
+        _loot.Add(item);
+        this.MarkDirty();
+    }
 
-    public void ForgetLoot(Item item) => _loot.Remove(item.Serial);
+    public bool IsLoot(Item item) => _loot.Contains(item);
+
+    public void ForgetLoot(Item item)
+    {
+        if (_loot.Remove(item))
+        {
+            this.MarkDirty();
+        }
+    }
 
     public void MarkLooted(Items.Corpse corpse)
     {
@@ -153,8 +218,72 @@ public partial class BotBrain
 
     public bool HasLooted(Items.Corpse corpse) => _lootedCorpses.Contains(corpse.Serial);
 
-    /// <summary>The bot's own corpse after a death, until its belongings are recovered.</summary>
-    internal Items.Corpse OwnCorpse;
+    // ---- Possession ----------------------------------------------------------------------------
+
+    // Что было у живого персонажа, когда его отдали ИИ ([BecomeBot). Мозг тот же, что у бота, а
+    // бот продаёт сырьё, изделия и всё, что лежит в банке, — для игрока это потеря нажитого.
+    // Поэтому прежнее имущество для торговли невидимо: продаётся только то, что мозг добыл,
+    // сделал или снял с трупов сам. Только в памяти: одержимость рестарт не переживает.
+    private HashSet<Serial> _ownersOwn;
+
+    /// <summary>Remembers everything the character owns right now — worn, in the pack and in the
+    /// bank, nested containers too — so the brain never sells or hauls it off.</summary>
+    internal void RememberOwnersBelongings()
+    {
+        _ownersOwn = [];
+
+        foreach (var item in _bot.Items)
+        {
+            AddOwned(item);
+        }
+
+        if (_bot.FindBankNoCreate() is { } bank)
+        {
+            AddOwned(bank);
+        }
+    }
+
+    private void AddOwned(Item item)
+    {
+        _ownersOwn.Add(item.Serial);
+        foreach (var child in item.Items)
+        {
+            AddOwned(child);
+        }
+    }
+
+    /// <summary>Hands something over to the owner for good: banked surplus the brain must not haul
+    /// back out to sell.</summary>
+    internal void GiveToOwner(Item item) => _ownersOwn?.Add(item.Serial);
+
+    /// <summary>The possessed character's own property from before the AI took over.</summary>
+    public bool IsOwnersOwn(Item item) => _ownersOwn?.Contains(item.Serial) == true;
+
+    /// <summary>Whether the character is someone's own, handed to the AI, rather than a bot.</summary>
+    public bool IsPossessed => _ownersOwn != null;
+
+    // ---- Hire ----------------------------------------------------------------------------------
+
+    public bool IsHiredBy(Mobile employer) => _hireEmployer == employer && employer != null && Core.TickCount - _hireUntilTick < 0;
+
+    public bool HasHire => _hireEmployer != null;
+
+    public bool HireExpired => _hireEmployer != null && Core.TickCount - _hireUntilTick >= 0;
+
+    public void Hire(Mobile employer, TimeSpan time)
+    {
+        var start = IsHiredBy(employer) ? _hireUntilTick : Core.TickCount;
+        HireEmployer = employer;
+        _hireUntilTick = start + (long)time.TotalMilliseconds;
+        HireUntil = Core.Now + TimeSpan.FromMilliseconds(_hireUntilTick - Core.TickCount);
+    }
+
+    public void EndHire()
+    {
+        HireEmployer = null;
+        HireUntil = DateTime.MinValue;
+        _hireUntilTick = 0;
+    }
 
     public BotGoal Goal { get; private set; }
 
@@ -176,7 +305,14 @@ public partial class BotBrain
     public readonly List<(BotGoal goal, double score)> LastScores = [];
 
     private readonly Dictionary<BotGoal, long> _goalCooldownUntil = new();
-    private int _goalFailures;
+
+    // Неудачи по цели в скользящем окне. Раньше счётчик был один и обнулялся любым удачным
+    // шагом: план «дойти → сделать» давал «Done, Failed, Done, Failed…», и порог в три неудачи
+    // не наступал никогда — бот перепланировал безнадёжную цель бесконечно.
+    private readonly Dictionary<BotGoal, (int count, long since)> _goalFailures = new();
+    private const int FailureWindowMs = 10 * 60_000;
+    private const int FailuresToGiveUp = 3;
+
     private long _nextGoalReview;
 
     // ---- Thinking ------------------------------------------------------------------------------
@@ -209,7 +345,11 @@ public partial class BotBrain
         }
 
         // Brought back by something other than the ghost walk (a player's spell, a GM).
-        IsGhost = false;
+        if (IsGhost)
+        {
+            IsGhost = false;
+            MahaonBots.BotReputation.RefreshTitle(bot);
+        }
 
         // До боевого рефлекса намеренно: тот возвращается раньше, чем дело дойдёт до действий,
         // и всё, что стоит после него, в драке не исполняется никогда. Именно поэтому боты
@@ -219,12 +359,21 @@ public partial class BotBrain
         var reflex = BotCombat.Think(this);
         if (reflex >= 0)
         {
+            // Бой — тоже дело: сторож не должен счесть дерущегося застрявшим.
+            NoteProgress(now);
             return reflex;
+        }
+
+        if (Watchdog(now))
+        {
+            return 1000;
         }
 
         BotStable.Upkeep(this);
 
-        if (now - _nextGoalReview >= 0 || Goal == null)
+        // Без цели обзор нужен, только если и делать нечего: в LastResort план есть, а цели
+        // нет, и прежняя проверка пересчитывала все цели на каждом шаге пути домой.
+        if (now - _nextGoalReview >= 0 || Goal == null && Action == null && _plan.Count == 0)
         {
             ReviewGoal(now);
         }
@@ -256,18 +405,24 @@ public partial class BotBrain
                 }
             case BotActionStatus.Done:
                 {
-                    _goalFailures = 0;
+                    NoteProgress(now);
                     Action.Stop(this);
                     Action = null;
 
                     if (_plan.Count == 0)
                     {
+                        if (Goal != null)
+                        {
+                            _goalFailures.Remove(Goal);
+                        }
+
                         if (Goal?.News is { Length: > 0 } news)
                         {
                             LastNews = news[Utility.Random(news.Length)];
                             LastNewsTick = now;
                         }
 
+                        NoteProgress(now);
                         Goal?.OnCompleted(this);
                         Goal = null;
                     }
@@ -281,14 +436,14 @@ public partial class BotBrain
 
                     // Replan the same goal from where the bot now stands; give up on it after
                     // repeated failures and let something else win for a while.
-                    if (++_goalFailures >= 3 || !TryPlan(Goal))
+                    if (CountFailure(Goal, now) >= FailuresToGiveUp || !TryPlan(Goal))
                     {
                         if (Goal != null)
                         {
                             _goalCooldownUntil[Goal] = now + 5 * 60_000;
+                            _goalFailures.Remove(Goal);
                         }
 
-                        _goalFailures = 0;
                         ClearPlan();
                         Goal = null;
                     }
@@ -312,7 +467,10 @@ public partial class BotBrain
     /// </summary>
     private int LastResort(long now)
     {
-        if (HomeMap != null && (_bot.Map != HomeMap || !Utility.InRange(_bot.Location, Home, 12)))
+        // Дом в охраняемом городе для красного или серого — верная смерть от стражи.
+        var homeIsSafe = HomeMap == null || !BotSocialRules.IsOutlaw(_bot) || !BotSocialRules.IsGuarded(HomeMap, Home);
+
+        if (HomeMap != null && homeIsSafe && (_bot.Map != HomeMap || !Utility.InRange(_bot.Location, Home, 12)))
         {
             _plan.Enqueue(new GoToAction(HomeMap, Home, 6, "домой, делать тут нечего"));
         }
@@ -325,6 +483,101 @@ public partial class BotBrain
         _nextGoalReview = now + 5_000;
 
         return NextAction() ? 500 : 2000;
+    }
+
+    // ---- Сторож -----------------------------------------------------------------------------------
+    //
+    // «Стоит столбом» чинили точечно не меньше пяти раз (LastResort, LoiterGoal, Relocate, речь,
+    // сироты маяка). Общий механизм: бот не сдвинулся и не закончил ни одной цели десять минут —
+    // мозг пишет о себе в лог и бросает всё, что делал; ещё десять минут без толку — переносится
+    // домой. Бот в клетке вне навигационного графа иначе проваливал бы любой поход вечно.
+
+    private const long StuckMs = 10 * 60_000;
+    private const int StuckDistance = 4;
+
+    private long _progressTick = Core.TickCount;
+    private Point3D _progressAnchor;
+    private Map _progressMap;
+    private int _progressWeight;
+    private int _stuckStrikes;
+
+    private void NoteProgress(long now)
+    {
+        _progressTick = now;
+        _progressAnchor = _bot.Location;
+        _progressMap = _bot.Map;
+        _progressWeight = _bot.TotalWeight;
+        _stuckStrikes = 0;
+    }
+
+    /// <summary>True when it stepped in: the bot was stuck and has been shaken loose.</summary>
+    private bool Watchdog(long now)
+    {
+        // Добыча и ремесло идут на месте, но сумка при этом меняется — это тоже дело.
+        if (_progressMap != _bot.Map || !Utility.InRange(_bot.Location, _progressAnchor, StuckDistance) ||
+            _progressWeight != _bot.TotalWeight || Action is RestAction)
+        {
+            NoteProgress(now);
+            return false;
+        }
+
+        if (now - _progressTick < StuckMs)
+        {
+            return false;
+        }
+
+        _stuckStrikes++;
+        logger.Warning(
+            "Bot {Bot} stuck at {Location} {Map} for {Minutes} min: goal {Goal}, action {Action}, top scores {Scores}",
+            _bot.Name, _bot.Location, _bot.Map, (now - _progressTick) / 60_000, Goal?.Name ?? "—", DescribeAction(), TopScores()
+        );
+
+        if (Goal != null)
+        {
+            _goalCooldownUntil[Goal] = now + StuckMs;
+        }
+
+        ClearPlan();
+        Goal = null;
+
+        if (_stuckStrikes >= 2 && HomeMap != null && HomeMap != Map.Internal)
+        {
+            // Последний довод: дорогу отсюда найти не удаётся, значит, вынести отсюда.
+            _bot.MoveToWorld(Home, HomeMap);
+            _stuckStrikes = 0;
+        }
+
+        _progressTick = now;
+        return true;
+    }
+
+    private string TopScores()
+    {
+        var sorted = new List<(BotGoal goal, double score)>(LastScores);
+        sorted.Sort((a, b) => b.score.CompareTo(a.score));
+
+        var text = new System.Text.StringBuilder();
+        for (var i = 0; i < sorted.Count && i < 5; i++)
+        {
+            text.Append(i == 0 ? "" : ", ").Append(sorted[i].goal.Name).Append('=').Append(sorted[i].score.ToString("0.00"));
+        }
+
+        return text.ToString();
+    }
+
+    private int CountFailure(BotGoal goal, long now)
+    {
+        if (goal == null)
+        {
+            return FailuresToGiveUp;
+        }
+
+        var (count, since) = _goalFailures.TryGetValue(goal, out var entry) && now - entry.since < FailureWindowMs
+            ? entry
+            : (0, now);
+
+        _goalFailures[goal] = (++count, since);
+        return count;
     }
 
     private bool NextAction()
@@ -354,12 +607,24 @@ public partial class BotBrain
                 continue;
             }
 
-            if (Focus != null && goal != Focus && !goal.IsUpkeep)
+            if (Focus != null && goal != Focus && !goal.IsUpkeep || IsPossessed && BotGoals.IsBotsOnly(goal))
             {
                 continue;
             }
 
-            var score = goal.Score(this);
+            double score;
+            try
+            {
+                score = goal.Score(this);
+            }
+            catch (Exception e)
+            {
+                // Одна сломанная цель не должна парализовать бота: без этого обзор обрывался на
+                // ней каждый раз, бот не делал ничего и раз в пять секунд писал ту же ошибку.
+                Disable(goal, now, e);
+                continue;
+            }
+
             if (goal != Goal && Goal != null && !force)
             {
                 score -= SwitchCost;
@@ -392,7 +657,17 @@ public partial class BotBrain
             return false;
         }
 
-        var steps = goal.Plan(this);
+        List<BotAction> steps;
+        try
+        {
+            steps = goal.Plan(this);
+        }
+        catch (Exception e)
+        {
+            Disable(goal, Core.TickCount, e);
+            return false;
+        }
+
         if (steps == null || steps.Count == 0)
         {
             return false;
@@ -407,6 +682,39 @@ public partial class BotBrain
         }
 
         return true;
+    }
+
+    private static readonly Logging.ILogger logger = Logging.LogFactory.GetLogger(typeof(BotBrain));
+
+    // Одна запись на цель и вид ошибки: она повторится у каждого бота и забьёт лог.
+    private static readonly HashSet<string> _reportedGoalErrors = [];
+
+    private void Disable(BotGoal goal, long now, Exception e)
+    {
+        _goalCooldownUntil[goal] = now + 10 * 60_000;
+
+        if (_reportedGoalErrors.Add($"{goal.GetType().Name}:{e.GetType().Name}"))
+        {
+            logger.Error(e, "Bot goal {Goal} threw for {Bot}; paused for this bot", goal.GetType().Name, _bot?.Name);
+        }
+    }
+
+    /// <summary>Starts a goal as if the review had picked it. For tests and GM tools.</summary>
+    internal bool Pursue(BotGoal goal)
+    {
+        _nextGoalReview = Core.TickCount + GoalReviewMs;
+        return TryPlan(goal);
+    }
+
+    /// <summary>Whether the brain has put this goal aside for a while after it kept failing.</summary>
+    internal bool IsPaused(BotGoal goal) =>
+        _goalCooldownUntil.TryGetValue(goal, out var until) && Core.TickCount - until < 0;
+
+    /// <summary>Drops the plan without stopping the action — for when Stop() itself is broken.</summary>
+    internal void AbandonPlan()
+    {
+        Action = null;
+        _plan.Clear();
     }
 
     public void ClearPlan()

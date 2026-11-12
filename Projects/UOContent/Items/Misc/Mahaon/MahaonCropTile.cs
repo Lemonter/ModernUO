@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ModernUO.Serialization;
+using Server.Systems.MahaonFarming;
 using Server.Systems.MahaonSeasons;
 using Server.Systems.MahaonWorld;
 
@@ -19,7 +20,7 @@ namespace Server.Items;
 ///     Item.Visible, same as MahaonDungeonMarker) — painted a permanent yellow-ish tint so
 ///     it's easy to spot even when it's just growing normally and blends in visually.
 /// </summary>
-[SerializationGenerator(0, false)]
+[SerializationGenerator(1, false)]
 public partial class MahaonCropTile : Item
 {
     [SerializableField(0)]
@@ -28,11 +29,27 @@ public partial class MahaonCropTile : Item
     [SerializableField(1)]
     private bool _harvested;
 
+    // Посеянная грядка (семенами — игроком или ботом) зарастает, если за целый круг сезонов её
+    // ни разу не собрали: иначе посадки копились бы вокруг городов без предела. Поля карты
+    // (MahaonFieldSeeding), грядки GM и всё, что посажено до этого правила, не зарастают.
+    [SerializableField(2)]
+    private bool _planted;
+
+    // Сколько осеней подряд урожай никто не снял.
+    [SerializableField(3)]
+    private sbyte _neglect;
+
+    private void MigrateFrom(V0Content content)
+    {
+        _cropType = content.CropType;
+        _harvested = content.Harvested;
+    }
+
     // Раньше грядки красились в жёлтый, чтобы ГМ видел их среди травы. Теперь грядками
     // стали и все поля Британии — пять с половиной тысяч штук, — и подкрашивать их значило
     // бы перекрасить полмира. Ищутся они и так: зимой и после сбора они невидимы для
     // игроков, но не для ГМ (AccessLevel обходит Item.Visible).
-    private const int HarvestAmount = 6;
+    // Сколько снимается с грядки, решает навык Земледелия (MahaonFarmingSkill.Yield).
 
     /// <summary>Во сколько раз семян меньше, чем урожая.</summary>
     private const int SeedsPerHarvestDivisor = 3;
@@ -81,13 +98,36 @@ public partial class MahaonCropTile : Item
         base.OnDelete();
     }
 
+    private static bool _configured;
+
     public static void Configure()
     {
+        // Повторный вызов безопасен: тестовый хост вызывает Configure выборочно и сам.
+        if (_configured)
+        {
+            return;
+        }
+
+        _configured = true;
         SeasonSystem.OnSeasonChanged += OnSeasonChanged;
+    }
+
+    /// <summary>Сколько осеней подряд без сбора грядка терпит, прежде чем зарасти.</summary>
+    private const int NeglectedAutumns = 1;
+
+    /// <summary>Отмечает грядку посеянной: такая зарастает, если её бросить.</summary>
+    public void MarkPlanted()
+    {
+        Planted = true;
+
+        // Посеянное осенью или зимой своей осени ещё не видело — год отсчитывается со следующей.
+        Neglect = (sbyte)(SeasonSystem.CurrentSeason is MahaonSeason.Autumn or MahaonSeason.Winter ? -1 : 0);
     }
 
     private static void OnSeasonChanged(MahaonSeason season)
     {
+        List<MahaonCropTile> overgrown = null;
+
         foreach (var tile in AllTiles)
         {
             if (tile.Deleted)
@@ -97,11 +137,33 @@ public partial class MahaonCropTile : Item
 
             if (season == MahaonSeason.Spring)
             {
+                if (tile._planted)
+                {
+                    tile.Neglect = (sbyte)(tile._harvested ? 0 : tile._neglect + 1);
+                    if (tile._neglect >= NeglectedAutumns)
+                    {
+                        (overgrown ??= []).Add(tile);
+                        continue;
+                    }
+                }
+
                 // New year — whatever got picked last autumn grows back.
-                tile._harvested = false;
+                tile.Harvested = false;
             }
 
             tile.RefreshAppearance();
+        }
+
+        if (overgrown == null)
+        {
+            return;
+        }
+
+        foreach (var tile in overgrown)
+        {
+            // Зарастает и пашня под грядкой.
+            MahaonTilledEarth.Find(tile.GetWorldLocation(), tile.Map)?.Delete();
+            tile.Delete();
         }
     }
 
@@ -182,7 +244,20 @@ public partial class MahaonCropTile : Item
             return;
         }
 
-        var amount = HarvestAmount;
+        if (!MahaonFarmingSkill.CanWork(from, _cropType))
+        {
+            MahaonFarmingSkill.SendTooHard(from, _cropType);
+            return;
+        }
+
+        var amount = MahaonFarmingSkill.Yield(from);
+
+        // Неудачный сбор портит половину, но не отнимает всё — грядку ведь уже вырастили.
+        if (!MahaonFarmingSkill.CheckHarvest(from, _cropType))
+        {
+            amount = MahaonFarmingSkill.Spoiled(amount);
+            from.SendMessage(0x22, "Ты неловко обрываешь плоды — часть урожая побита.");
+        }
 
         // Вспаханная земля под грядкой удваивает урожай — и на этом заканчивается: пашня
         // уходит вместе со снятым урожаем, так что перед следующим посевом землю надо
@@ -209,7 +284,7 @@ public partial class MahaonCropTile : Item
 
         from.SendMessage(0x59, $"Собрано: {Definition.NameRu}.");
 
-        _harvested = true;
+        Harvested = true;
         RefreshAppearance(); // goes invisible for everyone now, GM keeps seeing it (yellow)
     }
 }

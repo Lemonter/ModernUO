@@ -81,6 +81,7 @@ public static class ProfessionBonuses
             SkillName.Necromancy   => ProfessionCategory.Necromancy,
             SkillName.Chivalry     => ProfessionCategory.Faith,
             SkillName.Mysticism    => ProfessionCategory.Mysticism,
+            SkillName.Shamanism    => ProfessionCategory.Mysticism,
             SkillName.Spellweaving => ProfessionCategory.Weaving,
             _                      => (ProfessionCategory?)null
         };

@@ -8,7 +8,8 @@ namespace Server.Systems.Bots;
 /// and follow the town's auction: a bot undercuts the going rate a little, the way sellers do.</summary>
 public static class BotGoods
 {
-    public static bool IsRawGood(Item item) => item is MahaonIngot or MahaonOre or Log or Board or Fish or MahaonCoal;
+    public static bool IsRawGood(Item item) =>
+        item is MahaonIngot or MahaonOre or Log or Board or Fish or MahaonCoal or MahaonHerbItem;
 
     /// <summary>What fields and orchards yield.</summary>
     public static bool IsFarmGood(Item item) =>
@@ -53,6 +54,8 @@ public static class BotGoods
     /// what it crafted.</summary>
     // A map the bot will dig itself, or one it has read (then only it can dig there), stays.
     public static bool IsForSale(Mobile bot, Item item) =>
+        // Имущество одержимого персонажа ([BecomeBot) не товар: продаётся лишь нажитое мозгом.
+        !(bot.GetBrain() is { } owner && owner.IsOwnersOwn(item)) &&
         item is not TreasureMap { Decoder: not null } && !(item is TreasureMap map && BotTreasure.Keeps(bot, map)) && (
         IsRawGood(item) && !BotCrafting.KeepsForCraft(bot, item) ||
         IsProduct(bot, item) && !BotCrafting.KeepsForOwnUse(bot, item) ||
@@ -69,6 +72,14 @@ public static class BotGoods
         Log               => 3,
         Fish              => 5,
         MahaonCoal        => 4,
+
+        // Травы — по редкости: вдвое дороже того, что за них даёт травник в лавке.
+        MahaonPlantain                       => 2,
+        MahaonYarrow or MahaonStJohnsWort    => 4,
+        MahaonComfrey or MahaonWormwood      => 6,
+        MahaonMountainRoot                   => 10,
+        MahaonSnowbloom                      => 12,
+        MahaonMoonwort                       => 16,
         Cotton or Flax    => 40,
         SpoolOfThread     => 8,
         BaseHides         => 2,

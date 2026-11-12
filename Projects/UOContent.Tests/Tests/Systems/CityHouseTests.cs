@@ -140,7 +140,8 @@ public class CityHouseTests
             MahaonCityHouseSystem.TryBuyBasement(owner, house);
 
             Assert.True(house.HasBasement);
-            Assert.Equal(24, house.Tiles.Count);
+            // 12 клеток дома и подвал, добранный до 4×4 — меньше подвал не роют.
+            Assert.Equal(28, house.Tiles.Count);
             Assert.Same(house, MahaonCityHouseSystem.Find(new Point3D(3401, 3101, -MahaonCityHouse.BasementDepth), Map.Felucca));
 
             MahaonBasementHatch down = null;

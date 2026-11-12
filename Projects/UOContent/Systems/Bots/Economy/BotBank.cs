@@ -18,6 +18,11 @@ public static class BotBank
 
     private static bool IsCurrency(Item item) => item is Gold or BankCheck;
 
+    // Что бот забирает из банка на продажу: всё, кроме денег, — но у одержимого персонажа
+    // только то, что туда положил сам мозг (возвраты своих лотов), а не нажитое хозяином.
+    private static bool IsWaitingGood(Mobile bot, Item item) =>
+        !IsCurrency(item) && !(bot.GetBrain() is { } brain && brain.IsOwnersOwn(item));
+
     /// <summary>Non-currency items waiting in the bank box.</summary>
     public static int WaitingGoods(Mobile bot)
     {
@@ -29,7 +34,7 @@ public static class BotBank
         var count = 0;
         foreach (var item in box.Items)
         {
-            if (!IsCurrency(item))
+            if (IsWaitingGood(bot, item))
             {
                 count++;
             }
@@ -50,7 +55,7 @@ public static class BotBank
         var waiting = new List<Item>();
         foreach (var item in box.Items)
         {
-            if (!IsCurrency(item))
+            if (IsWaitingGood(bot, item))
             {
                 waiting.Add(item);
             }

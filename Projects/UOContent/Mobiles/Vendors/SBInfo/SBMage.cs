@@ -19,28 +19,14 @@ namespace Server.Mobiles
                 // кастов ... по 10 голды". Chivalry/Bushido/Ninjitsu/Spellweaving/Mysticism
                 // added alongside the two that were already here (Magery/Necromancy); era
                 // gates match how NecromancerSpellbook was already gated behind Core.AOS.
+                //
+                // Книги остальных школ (Некромантия, Рыцарство, Бусидо, Ниндзюцу, Плетение,
+                // Мистицизм) с 2026-11-12 продаёт городской мистик (SBMahaonMystic) — по
+                // просьбе владельца шарда, вместе с книгой шамана. У мага осталась своя книга.
                 Add(new GenericBuyInfo(typeof(Spellbook), 10, 10, 0xEFA, 0));
-
-                if (Core.AOS)
-                {
-                    Add(new GenericBuyInfo(typeof(NecromancerSpellbook), 10, 10, 0x2253, 0));
-                }
-
-                if (Core.SE)
-                {
-                    Add(new GenericBuyInfo(typeof(BookOfChivalry), 10, 10, 0x2252, 0));
-                    Add(new GenericBuyInfo(typeof(BookOfBushido), 10, 10, 0x238C, 0));
-                    Add(new GenericBuyInfo(typeof(BookOfNinjitsu), 10, 10, 0x23A0, 0));
-                }
-
-                if (Core.ML)
-                {
-                    Add(new GenericBuyInfo(typeof(SpellweavingBook), 10, 10, 0x2D50, 0x8A2));
-                }
 
                 if (Core.SA)
                 {
-                    Add(new GenericBuyInfo(typeof(MysticSpellbook), 10, 10, 0x2D9D, 0));
 
                     // Mahaon: all 16 Mysticism scrolls, same flat 10gp as every other
                     // discipline's scrolls below — moved here from the court mage's own

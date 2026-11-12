@@ -15,7 +15,10 @@ public sealed class LoiterGoal : BotGoal
     public override List<BotAction> Plan(BotBrain brain)
     {
         var bot = brain.Bot;
-        var center = bot.Map == brain.HomeMap && brain.HomeMap != null ? brain.Home : bot.Location;
+        var center = bot.Map == brain.HomeMap && brain.HomeMap != null &&
+                     (!BotSocialRules.IsOutlaw(bot) || !BotSocialRules.IsGuarded(bot.Map, brain.Home))
+            ? brain.Home
+            : bot.Location;
 
         var steps = new List<BotAction>();
         var stops = Utility.RandomMinMax(1, 3);

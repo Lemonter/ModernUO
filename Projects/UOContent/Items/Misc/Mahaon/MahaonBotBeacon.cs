@@ -65,11 +65,10 @@ public partial class MahaonBotBeacon : Item
     /// <summary>
     ///     Насколько широко вокруг маяка нельзя начинать драку.
     ///
-    ///     Боты возрождаются прямо у своего маяка, а разбойник ищет жертв в двадцати
-    ///     тайлах вокруг себя — то есть у того же маяка. Получалась ловушка: убитый
-    ///     вставал и тут же получал снова. Минуты неприкосновенности после возрождения
-    ///     мало, потому что охотник просто ждёт, когда она кончится; нужна именно тихая
-    ///     зона вокруг самой точки.
+    ///     Новые боты появляются у своего маяка и возвращаются к нему домой, а разбойник
+    ///     ищет жертв в двадцати тайлах вокруг себя — то есть у того же маяка. Получалась
+    ///     ловушка: появившийся бот тут же становился добычей. Нужна тихая зона вокруг
+    ///     самой точки. (Призрак бота теперь идёт к лекарю, а не воскресает у маяка.)
     ///
     ///     Это не защита от урона: уже начатую драку сюда можно притащить, и вмешаться в
     ///     неё тоже можно. Запрещено только выбирать здесь новую жертву.
@@ -106,14 +105,14 @@ public partial class MahaonBotBeacon : Item
         _totalLimit = 0;
 
         AllBeacons.Add(this);
-        Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
+        _spawnTimer = Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
     }
 
     [AfterDeserialization]
     private void AfterDeserialization()
     {
         AllBeacons.Add(this);
-        Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
+        _spawnTimer = Timer.DelayCall(SpawnTick, SpawnTick, TrySpawnOne);
     }
 
     // Both old versions (0 and 1) still had TargetCounts as a single int[5] indexed by
@@ -388,10 +387,8 @@ public partial class MahaonBotBeacon : Item
         var name = Systems.MahaonBots.BotNameGenerator.Generate();
         var bot = BotMobile.Create(name, spot, Map, bestArchetype, forceThief: bestIsThief);
 
-        // CityName (informational-only until now) doubles as HomeCity/CurrentCity here —
-        // without it every beacon-spawned bot had no city to fall back to, so getting
-        // "stuck" while traveling or dying anywhere on the map always teleported/
-        // resurrected it right back to this exact beacon tile instead of the nearer city.
+        // CityName doubles as the bot's home city: banking, shopping and the ghost's walk to a
+        // healer start from there.
         Systems.Bots.BotSystem.Register(bot, spot, Map, CityName);
         Claim(bot);
         bot.Brain.OwnerBeacon = this;
@@ -420,8 +417,13 @@ public partial class MahaonBotBeacon : Item
         return Location;
     }
 
+    // Таймер раньше не хранился и после удаления маяка тикал вечно.
+    private Timer _spawnTimer;
+
     public override void OnDelete()
     {
+        _spawnTimer?.Stop();
+        _spawnTimer = null;
         AllBeacons.Remove(this);
 
         // Раньше маяк удалялся, а его боты оставались навсегда — сироты копились

@@ -158,6 +158,9 @@ public static class HuntingAtlas
         return best;
     }
 
+    /// <summary>Fame of one kind of prey by its type name, or -1 when it is no prey or unknown.</summary>
+    public static int PreyFame(string typeName) => FameOf(typeName, []);
+
     /// <summary>Fame of a spawnable type name if it is fair prey, else -1.</summary>
     private static int FameOf(string typeName, HashSet<string> prey)
     {

@@ -5,7 +5,7 @@ namespace Server.Systems.MahaonBots;
 
 /// <summary>
 ///     What GuildBank's gems are actually FOR — until this existed, gems dropped into a
-///     guild's bank on every member death (see BotPets.DropGuildDeathGem) and just sat
+///     guild's bank on every member death (see GuildBank.OnMemberDeath) and just sat
 ///     there forever, read-only, shown as a number in MahaonBotGuildGump with nothing to
 ///     spend it on. This adds the one sink: "боевая подготовка" — spending gems permanently
 ///     buffs Str/Dex/Int, but only on ONE member per purchase — picked at random from

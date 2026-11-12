@@ -328,7 +328,8 @@ public class PlayerMurderSystem : GenericPersistence
             }
             _contextTerms.Remove(context);
         }
-        else if (player.NetState != null)
+        // Бот в игре всегда, клиента у него нет: без этого убийства у него не остывали бы.
+        else if (player.NetState != null || player is BotMobile)
         {
             _contextTerms.Add(context);
         }

@@ -24,6 +24,14 @@ public sealed class GoToAction : BotAction
     private Point3D _aimedAt;
     private int _replans;
 
+    // Ближе всего к цели, куда бот уже доходил. Лимит перепланировок — на заминки подряд, а не
+    // на весь путь: четыре толпы в воротах на дороге через континент не должны проваливать поход.
+    private double _closest = double.MaxValue;
+    private const int ProgressStride = 5;
+
+    // Как в NavFollower: этажом выше или ниже — ещё не пришёл (мост, второй этаж банка, подземный ход).
+    private const int ArrivalZ = 16;
+
     public GoToAction(Map map, Point3D point, int range, string label)
     {
         _map = map;
@@ -90,7 +98,8 @@ public sealed class GoToAction : BotAction
             return BotActionResult.Failed();
         }
 
-        if (bot.Map == TargetMap && Utility.InRange(bot.Location, TargetPoint, _range))
+        if (bot.Map == TargetMap && Utility.InRange(bot.Location, TargetPoint, _range) &&
+            System.Math.Abs(bot.Z - TargetPoint.Z) < ArrivalZ)
         {
             return BotActionResult.Done();
         }
@@ -123,6 +132,7 @@ public sealed class GoToAction : BotAction
         {
             case NavStepResult.Moved:
                 {
+                    NoteProgress(bot);
                     return BotActionResult.Running(BotMovement.StepDelay(bot, run));
                 }
             case NavStepResult.Waiting:
@@ -144,6 +154,21 @@ public sealed class GoToAction : BotAction
                     RequestRoute(brain);
                     return BotActionResult.Running(500);
                 }
+        }
+    }
+
+    private void NoteProgress(Mobile bot)
+    {
+        if (bot.Map != TargetMap)
+        {
+            return;
+        }
+
+        var distance = bot.GetDistanceToSqrt(TargetPoint);
+        if (distance <= _closest - ProgressStride)
+        {
+            _closest = distance;
+            _replans = 0;
         }
     }
 

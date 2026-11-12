@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Server.Items;
+using Server.Engines.Craft;
 using Server.Mobiles;
 
 namespace Server.Systems.Bots;
@@ -14,12 +15,21 @@ public sealed class SupplyGoal : BotGoal
     public override bool IsUpkeep => true;
 
 
+    // Ниже этого навыка добыча — не ремесло бота, и инструмент для неё не покупается. Без порога
+    // любой бот, да и одержимый персонаж без кирки, получал «купить кирку» с оценкой 0,9.
+    private const double GatherTradeSkill = 20;
+
     private static (ResourceKind kind, Type tool) MainTrade(BotBrain brain)
     {
         var skills = brain.Bot.Skills;
         var mining = skills.Mining.Value;
         var lumber = skills.Lumberjacking.Value;
         var fishing = skills.Fishing.Value;
+
+        if (Math.Max(mining, Math.Max(lumber, fishing)) < GatherTradeSkill)
+        {
+            return (ResourceKind.Ore, null);
+        }
 
         if (mining >= lumber && mining >= fishing)
         {
@@ -34,7 +44,7 @@ public sealed class SupplyGoal : BotGoal
     private static Type NeededTool(BotBrain brain)
     {
         var (kind, gatherTool) = MainTrade(brain);
-        if (GatherAction.FindTool(brain.Bot, kind) == null)
+        if (gatherTool != null && GatherAction.FindTool(brain.Bot, kind) == null)
         {
             return gatherTool;
         }
@@ -72,31 +82,30 @@ public sealed class SupplyGoal : BotGoal
         typeof(Nightshade), typeof(SpidersSilk), typeof(SulfurousAsh)
     ];
 
-    /// <summary>The next consumable the bot is short of and how many to buy: bandages for a
-    /// healer, reagents for a caster, ammunition for an archer, a few heal potions for everyone.</summary>
-    private static bool TryNextConsumable(BotBrain brain, out Type type, out int amount)
+    /// <summary>Every consumable the bot is short of and how many to buy, most pressing first:
+    /// bandages for a healer, reagents for a caster, ammunition for an archer, a few heal potions
+    /// for everyone. All of them, not just the first: one the town doesn't sell must not keep the
+    /// rest from ever being bought.</summary>
+    private static List<(Type type, int amount)> Shortages(BotBrain brain)
     {
         var bot = brain.Bot;
         var pack = bot.Backpack;
-        type = null;
-        amount = 0;
+        var needs = new List<(Type type, int amount)>();
 
         if (pack == null)
         {
-            return false;
+            return needs;
         }
 
         if (bot.Skills.Healing.Value >= 20 && pack.GetAmount(typeof(Bandage)) < 20)
         {
-            (type, amount) = (typeof(Bandage), 60);
-            return true;
+            needs.Add((typeof(Bandage), 60));
         }
 
         // A scribe writes only what its own book holds.
         if (BotScribe.IsScribe(bot) && Spellbook.FindRegular(bot) == null)
         {
-            (type, amount) = (typeof(Spellbook), 1);
-            return true;
+            needs.Add((typeof(Spellbook), 1));
         }
 
         if (bot.Skills.Magery.Value >= 30 || BotCrafting.IsAlchemist(bot) || BotScribe.IsScribe(bot))
@@ -105,113 +114,128 @@ public sealed class SupplyGoal : BotGoal
             {
                 if (pack.GetAmount(reagent) < 15)
                 {
-                    (type, amount) = (reagent, 40);
-                    return true;
+                    needs.Add((reagent, 40));
                 }
             }
         }
 
-        if (bot.Skills.Necromancy.Value >= 30 && TryShort(pack, NecroReagents, 15, out type))
+        if (bot.Skills.Necromancy.Value >= 30)
         {
-            amount = 40;
-            return true;
+            AddShort(needs, pack, NecroReagents, 15, 40);
         }
 
-        if (bot.Skills.Mysticism.Value >= 30 && TryShort(pack, MysticReagents, 15, out type))
+        if (bot.Skills.Mysticism.Value >= 30)
         {
-            amount = 40;
-            return true;
+            AddShort(needs, pack, MysticReagents, 15, 40);
         }
 
         if (bot.Skills.Musicianship.Value >= 30 && pack.FindItemByType<BaseInstrument>() == null)
         {
-            (type, amount) = (typeof(BaseInstrument), 1);
-            return true;
+            needs.Add((typeof(BaseInstrument), 1));
         }
 
         if (bot.Weapon is BaseRanged { AmmoType: not null } ranged && pack.GetAmount(ranged.AmmoType) < 50)
         {
-            (type, amount) = (ranged.AmmoType, 150);
-            return true;
+            needs.Add((ranged.AmmoType, 150));
         }
 
-        if (BotStable.TryNeededFood(bot, out type, out amount))
+        if (BotStable.TryNeededFood(bot, out var food, out var foodAmount))
         {
-            return true;
+            needs.Add((food, foodAmount));
         }
 
         if (BotCrafting.IsAlchemist(bot) && pack.GetAmount(typeof(Bottle)) < 20)
         {
-            (type, amount) = (typeof(Bottle), 50);
-            return true;
+            needs.Add((typeof(Bottle), 50));
+        }
+
+        // Травнику из лавки нужно только то, чего не соберёшь в поле: чеснок для
+        // противоядия и бинты для шин. Травы он собирает сам.
+        if (BotCrafting.IsHerbalist(bot))
+        {
+            if (pack.GetAmount(typeof(Garlic)) < 5)
+            {
+                needs.Add((typeof(Garlic), 20));
+            }
+
+            if (pack.GetAmount(typeof(Bandage)) < 5)
+            {
+                needs.Add((typeof(Bandage), 20));
+            }
         }
 
         if (BotScribe.IsScribe(bot))
         {
             if (pack.GetAmount(typeof(BlankScroll)) < 20)
             {
-                (type, amount) = (typeof(BlankScroll), 50);
-                return true;
+                needs.Add((typeof(BlankScroll), 50));
             }
 
             if (BotScribe.NextScrollToLearn(bot) is { } scroll)
             {
-                (type, amount) = (scroll, 1);
-                return true;
+                needs.Add((scroll, 1));
             }
         }
 
         // Treasure is dug with a shovel; a pickaxe is a weapon to the dig.
         if (BotTreasure.Usable(bot) != null && !TreasureMap.HasDiggingTool(bot))
         {
-            (type, amount) = (typeof(Shovel), 1);
-            return true;
+            needs.Add((typeof(Shovel), 1));
         }
 
         if (BotTreasure.WantsLockpicks(bot))
         {
-            (type, amount) = (typeof(Lockpick), 5);
-            return true;
+            needs.Add((typeof(Lockpick), 5));
         }
 
         // A cook short of meat buys ribs from the butcher; the rest comes from its hunting.
         if (BotCrafting.IsCook(bot) && pack.GetAmount(typeof(RawRibs)) + pack.GetAmount(typeof(RawBird)) +
             pack.GetAmount(typeof(RawFishSteak)) < 10)
         {
-            (type, amount) = (typeof(RawRibs), 20);
-            return true;
+            needs.Add((typeof(RawRibs), 20));
         }
 
         // A tailor with nothing to sew buys cloth; leather comes from its own hunting.
         if (BotCrafting.IsTailor(bot) && pack.GetAmount(typeof(Cloth)) + pack.GetAmount(typeof(BoltOfCloth)) * 50 +
             pack.GetAmount(typeof(BaseLeather)) < 30)
         {
-            (type, amount) = (typeof(Cloth), 60);
-            return true;
+            needs.Add((typeof(Cloth), 60));
+        }
+
+        // Ремесленник без материала и без сырья, чтобы его добыть, смотрит рынок своего города:
+        // аукцион, где боты-добытчики выставляют слитки и доски, или лавку.
+        if ((IsCrafterOf(bot, DefBlacksmithy.CraftSystem) || IsCrafterOf(bot, DefTinkering.CraftSystem)) &&
+            pack.GetAmount(typeof(MahaonIngot)) < 20 && pack.GetAmount(typeof(MahaonOre)) == 0)
+        {
+            needs.Add((typeof(MahaonIngot), 50));
+        }
+
+        if ((IsCrafterOf(bot, DefCarpentry.CraftSystem) || IsCrafterOf(bot, DefBowFletching.CraftSystem)) &&
+            pack.GetAmount(typeof(Board)) + pack.GetAmount(typeof(Log)) < 20)
+        {
+            needs.Add((typeof(Board), 50));
         }
 
         if (pack.GetAmount(typeof(BaseHealPotion)) < 2 && Banker.GetBalance(bot) + pack.GetAmount(typeof(Gold)) > 2000)
         {
-            (type, amount) = (typeof(GreaterHealPotion), 4);
-            return true;
+            needs.Add((typeof(GreaterHealPotion), 4));
         }
 
-        return false;
+        return needs;
     }
 
-    private static bool TryShort(Container pack, Type[] types, int min, out Type shortOf)
+    private static bool IsCrafterOf(Mobile bot, Engines.Craft.CraftSystem system) =>
+        system != null && BotCrafting.IsCrafter(bot, system) && BotCrafting.FindTool(bot, system) != null;
+
+    private static void AddShort(List<(Type type, int amount)> needs, Container pack, Type[] types, int min, int buy)
     {
         foreach (var t in types)
         {
             if (pack.GetAmount(t) < min)
             {
-                shortOf = t;
-                return true;
+                needs.Add((t, buy));
             }
         }
-
-        shortOf = null;
-        return false;
     }
 
     public override double Score(BotBrain brain)
@@ -221,7 +245,7 @@ public sealed class SupplyGoal : BotGoal
             return 0.9;
         }
 
-        return TryNextConsumable(brain, out _, out _) ? 0.65 : 0;
+        return Shortages(brain).Count > 0 ? 0.65 : 0;
     }
 
     public override List<BotAction> Plan(BotBrain brain)
@@ -233,54 +257,29 @@ public sealed class SupplyGoal : BotGoal
             return null;
         }
 
-        var toolType = NeededTool(brain);
-        var amount = 1;
-        if (toolType == null && !TryNextConsumable(brain, out toolType, out amount))
+        var wants = Shortages(brain);
+        if (NeededTool(brain) is { } tool)
         {
-            return null;
+            wants.Insert(0, (tool, 1));
         }
 
-        BaseVendor seller = null;
-        GenericBuyInfo stock = null;
-        foreach (var vendor in WorldCatalog.GetVendors(city))
+        // Первое, что в этом городе можно купить — в лавке или на аукционе. Чего нет нигде,
+        // пропускаем, а не бросаем закупку целиком.
+        foreach (var (type, amount) in wants)
         {
-            stock = BuyFromVendorAction.FindStock(vendor, toolType);
-            if (stock != null)
+            if (BotShopping.PlanPurchase(bot, city, type, amount) is not { } steps)
             {
-                seller = vendor;
-                break;
-            }
-        }
-
-        if (seller == null)
-        {
-            return null;
-        }
-
-        var steps = new List<BotAction>();
-        var purse = bot.Backpack?.GetAmount(typeof(Gold)) ?? 0;
-
-        var cost = stock.Price * Math.Min(amount, stock.Amount);
-        if (purse < cost)
-        {
-            var banker = WorldCatalog.GetBanker(city);
-            if (banker == null || Banker.GetBalance(bot) < cost - purse)
-            {
-                return null;
+                continue;
             }
 
-            steps.Add(new GoToAction(banker, 3, "в банк"));
-            steps.Add(new WithdrawGoldAction(banker, cost - purse + stock.Price));
+            if (typeof(SpellScroll).IsAssignableFrom(type))
+            {
+                steps.Add(new FillSpellbookAction());
+            }
+
+            return steps;
         }
 
-        steps.Add(new GoToAction(seller, 2, $"к торговцу {seller.Name}"));
-        steps.Add(new BuyFromVendorAction(seller, toolType, amount));
-
-        if (typeof(SpellScroll).IsAssignableFrom(toolType))
-        {
-            steps.Add(new FillSpellbookAction());
-        }
-
-        return steps;
+        return null;
     }
 }

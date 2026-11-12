@@ -120,8 +120,14 @@ public sealed class KillQuestGoal : BotGoal
     private static bool Fit(PlayerMobile bot) =>
         BotCombatStyles.FightingSkill(bot) >= MinFightingSkill && bot.Hits >= bot.HitsMax * 0.7;
 
-    private HuntSpot SpotFor(PlayerMobile bot, BotQuest quest) =>
-        HuntingAtlas.PickFor(bot.Map, bot.Location, SearchRange, quest.Target);
+    // Добыча не по силам — задания всё равно что нет: охота такую не выберет, и бот 25 минут
+    // бродил бы по месту и проваливал её снова и снова.
+    private static HuntSpot SpotFor(PlayerMobile bot, BotQuest quest) =>
+        CanTake(bot, quest.Target) ? HuntingAtlas.PickFor(bot.Map, bot.Location, SearchRange, quest.Target) : null;
+
+    private static bool CanTake(PlayerMobile bot, string prey) =>
+        bot.GetBrain() is { } brain && HuntingAtlas.PreyFame(prey) is var fame && fame >= 0 &&
+        fame <= BotCombatStyles.MaxPreyFame(brain);
 
     public override double Score(BotBrain brain)
     {
@@ -160,7 +166,7 @@ public sealed class KillQuestGoal : BotGoal
     {
         foreach (var kind in Kinds)
         {
-            if (BotQuests.QuestOf(bot, kind) is { } q && (q.IsComplete || HuntingAtlas.PickFor(bot.Map, bot.Location, SearchRange, q.Target) != null))
+            if (BotQuests.QuestOf(bot, kind) is { } q && (q.IsComplete || SpotFor(bot, q) != null))
             {
                 return true;
             }

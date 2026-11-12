@@ -1,0 +1,19 @@
+{
+  "version": 0,
+  "type": "Server.Items.MahaonCropTile",
+  "properties": [
+    {
+      "name": "CropType",
+      "type": "Server.Systems.MahaonWorld.MahaonCropType",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "Harvested",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    }
+  ]
+}

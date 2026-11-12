@@ -91,6 +91,7 @@ public class BotQuestTests
         try
         {
             outlaw.IsPk = true;
+            outlaw.Kills = 5; // награда — только за убийцу: ПК краснеют по убийствам
             BotSystem.Register(outlaw, outlaw.Location, outlaw.Map, null);
             board.MoveToWorld(new Point3D(2501, 1860, 0), Map.Felucca);
 

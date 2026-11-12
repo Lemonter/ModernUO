@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Server.Items;
 using Server.Mobiles;
+using Server.Systems.MahaonMapEdits;
 
 namespace Server.Movement;
 
@@ -182,15 +183,19 @@ public class MovementImpl : IMovementImpl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool CheckMovement(Mobile m, Direction d, out int newZ) => CheckMovement(m, m.Map, m.Location, d, out newZ);
 
+    // wadeTop — до какого уровня вода считается бродом и не мешает (MahaonWading): дно
+    // клетки + MaxDepth. Мелкая вода иначе стояла бы стеной: она Impassable, а персонаж,
+    // идущий по дну, пересекает её уровень.
     private static bool IsOk(
-        bool ignoreDoors, bool ignoreSpellFields, int ourZ, int ourTop, Map map, int x, int y, List<Item> items
+        bool ignoreDoors, bool ignoreSpellFields, int ourZ, int ourTop, Map map, int x, int y, List<Item> items,
+        int wadeTop
     )
     {
         foreach (var check in map.Tiles.GetStaticAndMultiTiles(x, y))
         {
             var itemData = TileData.ItemTable[check.ID & TileData.MaxItemValue];
 
-            if (itemData.ImpassableSurface)
+            if (itemData.ImpassableSurface && !(check.Z <= wadeTop && MahaonWading.IsWater(itemData)))
             {
                 var checkZ = check.Z;
                 var checkTop = checkZ + itemData.CalcHeight;
@@ -216,6 +221,11 @@ public class MovementImpl : IMovementImpl
                 }
 
                 if (ignoreSpellFields && itemID is 0x82 or 0x3946 or 0x3956)
+                {
+                    continue;
+                }
+
+                if (item.Z <= wadeTop && MahaonWading.IsWater(itemData))
                 {
                     continue;
                 }
@@ -259,6 +269,9 @@ public class MovementImpl : IMovementImpl
         var considerLand = !landTile.Ignored;
 
         map.GetAverageZ(x, y, out var landZ, out var landCenter, out _);
+
+        // Брод (MahaonWading): вода не глубже MaxDepth над дном не мешает идти по дну.
+        var wadeTop = considerLand ? landTile.Z + MahaonWading.MaxDepth : int.MinValue;
 
         var moveIsOk = false;
 
@@ -369,7 +382,7 @@ public class MovementImpl : IMovementImpl
                 continue;
             }
 
-            if (IsOk(ignoreDoors, ignoreSpellFields, ourZ, testTop, map, x, y, items))
+            if (IsOk(ignoreDoors, ignoreSpellFields, ourZ, testTop, map, x, y, items, wadeTop))
             {
                 newZ = ourZ;
                 moveIsOk = true;
@@ -441,7 +454,7 @@ public class MovementImpl : IMovementImpl
                 continue;
             }
 
-            if (IsOk(ignoreDoors, ignoreSpellFields, ourZ, testTop, map, x, y, items))
+            if (IsOk(ignoreDoors, ignoreSpellFields, ourZ, testTop, map, x, y, items, wadeTop))
             {
                 newZ = ourZ;
                 moveIsOk = true;
@@ -472,7 +485,7 @@ public class MovementImpl : IMovementImpl
             }
         }
 
-        if (shouldCheck && IsOk(ignoreDoors, ignoreSpellFields, landCenter, testTop, map, x, y, items))
+        if (shouldCheck && IsOk(ignoreDoors, ignoreSpellFields, landCenter, testTop, map, x, y, items, wadeTop))
         {
             newZ = landCenter;
             moveIsOk = true;

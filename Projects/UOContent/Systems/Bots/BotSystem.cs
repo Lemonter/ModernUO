@@ -71,6 +71,7 @@ public static class BotSystem
         {
             if (!bot.Deleted)
             {
+                ReturnToWorld(bot);
                 Register(bot, bot.Location, bot.Map, null);
             }
         }
@@ -85,10 +86,25 @@ public static class BotSystem
         );
     }
 
+    /// <summary>
+    /// При загрузке мира движок «разлогинивает» каждого персонажа-игрока: уносит в Map.Internal и
+    /// запоминает, где тот вышел (Mobile.Deserialize). Игрок возвращается на место при входе, а у
+    /// бота входа не бывает — он так и оставался вне мира, и планировщик удалял его как сироту.
+    /// Выходило, что после каждого рестарта все боты пропадали, а маяки набирали новых.
+    /// </summary>
+    private static void ReturnToWorld(BotMobile bot)
+    {
+        if ((bot.Map == null || bot.Map == Map.Internal) && bot.LogoutMap is { } map && map != Map.Internal)
+        {
+            bot.MoveToWorld(bot.LogoutLocation, map);
+        }
+    }
+
     internal static void OnBotLoaded(BotMobile bot)
     {
         if (_initialized)
         {
+            ReturnToWorld(bot);
             Register(bot, bot.Location, bot.Map, null);
         }
         else
@@ -111,6 +127,9 @@ public static class BotSystem
         }
 
         bot.Brain.Registered = true;
+
+        // Как вход игрока: счётчики убийств бота начинают остывать по его игровому времени.
+        Engines.PlayerMurderSystem.PlayerMurderSystem.OnLogin(bot);
 
         if (bot.Brain.OwnerBeacon is Items.MahaonBotBeacon { Deleted: false } beacon)
         {
@@ -139,6 +158,8 @@ public static class BotSystem
         {
             Registered = true
         };
+
+        brain.RememberOwnersBelongings();
 
         _possessed[player] = brain;
         _bots.Add(player);

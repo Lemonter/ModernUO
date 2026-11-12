@@ -18,11 +18,38 @@ public static class BotCrafting
     /// <summary>Crafts whose inputs bots produce or buy: metal for the smith and the tinker, wood
     /// for the carpenter and the bowyer, cloth and leather for the tailor, reagents and blank scrolls
     /// for the alchemist and the scribe.</summary>
-    public static CraftSystem[] Systems =>
-    [
-        DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem,
-        DefTailoring.CraftSystem, DefAlchemy.CraftSystem, DefCooking.CraftSystem, DefInscription.CraftSystem
-    ];
+    public static CraftSystem[] Systems
+    {
+        get
+        {
+            if (_systems != null)
+            {
+                return _systems;
+            }
+
+            CraftSystem[] systems =
+            [
+                DefBlacksmithy.CraftSystem, DefTinkering.CraftSystem, DefCarpentry.CraftSystem, DefBowFletching.CraftSystem,
+                DefTailoring.CraftSystem, DefAlchemy.CraftSystem, DefCooking.CraftSystem, DefInscription.CraftSystem,
+
+                // Строго в конец: номер в этом списке — индекс CraftGoal в BotGoals.
+                DefHerbalism.CraftSystem
+            ];
+
+            // Массив создавался на каждое обращение, а обращаются к нему на каждый предмет сумки
+            // при каждом обзоре целей. Запоминаем, когда все ремёсла уже созданы движком.
+            if (System.Array.TrueForAll(systems, s => s != null))
+            {
+                _systems = systems;
+            }
+
+            return systems;
+        }
+    }
+
+    private static CraftSystem[] _systems;
+
+    public static bool IsHerbalist(Mobile bot) => DefHerbalism.CraftSystem is { } system && IsCrafter(bot, system);
 
     public static bool IsAlchemist(Mobile bot) => DefAlchemy.CraftSystem is { } system && IsCrafter(bot, system);
 
@@ -75,9 +102,17 @@ public static class BotCrafting
             return IsTailor(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
         }
 
+        // Травы — сырьё ступки; травнику их не продавать, остальным — на рынок.
+        if (item is MahaonHerbItem)
+        {
+            return IsHerbalist(bot) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+        }
+
         if (item is BaseReagent)
         {
-            return (IsAlchemist(bot) || BotScribe.IsScribe(bot)) && bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
+            // Чеснок нужен травнику для противоядия.
+            return (IsAlchemist(bot) || BotScribe.IsScribe(bot) || item is Garlic && IsHerbalist(bot)) &&
+                   bot.Backpack.GetAmount(item.GetType()) <= CraftReserve;
         }
 
         if (item is Bottle)
@@ -180,6 +215,11 @@ public static class BotCrafting
         if (system == DefInscription.CraftSystem)
         {
             return typeof(ScribesPen);
+        }
+
+        if (system == DefHerbalism.CraftSystem)
+        {
+            return typeof(MahaonHerbalistMortar);
         }
 
         return typeof(FletcherTools);
@@ -371,5 +411,6 @@ public static class BotCrafting
         typeof(IronIngot).IsAssignableFrom(type) || type == typeof(MahaonIngot) ? 10 :
         typeof(Board).IsAssignableFrom(type) ? 6 :
         typeof(Log).IsAssignableFrom(type) ? 3 :
-        typeof(BaseLeather).IsAssignableFrom(type) ? 3 : 2;
+        typeof(BaseLeather).IsAssignableFrom(type) ? 3 :
+        typeof(MahaonHerbItem).IsAssignableFrom(type) ? 6 : 2;
 }

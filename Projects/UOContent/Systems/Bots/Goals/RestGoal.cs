@@ -16,7 +16,10 @@ public sealed class RestGoal : BotGoal
 
         // Rest at home when there is one: coming home through the door is also what keeps a
         // house from decaying.
-        if (BotHousing.HomeOf(brain.Bot) is { Map: { } map } house && map == brain.Bot.Map)
+        // Красному или серому в охраняемый город за отдыхом не ходить — там стража.
+        bool Safe(Map m, Point3D p) => !BotSocialRules.IsOutlaw(brain.Bot) || !BotSocialRules.IsGuarded(m, p);
+
+        if (BotHousing.HomeOf(brain.Bot) is { Map: { } map } house && map == brain.Bot.Map && Safe(map, house.Location))
         {
             if (BotHousing.IsGuildHouse(house) && brain.Bot.Guild is Guilds.Guild guild)
             {
@@ -26,7 +29,8 @@ public sealed class RestGoal : BotGoal
             return [new GoToAction(map, BotHousing.Inside(house), 1, "домой"), rest];
         }
 
-        if (BotCityHomes.CityHome(brain.Bot) is { AreaMap: { } cityMap } apartment && cityMap == brain.Bot.Map)
+        if (BotCityHomes.CityHome(brain.Bot) is { AreaMap: { } cityMap } apartment && cityMap == brain.Bot.Map &&
+            Safe(cityMap, BotCityHomes.Inside(apartment)))
         {
             return [new GoToAction(cityMap, BotCityHomes.Inside(apartment), 1, "домой"), rest];
         }

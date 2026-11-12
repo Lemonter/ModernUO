@@ -18,9 +18,6 @@ public static class BotParty
 {
     private static readonly Dictionary<Mobile, BotGroup> _groups = new();
 
-    // Paid service: until when, by whom.
-    private static readonly Dictionary<Mobile, (Mobile employer, long until)> _hired = new();
-
     private static readonly TimeSpan AnswerDelay = TimeSpan.FromSeconds(2);
 
     public static bool IsBot(Mobile m) => m is BotMobile && BotSystem.IsActive(m);
@@ -103,7 +100,7 @@ public static class BotParty
         if (m is BotMobile bot && bot.GetBrain()?.Group is { LedByPlayer: true } group)
         {
             group.Remove(bot);
-            _hired.Remove(bot);
+            bot.GetBrain()?.EndHire();
         }
     }
 
@@ -124,8 +121,8 @@ public static class BotParty
     /// <summary>What an hour of this bot's service costs: the better it fights, the dearer.</summary>
     public static int HourlyPrice(Mobile bot) => 50 + (int)(BotCombatStyles.FightingSkill(bot) * 5);
 
-    public static bool IsHired(Mobile bot, Mobile employer) =>
-        _hired.TryGetValue(bot, out var hire) && hire.employer == employer && Core.TickCount - hire.until < 0;
+    // Наём живёт в мозге и сохраняется: оплаченные часы не должен съедать рестарт.
+    public static bool IsHired(Mobile bot, Mobile employer) => bot.GetBrain()?.IsHiredBy(employer) == true;
 
     /// <summary>
     /// Gold handed to a bot: at least an hour's price hires it for the hours it covers, and it joins
@@ -146,8 +143,7 @@ public static class BotParty
         }
 
         var hours = gold.Amount / price;
-        var start = IsHired(bot, payer) ? _hired[bot].until : Core.TickCount;
-        _hired[bot] = (payer, start + hours * 60 * 60_000L);
+        brain.Hire(payer, TimeSpan.FromHours(hours));
         bot.Backpack?.DropItem(gold);
 
         if (Party.Get(bot) is not { } current || !current.Contains(payer))
@@ -177,14 +173,14 @@ public static class BotParty
     public static bool StillServes(BotMobile bot, BotGroup group)
     {
         var brain = bot.GetBrain();
-        if (_hired.TryGetValue(bot, out var hire))
+        if (brain.HasHire)
         {
-            if (Core.TickCount - hire.until < 0)
+            if (!brain.HireExpired)
             {
                 return true;
             }
 
-            _hired.Remove(bot);
+            brain.EndHire();
             if (!MahaonBots.BotRelationships.IsFriendlyTo(bot, group.Leader))
             {
                 Leave(bot, "Время вышло — плати ещё, или я пошёл.");

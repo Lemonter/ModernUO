@@ -90,7 +90,16 @@ public static class BotSchools
                 continue;
             }
 
+            // Порог MinSkill — только грубый отсев. Решает то же, что у мага: шанс не сорваться от
+            // половины, реагенты в сумке, мана, у паладина — десятина. Без этого любой воин с нулём
+            // некромантии на каждом третьем тике начинал «Проклятие оружия» (порог 0, реагент
+            // проверяется только в конце каста) и всё это время не мог ударить.
             var spell = entry.Make(bot);
+            if (!BotSpellbook.Usable(bot, spell, 0) || spell is PaladinSpell paladin && bot.TithingPoints < paladin.RequiredTithing)
+            {
+                continue;
+            }
+
             if (BotHealing.TryCast(brain, spell, use == SchoolUse.Attack ? foe : bot))
             {
                 return true;

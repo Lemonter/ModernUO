@@ -55,7 +55,7 @@ public static class BountyHunterSystem
 
     private static void EnsureValidTarget()
     {
-        if (_currentTarget?.Deleted == false && _currentTarget.Alive)
+        if (_currentTarget?.Deleted == false && _currentTarget.Alive && _currentTarget.Murderer)
         {
             return; // still a valid, live target — nothing to do
         }
@@ -65,7 +65,9 @@ public static class BountyHunterSystem
         // Only bots can be bounty targets, so the bot roster is the whole search.
         foreach (var mobile in Bots.BotSystem.Bots)
         {
-            if (mobile is BotMobile { IsPk: true, Deleted: false } bot && bot.Alive)
+            // Награда — только за убийцу (красного): ПК-бот краснеет по убийствам, как игрок, и
+            // нападать на синего значит самому стать преступником для стражи.
+            if (mobile is BotMobile { IsPk: true, Deleted: false } bot && bot.Alive && bot.Murderer)
             {
                 _currentTarget = bot;
                 break;

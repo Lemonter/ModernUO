@@ -25,7 +25,8 @@ public class MahaonBlueprintCategoryGump : StaticGump<MahaonBlueprintCategoryGum
         ("Изготовление луков", DefBowFletching.CraftSystem),
         ("Кулинария", DefCooking.CraftSystem),
         ("Каменная кладка", DefMasonry.CraftSystem),
-        ("Стеклодувное дело", DefGlassblowing.CraftSystem)
+        ("Стеклодувное дело", DefGlassblowing.CraftSystem),
+        ("Травничество", DefHerbalism.CraftSystem)
     };
 
     public MahaonBlueprintCategoryGump(Mobile player) : base(50, 50) => _player = player;

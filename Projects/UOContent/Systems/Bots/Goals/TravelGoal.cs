@@ -25,6 +25,9 @@ public sealed class TravelGoal : BotGoal
         BotCity destination = null;
         var candidates = 0;
 
+        // Слух о громкой продаже тянет жадного: такой бот в свежий «горячий» город едет охотнее.
+        var hot = Utility.RandomDouble() < BotBrain.Trait(brain.Greed) * 0.6 ? MahaonBots.BotHotMarkets.ActiveCities() : null;
+
         foreach (var city in WorldCatalog.Cities)
         {
             if (city == current || BotSocialRules.IsOutlaw(bot) && BotSocialRules.IsGuarded(city.Region))
@@ -37,6 +40,12 @@ public sealed class TravelGoal : BotGoal
                     : city.Map != bot.Map)
             {
                 continue;
+            }
+
+            if (hot?.Contains(city.Name) == true)
+            {
+                destination = city;
+                break;
             }
 
             // Reservoir pick: uniform over the other towns without building a list.

@@ -99,6 +99,23 @@ public static class BoneFractureSystem
         MahaonStatusEffects.Broadcast(victim, MahaonStatus.Fracture, false, 0, (byte)entry.Location);
     }
 
+    /// <summary>
+    ///     Шина травника (MahaonComfreySplint): снимает перелом сразу, не дожидаясь срока.
+    ///     Первоначально переломы задумывались «без шин, только ожиданием», но у
+    ///     травничества как раз и должно быть средство от того, чего не лечат зелья.
+    /// </summary>
+    public static void Mend(Mobile victim)
+    {
+        if (!Active.Remove(victim, out var entry))
+        {
+            return;
+        }
+
+        entry.Timer?.Stop();
+        victim.SendMessage(0x59, "Шина с окопником стягивает кость — перелом больше не мешает.");
+        MahaonStatusEffects.Broadcast(victim, MahaonStatus.Fracture, false, 0, (byte)entry.Location);
+    }
+
     private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Mobile, object> LastRunWarning = new();
 
     /// <summary>«Сломанная нога не даёт бежать» — не чаще раза в 5 секунд.</summary>

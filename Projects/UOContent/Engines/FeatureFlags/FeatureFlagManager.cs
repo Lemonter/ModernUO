@@ -17,7 +17,7 @@ public static class FeatureFlagManager
     private static readonly Dictionary<Type, GumpBlockEntry> _gumpBlocks = new();
     private static readonly Dictionary<Type, ItemBlockEntry> _itemBlocks = new();
     private static readonly SpellBlockEntry[] _spellBlocks = new SpellBlockEntry[SpellRegistry.Types.Length];
-    private static readonly SkillBlockEntry[] _skillBlocks = new SkillBlockEntry[58];
+    private static readonly SkillBlockEntry[] _skillBlocks = new SkillBlockEntry[Enum.GetValues<SkillName>().Length];
 
     // Fast bailout flags
     private static bool _hasActiveGumpBlocks;

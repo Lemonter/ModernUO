@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "type": "Server.Items.MahaonCropTile",
+  "properties": [
+    {
+      "name": "CropType",
+      "type": "Server.Systems.MahaonWorld.MahaonCropType",
+      "rule": "EnumMigrationRule"
+    },
+    {
+      "name": "Harvested",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "Planted",
+      "type": "bool",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    },
+    {
+      "name": "Neglect",
+      "type": "sbyte",
+      "rule": "PrimitiveTypeMigrationRule",
+      "ruleArguments": [
+        ""
+      ]
+    }
+  ]
+}

@@ -15,6 +15,13 @@ public sealed class SmeltAction : BotAction
     private readonly object _forge;
     private readonly Point3D _forgeLocation;
 
+    // Плавка может отказать, ничего не потратив (навык ниже нужного, «не похоже на печь»), и
+    // тогда следующий тик брал ту же стопку — бесконечно, раз в полторы секунды.
+    private Item _lastOre;
+    private int _lastAmount;
+    private int _stalls;
+    private const int MaxStalls = 2;
+
     public SmeltAction(object forge, Point3D forgeLocation)
     {
         _forge = forge;
@@ -35,6 +42,21 @@ public sealed class SmeltAction : BotAction
         {
             return BotActionResult.Done();
         }
+
+        if (ore == _lastOre && !ore.Deleted && ore.Amount == _lastAmount)
+        {
+            if (++_stalls >= MaxStalls)
+            {
+                return BotActionResult.Failed();
+            }
+        }
+        else
+        {
+            _stalls = 0;
+        }
+
+        _lastOre = ore;
+        _lastAmount = ore.Amount;
 
         bot.Direction = bot.GetDirectionTo(_forgeLocation);
         ore.OnDoubleClick(bot);

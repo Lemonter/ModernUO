@@ -153,8 +153,9 @@ public sealed class BuyCityHomeGoal : BotGoal
     private static MahaonCityHouse Candidate(BotBrain brain)
     {
         var bot = brain.Bot;
+        // Любой дом — свой или гильдейский — уже крыша: квартира сверху не покупается.
         if (bot is not BotMobile || BotSocialRules.IsOutlaw(bot) || BotCityHomes.CityHome(bot) != null ||
-            BotHousing.OwnHouse(bot) != null)
+            BotHousing.HomeOf(bot) != null)
         {
             return null;
         }

@@ -94,6 +94,8 @@ public class AuctionHouseSystem : GenericPersistence
         return listing;
     }
 
+    public static bool TryGetListing(int listingId, out AuctionListing listing) => Listings.TryGetValue(listingId, out listing);
+
     /// <summary>Attempts to buy a listing. Returns a result code for the UI to message on.</summary>
     public static AuctionBuyResult TryBuy(PlayerMobile buyer, int listingId)
     {

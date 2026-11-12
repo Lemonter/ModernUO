@@ -25,6 +25,8 @@ public static class BotGoals
     public static readonly CraftGoal Alchemy = new(5);
     public static readonly CraftGoal Cooking = new(6);
     public static readonly CraftGoal Inscription = new(7);
+    public static readonly CraftGoal Herbalism = new(8);
+    public static readonly HerbForageGoal HerbForage = new();
     public static readonly HuntGoal Hunt = new();
     public static readonly CorpseRunGoal CorpseRun = new();
     public static readonly TameGoal Tame = new();
@@ -63,5 +65,15 @@ public static class BotGoals
     public static readonly CityGuardUpgradeGoal CityGuardUpgrade = new();
     public static readonly GuildDonateGoal GuildDonate = new();
 
-    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest, ClaimCity, SiegeCity, DefendCity, TreasureHunt, GuardShop, CityGuardUpgrade, GuildDonate];
+    public static readonly UnloadGoal Unload = new();
+
+    // Цели, которые распоряжаются нажитым всерьёз: дом, квартира, свитки у Гвидо, казна гильдии,
+    // захват города, разбой. Боту можно, а одержимому персонажу ([BecomeBot) — нет: хозяин отдал
+    // его ИИ работать, а не тратить его деньги и имя.
+    private static readonly HashSet<BotGoal> _botsOnly =
+        [Pk, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, ClaimCity, SiegeCity, GuardShop, CityGuardUpgrade, GuildDonate, Unload];
+
+    public static bool IsBotsOnly(BotGoal goal) => _botsOnly.Contains(goal);
+
+    public static readonly IReadOnlyList<BotGoal> All = [Rest, Socialize, Bank, Travel, Loiter, Mine, Lumber, Fish, Trade, Supply, Learn, Smithing, Tinkering, Carpentry, Bowcraft, Tailoring, Alchemy, Cooking, Inscription, Herbalism, HerbForage, Hunt, CorpseRun, Tame, Tithe, LeadGroup, FollowGroup, Pk, Outfit, Stable, Farm, Weave, Sow, BuildHouse, Furnish, BuyCityHome, FurnishCityHome, DefendTown, Shelter, GuildOrder, BountyHunt, MayorQuest, GuardQuest, RangerQuest, CourtMageQuest, ClaimCity, SiegeCity, DefendCity, TreasureHunt, GuardShop, CityGuardUpgrade, GuildDonate, Unload];
 }

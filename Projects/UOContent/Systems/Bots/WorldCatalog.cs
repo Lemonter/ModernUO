@@ -39,6 +39,10 @@ public sealed class BotCity
     internal bool SmithySearched;
     internal Point3D? SmithyStand;
 
+    // Когда искали в последний раз. Отрицательный ответ больше не вечный: печь, поставленную
+    // GM-ом позже, боты увидят через несколько минут, а не после рестарта.
+    internal long ForgeSearchedAt, TextileSearchedAt, SmithySearchedAt;
+
     // What a GM may have placed in a town (quest boards and quest givers), by type, with when it
     // was last looked for.
     internal readonly Dictionary<System.Type, (IEntity entity, long searchedAt)> Placed = new();
@@ -152,7 +156,8 @@ public static class WorldCatalog
     /// </summary>
     public static bool TryGetForge(BotCity city, out object forge, out Point3D location)
     {
-        if (city.Forge is Item { Deleted: true })
+        if (city.Forge is Item { Deleted: true } ||
+            city.Forge == null && Core.TickCount - city.ForgeSearchedAt >= PlacedRecheckMs)
         {
             city.ForgeSearched = false;
         }
@@ -160,6 +165,7 @@ public static class WorldCatalog
         if (!city.ForgeSearched)
         {
             city.ForgeSearched = true;
+            city.ForgeSearchedAt = Core.TickCount;
             city.Forge = null;
             FindForge(city);
         }
@@ -228,7 +234,8 @@ public static class WorldCatalog
     /// </summary>
     public static bool TryGetTextileShop(BotCity city, out Item wheel, out Item loom)
     {
-        if (city.Wheel is { Deleted: true } || city.Loom is { Deleted: true })
+        if (city.Wheel is { Deleted: true } || city.Loom is { Deleted: true } ||
+            (city.Wheel == null || city.Loom == null) && Core.TickCount - city.TextileSearchedAt >= PlacedRecheckMs)
         {
             city.TextileSearched = false;
         }
@@ -236,6 +243,7 @@ public static class WorldCatalog
         if (!city.TextileSearched)
         {
             city.TextileSearched = true;
+            city.TextileSearchedAt = Core.TickCount;
             city.Wheel = null;
             city.Loom = null;
 
@@ -365,9 +373,15 @@ public static class WorldCatalog
     /// </summary>
     public static bool TryGetSmithy(BotCity city, out Point3D stand)
     {
+        if (city.SmithyStand == null && Core.TickCount - city.SmithySearchedAt >= PlacedRecheckMs)
+        {
+            city.SmithySearched = false;
+        }
+
         if (!city.SmithySearched)
         {
             city.SmithySearched = true;
+            city.SmithySearchedAt = Core.TickCount;
             city.SmithyStand = FindSmithy(city);
         }
 

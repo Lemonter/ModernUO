@@ -100,7 +100,16 @@ public sealed class CityGuardUpgradeGoal : BotGoal
 
     public override double Score(BotBrain brain) => Choice(brain.Bot) == null ? 0 : 0.6;
 
-    public override List<BotAction> Plan(BotBrain brain) => Choice(brain.Bot) is { } action ? [action] : null;
+    // Кнопки — в гампе городского камня, как у лидера-игрока: сначала дойти до камня.
+    public override List<BotAction> Plan(BotBrain brain)
+    {
+        if (Choice(brain.Bot) is not { } action || Items.MahaonCityClaimPoint.Of(action.City) is not { Deleted: false } stone)
+        {
+            return null;
+        }
+
+        return [new GoToAction(stone.Map, stone.Location, 2, "к городскому камню"), action];
+    }
 }
 
 /// <summary>One press of a city stone's button: the next guard step, a battle mage or a teacher.</summary>
@@ -109,6 +118,8 @@ public sealed class CityGuardCommandAction : BotAction
     private readonly string _city;
     private readonly GuardTeachers _teacher;
     private readonly bool _mage;
+
+    public string City => _city;
 
     public CityGuardCommandAction(string city, GuardTeachers teacher, bool mage)
     {
@@ -205,7 +216,16 @@ public sealed class GuildDonateGoal : BotGoal
     public override double Score(BotBrain brain) =>
         Gift(brain) == null ? 0 : 0.35 + BotBrain.Trait((byte)(100 - brain.Greed)) * 0.3;
 
-    public override List<BotAction> Plan(BotBrain brain) => Gift(brain) == null ? null : [new GuildDonateAction()];
+    // Казна открывается у банкира, как у игрока: взнос — после похода в банк.
+    public override List<BotAction> Plan(BotBrain brain)
+    {
+        if (Gift(brain) == null || BotSocialRules.TownFor(brain.Bot) is not { } city || WorldCatalog.GetBanker(city) is not { } banker)
+        {
+            return null;
+        }
+
+        return [new GoToAction(banker, 3, "в банк, в казну гильдии"), new GuildDonateAction()];
+    }
 }
 
 public sealed class GuildDonateAction : BotAction

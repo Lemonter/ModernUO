@@ -36,7 +36,12 @@ public static class UniversalRecipeGate
         nextId = GateSystem(DefBowFletching.CraftSystem, nextId);
         nextId = GateSystem(DefCooking.CraftSystem, nextId);
         nextId = GateSystem(DefMasonry.CraftSystem, nextId);
-        GateSystem(DefGlassblowing.CraftSystem, nextId);
+        nextId = GateSystem(DefGlassblowing.CraftSystem, nextId);
+
+        // Mahaon: травничество — строго последним. Номер рецепта лежит в сохранении у
+        // каждого, кто его выучил, а номера раздаются подряд: вставка выше сдвинула бы всем
+        // выученные рецепты стеклодувов на рецепты травника.
+        GateSystem(DefHerbalism.CraftSystem, nextId);
     }
 
     private static int GateSystem(CraftSystem system, int nextId)

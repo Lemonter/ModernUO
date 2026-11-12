@@ -16,7 +16,8 @@ public sealed class HuntGoal : BotGoal
     {
         var bot = brain.Bot;
         var skill = BotCombatStyles.FightingSkill(bot) / 100.0;
-        if (skill < 0.2 || bot.Hits < bot.HitsMax * 0.8)
+        // Без стрел или реагентов охота — это стоять и смотреть: сначала снабжение.
+        if (skill < 0.2 || bot.Hits < bot.HitsMax * 0.8 || !BotCombatStyles.IsArmed(bot))
         {
             return 0;
         }

@@ -40,6 +40,51 @@ public sealed class BotRelationships : GenericPersistence
 
     public static void Configure() => _instance = new BotRelationships();
 
+    // Отношения остывают: раньше счёт только копился, и война гильдий, где бойцы нападают друг на
+    // друга, лишь углубляла вражду — условие примирения (|среднее| ≤ 0,5) было недостижимо. Каждые
+    // полчаса счёт теряет десятую часть (половина — примерно за три с половиной часа), а совсем
+    // остывшие пары и пары с удалёнными уходят из таблицы.
+    private static readonly System.TimeSpan DecayInterval = System.TimeSpan.FromMinutes(30);
+    private const double DecayFactor = 0.9;
+    private const double Forgotten = 0.05;
+
+    public static void Initialize() => Timer.StartTimer(DecayInterval, DecayInterval, Decay);
+
+    internal static void Decay()
+    {
+        List<(Mobile, Mobile)> forget = null;
+        List<((Mobile, Mobile) key, double score)> update = null;
+
+        foreach (var (key, score) in Scores)
+        {
+            var cooled = score * DecayFactor;
+            if (key.bot?.Deleted != false || key.other?.Deleted != false || System.Math.Abs(cooled) < Forgotten)
+            {
+                (forget ??= []).Add(key);
+            }
+            else
+            {
+                (update ??= []).Add((key, cooled));
+            }
+        }
+
+        if (forget != null)
+        {
+            foreach (var key in forget)
+            {
+                Scores.Remove(key);
+            }
+        }
+
+        if (update != null)
+        {
+            foreach (var (key, cooled) in update)
+            {
+                Scores[key] = cooled;
+            }
+        }
+    }
+
     public static double GetScore(Mobile bot, Mobile other) =>
         bot != null && other != null && Scores.TryGetValue((bot, other), out var score) ? score : 0.0;
 

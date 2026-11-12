@@ -9,7 +9,7 @@ namespace Server.Tests.Systems.Bots;
 /// </summary>
 public class BotTacticsTests
 {
-    private static BotSituation Sides(int foes, int allies) => new(foes, allies, 0, null, false);
+    private static BotSituation Sides(int foes, int allies) => new(foes, allies, 0, null);
 
     [Fact]
     public void OneOnOne_IsEven()

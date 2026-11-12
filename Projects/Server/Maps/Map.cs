@@ -1974,8 +1974,13 @@ public sealed partial class Map : IComparable<Map>, ISpanFormattable, ISpanParsa
                 Owner.ActivateSectors(X, Y);
             }
 
-            if (mob.ActivatesSectors && _activators++ == 0)
+            if (mob.ActivatesSectors)
             {
+                // Wake the neighbourhood on every entry, not only for the first activator: OnMove
+                // holds the new sector across the hand-off, so the count is never zero here when an
+                // activator walks in, and the sectors ahead of it would stay asleep. Activate() is
+                // a no-op for a sector that is already awake.
+                _activators++;
                 Owner.ActivateSectors(X, Y);
             }
         }

@@ -1,4 +1,5 @@
 using ModernUO.Serialization;
+using Server.Systems.MahaonFarming;
 using Server.Systems.MahaonWorld;
 using Server.Targeting;
 
@@ -65,6 +66,14 @@ public class CropSeedPlantTarget : Target
             return;
         }
 
+        // Порог проверяем до места: сообщение «не умеешь» полезнее, чем «нет места», если
+        // верны оба, — место найдётся, а навык сам не вырастет.
+        if (!MahaonFarmingSkill.CanWork(from, _seed.CropType))
+        {
+            MahaonFarmingSkill.SendTooHard(from, _seed.CropType);
+            return;
+        }
+
         // Вспаханная земля — не помеха, а приглашение: сеют именно в неё, и грядка встаёт
         // на саму пашню, а не рядом с ней. Проверку места при этом пропускаем: сам дёрн
         // (0x0911-0x0914) помечен в tiledata как Surface, так что CanFit увидел бы в нём
@@ -82,7 +91,17 @@ public class CropSeedPlantTarget : Target
             return;
         }
 
+        // Проверка после места: семя тратится только на настоящую попытку, а не на промах
+        // курсором по стене.
+        if (!MahaonFarmingSkill.CheckSow(from, _seed.CropType))
+        {
+            _seed.Consume();
+            from.SendMessage(0x22, "Семя легло неудачно и не взойдёт.");
+            return;
+        }
+
         var tile = new MahaonCropTile(_seed.CropType);
+        tile.MarkPlanted();
         tile.MoveToWorld(loc, map);
         _seed.Consume(); // one seed per plot, not the whole stack
 

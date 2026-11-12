@@ -27,7 +27,8 @@ public static class SpellSchools
         NecromancySchoolSystem.TryDescribe(m, spell, out info) ||
         ChivalrySchoolSystem.TryDescribe(m, spell, out info) ||
         SpellweavingSchoolSystem.TryDescribe(m, spell, out info) ||
-        MysticismSchoolSystem.TryDescribe(m, spell, out info);
+        MysticismSchoolSystem.TryDescribe(m, spell, out info) ||
+        MahaonShamanism.ShamanismSchoolSystem.TryDescribe(m, spell, out info);
 
     /// <summary>Заклинание в каталоге: номер в реестре, тип, навык каста и школа.</summary>
     public sealed record Entry(int Id, Type Type, SkillName CastSkill, string Line, string SchoolName);

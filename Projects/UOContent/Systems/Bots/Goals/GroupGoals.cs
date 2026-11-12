@@ -34,9 +34,7 @@ public sealed class LeadGroupGoal : BotGoal
 
         foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, RecruitRange))
         {
-            if (m == bot || m.GetBrain() is not { Registered: true, Group: null } other || !m.Alive ||
-                BotSocialRules.IsOutlaw(m) || BotCombatStyles.FightingSkill(m) < 30 ||
-                other.Goal is LeadGroupGoal || other.Combat.Opponent != null)
+            if (m == bot || m.GetBrain() is not { Registered: true, Group: null } other || !WouldJoin(bot, m, other))
             {
                 continue;
             }
@@ -57,29 +55,55 @@ public sealed class LeadGroupGoal : BotGoal
             return null;
         }
 
+        if (recruits.Count > BotGroup.MaxSize - 1)
+        {
+            recruits.RemoveRange(BotGroup.MaxSize - 1, recruits.Count - (BotGroup.MaxSize - 1));
+        }
+
+        // Сначала место, потом сбор: раньше отряд собирался (и рвал планы рекрутов) до того, как
+        // выяснялось, что идти некуда. Сила отряда — по той же формуле, что у BotGroup.
+        var fame = BotCombatStyles.MaxPreyFame(brain);
+        foreach (var m in recruits)
+        {
+            fame += BotCombatStyles.MaxPreyFame(m.GetBrain());
+        }
+
+        var spot = HuntingAtlas.Pick(bot.Map, bot.Location, SearchRange, fame * 6 / 10, preferDungeon: true);
+        if (spot == null)
+        {
+            return null;
+        }
+
         var group = new BotGroup(bot);
         foreach (var m in recruits)
         {
-            if (group.Members.Count >= BotGroup.MaxSize)
-            {
-                break;
-            }
-
             if (group.TryAdd(m))
             {
                 BotSpeech.Say(m, BotTopic.Greeting, bot, 0.5);
             }
         }
 
-        var spot = HuntingAtlas.Pick(bot.Map, bot.Location, SearchRange, group.MaxPreyFame(), preferDungeon: true);
-        if (spot == null)
-        {
-            group.Disband();
-            return null;
-        }
-
         BotSpeech.Say(bot, BotTopic.GroupForming, chance: 1.0);
         return [new GoToAction(spot.Map, spot.Center, 4, "ведёт отряд"), new GroupHuntAction(group, spot)];
+    }
+
+    /// <summary>
+    ///     Пойдёт ли этот бот в отряд — его собственное решение, а не приказ. Не пойдёт занятый
+    ///     обслуживанием (свой труп, закупка, банк), раненый, уставший, с полной сумкой товара или
+    ///     дерущийся; остальные решают по общительности и по тому, как относятся к лидеру.
+    /// </summary>
+    private static bool WouldJoin(PlayerMobile leader, PlayerMobile m, BotBrain other)
+    {
+        if (!m.Alive || BotSocialRules.IsOutlaw(m) || BotCombatStyles.FightingSkill(m) < 30 ||
+            other.Goal is LeadGroupGoal || other.Goal is { IsUpkeep: true } || other.Goal == BotGoals.Rest ||
+            other.Goal == BotGoals.Shelter || other.Combat.Opponent != null || other.IsPossessed ||
+            m.Hits < m.HitsMax * 0.8 || other.Fatigue > 0.6 || BotGoods.ValueCarried(m) > 1500)
+        {
+            return false;
+        }
+
+        var odds = 0.3 + BotBrain.Trait(other.Sociability) * 0.5 + (BotSocialRules.IsFriend(m, leader) ? 0.3 : 0);
+        return Utility.RandomDouble() < odds;
     }
 }
 

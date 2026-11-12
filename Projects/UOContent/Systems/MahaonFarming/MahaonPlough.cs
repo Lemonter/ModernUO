@@ -128,6 +128,14 @@ public partial class MahaonPlough : Item
                 }
             }
 
+            // Неудачная вспашка стоит времени, но не плуга: износ — за сделанную работу, а не
+            // за попытку. Иначе новичок ломал бы плуг вдвое быстрее мастера.
+            if (!MahaonFarmingSkill.CheckPlough(from))
+            {
+                from.SendMessage(0x22, "Лемех выворачивает дёрн комьями — придётся пройтись ещё раз.");
+                return;
+            }
+
             if (!_plough.ConsumeUse(from))
             {
                 return;

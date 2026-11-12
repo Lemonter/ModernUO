@@ -3,6 +3,7 @@ using Server.Items;
 using Server.Mobiles;
 using Server.Systems.Bots;
 using Server.Systems.MahaonBots;
+using Server.Systems.MahaonMetals;
 using Xunit;
 
 namespace Server.Tests.Systems.Bots;
@@ -95,9 +96,15 @@ public class BotPossessionTests
         bot.MoveToWorld(new Point3D(1820, 1800, 0), Map.Felucca);
         bot.Brain = new BotBrain(bot, new Point3D(1500, 1600, 0), Map.Felucca, "Britain");
         BotMobile copy = null;
+        var loot = new Longsword();
+        var employer = new PlayerMobile { Name = "Наниматель", Body = 0x190 };
 
         try
         {
+            // Метки добычи и оплаченный наём — деньги и вещи — переживают рестарт.
+            bot.Brain.MarkLoot(loot);
+            bot.Brain.Hire(employer, TimeSpan.FromHours(2));
+
             var writer = new BufferWriter(true);
             bot.Serialize(writer);
             var buffer = new byte[writer.Position];
@@ -111,11 +118,49 @@ public class BotPossessionTests
             Assert.Equal(new Point3D(1500, 1600, 0), copy.Brain.Home);
             Assert.Equal("Britain", copy.Brain.HomeCity);
             Assert.Equal(bot.Brain.Greed, copy.Brain.Greed);
+            Assert.True(copy.Brain.IsLoot(loot));
+            Assert.True(copy.Brain.IsHiredBy(employer));
         }
         finally
         {
             bot.Delete();
             copy?.Delete();
+            loot.Delete();
+            employer.Delete();
+        }
+    }
+
+    [Fact]
+    public void Possessed_Player_KeepsWhatItOwnedBefore()
+    {
+        var player = new PlayerMobile { Name = "Владелец", Body = 0x190 };
+        player.AddItem(new Backpack());
+        player.MoveToWorld(new Point3D(1820, 1800, 0), Map.Felucca);
+
+        try
+        {
+            var sword = new Longsword();
+            player.BankBox.DropItem(sword);
+            var ingots = new MahaonIngot(MahaonMetal.Iron, 40);
+            player.Backpack.DropItem(ingots);
+
+            var brain = BotSystem.Possess(player);
+
+            // Взятое мозгом после — уже товар; прежнее — нет.
+            var mined = new MahaonOre(MahaonMetal.Iron, 10);
+            player.Backpack.DropItem(mined);
+
+            Assert.False(BotGoods.IsForSale(player, ingots));
+            Assert.True(BotGoods.IsForSale(player, mined));
+            Assert.Equal(0, BotBank.WaitingGoods(player));
+            Assert.Equal(0, BotBank.TakeOut(player));
+            Assert.Same(player.BankBox, sword.Parent);
+            Assert.Equal(0, BotGoals.Bank.Score(brain));
+        }
+        finally
+        {
+            BotSystem.Unregister(player);
+            player.Delete();
         }
     }
 }

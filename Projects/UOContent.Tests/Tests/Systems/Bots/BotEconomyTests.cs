@@ -45,10 +45,15 @@ public class BotEconomyTests
         var bot = NewBot();
         try
         {
+            bot.Skills.Mining.Base = 50;
             Assert.Equal(0, BotGoals.Mine.Score(bot.Brain));
 
             bot.Backpack.DropItem(new Pickaxe());
             Assert.True(BotGoals.Mine.Score(bot.Brain) > 0);
+
+            // Кирка без навыка — не ремесло: воин не идёт копать.
+            bot.Skills.Mining.Base = 0;
+            Assert.Equal(0, BotGoals.Mine.Score(bot.Brain));
         }
         finally
         {

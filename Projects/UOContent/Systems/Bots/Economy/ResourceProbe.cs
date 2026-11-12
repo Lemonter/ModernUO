@@ -85,8 +85,9 @@ public static class ResourceProbe
                 {
                     case ResourceKind.Ore:
                         {
+                            // То же правило «это скала», что у игрока: вода тоже Impassable.
                             var land = map.Tiles.GetLandTile(x, y);
-                            if ((TileData.LandTable[land.ID & TileData.MaxLandValue].Flags & TileFlag.Impassable) != 0)
+                            if (MahaonMining.MahaonMiningSwings.IsRockLand(land.ID))
                             {
                                 bestDist = dist;
                                 target = new Point3D(x, y, land.Z);

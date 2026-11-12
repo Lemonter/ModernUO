@@ -116,12 +116,7 @@ namespace Server.Engines.Harvest
                     return;
                 }
 
-                var tileFlags = TileData.LandTable[landTarget.TileID & TileData.MaxLandValue].Flags;
-
-                // Руда есть только в скале. Вода тоже помечена Impassable, но скалой от
-                // этого не становится — а раньше становилась: стоило вырытой яме набрать
-                // воду, и удар лопатой по собственному пруду начинал добывать из него руду.
-                var rock = (tileFlags & TileFlag.Impassable) != 0 && (tileFlags & TileFlag.Wet) == 0;
+                var rock = Systems.MahaonMining.MahaonMiningSwings.IsRockLand(landTarget.TileID);
 
                 // Лопата сюда уже не доходит — её развилка выше. Остаётся кирка, а ей в
                 // земле и воде делать нечего.

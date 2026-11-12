@@ -27,6 +27,59 @@ public static class BotCombatStyles
         return weapon is BaseRanged ? BotCombatStyle.Archer : BotCombatStyle.Melee;
     }
 
+    /// <summary>Arrows or bolts for this weapon in the quiver or the pack.</summary>
+    public static bool HasAmmo(Mobile bot, System.Type ammo) =>
+        bot.FindItemOnLayer<BaseQuiver>(Layer.Cloak)?.FindItemByType(ammo) != null || bot.Backpack?.FindItemByType(ammo) != null;
+
+    /// <summary>
+    /// Swaps an empty bow for the best melee weapon in the pack, or puts it away and fights with
+    /// fists. Through the same moves a player makes: into the pack, then equip.
+    /// </summary>
+    public static void PutAwayRanged(Mobile bot)
+    {
+        if (bot.Weapon is not BaseRanged bow || bot.Backpack is not { } pack)
+        {
+            return;
+        }
+
+        BaseWeapon best = null;
+        foreach (var weapon in pack.FindItemsByType<BaseWeapon>())
+        {
+            if (weapon is not BaseRanged && weapon.CanEquip(bot) &&
+                (best == null || bot.Skills[weapon.Skill].Value > bot.Skills[best.Skill].Value))
+            {
+                best = weapon;
+            }
+        }
+
+        pack.DropItem(bow);
+        if (best != null)
+        {
+            bot.EquipItem(best);
+        }
+    }
+
+    /// <summary>Whether this bot can fight at all with what it carries: a bow wants ammunition, a
+    /// caster whose school needs reagents wants some in the pack. Supply buys them.</summary>
+    public static bool IsArmed(Mobile bot)
+    {
+        if (bot.Weapon is BaseRanged { AmmoType: { } ammo } && !HasAmmo(bot, ammo))
+        {
+            return false;
+        }
+
+        if (Of(bot) != BotCombatStyle.Mage)
+        {
+            return true;
+        }
+
+        // Ткачество заклинаний реагентов не просит; магия, некромантия и мистицизм — просят.
+        var reagentFree = bot.Skills.Spellweaving.Value >= System.Math.Max(bot.Skills.Magery.Value,
+            System.Math.Max(bot.Skills.Necromancy.Value, bot.Skills.Mysticism.Value));
+
+        return reagentFree || bot.Backpack?.FindItemByType<BaseReagent>() != null;
+    }
+
     /// <summary>The skill that decides how hard a fight this bot can take.</summary>
     public static double FightingSkill(Mobile bot)
     {

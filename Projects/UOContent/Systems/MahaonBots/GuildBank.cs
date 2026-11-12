@@ -138,7 +138,7 @@ public static class GuildBank
         }
 
         // Cheapest-first: rarer gems (Diamond, StarSapphire, ...) have lower drop weight in
-        // BotPets.GuildDeathGemTable, so smaller on-hand stacks are treated as rarer/more
+        // GuildBank.GuildDeathGemTable, so smaller on-hand stacks are treated as rarer/more
         // valuable and spent last.
         gemStacks.Sort((a, b) => b.Amount.CompareTo(a.Amount));
 
@@ -392,6 +392,32 @@ public static class GuildBank
         }
 
         var bank = GuildBank.GetOrCreate(guildName);
-        bank?.DropItem(gem);
+        if (bank == null)
+        {
+            gem.Delete();
+            return;
+        }
+
+        // DropItem стопок не сливает: каждая смерть бота клала в мир новый предмет. Сливаем с
+        // такой же стопкой, а сверх потолка самоцвет просто не появляется.
+        foreach (var item in bank.Items)
+        {
+            if (item.GetType() == gem.GetType() && item.Stackable)
+            {
+                if (item.Amount < DeathGemCap)
+                {
+                    item.Amount = System.Math.Min(DeathGemCap, item.Amount + gem.Amount);
+                }
+
+                gem.Delete();
+                return;
+            }
+        }
+
+        gem.Stackable = true;
+        bank.DropItem(gem);
     }
+
+    // Самоцветов одного вида за смерти — не больше этого в гильдейском банке.
+    private const int DeathGemCap = 200;
 }

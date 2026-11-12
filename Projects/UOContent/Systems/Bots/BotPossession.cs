@@ -81,6 +81,8 @@ public class BotGoalGump : DynamicGump
         ("Рыбачить", BotGoals.Fish),
         ("Охотиться", BotGoals.Hunt),
         ("Ковать", BotGoals.Smithing),
+        ("Собирать травы", BotGoals.HerbForage),
+        ("Варить снадобья", BotGoals.Herbalism),
         ("Решать самому", null)
     ];
 

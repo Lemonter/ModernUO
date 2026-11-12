@@ -72,13 +72,9 @@ namespace Server.Spells
             return true;
         }
 
+        // Скидка ботам на ману (×0,1) из v1 убрана: правила те же, что у игроков.
         public virtual int ScaleMana(Mobile m, int mana)
         {
-            if (m is Mobiles.BotMobile)
-            {
-                return (int)(mana * 0.1);
-            }
-
             var scalar = 1.0;
 
             if (!MindRotSpell.GetMindRotScalar(m, ref scalar))

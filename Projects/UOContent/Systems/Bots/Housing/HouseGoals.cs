@@ -63,7 +63,9 @@ public sealed class BuildHouseGoal : BotGoal
         {
             forGuild = true;
         }
+        // Квартира в городе — уже свой угол: второй, личный дом такому боту не нужен.
         else if (BotShopping.Funds(bot) < BotHousing.RichThreshold || BotHousing.HomeOf(bot) != null ||
+                 BotCityHomes.CityHome(bot) != null ||
                  BotHousing.PrivateHouseCount() >= BotHousing.MaxPrivateHouses)
         {
             return false;

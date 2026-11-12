@@ -15,9 +15,18 @@ public class BotSowTests
     {
         var bot = new BotMobile { Name = "Сеятель", Player = true, Body = 0x190 };
         bot.AddItem(new Backpack());
+        // С навыком посев не срывается: тест проверяет действие, а не бросок кубика.
+        bot.Skills[SkillName.Farming].Base = 100;
         bot.MoveToWorld(new Point3D(2200, 1800, 0), Map.Felucca);
         bot.Brain = new BotBrain(bot, bot.Location, bot.Map, null);
         var planted = new List<Item>();
+
+        // Посев бросает проверку навыка, а тестовый хост её обработчики не ставит.
+        var locationCheck = Mobile.SkillCheckLocationHandler;
+        var directLocationCheck = Mobile.SkillCheckDirectLocationHandler;
+        var targetCheck = Mobile.SkillCheckTargetHandler;
+        var directTargetCheck = Mobile.SkillCheckDirectTargetHandler;
+        Server.Misc.SkillCheck.Initialize();
 
         try
         {
@@ -43,6 +52,10 @@ public class BotSowTests
         }
         finally
         {
+            Mobile.SkillCheckLocationHandler = locationCheck;
+            Mobile.SkillCheckDirectLocationHandler = directLocationCheck;
+            Mobile.SkillCheckTargetHandler = targetCheck;
+            Mobile.SkillCheckDirectTargetHandler = directTargetCheck;
             bot.Delete();
             foreach (var item in planted)
             {

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Server.Items;
 using Server.Mobiles;
+using Server.Systems.MahaonFarming;
 using Server.Systems.MahaonSeasons;
 using Server.Systems.MahaonWorld;
 using Server.Targeting;
@@ -130,10 +131,17 @@ public sealed class SowGoal : BotGoal
     private static bool IsFruit(MahaonTreeSpecies species) => MahaonTreeSpeciesTable.Get(species).BearsFruit;
 
     /// <summary>What to grow: fibre for a tailor's money if greedy, food otherwise.</summary>
-    private static MahaonCropType ChooseCrop(BotBrain brain) =>
-        Utility.RandomDouble() < 0.3 + BotBrain.Trait(brain.Greed) * 0.5
-            ? Utility.RandomBool() ? MahaonCropType.Cotton : MahaonCropType.Flax
-            : Utility.RandomList(MahaonCropType.Wheat, MahaonCropType.Carrot, MahaonCropType.Cabbage, MahaonCropType.Pumpkin, MahaonCropType.Corn);
+    private static MahaonCropType ChooseCrop(BotBrain brain)
+    {
+        if (Utility.RandomDouble() < 0.3 + BotBrain.Trait(brain.Greed) * 0.5)
+        {
+            return Utility.RandomBool() ? MahaonCropType.Cotton : MahaonCropType.Flax;
+        }
+
+        // Тыква требует навыка земледелия: без него семена купятся, но не взойдут.
+        var crop = Utility.RandomList(MahaonCropType.Wheat, MahaonCropType.Carrot, MahaonCropType.Cabbage, MahaonCropType.Pumpkin, MahaonCropType.Corn);
+        return MahaonFarmingSkill.CanWork(brain.Bot, crop) ? crop : MahaonCropType.Wheat;
+    }
 }
 
 /// <summary>Works down a list of plots: plough if it can, then sow one seed in each.</summary>

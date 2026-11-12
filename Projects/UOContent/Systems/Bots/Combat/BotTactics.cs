@@ -30,16 +30,12 @@ public readonly struct BotSituation
     /// <summary>Середина этой кучи — куда бить площадью.</summary>
     public readonly Mobile ClusterCenter;
 
-    /// <summary>Тесно ли вокруг бота: коридор, проход, комната.</summary>
-    public readonly bool Tight;
-
-    public BotSituation(int foes, int allies, int clustered, Mobile clusterCenter, bool tight)
+    public BotSituation(int foes, int allies, int clustered, Mobile clusterCenter)
     {
         Foes = foes;
         Allies = allies;
         Clustered = clustered;
         ClusterCenter = clusterCenter;
-        Tight = tight;
     }
 
     /// <summary>
@@ -64,18 +60,21 @@ public static class BotTactics
     /// <summary>Сколько врагов в куче оправдывают массовое заклинание.</summary>
     public const int MassCastThreshold = 3;
 
+    private static readonly Mobile[] _foes = new Mobile[16];
+
     public static BotSituation Assess(BotBrain brain, Mobile foe)
     {
         var bot = brain.Bot;
 
         if (bot?.Map == null)
         {
-            return new BotSituation(foe == null ? 0 : 1, 0, 0, foe, false);
+            return new BotSituation(foe == null ? 0 : 1, 0, 0, foe);
         }
 
         // Враги собираются в список: по нему потом ищется куча, а второй проход по карте
-        // обошёлся бы дороже небольшого массива.
-        Span<Mobile> foes = new Mobile[16];
+        // обошёлся бы дороже небольшого массива. Буфер общий: игровой цикл однопоточный, а
+        // вызов за боевой тик — до двух на бота.
+        Span<Mobile> foes = _foes;
         var foeCount = 0;
         var allies = 0;
 
@@ -111,7 +110,8 @@ public static class BotTactics
         var inList = Math.Min(foeCount, foes.Length);
         var clustered = FindCluster(foes[..inList], foe, out var center);
 
-        return new BotSituation(Math.Max(foeCount, foe == null ? 0 : 1), allies, clustered, center ?? foe, IsTight(bot));
+        foes[..inList].Clear(); // не держать ссылки на мобилей между вызовами
+        return new BotSituation(Math.Max(foeCount, foe == null ? 0 : 1), allies, clustered, center ?? foe);
     }
 
     /// <summary>
@@ -176,39 +176,5 @@ public static class BotTactics
         }
 
         return m.Combatant is { } other && IsAlly(bot, other);
-    }
-
-    /// <summary>
-    ///     Тесно ли вокруг. Считается по непроходимым соседям в кольце: в коридоре их
-    ///     большинство, в поле нет вовсе.
-    ///
-    ///     Нужно для площадных заклинаний: стена огня в проходе запирает всех, а в чистом
-    ///     поле её просто обойдут, и мана уйдёт впустую.
-    /// </summary>
-    private static bool IsTight(Mobile bot)
-    {
-        var map = bot.Map;
-        var blocked = 0;
-
-        for (var dx = -2; dx <= 2; dx++)
-        {
-            for (var dy = -2; dy <= 2; dy++)
-            {
-                if (dx == 0 && dy == 0)
-                {
-                    continue;
-                }
-
-                var land = map.Tiles.GetLandTile(bot.X + dx, bot.Y + dy);
-
-                if ((TileData.LandTable[land.ID & TileData.MaxLandValue].Flags & TileFlag.Impassable) != 0)
-                {
-                    blocked++;
-                }
-            }
-        }
-
-        // Больше трети кольца — уже не открытое место.
-        return blocked * 3 > 24;
     }
 }

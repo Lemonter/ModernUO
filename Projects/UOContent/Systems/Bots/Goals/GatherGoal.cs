@@ -26,6 +26,8 @@ public sealed class GatherGoal : BotGoal
         _                 => ["Рыба сегодня клевала как бешеная.", "Наловил рыбы, кому продать?", "Сидел с удочкой с самого утра."]
     };
 
+    private const double GatherSkill = 20;
+
     public override double Score(BotBrain brain)
     {
         var bot = brain.Bot;
@@ -35,6 +37,15 @@ public sealed class GatherGoal : BotGoal
         }
 
         var skill = bot.Skills[ResourceProbe.SkillFor(_kind)].Value / 100.0;
+
+        // Кирку, топор и удочку получает каждый бот, но добыча — ремесло: воин с нулём горного
+        // дела копал пустые цепочки и штрафовал хорошую точку для всех. Порог как у ремёсел.
+        // Одержимому персонажу, которому хозяин велел копать, порог не мешает — так он учится.
+        if (skill * 100 < GatherSkill && brain.Focus != this)
+        {
+            return 0;
+        }
+
         var score = 0.15 + BotBrain.Trait(brain.Diligence) * 0.35 + BotBrain.Trait(brain.Greed) * 0.15 + skill * 0.35;
 
         score -= brain.Fatigue * 0.6;

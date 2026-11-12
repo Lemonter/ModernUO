@@ -84,8 +84,19 @@ public static class BotScheduler
             {
                 // One broken brain must not take the scheduler down with it.
                 logger.Error(e, "Bot {Bot} threw while thinking; its plan was dropped", brain.Bot);
-                brain.ClearPlan();
                 delay = 5000;
+
+                // Stop() сломанного действия может бросить снова — тогда без защиты упал бы весь
+                // проход планировщика, а не один бот.
+                try
+                {
+                    brain.ClearPlan();
+                }
+                catch (Exception inner)
+                {
+                    logger.Error(inner, "Bot {Bot} threw while dropping its plan", brain.Bot);
+                    brain.AbandonPlan();
+                }
             }
 
             var ms = (Stopwatch.GetTimestamp() - t0) * 1000.0 / Stopwatch.Frequency;

@@ -114,7 +114,17 @@ public abstract partial class BaseAI
     // deadline, so the only cost is single-digit-ms drift per step.
     private void ConsumeMoveBudget()
     {
-        NextMove = Core.TickCount + Math.Max(50, (long)(EffectiveStepDelay() * 1000));
+        var delay = (long)(EffectiveStepDelay() * 1000);
+
+        // Брод (MahaonWading): по мелкой воде и NPC идут медленнее, как игрок. Пловцам
+        // (морские твари) вода — дом, их не тормозим.
+        if (!Mobile.CanSwim &&
+            Systems.MahaonMapEdits.MahaonWading.IsWadingStep(Mobile.Map, Mobile.X, Mobile.Y, Mobile.Z))
+        {
+            delay = Systems.MahaonMapEdits.MahaonWading.Slow((int)delay);
+        }
+
+        NextMove = Core.TickCount + Math.Max(50, delay);
     }
 
     public virtual bool CheckMove() => !(Mobile.Deleted || Mobile.DisallowAllMoves);

@@ -106,6 +106,17 @@ public static class MahaonMiningSwings
         Timer.DelayCall(SwingDelay, () => DoWallSwing(from, wall, tool));
     }
 
+    /// <summary>
+    ///     Руда есть только в скале. Вода тоже помечена Impassable, но скалой от этого не
+    ///     становится — а раньше становилась: стоило вырытой яме набрать воду, и удар лопатой по
+    ///     собственному пруду начинал добывать из него руду. Одно правило для игрока и для бота.
+    /// </summary>
+    public static bool IsRockLand(int landId)
+    {
+        var flags = TileData.LandTable[landId & TileData.MaxLandValue].Flags;
+        return (flags & TileFlag.Impassable) != 0 && (flags & TileFlag.Wet) == 0;
+    }
+
     public static void StartSurfaceSwings(
         Mobile from, Point3D targetLoc, Map map, Item tool, bool allowMineOffer = true, bool isInsideMine = false
     )

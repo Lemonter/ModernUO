@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Server.Items;
 using Server.Mobiles;
+using Server.Systems.MahaonFarming;
 using Server.Systems.MahaonSeasons;
 
 namespace Server.Systems.Bots;
@@ -153,6 +154,13 @@ public sealed class HarvestFieldAction : BotAction
                 continue;
             }
 
+            // Культура не по навыку: грядка откажет, бот останется у неё навсегда — она
+            // ведь так и будет ближайшей несобранной.
+            if (!MahaonFarmingSkill.CanWork(bot, tile.CropType))
+            {
+                continue;
+            }
+
             var dist = bot.GetDistanceToSqrt(tile);
             if (dist < bestDist)
             {
@@ -179,6 +187,11 @@ public sealed class PickFruitAction : BotAction
     private MahaonTreeFoliage _tree;
     private GoToAction _walk;
 
+    // Сбор, который не уменьшает плодов (перегруз, отказ), раньше повторялся бесконечно.
+    private int _lastFruit = -1;
+    private int _stalls;
+    private const int MaxStalls = 2;
+
     public PickFruitAction(int trees) => _trees = trees;
 
     public override BotActionResult Tick(BotBrain brain)
@@ -199,6 +212,12 @@ public sealed class PickFruitAction : BotAction
 
         if (_tree != null && FarmAtlas.HasFruit(_tree) && bot.InRange(_tree.GetWorldLocation(), 2))
         {
+            if (_tree.FruitRemaining == _lastFruit && ++_stalls >= MaxStalls)
+            {
+                return _visited > 0 ? BotActionResult.Done() : BotActionResult.Failed();
+            }
+
+            _lastFruit = _tree.FruitRemaining;
             bot.Direction = bot.GetDirectionTo(_tree);
             _tree.OnDoubleClick(bot);
             return BotActionResult.Running(1200);

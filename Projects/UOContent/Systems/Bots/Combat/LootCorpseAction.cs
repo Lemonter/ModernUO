@@ -54,12 +54,23 @@ public sealed class LootCorpseAction : BotAction
             }
         }
 
+        var left = 0;
+        var taken = 0;
         foreach (var item in take)
         {
+            // Со своего трупа — всё, что влезет, а не до первой тяжёлой вещи: остальное — тоже его.
             if (!pack.TryDropItem(bot, item, false))
             {
+                left++;
+                if (own)
+                {
+                    continue;
+                }
+
                 break;
             }
+
+            taken++;
 
             _corpse.OnItemLifted(bot, item);
 
@@ -74,8 +85,18 @@ public sealed class LootCorpseAction : BotAction
 
         if (own)
         {
-            brain.OwnCorpse = null;
+            // Не всё влезло — труп остаётся «своим»: бот разгрузится и вернётся. Если не взял
+            // ничего, это отказ, чтобы мозг отложил цель и сперва освободил сумку.
+            if (left == 0)
+            {
+                brain.OwnCorpse = null;
+            }
+            else if (taken == 0)
+            {
+                return BotActionResult.Failed();
+            }
         }
+
         return BotActionResult.Done(800);
     }
 

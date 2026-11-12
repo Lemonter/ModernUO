@@ -73,7 +73,17 @@ public enum SkillName
     Spellweaving = 54,
     Mysticism = 55,
     Imbuing = 56,
-    Throwing = 57
+    Throwing = 57,
+
+    // Mahaon: навык шарда, которого нет у OSI. Строго в конец — номер навыка лежит в
+    // сейвах и уходит клиенту в пакете 0x3A.
+    Shamanism = 58,
+
+    // Mahaon: Земледелие — урожай, качество и пороги культур на грядках MahaonFarming.
+    Farming = 59,
+
+    // Mahaon: Травничество — сбор и переработка диких трав.
+    Herbalism = 60
 }
 
 public enum Stat
@@ -770,6 +780,15 @@ public class Skills
 
     [CommandProperty(AccessLevel.Counselor, canModify: true)]
     public Skill Throwing => this[SkillName.Throwing];
+
+    [CommandProperty(AccessLevel.Counselor, canModify: true)]
+    public Skill Shamanism => this[SkillName.Shamanism];
+
+    [CommandProperty(AccessLevel.Counselor, canModify: true)]
+    public Skill Farming => this[SkillName.Farming];
+
+    [CommandProperty(AccessLevel.Counselor, canModify: true)]
+    public Skill Herbalism => this[SkillName.Herbalism];
 
     public override string ToString() => "...";
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ModernUO.CodeGeneratedEvents;
 using Server.Mobiles;
 
 namespace Server.Systems.MahaonProfessions;
@@ -31,6 +32,32 @@ public class ProfessionSystem : GenericPersistence
     public static void Configure()
     {
         _instance = new ProfessionSystem();
+    }
+
+    /// <summary>
+    ///     Догоняет потолки набора первичной категории при входе в игру.
+    ///
+    ///     Потолки ставятся один раз, в момент выбора профессии. Навык, добавленный в набор
+    ///     позже (так в набор Мистицизма пришло Шаманство), у уже выбравших профессию так и
+    ///     остался бы на сотне. Поднимаем только то, что стоит ровно на обычной сотне: потолок,
+    ///     выставленный ГМом вручную или снятый свитком силы, не трогаем.
+    /// </summary>
+    [OnEvent(nameof(PlayerMobile.PlayerLoginEvent))]
+    public static void OnLogin(PlayerMobile pm)
+    {
+        if (!Chosen.TryGetValue(pm, out var profession) ||
+            !ProfessionData.CategorySkills.TryGetValue(ProfessionData.All[profession].Category, out var kit))
+        {
+            return;
+        }
+
+        foreach (var skillName in kit)
+        {
+            if ((int)skillName < pm.Skills.Length && pm.Skills[skillName] is { } skill && skill.Cap == BaseSkillCap)
+            {
+                skill.Cap = PrimarySkillCap;
+            }
+        }
     }
 
     public static MahaonProfession? GetProfession(Mobile m) =>

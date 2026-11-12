@@ -381,12 +381,20 @@ namespace Server.Mobiles
         [CommandProperty(AccessLevel.GameMaster)]
         public DateTime SessionStart { get; private set; }
 
+        /// <summary>
+        ///     Персонаж «в игре» и без клиента — бот. Без этого его игровое время стояло бы, а
+        ///     по нему остывают убийства: покрасневший ПК-бот оставался бы красным навсегда.
+        /// </summary>
+        protected virtual bool AlwaysInSession => false;
+
+        protected void BeginSession() => SessionStart = DateTime.UtcNow;
+
         [CommandProperty(AccessLevel.GameMaster)]
         public TimeSpan GameTime
         {
             get
             {
-                if (NetState != null)
+                if (NetState != null || AlwaysInSession)
                 {
                     return m_GameTime + (Core.Now - SessionStart);
                 }
@@ -653,16 +661,10 @@ namespace Server.Mobiles
         {
             get
             {
-                var baseMana = base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
-                               (Core.ML && Race == Race.Elf ? 20 : 0) +
-                               Systems.MahaonQuests.CourtMageSystem.GetManaBonus(this);
-
-                if (this is BotMobile { Archetype: BotArchetype.Mage })
-                {
-                    baseMana *= 3;
-                }
-
-                return baseMana;
+                // Тройной запас маны магов-ботов из v1 убран: правила те же, что у игроков.
+                return base.ManaMax + AosAttributes.GetValue(this, AosAttribute.BonusMana) +
+                       (Core.ML && Race == Race.Elf ? 20 : 0) +
+                       Systems.MahaonQuests.CourtMageSystem.GetManaBonus(this);
             }
         }
 
@@ -2529,6 +2531,10 @@ namespace Server.Mobiles
 
             if (Alive && !wasAlive)
             {
+                // Mahaon: воскрешение рвёт Печать души шамана сразу, а не на следующей
+                // проверке таймера — иначе быстрая повторная смерть сохраняла печать.
+                Systems.MahaonShamanism.SoulSeal.OnResurrected(this);
+
                 var deathRobe = new DeathRobe();
 
                 if (!EquipItem(deathRobe))
@@ -2758,10 +2764,8 @@ namespace Server.Mobiles
 
             Systems.MahaonCombat.MonsterLootingSystem.TryEquipFromCorpse(this, c);
 
-            if (LastKiller is BotMobile { IsPk: true } killerBot)
-            {
-                killerBot.Kills = 0;
-            }
+            // ПК-боты краснеют честно: счётчик убийств у них растёт от отчётов жертв, как у
+            // игроков (ReportMurdererGump — боты сообщают о каждом убийце сами).
 
             if (this is BotMobile deadBot)
             {
@@ -2941,20 +2945,7 @@ namespace Server.Mobiles
 
         public override void Damage(int amount, Mobile from = null, bool informMount = true, bool ignoreEvilOmen = false)
         {
-            // Thief bots get a flat 30% chance to dodge an incoming hit entirely — has to be
-            // the very first thing here, before any of the damage-modifier chain below
-            // (combat stance, ring of protection, evil omen, blood oath) even runs, so a
-            // dodge is a true "the hit never landed" with zero side effects, not just zero
-            // final damage. Real players with Thief skill aren't affected — this is
-            // specifically the bot flavor ability requested for them.
-            if (this is BotMobile &&
-                BotMobile.IsProfessionCategory(this, Systems.MahaonProfessions.ProfessionCategory.Thief) &&
-                Utility.RandomDouble() < 0.3)
-            {
-                PublicOverheadMessage(MessageType.Emote, 0x480, false, "*уворачивается*");
-                return;
-            }
-
+            // Уворот ботов-воров (30%) из v1 убран: правила те же, что у игроков.
             var damageBonus = 1.0;
 
             damageBonus *= Systems.MahaonCombat.CombatStanceSystem.GetDamageTakenScalar(this);
@@ -4199,6 +4190,22 @@ namespace Server.Mobiles
                 return CalcMoves.TurnDelay; // We are NOT actually moving (just a direction change)
             }
 
+            var delay = ComputeStepDelay(dir);
+
+            // Брод (MahaonWading): шаг в мелкую воду медленнее. Считается по клетке, КУДА
+            // идёт шаг, и по высоте, на которой стоим сейчас, — и тут, и в клиенте Primaris
+            // это известно до шага. Location здесь ещё старая: зовут до перемещения
+            // (MovementThrottle и Mobile.Move).
+            int x = X, y = Y;
+            Server.Movement.Movement.Offset(dir & Direction.Mask, ref x, ref y);
+
+            return Systems.MahaonMapEdits.MahaonWading.IsWadingStep(Map, x, y, Z)
+                ? Systems.MahaonMapEdits.MahaonWading.Slow(delay)
+                : delay;
+        }
+
+        private int ComputeStepDelay(Direction dir)
+        {
             var context = TransformationSpellHelper.GetContext(this);
 
             if (context?.Type == typeof(ReaperFormSpell))

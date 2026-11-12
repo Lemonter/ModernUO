@@ -83,4 +83,37 @@ public class SectorActivatorTests
             watcher.Delete();
         }
     }
+
+    [Fact]
+    public void Activator_WalkingAcrossSectors_WakesSectorsAhead()
+    {
+        var map = Map.Felucca;
+        var mobile = new Activator();
+        var step = 1 << Map.SectorShift;
+        var origin = new Point3D(3600, 3000, 0);
+
+        try
+        {
+            mobile.MoveToWorld(origin, map);
+
+            for (var i = 1; i <= 6; i++)
+            {
+                mobile.Location = new Point3D(origin.X + i * step, origin.Y, 0);
+
+                Assert.True(
+                    SectorAt(map, mobile.X + Map.SectorActiveRange * step, mobile.Y).Active,
+                    $"leading edge asleep after {i} sector crossing(s)"
+                );
+                Assert.True(SectorAt(map, mobile.X, mobile.Y).Active, $"own sector asleep after {i} sector crossing(s)");
+                Assert.False(
+                    SectorAt(map, mobile.X - (Map.SectorActiveRange + 1) * step, mobile.Y).Active,
+                    $"trailing edge awake after {i} sector crossing(s)"
+                );
+            }
+        }
+        finally
+        {
+            mobile.Delete();
+        }
+    }
 }

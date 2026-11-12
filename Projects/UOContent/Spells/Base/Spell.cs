@@ -62,6 +62,13 @@ namespace Server.Spells
             !Systems.MahaonProfessions.ProfessionSystem.HasSignature(Caster, Systems.MahaonProfessions.ProfessionCategory.Magic);
         public virtual bool ShowHandMovement => true;
 
+        /// <summary>
+        ///     Mahaon: можно ли колдовать это заклинание мёртвым (призраком). По умолчанию
+        ///     нельзя — проверки ниже в Cast и CheckSequence. Шаманские посмертные чары
+        ///     (Печать души) разрешают это себе сами и сами же решают, когда именно.
+        /// </summary>
+        public virtual bool CastWhileDead => false;
+
         public virtual bool DelayedDamage => false;
 
         public static readonly Type[] AOSNoDelayedDamageStackingSelf = Core.AOS ? Array.Empty<Type>() : null;
@@ -523,7 +530,7 @@ namespace Server.Spells
                 spell.Disturb(DisturbType.NewCast);
             }
 
-            if (!Caster.CheckAlive())
+            if (!CastWhileDead && !Caster.CheckAlive())
             {
                 return false;
             }
@@ -690,13 +697,9 @@ namespace Server.Spells
 
         public abstract int GetMana();
 
+        // Скидка ботам на ману (×0,1) из v1 убрана: правила те же, что у игроков.
         public virtual int ScaleMana(int mana)
         {
-            if (Caster is Mobiles.BotMobile)
-            {
-                return (int)(mana * 0.1);
-            }
-
             var scalar = 1.0;
 
             if (!MindRotSpell.GetMindRotScalar(Caster, ref scalar))
@@ -838,7 +841,7 @@ namespace Server.Spells
         {
             var mana = ScaleMana(GetMana());
 
-            if (Caster.Deleted || !Caster.Alive || Caster.Spell != this || State != SpellState.Sequencing)
+            if (Caster.Deleted || !Caster.Alive && !CastWhileDead || Caster.Spell != this || State != SpellState.Sequencing)
             {
                 DoFizzle();
             }
@@ -1092,6 +1095,7 @@ namespace Server.Spells
                     Systems.MahaonCombat.ChivalrySchoolSystem.OnSpellCast(caster, m_Spell);
                     Systems.MahaonCombat.SpellweavingSchoolSystem.OnSpellCast(caster, m_Spell);
                     Systems.MahaonCombat.MysticismSchoolSystem.OnSpellCast(caster, m_Spell);
+                    Systems.MahaonShamanism.ShamanismSchoolSystem.OnSpellCast(caster, m_Spell);
 
                     if (caster is Mobiles.BaseCreature petCaster)
                     {

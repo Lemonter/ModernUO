@@ -44,7 +44,12 @@ public sealed class HuntAction : BotAction
 
         if (_prey != null && (_prey.Deleted || !_prey.Alive))
         {
-            _kills++;
+            // Исчезнувшая добыча (спаунер убрал, GM удалил) — не убийство: у убитой есть
+            // убийца или ноль здоровья.
+            if (_prey.LastKiller != null || _prey.Hits <= 0)
+            {
+                _kills++;
+            }
 
             // A kill like this gets talked about.
             if (_prey is BaseCreature { Fame: >= NotableFame } notable && !notable.Deleted)

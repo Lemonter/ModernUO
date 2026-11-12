@@ -30,6 +30,13 @@ public sealed class BotCombatState
     /// <summary>Who a spell in flight is for; handed to its target cursor when it appears.</summary>
     public Mobile SpellTarget;
 
+    /// <summary>The spell in hand was started to help <see cref="SpellTarget"/>, a friend.</summary>
+    public bool SpellForAlly;
+
+    /// <summary>Until then the bot fights hand to hand whatever its style: a mage with nothing it
+    /// can cast. A tick, not a flag, so it tries its spells again once mana has come back.</summary>
+    public long MeleeUntil = Core.TickCount;
+
     public long NextPotionTick;
     public long NextSongTick;
     public long FleeUntil;
@@ -57,6 +64,7 @@ public static class BotCombat
     private const int ThreatRange = 14;
     private const int FightTickMs = 300;
     private const long FleeMs = 20_000;
+    private const long MeleeWhileDryMs = 10_000;
 
     // Archers and casters keep this band to their target.
     private const int KeepMin = 4;
@@ -73,10 +81,23 @@ public static class BotCombat
         if (bot.Target is { } cursor && state.SpellTarget != null)
         {
             var target = state.SpellTarget;
+            var forAlly = state.SpellForAlly;
             state.SpellTarget = null;
-            // A helping spell's cursor wants a friend: the bot itself, not the foe it fights.
+            state.SpellForAlly = false;
+
+            // A helping spell's cursor wants a friend: the bot itself, not the foe it fights
+            // (masteries pass the foe even for their helping abilities) — unless it was started
+            // for a wounded ally, which then gets it.
             var helps = (cursor.Flags & Targeting.TargetFlags.Beneficial) != 0;
-            cursor.Invoke(bot, helps || target.Deleted || !target.Alive ? bot : target);
+            var onTarget = !target.Deleted && target.Alive && (!helps || forAlly);
+            cursor.Invoke(bot, onTarget ? target : bot);
+
+            if (onTarget && forAlly)
+            {
+                // Help remembered both ways is what lets guilds drift into alliances.
+                MahaonBots.BotRelationships.OnHelped(target, bot);
+            }
+
             return 250;
         }
 
@@ -374,7 +395,14 @@ public static class BotCombat
             return FightTickMs;
         }
 
-        var style = BotCombatStyles.Of(bot);
+        // Лучник без стрел снимает лук: с пустым колчаном замах не делает ничего, и бот стоял бы
+        // на дистанции до самого бегства.
+        if (bot.Weapon is BaseRanged { AmmoType: { } ammo } && !BotCombatStyles.HasAmmo(bot, ammo))
+        {
+            BotCombatStyles.PutAwayRanged(bot);
+        }
+
+        var style = Core.TickCount - state.MeleeUntil < 0 ? BotCombatStyle.Melee : BotCombatStyles.Of(bot);
         var distance = bot.GetDistanceToSqrt(foe);
 
         switch (style)
@@ -396,6 +424,16 @@ public static class BotCombat
                          BotSchools.TryCast(brain, SchoolUse.Attack, foe)))
                     {
                         return FightTickMs;
+                    }
+
+                    // Мог колдовать (не в касте, не в откате, цель видна), а начать было нечего —
+                    // ни маны, ни реагентов. Раньше маг держал дистанцию и не делал ничего до
+                    // порога бегства. Теперь — в рукопашную, пока мана не вернётся.
+                    if (bot.Spell == null && bot.Target == null && distance <= 10 && bot.InLOS(foe) &&
+                        Core.TickCount - bot.NextSpellTime >= 0)
+                    {
+                        state.MeleeUntil = Core.TickCount + MeleeWhileDryMs;
+                        return Approach(brain, foe, 1);
                     }
 
                     return distance > KeepMax ? Approach(brain, foe, KeepMax) : FightTickMs;

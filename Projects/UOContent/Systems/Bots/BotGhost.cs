@@ -218,6 +218,9 @@ public static class BotGhost
 
         brain.IsGhost = false;
         brain.GhostFailures = 0;
+
+        // Смерть сняла NameMod — титул репутации возвращается вместе с жизнью.
+        MahaonBots.BotReputation.RefreshTitle(bot);
         ClearTarget(brain);
         BotSpeech.Say(bot, BotTopic.Resurrected, chance: 0.6);
     }

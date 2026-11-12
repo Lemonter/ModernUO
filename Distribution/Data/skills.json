@@ -926,5 +926,53 @@
     "ProfessionSkillName": "Throwing",
     "PrimaryStat": "Dex",
     "SecondaryStat": "Str"
+  },
+  {
+    "SkillID": 58,
+    "Name": "Shamanism",
+    "Title": "Shaman",
+    "StrScale": 0.05,
+    "DexScale": 0,
+    "IntScale": 0.1,
+    "StatTotal": 15,
+    "StrGain": 0.5,
+    "DexGain": 0,
+    "IntGain": 1.0,
+    "GainFactor": 10,
+    "ProfessionSkillName": "Shamanism",
+    "PrimaryStat": "Int",
+    "SecondaryStat": "Str"
+  },
+  {
+    "SkillID": 59,
+    "Name": "Farming",
+    "Title": "Farmer",
+    "StrScale": 0.1,
+    "DexScale": 0.05,
+    "IntScale": 0,
+    "StatTotal": 15,
+    "StrGain": 1.0,
+    "DexGain": 0.5,
+    "IntGain": 0,
+    "GainFactor": 10,
+    "ProfessionSkillName": "Farming",
+    "PrimaryStat": "Str",
+    "SecondaryStat": "Dex"
+  },
+  {
+    "SkillID": 60,
+    "Name": "Herbalism",
+    "Title": "Herbalist",
+    "StrScale": 0,
+    "DexScale": 0.05,
+    "IntScale": 0.1,
+    "StatTotal": 15,
+    "StrGain": 0,
+    "DexGain": 0.5,
+    "IntGain": 1.0,
+    "GainFactor": 10,
+    "ProfessionSkillName": "Herbalism",
+    "PrimaryStat": "Int",
+    "SecondaryStat": "Dex"
   }
 ]

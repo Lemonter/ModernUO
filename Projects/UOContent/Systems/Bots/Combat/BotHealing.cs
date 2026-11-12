@@ -89,6 +89,7 @@ public static class BotHealing
         }
 
         brain.Combat.SpellTarget = target;
+        brain.Combat.SpellForAlly = false;
         return true;
     }
 
@@ -120,13 +121,19 @@ public static class BotHealing
             return false;
         }
 
-        if (!StartAllyHeal(brain, patient))
+        // Отношения за помощь записываются, когда она случилась: бинт — сразу, заклинание —
+        // когда курсор отдан пациенту (BotCombat.Think).
+        return StartAllyHeal(brain, patient);
+    }
+
+    private static bool TryCastOnAlly(BotBrain brain, Spell spell, Mobile patient)
+    {
+        if (!TryCast(brain, spell, patient))
         {
             return false;
         }
 
-        // Help remembered both ways is what lets guilds drift into alliances.
-        MahaonBots.BotRelationships.OnHelped(patient, bot);
+        brain.Combat.SpellForAlly = true;
         return true;
     }
 
@@ -138,6 +145,7 @@ public static class BotHealing
             bot.Backpack?.FindItemByType<Bandage>() is { } bandage && BandageContext.BeginHeal(bot, patient) != null)
         {
             bandage.Consume();
+            MahaonBots.BotRelationships.OnHelped(patient, bot);
             return true;
         }
 
@@ -146,16 +154,16 @@ public static class BotHealing
             return false;
         }
 
-        if (patient.Poisoned && bot.Skills.Magery.Value >= 30 && TryCast(brain, new CureSpell(bot), patient))
+        if (patient.Poisoned && bot.Skills.Magery.Value >= 30 && TryCastOnAlly(brain, new CureSpell(bot), patient))
         {
             return true;
         }
 
-        if (bot.Skills.Magery.Value >= 50 && TryCast(brain, new GreaterHealSpell(bot), patient))
+        if (bot.Skills.Magery.Value >= 50 && TryCastOnAlly(brain, new GreaterHealSpell(bot), patient))
         {
             return true;
         }
 
-        return bot.Skills.Chivalry.Value >= 30 && TryCast(brain, new Spells.Chivalry.CloseWoundsSpell(bot), patient);
+        return bot.Skills.Chivalry.Value >= 30 && TryCastOnAlly(brain, new Spells.Chivalry.CloseWoundsSpell(bot), patient);
     }
 }
