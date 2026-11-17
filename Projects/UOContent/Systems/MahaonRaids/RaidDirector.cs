@@ -628,6 +628,7 @@ public static class RaidDirector
             $"Дозорные {site.Genitive} трубят тревогу: с {SideFrom(site, a)} идут приспешники {FactionGenitive(f)} — {count} налётчиков!"
         );
         MahaonBots.BotRumors.Spread($"Набег на {site.City}! {count} налётчиков у стен.");
+        TownNews(MahaonCities.TownTalk.Kind.RaidStarted, raid);
         MahaonAi.MahaonForumBridge.OnRaidTriggered(site.City, count);
 
         logger.Information(
@@ -692,6 +693,7 @@ public static class RaidDirector
                 : $"Защитники {raid.Site.Genitive} отбили набег! Приспешники {FactionGenitive(raid.Faction)} отступили."
         );
         logger.Information("Raid on {City} repelled; {Faction} strength {Strength}", raid.Site.City, raid.Faction, Strength[f]);
+        TownNews(MahaonCities.TownTalk.Kind.RaidRepelled, raid);
     }
 
     public static void BankDestroyed(MahaonRaid raid)
@@ -724,6 +726,7 @@ public static class RaidDirector
             $"Защита {raid.Site.Genitive} провалена! Банк взорван. Приспешники {FactionGenitive(raid.Faction)} стали сильнее."
         );
         logger.Information("Raid on {City}: bank destroyed; {Faction} strength {Strength}", raid.Site.City, raid.Faction, Strength[f]);
+        TownNews(MahaonCities.TownTalk.Kind.BankBlown, raid);
     }
 
     public static void Dissolved(MahaonRaid raid)
@@ -731,7 +734,12 @@ public static class RaidDirector
         raid.End(true);
         Announce(0x3B2, $"Приспешники {FactionGenitive(raid.Faction)} отошли от {raid.Site.Genitive}.");
         logger.Information("Raid on {City} dissolved after timeout", raid.Site.City);
+        TownNews(MahaonCities.TownTalk.Kind.RaidGone, raid);
     }
+
+    // О чём потом говорят в лавках и на улицах.
+    private static void TownNews(MahaonCities.TownTalk.Kind kind, MahaonRaid raid) =>
+        MahaonCities.TownTalk.OnRaid(kind, raid.Site.City, raid.Site.Genitive, FactionGenitive(raid.Faction));
 
     public static void Announce(int hue, string text)
     {

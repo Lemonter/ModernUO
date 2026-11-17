@@ -10,6 +10,21 @@ namespace Server.Engines.Pathing.Nav;
 public static class NavStats
 {
     public static long Routes { get; private set; }
+
+    /// <summary>Запросы, отложенные из-за полной очереди (вместо поиска в главном потоке).</summary>
+    public static long Busy { get; private set; }
+
+    public static void RecordBusy() => Busy++;
+
+    /// <summary>Отказы без поиска: недостижимо по островам или недавно уже не нашлось.</summary>
+    public static long Shortcuts { get; private set; }
+
+    public static void RecordShortcut() => Shortcuts++;
+
+    /// <summary>Отрезки пути, прошедшие по прямой без поиска.</summary>
+    public static long StraightLegs { get; private set; }
+
+    public static void RecordStraightLeg() => StraightLegs++;
     public static double RouteMsTotal { get; private set; }
     public static double RouteMsMax { get; private set; }
     public static long RouteExpanded { get; private set; }
@@ -82,6 +97,9 @@ public static class NavStats
 
     public static void Reset()
     {
+        Busy = 0;
+        Shortcuts = 0;
+        StraightLegs = 0;
         Routes = 0;
         RouteMsTotal = 0;
         RouteMsMax = 0;

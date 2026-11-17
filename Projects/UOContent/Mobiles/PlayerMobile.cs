@@ -3716,6 +3716,12 @@ namespace Server.Mobiles
         {
             base.OnMovement(m, oldLocation);
 
+            // Mahaon: боты замечают людей, вошедших в поле зрения (BotCombat.FindPlayerThreat).
+            if (m is PlayerMobile)
+            {
+                Systems.Bots.BotCombat.OnSeen(this, m, oldLocation);
+            }
+
             // Passive detect hidden: either party moving within range can trigger detection
             if (m is PlayerMobile && Utility.InRange(Location, m.Location, 4))
             {

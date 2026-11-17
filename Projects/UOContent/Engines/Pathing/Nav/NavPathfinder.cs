@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Server.Engines.Pathing.Nav;
@@ -56,6 +57,37 @@ public static class NavPathfinder
         return startNode == goalNode ? Resolve.SameRegion : Resolve.Search;
     }
 
+    // Провалившиеся поиски между двумя областями: те же два узла не ищутся снова какое-то время.
+    // Только в главном потоке (пишет Complete воркера через LoopContext).
+    private static readonly Dictionary<(long, long), long> _failed = new();
+    private const long FailedForgetMs = 2 * 60_000;
+
+    internal static void RememberFailure(long startNode, long goalNode)
+    {
+        if (_failed.Count > 20_000)
+        {
+            _failed.Clear();
+        }
+
+        _failed[(startNode, goalNode)] = Core.TickCount + FailedForgetMs;
+    }
+
+    private static bool RecentlyFailed(long startNode, long goalNode)
+    {
+        if (!_failed.TryGetValue((startNode, goalNode), out var until))
+        {
+            return false;
+        }
+
+        if (Core.TickCount - until < 0)
+        {
+            return true;
+        }
+
+        _failed.Remove((startNode, goalNode));
+        return false;
+    }
+
     private static NavRoute Direct(Map goalMap, Point3D start, Point3D goal) =>
         new([new NavWaypoint(goalMap, goal, NavWaypointKind.Goal)], NavMath.Octile(start.X, start.Y, goal.X, goal.Y), 0);
 
@@ -87,10 +119,13 @@ public static class NavPathfinder
     /// <summary>
     /// Finds a route and hands it to <paramref name="onDone"/> on the loop — later, from the route
     /// worker, or right away when no search is needed or the worker is off or full. Null means no
-    /// route. The caller must re-validate in the callback: time may have passed.
+    /// route. The caller must re-validate in the callback: time may have passed. False — очередь
+    /// полна и <paramref name="inlineWhenBusy"/> не разрешил искать в главном потоке: ответа не
+    /// будет, спросить позже.
     /// </summary>
-    public static void FindAsync(
-        Map startMap, Point3D start, Map goalMap, Point3D goal, Action<NavRoute> onDone, NavAccess access = NavAccess.None
+    public static bool FindAsync(
+        Map startMap, Point3D start, Map goalMap, Point3D goal, Action<NavRoute> onDone, NavAccess access = NavAccess.None,
+        NavRouteTicket ticket = null, bool inlineWhenBusy = true
     )
     {
         var t0 = Stopwatch.GetTimestamp();
@@ -100,19 +135,34 @@ public static class NavPathfinder
         {
             NavStats.RecordRoute(NavStats.ElapsedMs(t0), 0, resolved == Resolve.SameRegion);
             onDone(resolved == Resolve.SameRegion ? Direct(goalMap, start, goal) : null);
-            return;
+            return true;
         }
 
-        if (NavRouteWorker.TryEnqueue(NavSystem.Snapshot, startNode, goalNode, goal, access, onDone))
+        // Дороги наверняка нет, или такой же поиск только что провалился: ответ сразу, без поиска.
+        if (NavSystem.Snapshot.Unreachable(startNode, goalNode) || RecentlyFailed(startNode, goalNode))
+        {
+            NavStats.RecordShortcut();
+            onDone(null);
+            return true;
+        }
+
+        if (NavRouteWorker.TryEnqueue(NavSystem.Snapshot, startNode, goalNode, goal, access, onDone, ticket))
         {
             NavStats.RecordDispatch(NavStats.ElapsedMs(t0));
-            return;
+            return true;
+        }
+
+        if (!inlineWhenBusy && NavRouteWorker.Enabled)
+        {
+            NavStats.RecordBusy();
+            return false;
         }
 
         var raw = _loopSearch.Run(NavSystem.Snapshot, startNode, goalNode, goal, access);
         var route = ToRoute(raw);
         NavStats.RecordRoute(NavStats.ElapsedMs(t0), raw?.Expanded ?? 0, route != null);
         onDone(route);
+        return true;
     }
 
     /// <summary>Turns a search result into a route of maps. Loop only.</summary>

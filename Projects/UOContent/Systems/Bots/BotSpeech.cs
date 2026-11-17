@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Server.Misc;
 
 namespace Server.Systems.Bots;
 
@@ -80,7 +81,43 @@ public static class BotSpeech
         _lastSpoke[bot] = now;
 
         var line = lines[Utility.Random(lines.Length)];
+
+        // «*зевает*» — не слово, а эмоция: со звуком и движением, как у игрока.
+        if (line == "*зевает*")
+        {
+            MahaonEmotes.Do(bot, Emote.Yawn);
+            return;
+        }
+
         bot.Say(line.Contains("{0}") ? string.Format(line, target?.Name ?? "дружище") : line);
+
+        if (TopicEmote(topic) is { } emote)
+        {
+            Timer.StartTimer(EmoteDelay, () => MahaonEmotes.Do(bot, emote));
+        }
+    }
+
+    private static readonly System.TimeSpan EmoteDelay = System.TimeSpan.FromSeconds(1);
+
+    // Изредка к словам — эмоция: победный клич, поклон на прощание, зевок на привале.
+    private static Emote? TopicEmote(BotTopic topic)
+    {
+        var roll = Utility.RandomDouble();
+        return topic switch
+        {
+            BotTopic.Victory when roll < 0.3     => Emote.Cheer,
+            BotTopic.Victory when roll < 0.45    => Emote.Laugh,
+            BotTopic.Greeting when roll < 0.12   => Emote.Hey,
+            BotTopic.Greeting when roll < 0.22   => Emote.Bow,
+            BotTopic.Farewell when roll < 0.12   => Emote.Bow,
+            BotTopic.Farewell when roll < 0.18   => Emote.Salute,
+            BotTopic.Resting when roll < 0.3     => Emote.Yawn,
+            BotTopic.Resurrected when roll < 0.4 => Emote.Sigh,
+            BotTopic.Arrived when roll < 0.25    => Emote.Sigh,
+            BotTopic.GroupDone when roll < 0.3   => Emote.Cheer,
+            BotTopic.SmallTalk when roll < 0.08  => Emote.Giggle,
+            _                                    => null
+        };
     }
 
     /// <summary>Says a ready line, under the same cooldown as the templates.</summary>

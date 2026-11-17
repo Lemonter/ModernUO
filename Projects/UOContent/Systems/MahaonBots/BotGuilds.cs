@@ -221,6 +221,10 @@ public sealed class BotGuilds : GenericPersistence
     /// <summary>Sets how guild A and guild B feel about each other — symmetric, one call
     /// covers both directions. Overwrites whatever relation was there before. Works even
     /// if neither guild has a real Guild object yet (see class remarks).</summary>
+    /// <summary>Растёт при каждой смене отношений гильдий: боты тогда оглядываются заново —
+    /// у кого-то вокруг сменился «цвет».</summary>
+    public static int RelationsEpoch { get; private set; }
+
     public static void SetRelation(string a, string b, BotGuildRelation relation)
     {
         if (a == null || b == null || a == b)
@@ -228,6 +232,7 @@ public sealed class BotGuilds : GenericPersistence
             return;
         }
 
+        RelationsEpoch++;
         Relations[(a, b)] = relation;
         Relations.Remove((b, a)); // keep exactly one direction stored, no stale duplicate
     }

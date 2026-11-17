@@ -1,4 +1,6 @@
+using Server.Misc;
 using Server.Mobiles;
+using Server.Systems.MahaonCities;
 
 namespace Server.Systems.Bots;
 
@@ -7,10 +9,15 @@ namespace Server.Systems.Bots;
 public sealed class TalkAction : BotAction
 {
     private const int TalkRange = 4;
+    private const double RaidTopicChance = 0.3;
 
     private readonly Mobile _partner;
     private int _lines;
     private int _maxLines;
+
+    // Начатая тема ждёт ответа собеседника: о набеге отвечают о набеге, а не о погоде.
+    private string _pendingReply;
+    private Emote? _pendingEmote;
 
     public TalkAction(Mobile partner) => _partner = partner;
 
@@ -34,6 +41,13 @@ public sealed class TalkAction : BotAction
             {
                 BotSpeech.Say(bot, BotTopic.Greeting, target: _partner);
             }
+            else if (Utility.RandomDouble() < RaidTopicChance && _partner.GetBrain() != null &&
+                     TownTalk.TryRaidTalk(BotSocialRules.TownFor(bot)?.Name, out var opener, out var reply, out var emote) &&
+                     BotSpeech.SayText(bot, opener))
+            {
+                _pendingReply = reply;
+                _pendingEmote = emote;
+            }
             else
             {
                 BotSpeech.Chat(bot, _partner);
@@ -42,7 +56,22 @@ public sealed class TalkAction : BotAction
         else if (_partner.GetBrain() is { } other && _partner is var partnerBot)
         {
             partnerBot.Direction = partnerBot.GetDirectionTo(bot);
-            BotSpeech.Chat(partnerBot, bot);
+            if (_pendingReply != null)
+            {
+                if (_pendingEmote is { } emote)
+                {
+                    MahaonEmotes.Do(partnerBot, emote);
+                }
+
+                BotSpeech.SayText(partnerBot, _pendingReply);
+                _pendingReply = null;
+                _pendingEmote = null;
+            }
+            else
+            {
+                BotSpeech.Chat(partnerBot, bot);
+            }
+
             other.OnSocialized(0.3);
         }
 

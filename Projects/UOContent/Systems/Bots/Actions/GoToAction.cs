@@ -15,7 +15,7 @@ public sealed class GoToAction : BotAction
     private const int RetargetDistance = 6;
 
     private readonly Map _map;
-    private readonly Point3D _point;
+    private Point3D _point;
     private readonly Mobile _mobile;
     private readonly int _range;
     private readonly string _label;
@@ -32,12 +32,23 @@ public sealed class GoToAction : BotAction
     // Как в NavFollower: этажом выше или ниже — ещё не пришёл (мост, второй этаж банка, подземный ход).
     private const int ArrivalZ = 16;
 
-    public GoToAction(Map map, Point3D point, int range, string label)
+    // Точка с радиусом 0 — место работы (у кузницы, у жилы), общее для всех. Пришедший вторым
+    // не лезет в ту же клетку, а встаёт на свободную рядом: из _spots, если место знает, где ещё
+    // можно стоять (кузница — в двух шагах и от печи, и от наковальни), иначе по соседству.
+    private readonly Point3D _origin;
+    private readonly Point3D[] _spots;
+    private int _shifts;
+    private const int SpreadLook = 3;
+    private const int MaxShifts = 4;
+
+    public GoToAction(Map map, Point3D point, int range, string label, Point3D[] spots = null)
     {
         _map = map;
         _point = point;
+        _origin = point;
         _range = range;
         _label = label;
+        _spots = spots;
     }
 
     public GoToAction(Mobile mobile, int range, string label)
@@ -47,11 +58,20 @@ public sealed class GoToAction : BotAction
         _label = label;
     }
 
+    internal Point3D Destination => TargetPoint;
+
     private Map TargetMap => _mobile?.Map ?? _map;
     private Point3D TargetPoint => _mobile?.Location ?? _point;
 
     // A route is being searched (maybe on the route worker); ticks wait for it.
     private bool _routing;
+
+    // Запрос в очереди: при новом запросе или остановке старый отзывается, чтобы поток поиска не
+    // тратил время на маршрут, который уже никому не нужен.
+    private NavRouteTicket _ticket;
+
+    // Очередь поиска была полна: спросить снова не раньше этого тика (в главном потоке не ищем).
+    private long _retryAt;
     private bool _routeFailed;
     private int _routeRequest;
     private bool _stopped;
@@ -65,8 +85,10 @@ public sealed class GoToAction : BotAction
         _routing = true;
         _routeFailed = false;
 
+        _ticket?.Cancel();
+        var ticket = _ticket = new NavRouteTicket();
         var request = ++_routeRequest;
-        NavPathfinder.FindAsync(
+        var queued = NavPathfinder.FindAsync(
             bot.Map,
             bot.Location,
             TargetMap,
@@ -83,11 +105,25 @@ public sealed class GoToAction : BotAction
                 _follower = route == null ? null : new NavFollower(bot, route, _range);
                 _routeFailed = route == null;
             },
-            NavPathfinder.AccessOf(bot)
+            NavPathfinder.AccessOf(bot),
+            ticket,
+            inlineWhenBusy: false
         );
+
+        if (!queued)
+        {
+            _routing = false;
+            _retryAt = Core.TickCount + BusyRetryMs;
+        }
     }
 
-    public override void Stop(BotBrain brain) => _stopped = true;
+    private const int BusyRetryMs = 1000;
+
+    public override void Stop(BotBrain brain)
+    {
+        _stopped = true;
+        _ticket?.Cancel();
+    }
 
     public override BotActionResult Tick(BotBrain brain)
     {
@@ -98,6 +134,11 @@ public sealed class GoToAction : BotAction
             return BotActionResult.Failed();
         }
 
+        if (_range == 0 && _mobile == null && ShiftIfTaken(bot))
+        {
+            return BotActionResult.Running(200);
+        }
+
         if (bot.Map == TargetMap && Utility.InRange(bot.Location, TargetPoint, _range) &&
             System.Math.Abs(bot.Z - TargetPoint.Z) < ArrivalZ)
         {
@@ -106,6 +147,19 @@ public sealed class GoToAction : BotAction
 
         if (_routing)
         {
+            return BotActionResult.Running(200);
+        }
+
+        // Очередь поиска была занята: ждём и спрашиваем снова, не считая это неудачей.
+        if (_retryAt != 0)
+        {
+            if (Core.TickCount - _retryAt < 0)
+            {
+                return BotActionResult.Running(BusyRetryMs);
+            }
+
+            _retryAt = 0;
+            RequestRoute(brain);
             return BotActionResult.Running(200);
         }
 
@@ -154,6 +208,85 @@ public sealed class GoToAction : BotAction
                     RequestRoute(brain);
                     return BotActionResult.Running(500);
                 }
+        }
+    }
+
+    /// <summary>Подойдя к занятой чужим клетке, перенацеливается на свободную рядом.</summary>
+    private bool ShiftIfTaken(Mobile bot)
+    {
+        if (_shifts >= MaxShifts || bot.Map != _map || bot.Location == _point ||
+            !Utility.InRange(bot.Location, _point, SpreadLook) || !IsTaken(_map, _point, bot))
+        {
+            return false;
+        }
+
+        if (FreeSpot(bot) is not { } free)
+        {
+            return false;
+        }
+
+        _shifts++;
+        _point = free;
+        _follower = null;
+        return true;
+    }
+
+    internal static bool IsTaken(Map map, Point3D p, Mobile except)
+    {
+        foreach (var m in map.GetMobilesAt(p))
+        {
+            if (m != except && !m.Deleted && System.Math.Abs(m.Z - p.Z) < ArrivalZ)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Point3D? FreeSpot(Mobile bot)
+    {
+        Point3D? best = null;
+        var bestDistance = double.MaxValue;
+
+        if (_spots != null)
+        {
+            foreach (var p in _spots)
+            {
+                Consider(bot, p, ref best, ref bestDistance);
+            }
+
+            return best;
+        }
+
+        var graph = NavSystem.GetGraph(_map);
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            for (var dx = -1; dx <= 1; dx++)
+            {
+                var p = new Point3D(_origin.X + dx, _origin.Y + dy, _origin.Z);
+                if ((dx != 0 || dy != 0) && graph?.Locate(p.X, p.Y, p.Z, 0) >= 0 && _map.CanFit(p, 16, false, false))
+                {
+                    Consider(bot, p, ref best, ref bestDistance);
+                }
+            }
+        }
+
+        return best;
+    }
+
+    private void Consider(Mobile bot, Point3D p, ref Point3D? best, ref double bestDistance)
+    {
+        if (p == _point || IsTaken(_map, p, bot))
+        {
+            return;
+        }
+
+        var distance = bot.GetDistanceToSqrt(p);
+        if (distance < bestDistance)
+        {
+            bestDistance = distance;
+            best = p;
         }
     }
 

@@ -2985,6 +2985,12 @@ namespace Server.Mobiles
 
         public override bool OnMoveOver(Mobile m)
         {
+            // Mahaon: боты проходят сквозь мирных НПС (Systems.Bots.BotPassage).
+            if (m is BotMobile && Systems.Bots.BotPassage.IsPeaceful(this))
+            {
+                return true;
+            }
+
             if (m is BaseCreature creature && !creature.Controlled)
             {
                 return !Alive || !creature.Alive || IsDeadBondedPet || creature.IsDeadBondedPet ||

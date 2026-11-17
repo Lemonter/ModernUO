@@ -31,6 +31,7 @@ public static class NavRouteWorker
 
     private sealed class Job
     {
+        public NavRouteTicket Ticket;
         public NavSnapshot Snapshot;
         public long StartNode;
         public long GoalNode;
@@ -41,9 +42,11 @@ public static class NavRouteWorker
 
     private static readonly ConcurrentQueue<Job> _queue = [];
     private static readonly AutoResetEvent _work = new(false);
-    private static readonly NavSearch _search = new();
 
-    private static Thread _thread;
+    // Несколько потоков поиска, у каждого свой NavSearch: снимок графа неизменяем, делить нечего.
+    // Один поток не успевал за тысячей ботов: очередь доходила до предела, и маршруты начинали
+    // искаться прямо в главном потоке — по секунде на маршрут.
+    private static Thread[] _threads;
     private static int _pending;
 
     /// <summary>Off a host without a spare core to move the work to (see threading-model.md).</summary>
@@ -59,13 +62,24 @@ public static class NavRouteWorker
 
         if (Enabled)
         {
-            _thread = new Thread(Execute) { IsBackground = true, Name = "Nav Route Worker" };
-            _thread.Start();
+            var count = Math.Clamp(
+                ServerConfiguration.GetOrUpdateSetting("pathfinding.navWorkers", Math.Max(1, Environment.ProcessorCount - 2)),
+                1,
+                Environment.ProcessorCount
+            );
+            _threads = new Thread[count];
+            for (var i = 0; i < count; i++)
+            {
+                var search = new NavSearch();
+                _threads[i] = new Thread(() => Execute(search)) { IsBackground = true, Name = $"Nav Route Worker {i + 1}" };
+                _threads[i].Start();
+            }
         }
     }
 
     internal static bool TryEnqueue(
-        NavSnapshot snapshot, long startNode, long goalNode, Point3D goal, NavAccess access, Action<NavRoute> onDone
+        NavSnapshot snapshot, long startNode, long goalNode, Point3D goal, NavAccess access, Action<NavRoute> onDone,
+        NavRouteTicket ticket = null
     )
     {
         if (!Enabled || Volatile.Read(ref _pending) >= MaxPending)
@@ -74,20 +88,29 @@ public static class NavRouteWorker
         }
 
         Interlocked.Increment(ref _pending);
-        _queue.Enqueue(new Job { Snapshot = snapshot, StartNode = startNode, GoalNode = goalNode, Goal = goal, Access = access, OnDone = onDone });
+        _queue.Enqueue(
+            new Job
+            {
+                Ticket = ticket, Snapshot = snapshot, StartNode = startNode, GoalNode = goalNode, Goal = goal, Access = access,
+                OnDone = onDone
+            }
+        );
         _work.Set();
         return true;
     }
 
     private static bool CanRunNow() => World.WorldState is WorldState.Running or WorldState.WritingSave;
 
-    private static void Execute()
+    public static int Workers => _threads?.Length ?? 0;
+
+    private static void Execute(NavSearch search)
     {
         while (true)
         {
             if (_queue.IsEmpty)
             {
-                _work.WaitOne();
+                // Ждём с тайм-аутом: событие одно на всех, и сигнал может достаться соседу.
+                _work.WaitOne(100);
                 continue;
             }
 
@@ -104,13 +127,24 @@ public static class NavRouteWorker
 
             Interlocked.Decrement(ref _pending);
 
+            // Ходок уже передумал (новая цель, новый маршрут, остановка): искать незачем.
+            if (job.Ticket?.Cancelled == true)
+            {
+                continue;
+            }
+
+            if (!_queue.IsEmpty)
+            {
+                _work.Set();
+            }
+
             NavSearchResult result;
             var t0 = Stopwatch.GetTimestamp();
 
             try
             {
-                _search.MaxExpansions = MaxExpansions;
-                result = _search.Run(job.Snapshot, job.StartNode, job.GoalNode, job.Goal, job.Access);
+                search.MaxExpansions = MaxExpansions;
+                result = search.Run(job.Snapshot, job.StartNode, job.GoalNode, job.Goal, job.Access);
             }
             catch (Exception e)
             {
@@ -129,6 +163,20 @@ public static class NavRouteWorker
         var t0 = Stopwatch.GetTimestamp();
         var route = NavPathfinder.ToRoute(result);
         NavStats.RecordWorkerRoute(workerMs, NavStats.ElapsedMs(t0), result?.Expanded ?? 0, route != null);
+        if (route == null)
+        {
+            NavPathfinder.RememberFailure(job.StartNode, job.GoalNode);
+        }
         job.OnDone(route);
     }
+}
+
+/// <summary>Запрос маршрута, который ходок может отозвать, пока тот ждёт в очереди.</summary>
+public sealed class NavRouteTicket
+{
+    private volatile bool _cancelled;
+
+    public bool Cancelled => _cancelled;
+
+    public void Cancel() => _cancelled = true;
 }

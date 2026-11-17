@@ -394,6 +394,18 @@ public class BitmapAStarAlgorithm : PathAlgorithm
                 {
                     continue;
                 }
+
+                // Mahaon: кэш знает только статику, а угол срезать не даёт и предмет на боковой
+                // клетке — статуя маяка, камень города. Без этой проверки поиск раз за разом
+                // предлагал диагональ мимо статуи, а настоящий шаг её запрещал: тысячи отказов в
+                // минуту у ботов, появившихся рядом с маяком. Мобили здесь не считаются — шаг
+                // их на боковых клетках тоже не смотрит.
+                var leftBlocked = FlankBlocked(m, map, px, py, (i - 1) & 0x7, lookup);
+                var rightBlocked = FlankBlocked(m, map, px, py, (i + 1) & 0x7, lookup);
+                if (_currentMobilePlayerStrict ? leftBlocked || rightBlocked : leftBlocked && rightBlocked)
+                {
+                    continue;
+                }
             }
 
             // Walking wins over swimming where both are possible. MovementImpl picks the surface
@@ -451,12 +463,29 @@ public class BitmapAStarAlgorithm : PathAlgorithm
     private const int PersonHeightConst = 16;
     private const int MobileHeight = 15;
 
+    private bool FlankBlocked(Mobile m, Map map, int px, int py, int dir, StepMask lookup)
+    {
+        var x = px;
+        var y = py;
+        CalcMoves.Offset((Direction)dir, ref x, ref y);
+
+        int z = dir switch
+        {
+            0 => lookup.WalkZ_N,
+            2 => lookup.WalkZ_E,
+            4 => lookup.WalkZ_S,
+            _ => lookup.WalkZ_W
+        };
+
+        return IsBlockedByDynamic(m, map, x + _xOffset, y + _yOffset, z, checkMobiles: false);
+    }
+
     /// <summary>
     /// MovementImpl's item and mobile collision phase for one target cell: impassable items
     /// overlapping the mobile's vertical envelope block it, subject to the capability overrides,
     /// as does any other mobile it can't move over.
     /// </summary>
-    private bool IsBlockedByDynamic(Mobile m, Map map, int x, int y, int z)
+    private bool IsBlockedByDynamic(Mobile m, Map map, int x, int y, int z, bool checkMobiles = true)
     {
         var ourTop = z + PersonHeightConst;
 
@@ -516,7 +545,7 @@ public class BitmapAStarAlgorithm : PathAlgorithm
         // The goal cell is usually occupied by whatever the mobile is chasing, so blocking on it
         // would fail every pursuit. The follower stops short of the goal anyway. Every other cell
         // still blocks on mobiles.
-        var skipMobCheck = x == MoveImpl.Goal.X && y == MoveImpl.Goal.Y;
+        var skipMobCheck = !checkMobiles || x == MoveImpl.Goal.X && y == MoveImpl.Goal.Y;
 
         if (!skipMobCheck)
         {
@@ -543,7 +572,8 @@ public class BitmapAStarAlgorithm : PathAlgorithm
     /// </summary>
     private static bool CanMoveOver(Mobile m, Mobile t) =>
         !t.Alive || !m.Alive || t.IsDeadBondedPet || m.IsDeadBondedPet
-        || t.Hidden && t.AccessLevel > AccessLevel.Player;
+        || t.Hidden && t.AccessLevel > AccessLevel.Player
+        || Server.Systems.Bots.BotPassage.CanPass(m, t); // Mahaon: боты — сквозь ботов и мирных НПС
 
     /// <summary>
     /// Expands one cell the long way, with a CheckMovement call per direction. The same-cell

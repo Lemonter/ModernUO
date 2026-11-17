@@ -118,9 +118,9 @@ public static class BotHousing
     /// Where a smith stands at home: a floor cell within reach of both the house's forge and its
     /// anvil (the craft checks both within two tiles).
     /// </summary>
-    public static bool TryGetSmithy(BaseHouse house, out Point3D stand)
+    public static bool TryGetSmithy(BaseHouse house, out Point3D[] stands)
     {
-        stand = default;
+        stands = null;
         Item forge = null, anvil = null;
 
         foreach (var addon in house.Addons)
@@ -140,16 +140,18 @@ public static class BotHousing
             return false;
         }
 
+        // Все клетки, а не первая: два кузнеца гильдии встают рядом, а не в одну клетку.
+        var found = new List<Point3D>();
         foreach (var p in FloorPoints(house))
         {
             if (Utility.InRange(p, forge.Location, 2) && Utility.InRange(p, anvil.Location, 2) && house.Map.CanFit(p, 16, false, false))
             {
-                stand = p;
-                return true;
+                found.Add(p);
             }
         }
 
-        return false;
+        stands = found.Count > 0 ? found.ToArray() : null;
+        return stands != null;
     }
 
     /// <summary>The house's own spinning wheel and loom, if it has both.</summary>

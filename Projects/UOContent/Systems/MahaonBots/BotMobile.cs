@@ -51,6 +51,17 @@ public partial class BotMobile : PlayerMobile, IPathDoorOpener
     // Бот играет всё время, пока жив сервер: игровое время (и остывание убийств) идёт и у него.
     protected override bool AlwaysInSession => true;
 
+    // Боты проходят друг сквозь друга: в городе их сотни, и толкотня в проулках съедала и
+    // выносливость, и время сервера на обход (см. BitmapAStarAlgorithm.CanMoveOver).
+    public override bool CheckShove(Mobile shoved) => Systems.Bots.BotPassage.CanPass(this, shoved) || base.CheckShove(shoved);
+
+    // Напали — свои вокруг замечают нападающего сразу (BotCombat.OnAttacked).
+    public override void AggressiveAction(Mobile aggressor, bool criminal)
+    {
+        base.AggressiveAction(aggressor, criminal);
+        Systems.Bots.BotCombat.OnAttacked(this, aggressor);
+    }
+
     public bool OpensDoors => Systems.Bots.BotSystem.IsActive(this);
 
     // Bots keep the world awake around them the way a connected player does: away from the real

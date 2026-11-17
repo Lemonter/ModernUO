@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Server.Misc;
 using Server.Mobiles;
 
 namespace Server.Systems.MahaonCities;
@@ -114,7 +115,7 @@ public static class CityGuardChatter
 
         _nextTalk[city] = now + Utility.RandomMinMax(4, 8) * 60_000L;
 
-        var (opener, reply) = Pick(city, now);
+        var (opener, reply, emote) = Pick(city, now);
         guard.Direction = guard.GetDirectionTo(partner);
         guard.Say(opener);
         Said?.Invoke(guard, opener);
@@ -126,6 +127,11 @@ public static class CityGuardChatter
                 if (!partner.Deleted && partner.Alive && partner.Combatant == null && partner.InRange(guard, PartnerRange + 2))
                 {
                     partner.Direction = partner.GetDirectionTo(guard);
+                    if (emote is { } e)
+                    {
+                        MahaonEmotes.Do(partner, e);
+                    }
+
                     partner.Say(reply);
                     Said?.Invoke(partner, reply);
                 }
@@ -149,25 +155,41 @@ public static class CityGuardChatter
     }
 
     // News first, when there is any; otherwise a rumour now and then, or garrison small talk.
-    private static (string opener, string reply) Pick(string city, long now)
+    private static (string opener, string reply, Emote? emote) Pick(string city, long now)
     {
         if (_news.TryGetValue(city, out var news))
         {
             news.RemoveAll(h => now - h.At >= NewsLifetimeMs);
             if (news.Count > 0 && Utility.RandomDouble() < 0.6)
             {
-                return Say(news[Utility.Random(news.Count)], now);
+                var happening = news[Utility.Random(news.Count)];
+                var (o, r) = Say(happening, now);
+                return (o, r, EmoteFor(happening.Topic));
             }
         }
 
         if (Utility.RandomDouble() < 0.2 && MahaonBots.BotRumors.TryPick(out var rumor))
         {
-            return (rumor, Any("Да ну?", "Вот это новость.", "Брешут, поди.", "Слыхал уже."));
+            return (rumor, Any("Да ну?", "Вот это новость.", "Брешут, поди.", "Слыхал уже."), Emote.Huh);
         }
 
         var (opener, replies) = SmallTalk[Utility.Random(SmallTalk.Length)];
-        return (opener, replies[Utility.Random(replies.Length)]);
+        return (opener, replies[Utility.Random(replies.Length)], Utility.RandomDouble() < 0.25 ? Emote.Laugh : null);
     }
+
+    // С чем товарищ отвечает: над пойманным воришкой смеются, получке радуются, задержке стонут.
+    private static Emote? EmoteFor(Topic topic) =>
+        topic switch
+        {
+            Topic.Thief         => Emote.Laugh,
+            Topic.Paid          => Emote.Cheer,
+            Topic.Unpaid        => Emote.Groan,
+            Topic.NewArmour     => Emote.Whistle,
+            Topic.Teacher       => Emote.Sigh,
+            Topic.Raid          => Emote.Sigh,
+            Topic.ClaimRepelled => Emote.Laugh,
+            _                   => null
+        };
 
     private static (string opener, string reply) Say(Happening news, long now)
     {

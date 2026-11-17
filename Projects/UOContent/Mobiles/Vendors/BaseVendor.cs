@@ -93,6 +93,17 @@ namespace Server.Mobiles
 
         public override bool PlayerRangeSensitive => true;
 
+        // Mahaon: без дела торговец изредка перекидывается словом с соседом (VendorChatter).
+        public override void OnThink()
+        {
+            base.OnThink();
+
+            if (Combatant == null)
+            {
+                Systems.MahaonCities.VendorChatter.TryStart(this);
+            }
+        }
+
         public virtual bool IsActiveVendor => true;
         public virtual bool IsActiveBuyer => IsActiveVendor;  // response to vendor SELL
         public virtual bool IsActiveSeller => IsActiveVendor; // response to vendor BUY

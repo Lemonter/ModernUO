@@ -62,6 +62,8 @@ public partial class MahaonBotBeacon : Item
 
     private static readonly List<MahaonBotBeacon> AllBeacons = new();
 
+    public static IReadOnlyList<MahaonBotBeacon> All => AllBeacons;
+
     /// <summary>
     ///     Насколько широко вокруг маяка нельзя начинать драку.
     ///
@@ -95,7 +97,12 @@ public partial class MahaonBotBeacon : Item
 
         return false;
     }
-    private static readonly TimeSpan SpawnTick = TimeSpan.FromSeconds(12); // 5/min
+    // Один бот на маяк за тик: 12 с — пять в минуту. Для проверок под нагрузкой тик ускоряют
+    // настройкой bots.beaconSpawnSeconds, не трогая код.
+    private static TimeSpan SpawnTick = TimeSpan.FromSeconds(12);
+
+    public static void Configure() =>
+        SpawnTick = TimeSpan.FromSeconds(Math.Max(0.1, ServerConfiguration.GetOrUpdateSetting("bots.beaconSpawnSeconds", 12.0)));
 
     [Constructible]
     public MahaonBotBeacon() : base(0x2D12)
@@ -317,6 +324,46 @@ public partial class MahaonBotBeacon : Item
         {
             _ownedBots.Add(bot);
         }
+
+        // Свой угол у каждого горожанина. Раньше домом всех ботов маяка была одна точка у
+        // самого маяка, и сотни ботов жили в одной толпе: толкались, обходили друг друга и
+        // каждый перебирал сотни соседей. Тот, кто ещё живёт у самого маяка (новый или из
+        // старого сохранения), получает дом в округе.
+        if (bot.GetBrain() is { } brain && brain.HomeMap == Map && Map != null && Utility.InRange(brain.Home, Location, 4))
+        {
+            brain.Home = HomeSpot();
+        }
+    }
+
+    private const int HomeMinRange = 6;
+    private const int HomeMaxRange = 28;
+
+    /// <summary>Случайное место в округе маяка, где можно стоять и куда можно дойти.</summary>
+    internal Point3D HomeSpot()
+    {
+        var graph = Engines.Pathing.Nav.NavSystem.GetGraph(Map);
+        for (var attempt = 0; attempt < 24; attempt++)
+        {
+            var dx = Utility.RandomMinMax(-HomeMaxRange, HomeMaxRange);
+            var dy = Utility.RandomMinMax(-HomeMaxRange, HomeMaxRange);
+            if (Math.Max(Math.Abs(dx), Math.Abs(dy)) < HomeMinRange ||
+                !Map.CanSpawnMobile(X + dx, Y + dy, Z - 20, Z + 20, false, false, out var z))
+            {
+                continue;
+            }
+
+            var p = new Point3D(X + dx, Y + dy, z);
+            if (Multis.BaseHouse.FindHouseAt(p, Map, 16) != null ||
+                Systems.MahaonWorld.MahaonCityHouseSystem.Find(p, Map) != null ||
+                graph != null && graph.Locate(p.X, p.Y, p.Z, 0) < 0)
+            {
+                continue;
+            }
+
+            return p;
+        }
+
+        return Location;
     }
 
     private void TrySpawnOne()
@@ -339,10 +386,15 @@ public partial class MahaonBotBeacon : Item
         var bestIsThief = false;
         var bestDeficit = 0.0;
 
+        // Лимит маяка — это сколько ботов он держит. Раньше спаун останавливался на сумме целей по
+        // типам, и маяк с лимитом 600 и целями на 481 вечно показывал «481/600», хотя ни одного места
+        // больше не выдавал. Теперь цели — доли: при сумме меньше лимита они растягиваются до него.
+        var scale = Scale();
+
         for (var i = 0; i < 5; i++)
         {
             var archetype = (BotArchetype)i;
-            var target = GetTarget(archetype);
+            var target = (int)Math.Ceiling(GetTarget(archetype) * scale);
             if (target <= 0)
             {
                 continue;
@@ -363,12 +415,13 @@ public partial class MahaonBotBeacon : Item
             }
         }
 
-        if (_thiefTarget > 0)
+        var thiefTarget = (int)Math.Ceiling(_thiefTarget * scale);
+        if (thiefTarget > 0)
         {
             var haveThieves = OwnedThiefCount();
-            if (haveThieves < _thiefTarget)
+            if (haveThieves < thiefTarget)
             {
-                var thiefDeficit = (_thiefTarget - haveThieves) / (double)_thiefTarget;
+                var thiefDeficit = (thiefTarget - haveThieves) / (double)thiefTarget;
                 if (thiefDeficit > bestDeficit)
                 {
                     bestDeficit = thiefDeficit;
@@ -398,6 +451,18 @@ public partial class MahaonBotBeacon : Item
         // выбора в BotMobile.ApplyNameTemplate, и соседи по точке возрождения оказывались
         // чужаками друг другу.
         Systems.MahaonBots.BotGuilds.Join(GuildNameFor(bot), bot);
+    }
+
+    /// <summary>Во сколько раз растянуть цели по типам, чтобы их сумма дошла до лимита.</summary>
+    internal double Scale()
+    {
+        var sum = 0;
+        for (var i = 0; i < 5; i++)
+        {
+            sum += GetTarget((BotArchetype)i);
+        }
+
+        return sum > 0 && sum < TotalLimit ? TotalLimit / (double)sum : 1.0;
     }
 
     private Point3D FindSpawnSpot()

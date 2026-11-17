@@ -37,7 +37,7 @@ public sealed class BotCity
     internal Item Loom;
 
     internal bool SmithySearched;
-    internal Point3D? SmithyStand;
+    internal Point3D[] SmithyStands;
 
     // Когда искали в последний раз. Отрицательный ответ больше не вечный: печь, поставленную
     // GM-ом позже, боты увидят через несколько минут, а не после рестарта.
@@ -368,12 +368,13 @@ public static class WorldCatalog
     private static bool IsAnvilId(int id) => id is 4015 or 4016 or 11733 or 11734;
 
     /// <summary>
-    /// A standable cell within reach of both the town forge and an anvil — where a smith works
-    /// (the craft checks both within 2 tiles). Found once per town.
+    /// Standable cells within reach of both the town forge and an anvil — where a smith works
+    /// (the craft checks both within 2 tiles). All of them, so smiths spread out instead of
+    /// queueing for one cell. Found once per town.
     /// </summary>
-    public static bool TryGetSmithy(BotCity city, out Point3D stand)
+    public static bool TryGetSmithy(BotCity city, out Point3D[] stands)
     {
-        if (city.SmithyStand == null && Core.TickCount - city.SmithySearchedAt >= PlacedRecheckMs)
+        if (city.SmithyStands == null && Core.TickCount - city.SmithySearchedAt >= PlacedRecheckMs)
         {
             city.SmithySearched = false;
         }
@@ -382,14 +383,14 @@ public static class WorldCatalog
         {
             city.SmithySearched = true;
             city.SmithySearchedAt = Core.TickCount;
-            city.SmithyStand = FindSmithy(city);
+            city.SmithyStands = FindSmithy(city);
         }
 
-        stand = city.SmithyStand ?? Point3D.Zero;
-        return city.SmithyStand != null;
+        stands = city.SmithyStands;
+        return stands != null;
     }
 
-    private static Point3D? FindSmithy(BotCity city)
+    private static Point3D[] FindSmithy(BotCity city)
     {
         if (!TryGetForge(city, out _, out var forge))
         {
@@ -435,6 +436,7 @@ public static class WorldCatalog
         }
 
         var a = anvil.Value;
+        var stands = new List<Point3D>();
         for (var dy = -2; dy <= 2; dy++)
         {
             for (var dx = -2; dx <= 2; dx++)
@@ -449,12 +451,12 @@ public static class WorldCatalog
                 var region = graph.Locate(x, y, forge.Z, 0);
                 if (region >= 0)
                 {
-                    return new Point3D(x, y, forge.Z);
+                    stands.Add(new Point3D(x, y, forge.Z));
                 }
             }
         }
 
-        return null;
+        return stands.Count > 0 ? stands.ToArray() : null;
     }
 
     /// <summary>The town's vendors, refreshed every few minutes as they die and respawn.</summary>

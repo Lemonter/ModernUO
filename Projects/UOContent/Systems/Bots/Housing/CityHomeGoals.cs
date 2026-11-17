@@ -89,9 +89,9 @@ public static class BotCityHomes
         return false;
     }
 
-    public static bool TryGetSmithy(MahaonCityHouse house, out Point3D stand)
+    public static bool TryGetSmithy(MahaonCityHouse house, out Point3D[] stands)
     {
-        stand = default;
+        stands = null;
         Item forge = null, anvil = null;
 
         foreach (var item in house.Addons)
@@ -111,16 +111,17 @@ public static class BotCityHomes
             return false;
         }
 
+        var found = new List<Point3D>();
         foreach (var t in house.Tiles)
         {
             if (Utility.InRange(t, forge.Location, 2) && Utility.InRange(t, anvil.Location, 2) && house.AreaMap.CanFit(t, 16, false, false))
             {
-                stand = t;
-                return true;
+                found.Add(t);
             }
         }
 
-        return false;
+        stands = found.Count > 0 ? found.ToArray() : null;
+        return stands != null;
     }
 
     public static bool TryGetTextiles(MahaonCityHouse house, out Item wheel, out Item loom)

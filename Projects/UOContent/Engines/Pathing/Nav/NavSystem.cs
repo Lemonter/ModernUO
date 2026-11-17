@@ -336,11 +336,11 @@ public static class NavSystem
             $"Routes: {routes} ({NavStats.RoutesFailed} failed), avg {(routes == 0 ? 0 : NavStats.RouteMsTotal / routes):F3} ms, max {NavStats.RouteMsMax:F2} ms, total {NavStats.RouteMsTotal:F0} ms, avg expanded {(routes == 0 ? 0 : NavStats.RouteExpanded / routes)}."
         );
         m.SendMessage(
-            $"Legs: {legs} ({NavStats.LegsFailed} failed), avg {(legs == 0 ? 0 : NavStats.LegMsTotal / legs):F3} ms, max {NavStats.LegMsMax:F2} ms, total {NavStats.LegMsTotal:F0} ms."
+            $"Legs: {legs} ({NavStats.LegsFailed} failed), avg {(legs == 0 ? 0 : NavStats.LegMsTotal / legs):F3} ms, max {NavStats.LegMsMax:F2} ms, total {NavStats.LegMsTotal:F0} ms; straight without search {NavStats.StraightLegs}."
         );
         var worker = NavStats.WorkerRoutes;
         m.SendMessage(
-            $"Worker: {(NavRouteWorker.Enabled ? "on" : "off")}, {worker} routes, avg {(worker == 0 ? 0 : NavStats.WorkerMsTotal / worker):F3} ms off-loop, max {NavStats.WorkerMsMax:F2} ms, on-loop dispatch total {NavStats.DispatchMsTotal:F1} ms, pending {NavRouteWorker.Pending}."
+            $"Worker: {(NavRouteWorker.Enabled ? $"on x{NavRouteWorker.Workers}" : "off")}, {worker} routes, busy (deferred) {NavStats.Busy}, refused without search {NavStats.Shortcuts}, avg {(worker == 0 ? 0 : NavStats.WorkerMsTotal / worker):F3} ms off-loop, max {NavStats.WorkerMsMax:F2} ms, on-loop dispatch total {NavStats.DispatchMsTotal:F1} ms, pending {NavRouteWorker.Pending}."
         );
         m.SendMessage($"Cores: {Environment.ProcessorCount}. Stats reset.");
         NavStats.Reset();

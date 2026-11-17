@@ -46,7 +46,7 @@ public static class BotSystem
 
     public static void Configure()
     {
-        BotScheduler.BudgetMs = ServerConfiguration.GetOrUpdateSetting("bots.thinkBudgetMs", 4.0);
+        BotScheduler.BudgetMs = ServerConfiguration.GetOrUpdateSetting("bots.thinkBudgetMs", 6.0);
 
         CommandSystem.Register("BotInspect", AccessLevel.GameMaster, OnBotInspect);
         CommandSystem.Register("BotStats", AccessLevel.GameMaster, OnBotStats);
@@ -257,12 +257,29 @@ public static class BotSystem
             $"Thinks: {thinks}, avg {avg:F3} ms, max {BotScheduler.ThinkMsMax:F2} ms, total {BotScheduler.ThinkMsTotal:F0} ms, budget overruns {BotScheduler.BudgetOverruns}."
         );
 
+        var wallMs = Math.Max(1, Core.TickCount - BotScheduler.StatsSince);
+        var lateAvg = thinks == 0 ? 0 : BotScheduler.LateMsTotal / thinks;
+        m.SendMessage(
+            $"Late: avg {lateAvg:F1} ms, max {BotScheduler.LateMsMax} ms. Main thread on bots: {BotScheduler.DrainMsTotal * 100.0 / wallMs:F2}% over {wallMs / 1000.0:F0} s, worst tick {BotScheduler.DrainMsMax:F2} ms."
+        );
+
         foreach (var (goal, count) in goals)
         {
             m.SendMessage($"  {goal}: {count}");
         }
 
+        foreach (var (section, calls, totalMs, us, maxMs) in BotProfile.Top(14))
+        {
+            m.SendMessage($"  [{totalMs:F0} мс] {section}: {calls} раз по {us:F1} мкс, худший {maxMs:F1} мс");
+        }
+
+        foreach (var (reason, count) in BotProfile.Counts("отказ шага"))
+        {
+            m.SendMessage($"  отказ шага — {reason}: {count}");
+        }
+
         m.SendMessage($"Nav links: {NavLinks.All.Count}. Stats reset.");
         BotScheduler.ResetStats();
+        BotProfile.Reset();
     }
 }

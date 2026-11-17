@@ -336,12 +336,17 @@ public partial class BotBrain
         var elapsedMs = _hasThought ? Math.Clamp(now - LastThinkTick, 0, 600_000) : 0;
         LastThinkTick = now;
         _hasThought = true;
+        var t = BotProfile.Start();
         UpdateNeeds(elapsedMs);
+        BotProfile.Stop("нужды", t);
 
         if (!bot.Alive)
         {
             ClearPlan();
-            return BotGhost.Think(this);
+            t = BotProfile.Start();
+            var ghost = BotGhost.Think(this);
+            BotProfile.Stop("призрак", t);
+            return ghost;
         }
 
         // Brought back by something other than the ghost walk (a player's spell, a GM).
@@ -354,9 +359,13 @@ public partial class BotBrain
         // До боевого рефлекса намеренно: тот возвращается раньше, чем дело дойдёт до действий,
         // и всё, что стоит после него, в драке не исполняется никогда. Именно поэтому боты
         // молчали как раз там, где за ними смотрят. Свой счётчик внутри.
+        t = BotProfile.Start();
         BotSpeech.Ambient(this);
+        BotProfile.Stop("болтовня фоном", t);
 
+        t = BotProfile.Start();
         var reflex = BotCombat.Think(this);
+        BotProfile.Stop("бой: рефлекс", t);
         if (reflex >= 0)
         {
             // Бой — тоже дело: сторож не должен счесть дерущегося застрявшим.
@@ -369,7 +378,9 @@ public partial class BotBrain
             return 1000;
         }
 
+        t = BotProfile.Start();
         BotStable.Upkeep(this);
+        BotProfile.Stop("конюшня", t);
 
         // Без цели обзор нужен, только если и делать нечего: в LastResort план есть, а цели
         // нет, и прежняя проверка пересчитывала все цели на каждом шаге пути домой.
@@ -395,7 +406,9 @@ public partial class BotBrain
             }
         }
 
+        t = BotProfile.Start();
         var result = Action.Tick(this);
+        BotProfile.Stop("шаг", Action.GetType().Name, t);
 
         switch (result.Status)
         {
@@ -613,9 +626,11 @@ public partial class BotBrain
             }
 
             double score;
+            var scoreStart = BotProfile.Start();
             try
             {
                 score = goal.Score(this);
+                BotProfile.Stop("оценка", goal.Name, scoreStart);
             }
             catch (Exception e)
             {
@@ -658,9 +673,11 @@ public partial class BotBrain
         }
 
         List<BotAction> steps;
+        var planStart = BotProfile.Start();
         try
         {
             steps = goal.Plan(this);
+            BotProfile.Stop("план", goal.Name, planStart);
         }
         catch (Exception e)
         {

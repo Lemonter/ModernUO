@@ -45,6 +45,20 @@ public sealed class BotCombatState
     internal GoToAction Approach;
     internal Mobile ApproachTarget;
 
+    // Как живой игрок: огляделся, запомнил, кто вокруг, — дальше замечает только новых, тех, кто
+    // полез в драку, и перемену «цвета» (войну гильдий). Раз в несколько секунд оглядывается снова.
+    internal long NextLookAround = Core.TickCount;
+    internal int RelationsSeen = -1;
+    internal readonly System.Collections.Generic.List<Mobile> Noticed = [];
+
+    internal void Notice(Mobile m)
+    {
+        if (Noticed.Count < 32 && !Noticed.Contains(m))
+        {
+            Noticed.Add(m);
+        }
+    }
+
     // Who the bot last held to account for hitting it, and when, so a long fight sours the
     // relationship blow by blow rather than once per think.
     internal Mobile LastBlamed;
@@ -166,7 +180,10 @@ public static class BotCombat
             return best;
         }
 
-        return FindPlayerThreat(brain);
+        var t = BotProfile.Start();
+        var threat = FindPlayerThreat(brain);
+        BotProfile.Stop("бой: поиск угрозы среди людей", t);
+        return threat;
     }
 
     /// <summary>
@@ -174,47 +191,161 @@ public static class BotCombat
     /// attacking a friend nearby, a member of a guild at war with its own, or an outlaw it holds a
     /// grudge against.
     /// </summary>
+    private const int SightRange = ThreatRange - 2;
+    private const int LookAroundMinMs = 8_000;
+    private const int LookAroundMaxMs = 15_000;
+
+    /// <summary>
+    /// Кого из людей вокруг пора бить. Раньше бот на каждом обдумывании перебирал всех в округе и
+    /// каждого проверял на дружбу, войну, злобу — в городе с сотнями ботов это и было главное, что
+    /// дорожало с их числом. Теперь как у игрока: огляделся раз в 8–15 секунд (или когда гильдии
+    /// объявили войну — сменился «цвет»), а между этим смотрит только на тех, кого заметил: вошедших
+    /// в поле зрения и напавших на своих.
+    /// </summary>
     private static Mobile FindPlayerThreat(BotBrain brain)
     {
         var bot = brain.Bot;
+        var state = brain.Combat;
         if (bot.Hits < bot.HitsMax * 0.6)
+        {
+            state.Noticed.Clear();
+            return null;
+        }
+
+        var now = Core.TickCount;
+        if (now - state.NextLookAround >= 0 || state.RelationsSeen != MahaonBots.BotGuilds.RelationsEpoch)
+        {
+            state.NextLookAround = now + Utility.RandomMinMax(LookAroundMinMs, LookAroundMaxMs);
+            state.RelationsSeen = MahaonBots.BotGuilds.RelationsEpoch;
+            state.Noticed.Clear();
+
+            var looks = BotProfile.Start();
+            Mobile found = null;
+            foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, SightRange))
+            {
+                if ((found = Appraise(brain, m)) != null)
+                {
+                    break;
+                }
+            }
+
+            BotProfile.Stop("бой: огляделся", looks);
+            return found;
+        }
+
+        if (state.Noticed.Count == 0)
         {
             return null;
         }
 
-        foreach (var m in bot.Map.GetMobilesInRange<PlayerMobile>(bot.Location, ThreatRange - 2))
+        Mobile threat = null;
+        foreach (var m in state.Noticed)
         {
-            if (m == bot || !m.Alive || m.Hidden)
+            if (m.Map == bot.Map && bot.InRange(m, SightRange) && (threat = Appraise(brain, m)) != null)
             {
-                continue;
-            }
-
-            // A friend under attack: their attacker is fair game.
-            if (BotSocialRules.IsFriend(bot, m) && m.Combatant is { Alive: true } attacker &&
-                !BotSocialRules.IsFriend(bot, attacker) && IsValidFoe(bot, attacker))
-            {
-                return attacker;
-            }
-
-            // Nobody picks a new fight next to a beacon, where bots rise from the dead.
-            if (!IsValidFoe(bot, m) || BotSocialRules.IsFriend(bot, m) || Items.MahaonBotBeacon.IsNearAnyBeacon(m))
-            {
-                continue;
-            }
-
-            if (BotSocialRules.IsAtWar(bot, m) && bot.Hits > bot.HitsMax * 0.7)
-            {
-                return m;
-            }
-
-            if (brain.HoldsGrudge(m) && (m.Murderer || m.Criminal) && bot.Hits > bot.HitsMax * 0.7)
-            {
-                BotSpeech.Say(bot, BotTopic.Threat, m, 0.7);
-                return m;
+                break;
             }
         }
 
-        return null;
+        state.Noticed.Clear();
+        return threat;
+    }
+
+    /// <summary>Чем грозит этот человек: дешёвые признаки («цвет», дружба) — первыми.</summary>
+    private static Mobile Appraise(BotBrain brain, Mobile m)
+    {
+        var bot = brain.Bot;
+        if (m == bot || !m.Alive || m.Hidden)
+        {
+            return null;
+        }
+
+        // Свой: опасен не он, а тот, кто на него напал.
+        if (BotSocialRules.IsFriend(bot, m))
+        {
+            return m.Combatant is { Alive: true } attacker && !BotSocialRules.IsFriend(bot, attacker) &&
+                   IsValidFoe(bot, attacker)
+                ? attacker
+                : null;
+        }
+
+        // Напал на своего — враг.
+        if (m.Combatant is { Alive: true } victim && victim != bot && BotSocialRules.IsFriend(bot, victim) &&
+            IsValidFoe(bot, m))
+        {
+            return m;
+        }
+
+        if (bot.Hits <= bot.HitsMax * 0.7)
+        {
+            return null;
+        }
+
+        var atWar = BotSocialRules.IsAtWar(bot, m);
+        var grudge = !atWar && (m.Murderer || m.Criminal) && brain.HoldsGrudge(m);
+
+        // Nobody picks a new fight next to a beacon, where bots rise from the dead.
+        if (!atWar && !grudge || !IsValidFoe(bot, m) || Items.MahaonBotBeacon.IsNearAnyBeacon(m))
+        {
+            return null;
+        }
+
+        if (grudge)
+        {
+            BotSpeech.Say(bot, BotTopic.Threat, m, 0.7);
+        }
+
+        return m;
+    }
+
+    /// <summary>
+    /// Кто-то шагнул в поле зрения: заметили его боты рядом — и он их, если сам бот. Зовёт
+    /// PlayerMobile.OnMovement на каждый шаг человека поблизости.
+    /// </summary>
+    public static void OnSeen(Mobile watcher, Mobile mover, Point3D oldLocation)
+    {
+        if (!Utility.InRange(watcher.Location, mover.Location, SightRange) || Utility.InRange(watcher.Location, oldLocation, SightRange))
+        {
+            return;
+        }
+
+        watcher.GetBrain()?.Combat.Notice(mover);
+        mover.GetBrain()?.Combat.Notice(watcher);
+    }
+
+    private static readonly System.Collections.Generic.Dictionary<Mobile, long> _lastAlarm = new();
+    private const long AlarmIntervalMs = 3_000;
+
+    /// <summary>
+    /// На бота напали: драку видят и слышат все вокруг, свои заметят нападающего сразу, не
+    /// дожидаясь, пока оглядятся.
+    /// </summary>
+    public static void OnAttacked(Mobile victim, Mobile aggressor)
+    {
+        if (victim.Map == null || aggressor == null || aggressor == victim)
+        {
+            return;
+        }
+
+        var now = Core.TickCount;
+        if (_lastAlarm.TryGetValue(victim, out var last) && now - last < AlarmIntervalMs)
+        {
+            return;
+        }
+
+        _lastAlarm[victim] = now;
+        if (_lastAlarm.Count > 2048)
+        {
+            _lastAlarm.Clear();
+        }
+
+        foreach (var bot in victim.Map.GetMobilesInRange<BotMobile>(victim.Location, SightRange))
+        {
+            if (bot != victim && bot != aggressor)
+            {
+                bot.Brain?.Combat.Notice(aggressor);
+            }
+        }
     }
 
     /// <summary>Как часто бот пересматривает, не стоит ли бить общую цель.</summary>

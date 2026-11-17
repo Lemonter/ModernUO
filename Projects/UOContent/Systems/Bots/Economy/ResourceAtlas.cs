@@ -14,6 +14,7 @@ public static class ResourceAtlas
 {
     private const int MaxSpotsPerKind = 4000;
     private const int ProspectSamples = 48;
+    private static readonly long ProspectBudgetTicks = System.Diagnostics.Stopwatch.Frequency * 5 / 1000;
     private const long BenchMs = 15 * 60_000;
 
     private sealed class Spot
@@ -72,8 +73,18 @@ public static class ResourceAtlas
             return false;
         }
 
+        // Каждая проба в незнакомом куске карты заставляет граф разметить его клетки заново —
+        // миллисекунды на кусок. Сорок восемь холодных проб подряд давали заминку сервера в треть
+        // секунды. Не уложились в бюджет — бот поищет в другой раз.
+        var deadline = System.Diagnostics.Stopwatch.GetTimestamp() + ProspectBudgetTicks;
+
         for (var i = 0; i < ProspectSamples; i++)
         {
+            if (System.Diagnostics.Stopwatch.GetTimestamp() > deadline)
+            {
+                break;
+            }
+
             var x = center.X + Utility.RandomMinMax(-radius, radius);
             var y = center.Y + Utility.RandomMinMax(-radius, radius);
             var region = graph.Locate(x, y, center.Z, 2);

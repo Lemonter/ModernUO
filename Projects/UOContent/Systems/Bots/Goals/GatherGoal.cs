@@ -64,10 +64,18 @@ public sealed class GatherGoal : BotGoal
         var bot = brain.Bot;
         var center = bot.Map == brain.HomeMap && brain.HomeMap != null ? brain.Home : bot.Location;
 
-        if (!ResourceAtlas.TryPick(bot.Map, center, SearchRange, _kind, out var spot) &&
-            !ResourceAtlas.TryProspect(bot.Map, center, Utility.RandomMinMax(30, SearchRange), _kind, out spot))
+        var t = BotProfile.Start();
+        var picked = ResourceAtlas.TryPick(bot.Map, center, SearchRange, _kind, out var spot);
+        BotProfile.Stop("добыча: из атласа", t);
+        if (!picked)
         {
-            return null;
+            t = BotProfile.Start();
+            var found = ResourceAtlas.TryProspect(bot.Map, center, Utility.RandomMinMax(30, SearchRange), _kind, out spot);
+            BotProfile.Stop("добыча: разведка", t);
+            if (!found)
+            {
+                return null;
+            }
         }
 
         var quota = 30 + brain.Diligence / 2;

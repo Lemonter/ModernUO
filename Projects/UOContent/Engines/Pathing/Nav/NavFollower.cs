@@ -101,7 +101,10 @@ public sealed class NavFollower
 
         if (_leg == null || _legPos >= _leg.Length || m.Location != _expected)
         {
-            if (!PlanLeg())
+            var planStart = Systems.Bots.BotProfile.Start();
+            var planned = PlanLeg();
+            Systems.Bots.BotProfile.Stop("путь: локальный поиск", planStart);
+            if (!planned)
             {
                 return ++_failures >= MaxConsecutiveFailures ? NavStepResult.Failed : NavStepResult.Waiting;
             }
@@ -120,7 +123,14 @@ public sealed class NavFollower
         var oldLocation = m.Location;
         var oldMap = m.Map;
 
-        if (!m.Move(run ? dir | Direction.Running : dir) || m.Location == oldLocation && m.Map == oldMap)
+        var moveStart = Systems.Bots.BotProfile.Start();
+        var moved = m.Move(run ? dir | Direction.Running : dir);
+        Systems.Bots.BotProfile.Stop(moved ? "путь: шаг" : "путь: шаг не удался", moveStart);
+        if (!moved)
+        {
+            Systems.Bots.BotProfile.Stop("отказ шага", WhyRefused(m, dir, next), Systems.Bots.BotProfile.Start());
+        }
+        if (!moved || m.Location == oldLocation && m.Map == oldMap)
         {
             _leg = null;
             return ++_failures >= MaxConsecutiveFailures ? NavStepResult.Failed : NavStepResult.Waiting;
@@ -317,6 +327,14 @@ public sealed class NavFollower
 
     private static Direction[] FindLeg(Mobile m, Point3D target)
     {
+        // Большинство отрезков — прямая по открытому месту: проверить её по шагам куда дешевле
+        // поиска, а поиск нужен, только если прямая во что-то упёрлась.
+        if (StraightLeg(m, target) is { } line)
+        {
+            NavStats.RecordStraightLeg();
+            return line;
+        }
+
         var alg = BitmapAStarAlgorithm.Instance;
         if (!alg.CheckCondition(m, m.Map, m.Location, target))
         {
@@ -328,6 +346,145 @@ public sealed class NavFollower
         var found = path?.Length > 0;
         NavStats.RecordLeg(NavStats.ElapsedMs(t0), found);
         return found ? path : null;
+    }
+
+    // Диагностика: почему движок не дал шагнуть.
+    private static string WhyRefused(Mobile m, Direction dir, Point3D next)
+    {
+        var who = m is Server.Mobiles.BotMobile ? "бот" : "не бот";
+        if (m.Spell != null)
+        {
+            return who + ", колдует";
+        }
+
+        if (m.Paralyzed || m.Frozen)
+        {
+            return who + ", скован";
+        }
+
+        if (!Movement.Movement.CheckMovement(m, m.Map, m.Location, dir, out _))
+        {
+            return who + ", " + TerrainWhy(m, dir, next);
+        }
+
+        foreach (var other in m.Map.GetMobilesAt(next))
+        {
+            if (other != m && (other.Z - m.Z).Abs() < 16)
+            {
+                var kind = other switch
+                {
+                    Server.Mobiles.BotMobile => "бот",
+                    Server.Mobiles.PlayerMobile => "игрок",
+                    Server.Mobiles.BaseVendor => "торговец",
+                    Server.Mobiles.BaseCreature { Controlled: true } => "питомец",
+                    Server.Mobiles.BaseCreature bc when Systems.Bots.BotPassage.IsPeaceful(bc) => "мирное существо",
+                    Server.Mobiles.BaseCreature bc => $"существо {bc.GetType().Name}",
+                    _ => other.GetType().Name
+                };
+                return $"{who}, на клетке {kind}";
+            }
+        }
+
+        return who + ", прочее (регион, предмет на клетке)";
+    }
+
+    private static string TerrainWhy(Mobile m, Direction dir, Point3D next)
+    {
+        var map = m.Map;
+        string why;
+
+        if (map.GetItemsAt<BaseDoor>(next) is var doors && HasAny(doors))
+        {
+            why = "дверь";
+        }
+        else if (((int)dir & 1) == 1 && DiagonalCorner(m, dir))
+        {
+            why = "срезание угла по диагонали";
+        }
+        else if (IsWet(map, next))
+        {
+            why = "вода";
+        }
+        else
+        {
+            why = "стена/высота";
+        }
+
+        return "рельеф: " + why;
+    }
+
+    private static bool HasAny(Map.ItemAtEnumerable<BaseDoor> doors)
+    {
+        foreach (var _ in doors)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    // Диагональ: в одну из боковых клеток шагнуть можно, а наискосок — нет.
+    private static bool DiagonalCorner(Mobile m, Direction dir)
+    {
+        var left = (Direction)(((int)dir - 1) & 7);
+        var right = (Direction)(((int)dir + 1) & 7);
+        return Movement.Movement.CheckMovement(m, m.Map, m.Location, left, out _) ||
+               Movement.Movement.CheckMovement(m, m.Map, m.Location, right, out _);
+    }
+
+    private static bool IsWet(Map map, Point3D p)
+    {
+        var land = map.Tiles.GetLandTile(p.X, p.Y);
+        if ((TileData.LandTable[land.ID & TileData.MaxLandValue].Flags & TileFlag.Wet) != 0)
+        {
+            return true;
+        }
+
+        foreach (var tile in map.Tiles.GetStaticTiles(p.X, p.Y))
+        {
+            if ((TileData.ItemTable[tile.ID & TileData.MaxItemValue].Flags & TileFlag.Wet) != 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>Шаги по прямой до точки, если каждый шаг проходим; иначе null.</summary>
+    private static Direction[] StraightLeg(Mobile m, Point3D target)
+    {
+        var map = m.Map;
+        var loc = m.Location;
+        var steps = new Direction[LegRange * 2];
+        var count = 0;
+
+        while (loc.X != target.X || loc.Y != target.Y)
+        {
+            if (count >= steps.Length)
+            {
+                return null;
+            }
+
+            var dir = Utility.GetDirection(loc, target) & Direction.Mask;
+            if (!Movement.Movement.CheckMovement(m, map, loc, dir, out var z))
+            {
+                return null;
+            }
+
+            int x = loc.X, y = loc.Y;
+            Movement.Movement.Offset(dir, ref x, ref y);
+            loc = new Point3D(x, y, z);
+            steps[count++] = dir;
+        }
+
+        if (count == 0)
+        {
+            return null;
+        }
+
+        System.Array.Resize(ref steps, count);
+        return steps;
     }
 
     /// <summary>Opens a closed door on the cell about to be entered. True when the tick went on

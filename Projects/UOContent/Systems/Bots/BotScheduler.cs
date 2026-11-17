@@ -21,7 +21,9 @@ public static class BotScheduler
     // tick and never depend on the tick counter's absolute value.
     private static long _anchor;
 
-    public static double BudgetMs { get; set; } = 4.0;
+    // 6 мс из 25-мс такта (~24% главного потока): при тысяче ботов 4 мс не хватало, и боты
+    // просыпались на полсекунды позже заказанного.
+    public static double BudgetMs { get; set; } = 6.0;
 
     // ---- Stats for [BotStats -----------------------------------------------------------------
     public static long Thinks { get; private set; }
@@ -30,12 +32,27 @@ public static class BotScheduler
     public static long BudgetOverruns { get; private set; }
     public static int QueueLength => _queue.Count;
 
+    // Насколько позже заказанного бот просыпается: главная цифра перегруза. Пока планировщик
+    // успевает, опоздание — доли тика (25 мс); растёт — значит боты думают реже, чем просят.
+    public static double LateMsTotal { get; private set; }
+    public static long LateMsMax { get; private set; }
+
+    // Сколько всего времени главного потока ушло на ботов и с какого момента считаем.
+    public static double DrainMsTotal { get; private set; }
+    public static double DrainMsMax { get; private set; }
+    public static long StatsSince { get; private set; } = Core.TickCount;
+
     public static void ResetStats()
     {
         Thinks = 0;
         ThinkMsTotal = 0;
         ThinkMsMax = 0;
         BudgetOverruns = 0;
+        LateMsTotal = 0;
+        LateMsMax = 0;
+        DrainMsTotal = 0;
+        DrainMsMax = 0;
+        StatsSince = Core.TickCount;
     }
 
     public static void Start()
@@ -54,6 +71,23 @@ public static class BotScheduler
     private static void Drain()
     {
         var start = Stopwatch.GetTimestamp();
+        try
+        {
+            DrainQueue(start);
+        }
+        finally
+        {
+            var ms = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+            DrainMsTotal += ms;
+            if (ms > DrainMsMax)
+            {
+                DrainMsMax = ms;
+            }
+        }
+    }
+
+    private static void DrainQueue(long start)
+    {
         var budgetTicks = (long)(BudgetMs * Stopwatch.Frequency / 1000.0);
         var now = Core.TickCount - _anchor;
 
@@ -71,6 +105,13 @@ public static class BotScheduler
             if (!brain.Registered || stamp != brain.ScheduleStamp)
             {
                 continue;
+            }
+
+            var late = now - due;
+            LateMsTotal += late;
+            if (late > LateMsMax)
+            {
+                LateMsMax = late;
             }
 
             var t0 = Stopwatch.GetTimestamp();

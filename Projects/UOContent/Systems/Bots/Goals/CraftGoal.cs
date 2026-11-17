@@ -65,24 +65,24 @@ public sealed class CraftGoal : BotGoal
         {
             // A smithy at home beats walking to town.
             if (BotHousing.HomeOf(bot) is { Map: { } homeMap } house && homeMap == bot.Map &&
-                BotHousing.TryGetSmithy(house, out var homeStand))
+                BotHousing.TryGetSmithy(house, out var homeStands))
             {
-                steps.Add(new GoToAction(homeMap, homeStand, 0, "в домашнюю кузницу"));
+                steps.Add(new GoToAction(homeMap, homeStands[0], 0, "в домашнюю кузницу", homeStands));
             }
             else if (BotCityHomes.CityHome(bot) is { AreaMap: { } cityMap } apartment && cityMap == bot.Map &&
-                     BotCityHomes.TryGetSmithy(apartment, out var cityStand))
+                     BotCityHomes.TryGetSmithy(apartment, out var cityStands))
             {
-                steps.Add(new GoToAction(cityMap, cityStand, 0, "в домашнюю кузницу"));
+                steps.Add(new GoToAction(cityMap, cityStands[0], 0, "в домашнюю кузницу", cityStands));
             }
             else
             {
                 var city = BotSocialRules.TownFor(bot);
-                if (city == null || !WorldCatalog.TryGetSmithy(city, out var stand))
+                if (city == null || !WorldCatalog.TryGetSmithy(city, out var stands))
                 {
                     return null;
                 }
 
-                steps.Add(new GoToAction(city.Map, stand, 0, "в кузницу"));
+                steps.Add(new GoToAction(city.Map, stands[0], 0, "в кузницу", stands));
             }
         }
 
@@ -95,9 +95,9 @@ public sealed class CraftGoal : BotGoal
         if (System == DefCooking.CraftSystem)
         {
             if (BotHousing.HomeOf(bot) is { Map: { } homeMap } home && homeMap == bot.Map &&
-                BotHousing.TryGetSmithy(home, out var homeFire))
+                BotHousing.TryGetSmithy(home, out var homeFires))
             {
-                steps.Add(new GoToAction(homeMap, homeFire, 0, "к очагу"));
+                steps.Add(new GoToAction(homeMap, homeFires[0], 0, "к очагу", homeFires));
             }
             else if (BotSocialRules.TownFor(bot) is { } town && WorldCatalog.TryGetForge(town, out _, out var fire))
             {
