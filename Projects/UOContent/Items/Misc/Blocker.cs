@@ -15,6 +15,25 @@ public partial class Blocker : Item
 
     public override int LabelNumber => 503057; // Impassable!
 
+    // Декор для кэша шагов и графа ботов (Engines.Pathing.Cache.DecorStatics).
+    public override void OnLocationChange(Point3D oldLocation)
+    {
+        base.OnLocationChange(oldLocation);
+        Engines.Pathing.Cache.DecorStatics.Update(this);
+    }
+
+    public override void OnMapChange()
+    {
+        base.OnMapChange();
+        Engines.Pathing.Cache.DecorStatics.Update(this);
+    }
+
+    public override void OnAfterDelete()
+    {
+        base.OnAfterDelete();
+        Engines.Pathing.Cache.DecorStatics.Remove(this);
+    }
+
     public override void SendWorldPacketTo(NetState ns, ReadOnlySpan<byte> world = default)
     {
         var mob = ns.Mobile;

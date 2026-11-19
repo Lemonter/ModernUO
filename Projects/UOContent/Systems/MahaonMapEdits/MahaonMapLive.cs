@@ -159,7 +159,7 @@ public static class MahaonMapLive
 
         var known = KnownByState.GetOrCreateValue(m.NetState);
 
-        if (known.MapId == m.Map.MapID && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
+        if (known.MapId == m.Map.MapIndex && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
         {
             return;
         }
@@ -185,7 +185,7 @@ public static class MahaonMapLive
 
             var known = KnownByState.GetOrCreateValue(ns);
 
-            if (known.MapId == m.Map.MapID && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
+            if (known.MapId == m.Map.MapIndex && known.BlockX == m.X >> 3 && known.BlockY == m.Y >> 3)
             {
                 continue;
             }
@@ -211,7 +211,7 @@ public static class MahaonMapLive
 
         // Смена фасета: журнал старой карты клиент отложил, а не выбросил — список известного
         // остаётся, меняется только карта, вокруг которой смотрим.
-        known.MapId = map.MapID;
+        known.MapId = map.MapIndex;
 
         known.BlockX = m.X >> 3;
         known.BlockY = m.Y >> 3;
@@ -220,7 +220,7 @@ public static class MahaonMapLive
 
         foreach (var ((mapId, blockId), state) in MahaonMapEdits.Current)
         {
-            if (mapId == map.MapID && IsNear(blockId, blockHeight, known) && IsStale(known, mapId, blockId))
+            if (mapId == map.MapIndex && IsNear(blockId, blockHeight, known) && IsStale(known, mapId, blockId))
             {
                 Deliver(ns, known, mapId, blockId, state);
             }
@@ -231,7 +231,7 @@ public static class MahaonMapLive
 
         foreach (var ((mapId, blockId), version) in known.Blocks)
         {
-            if (mapId == map.MapID && version != VersionOf(mapId, blockId) &&
+            if (mapId == map.MapIndex && version != VersionOf(mapId, blockId) &&
                 !MahaonMapEdits.Current.ContainsKey((mapId, blockId)) && IsNear(blockId, blockHeight, known))
             {
                 (reverted ??= new List<(int, int)>()).Add((mapId, blockId));
@@ -386,7 +386,7 @@ public static class MahaonMapLive
 
         foreach (var ns in NetState.Instances)
         {
-            if (ns.Mobile?.Map?.MapID != mapId)
+            if (ns.Mobile?.Map?.MapIndex != mapId)
             {
                 continue;
             }
@@ -451,7 +451,7 @@ public static class MahaonMapLive
         writer.Write(MahaonMultiPacketId);
         writer.Write((ushort)0); // место под длину — проставит WritePacketLength()
         writer.Write(SubtypeMapStatics);
-        writer.Write((byte)mapId);
+        writer.Write((byte)(Map.Maps[mapId]?.MapID ?? mapId)); // клиенту — номер его файла карты, не индекс фасета
         writer.Write(blockId);
         writer.Write((ushort)statics.Count);
 
@@ -476,7 +476,7 @@ public static class MahaonMapLive
         writer.Write(MahaonMultiPacketId);
         writer.Write((ushort)0);
         writer.Write(SubtypeMapLand);
-        writer.Write((byte)mapId);
+        writer.Write((byte)(Map.Maps[mapId]?.MapID ?? mapId)); // клиенту — номер его файла карты, не индекс фасета
         writer.Write(blockId);
 
         for (var i = 0; i < 64; i++)

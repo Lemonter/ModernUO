@@ -179,7 +179,7 @@ public static class MahaonMapEditCommands
         {
             foreach (var map in Map.AllMaps)
             {
-                if (map != null && map != Map.Internal && map.MapID <= 5)
+                if (map != null && map != Map.Internal && map.MapIndex <= 5)
                 {
                     maps.Add(map);
                 }
@@ -389,7 +389,7 @@ public static class MahaonMapEditCommands
             var map = from.Map;
             var blockId = MahaonMapEdits.BlockIdFor(map, p.X, p.Y);
 
-            if (!MahaonMapEdits.Current.TryGetValue((map.MapID, blockId), out var state))
+            if (!MahaonMapEdits.Current.TryGetValue((map.MapIndex, blockId), out var state))
             {
                 from.SendMessage(0x3B2, "Этот блок не изменён — он такой же, как в файлах карты.");
                 return;

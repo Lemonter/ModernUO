@@ -14,6 +14,25 @@ public partial class Static : Item
     public Static(int itemID, int count) : this(Utility.Random(itemID, count))
     {
     }
+
+    // Декор для кэша шагов и графа ботов (Engines.Pathing.Cache.DecorStatics).
+    public override void OnLocationChange(Point3D oldLocation)
+    {
+        base.OnLocationChange(oldLocation);
+        Engines.Pathing.Cache.DecorStatics.Update(this);
+    }
+
+    public override void OnMapChange()
+    {
+        base.OnMapChange();
+        Engines.Pathing.Cache.DecorStatics.Update(this);
+    }
+
+    public override void OnAfterDelete()
+    {
+        base.OnAfterDelete();
+        Engines.Pathing.Cache.DecorStatics.Remove(this);
+    }
 }
 
 [SerializationGenerator(0)]

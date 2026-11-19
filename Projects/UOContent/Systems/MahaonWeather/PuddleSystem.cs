@@ -277,7 +277,7 @@ public static class PuddleSystem
                 puddle.MoveToWorld(new Point3D(x, y, map.GetAverageZ(x, y)), map);
 
                 ActivePuddles.Add(puddle);
-                Taken.Add((map.MapID, x, y));
+                Taken.Add((map.MapIndex, x, y));
                 placed++;
             }
         }
@@ -347,7 +347,7 @@ public static class PuddleSystem
     /// <summary>Проходимая земля под открытым небом, без своей воды и без чужого добра.</summary>
     private static bool IsOpenGround(Map map, int x, int y)
     {
-        if (Taken.Contains((map.MapID, x, y)))
+        if (Taken.Contains((map.MapIndex, x, y)))
         {
             return false;
         }

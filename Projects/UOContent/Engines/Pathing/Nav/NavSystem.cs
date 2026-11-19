@@ -38,7 +38,7 @@ public static class NavSystem
     /// <summary>Rebuilds and publishes the snapshot. Loop only.</summary>
     public static void PublishSnapshot() => _snapshot = NavSnapshot.Build(_graphs, _islands, NavLinks.All);
 
-    public static NavMapGraph GetGraph(Map map) => map == null || map == Map.Internal ? null : _graphs[map.MapID];
+    public static NavMapGraph GetGraph(Map map) => map == null || map == Map.Internal ? null : _graphs[map.MapIndex];
 
     /// <summary>
     /// Connected component of the graph treated as undirected. Two regions on different islands
@@ -110,9 +110,9 @@ public static class NavSystem
 
         StepCache.Instance.InvalidateArea(map, x, y, width, height);
 
-        if (!_changedClusters.TryGetValue(map.MapID, out var clusters))
+        if (!_changedClusters.TryGetValue(map.MapIndex, out var clusters))
         {
-            _changedClusters[map.MapID] = clusters = [];
+            _changedClusters[map.MapIndex] = clusters = [];
         }
 
         // Same one-tile margin as the step cache: border cells of the neighbours changed too.
@@ -141,6 +141,7 @@ public static class NavSystem
     private static void ApplyPatches()
     {
         _patchScheduled = false;
+        var patched = false;
 
         foreach (var (mapId, clusters) in _changedClusters)
         {
@@ -154,6 +155,7 @@ public static class NavSystem
             var watch = Stopwatch.StartNew();
             var graph = NavGraphBuilder.Patch(old, new StepCacheNavCellSource(map), clusters);
             Install(map, graph);
+            patched = true;
 
             logger.Information(
                 "Nav graph for map {MapId} patched around {Clusters} changed clusters in {Elapsed:F1} ms",
@@ -164,12 +166,19 @@ public static class NavSystem
         }
 
         _changedClusters.Clear();
+
+        // Заплата перенумеровывает области графа: телепорты, привязанные к старым номерам, вели бы
+        // в чужие области (после старта с декором — почти все подземелья «без входа»).
+        if (patched)
+        {
+            NavLinks.Rebuild();
+        }
     }
 
     public static bool TryLoad(Map map)
     {
-        var path = PathFor(map.MapID);
-        var graph = NavGraphFile.Read(path, map.MapID, StepCacheFile.ComputeFingerprint(map.MapID));
+        var path = PathFor(map.MapIndex);
+        var graph = NavGraphFile.Read(path, map.MapIndex, StepCacheFile.ComputeFingerprint(map.MapIndex));
 
         if (graph == null)
         {
@@ -179,7 +188,7 @@ public static class NavSystem
         Install(map, graph);
         logger.Information(
             "Nav graph for map {MapId} loaded: {Regions} regions, {Edges} edges",
-            map.MapID,
+            map.MapIndex,
             graph.RegionCount,
             graph.EdgeCount
         );
@@ -192,33 +201,33 @@ public static class NavSystem
     /// </summary>
     public static NavMapGraph Bake(Map map)
     {
-        logger.Information("Nav bake: map {MapId} ({Width}x{Height}) — this can take a while...", map.MapID, map.Width, map.Height);
+        logger.Information("Nav bake: map {MapId} ({Width}x{Height}) — this can take a while...", map.MapIndex, map.Width, map.Height);
 
         var watch = Stopwatch.StartNew();
         var lastLog = 0L;
 
         var graph = NavGraphBuilder.Build(
-            map.MapID,
+            map.MapIndex,
             new StepCacheNavCellSource(map),
             (row, rows) =>
             {
                 if (watch.ElapsedMilliseconds - lastLog >= 5000 || row == rows)
                 {
                     lastLog = watch.ElapsedMilliseconds;
-                    logger.Information("Nav bake: map {MapId} row {Row}/{Rows} ({Elapsed:F1}s)", map.MapID, row, rows, watch.Elapsed.TotalSeconds);
+                    logger.Information("Nav bake: map {MapId} row {Row}/{Rows} ({Elapsed:F1}s)", map.MapIndex, row, rows, watch.Elapsed.TotalSeconds);
                 }
             }
         );
 
-        var path = PathFor(map.MapID);
+        var path = PathFor(map.MapIndex);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        NavGraphFile.Write(path, graph, StepCacheFile.ComputeFingerprint(map.MapID));
+        NavGraphFile.Write(path, graph, StepCacheFile.ComputeFingerprint(map.MapIndex));
 
         Install(map, graph);
 
         logger.Information(
             "Nav bake: map {MapId} done in {Elapsed:F1}s — {Regions} regions, {Edges} edges",
-            map.MapID,
+            map.MapIndex,
             watch.Elapsed.TotalSeconds,
             graph.RegionCount,
             graph.EdgeCount
@@ -231,15 +240,15 @@ public static class NavSystem
     public static void Install(Map map, NavMapGraph graph, INavCellSource source = null)
     {
         graph.AttachSource(source ?? new StepCacheNavCellSource(map));
-        _graphs[map.MapID] = graph;
-        _islands[map.MapID] = ComputeIslands(graph);
+        _graphs[map.MapIndex] = graph;
+        _islands[map.MapIndex] = ComputeIslands(graph);
         PublishSnapshot();
     }
 
     public static void Uninstall(Map map)
     {
-        _graphs[map.MapID] = null;
-        _islands[map.MapID] = null;
+        _graphs[map.MapIndex] = null;
+        _islands[map.MapIndex] = null;
         PublishSnapshot();
     }
 

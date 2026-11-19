@@ -159,7 +159,7 @@ public static class MahaonWaterFlow
     /// <summary>Стоял ли этот самый статик здесь изначально.</summary>
     private static bool WasThereBefore(Map map, int x, int y, MapStatic s)
     {
-        if (!MahaonMapEdits.TryGetOriginalStatics(map.MapID, MahaonMapEdits.BlockIdFor(map, x, y), out var before))
+        if (!MahaonMapEdits.TryGetOriginalStatics(map.MapIndex, MahaonMapEdits.BlockIdFor(map, x, y), out var before))
         {
             return false;
         }

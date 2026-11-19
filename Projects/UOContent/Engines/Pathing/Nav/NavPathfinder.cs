@@ -52,8 +52,8 @@ public static class NavPathfinder
             return Resolve.Failed;
         }
 
-        startNode = NavLinks.NodeKey(startMap.MapID, startRegion);
-        goalNode = NavLinks.NodeKey(goalMap.MapID, goalRegion);
+        startNode = NavLinks.NodeKey(startMap.MapIndex, startRegion);
+        goalNode = NavLinks.NodeKey(goalMap.MapIndex, goalRegion);
         return startNode == goalNode ? Resolve.SameRegion : Resolve.Search;
     }
 

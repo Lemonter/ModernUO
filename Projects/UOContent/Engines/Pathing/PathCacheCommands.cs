@@ -108,22 +108,22 @@ public static class PathCacheCommands
                 continue;
             }
 
-            if (StepCache.Instance.HasLazyReader(map.MapID))
+            if (StepCache.Instance.HasLazyReader(map.MapIndex))
             {
                 continue; // already has a fingerprint-valid .swb open
             }
 
-            var path = PathFor(map.MapID);
+            var path = PathFor(map.MapIndex);
 
             logger.Information(
                 "PathBake: pre-baking map {MapId} (pathfinding.prebakeMaps) — this can take several minutes...",
-                map.MapID
+                map.MapIndex
             );
-            StepCache.Instance.BakeMap(map.MapID, path);
+            StepCache.Instance.BakeMap(map.MapIndex, path);
             StepCache.Instance.ClearResidentChunks();
 
             // Just this map: a blanket AutoLoadAtStartup() would reopen every reader already open.
-            StepCache.Instance.TryOpenLazyReader(path, map.MapID);
+            StepCache.Instance.TryOpenLazyReader(path, map.MapIndex);
             baked++;
         }
 
@@ -147,7 +147,7 @@ public static class PathCacheCommands
             {
                 continue;
             }
-            StepCache.Instance.TryOpenLazyReader(PathFor(map.MapID), map.MapID);
+            StepCache.Instance.TryOpenLazyReader(PathFor(map.MapIndex), map.MapIndex);
         }
     }
 
@@ -192,7 +192,7 @@ public static class PathCacheCommands
         for (var i = 0; i < Map.Maps.Length; i++)
         {
             var map = Map.Maps[i];
-            if (map == null || map == Map.Internal || only.HasValue && map.MapID != only.Value)
+            if (map == null || map == Map.Internal || only.HasValue && map.MapIndex != only.Value)
             {
                 continue;
             }
@@ -200,14 +200,14 @@ public static class PathCacheCommands
             // BakeMap leaves every chunk it built resident. Drop them between maps so peak memory
             // is one map's worth rather than all of them, and the footprint afterwards is back
             // under the LRU cap.
-            var written = StepCache.Instance.BakeMap(map.MapID, PathFor(map.MapID));
+            var written = StepCache.Instance.BakeMap(map.MapIndex, PathFor(map.MapIndex));
             StepCache.Instance.ClearResidentChunks();
 
             if (written > 0)
             {
                 totalChunks += written;
                 totalMaps++;
-                from.SendMessage($"  map {map.MapID}: {written} chunks → {PathFor(map.MapID)}");
+                from.SendMessage($"  map {map.MapIndex}: {written} chunks → {PathFor(map.MapIndex)}");
             }
         }
 
@@ -237,13 +237,13 @@ public static class PathCacheCommands
             {
                 continue;
             }
-            var path = PathFor(map.MapID);
-            var written = StepCache.Instance.SaveToFile(path, map.MapID);
+            var path = PathFor(map.MapIndex);
+            var written = StepCache.Instance.SaveToFile(path, map.MapIndex);
             if (written > 0)
             {
                 totalChunks += written;
                 totalMaps++;
-                e.Mobile.SendMessage($"  map {map.MapID}: {written} chunks → {path}");
+                e.Mobile.SendMessage($"  map {map.MapIndex}: {written} chunks → {path}");
             }
         }
         e.Mobile.SendMessage($"StepCache saved: {totalChunks} chunks across {totalMaps} map(s).");
@@ -261,7 +261,7 @@ public static class PathCacheCommands
             {
                 continue;
             }
-            if (StepCache.Instance.TryOpenLazyReader(PathFor(map.MapID), map.MapID))
+            if (StepCache.Instance.TryOpenLazyReader(PathFor(map.MapIndex), map.MapIndex))
             {
                 openedMaps++;
             }

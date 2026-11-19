@@ -50,6 +50,13 @@ namespace Server.Commands
             // Повторный запуск ничего не дублирует: ставится только недостающее.
             Systems.MahaonCities.CityFixtures.Renew(m_Mobile);
 
+            // Телепорты не на высоте пола не срабатывают (Wrong, Covetous, Fire, Ice...): поправить.
+            var repaired = Systems.MahaonDungeons.DungeonSurvey.RepairTeleporters();
+            m_Mobile.SendMessage($"Телепортов поставлено на пол: {repaired.Count}.");
+
+            // Своё подземелье на фасете Сумрак.
+            Systems.MahaonDungeons.NecroLair.Generate(m_Mobile);
+
             m_Mobile.SendMessage($"World generating complete. {m_Count} items were generated.");
         }
 

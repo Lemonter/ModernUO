@@ -90,9 +90,10 @@ public sealed class SeasonSystem : GenericPersistence
             _                   => 3
         };
 
+        // Свои фасеты (индекс за 5: Сумрак) держат свой сезон — у Сумрака вечное запустение.
         foreach (var map in Map.Maps)
         {
-            if (map != null && map != Map.Internal)
+            if (map != null && map != Map.Internal && map.MapIndex <= 5)
             {
                 map.Season = nativeSeason;
             }
@@ -100,7 +101,7 @@ public sealed class SeasonSystem : GenericPersistence
 
         foreach (var ns in NetState.Instances)
         {
-            if (ns.Mobile != null)
+            if (ns.Mobile is { Map.MapIndex: <= 5 })
             {
                 ns.SendSeasonChange((byte)nativeSeason, true);
             }

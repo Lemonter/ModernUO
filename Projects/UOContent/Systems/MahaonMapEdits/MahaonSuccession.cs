@@ -123,7 +123,7 @@ public static class MahaonSuccession
             return;
         }
 
-        var key = (map.MapID, x, y);
+        var key = (map.MapIndex, x, y);
 
         if (!Waiting.TryGetValue(key, out var spot))
         {
@@ -188,7 +188,7 @@ public static class MahaonSuccession
 
         MahaonMapEdits.AddStatic(map, x, y, newZ, Stumps[Utility.Random(Stumps.Length)], 0);
 
-        var key = (map.MapID, x, y);
+        var key = (map.MapIndex, x, y);
 
         if (!Waiting.TryGetValue(key, out var spot))
         {

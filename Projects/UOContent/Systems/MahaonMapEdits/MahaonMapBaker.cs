@@ -61,11 +61,19 @@ public static class MahaonMapBaker
     {
         var result = new BakeResult();
 
+        // Фасет-копия (свой индекс, чужой файл карты) в файлы не запекается: они общие с
+        // фасетом-хозяином, и правки копии легли бы ему.
+        if (map.MapIndex != map.MapID)
+        {
+            result.Error = "фасет без собственных файлов карты";
+            return result;
+        }
+
         var blocks = new Dictionary<int, MahaonMapEdits.BlockState>();
 
         foreach (var ((mapId, blockId), state) in MahaonMapEdits.Current)
         {
-            if (mapId == map.MapID)
+            if (mapId == map.MapIndex)
             {
                 blocks[blockId] = state;
             }

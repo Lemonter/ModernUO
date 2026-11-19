@@ -126,7 +126,7 @@ public static class MahaonFluids
 
     private static bool Place(Map map, int x, int y, FluidKind kind, int strength)
     {
-        var key = (map.MapID, x, y);
+        var key = (map.MapIndex, x, y);
 
         if (Cells.ContainsKey(key) || !MahaonExcavation.CanDigHere(map, x, y, out _))
         {
@@ -157,7 +157,7 @@ public static class MahaonFluids
     ///     текучую воду своей и осушал её на первом же пересчёте.
     /// </summary>
     public static bool Holds(Map map, int x, int y) =>
-        map != null && Cells.ContainsKey((map.MapID, x, y));
+        map != null && Cells.ContainsKey((map.MapIndex, x, y));
 
     private static void Tick()
     {
@@ -294,7 +294,7 @@ public static class MahaonFluids
     {
         groundZ = 0;
 
-        if (x < 0 || y < 0 || x >= map.Width || y >= map.Height || Cells.ContainsKey((map.MapID, x, y)))
+        if (x < 0 || y < 0 || x >= map.Width || y >= map.Height || Cells.ContainsKey((map.MapIndex, x, y)))
         {
             return false;
         }

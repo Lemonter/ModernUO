@@ -60,7 +60,7 @@ public static class MahaonExcavation
     {
         var blockId = MahaonMapEdits.BlockIdFor(map, x, y);
 
-        if (MahaonMapEdits.TryGetOriginalLand(map.MapID, blockId, out var land))
+        if (MahaonMapEdits.TryGetOriginalLand(map.MapIndex, blockId, out var land))
         {
             return land[(y & 7) * 8 + (x & 7)].Z;
         }
@@ -239,7 +239,7 @@ public static class MahaonExcavation
         }
 
         var blockId = MahaonMapEdits.BlockIdFor(map, x, y);
-        var restored = MahaonMapEdits.TryGetOriginalLand(map.MapID, blockId, out var land)
+        var restored = MahaonMapEdits.TryGetOriginalLand(map.MapIndex, blockId, out var land)
             ? land[(y & 7) * 8 + (x & 7)].Graphic
             : (ushort)MahaonSuccession.Furrows[0];
 
@@ -276,7 +276,7 @@ public static class MahaonExcavation
     {
         var blockId = MahaonMapEdits.BlockIdFor(map, x, y);
 
-        if (MahaonMapEdits.TryGetOriginalLand(map.MapID, blockId, out var land))
+        if (MahaonMapEdits.TryGetOriginalLand(map.MapIndex, blockId, out var land))
         {
             return land[(y & 7) * 8 + (x & 7)];
         }

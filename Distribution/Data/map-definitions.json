@@ -60,6 +60,16 @@
     "rules": "TrammelRules"
   },
   {
+    "index": 32,
+    "id": 2,
+    "fileIndex": 2,
+    "name": "Sumrak",
+    "width": 2304,
+    "height": 1600,
+    "season": 4,
+    "rules": "FeluccaRules"
+  },
+  {
     "index": 127,
     "id": 127,
     "fileIndex": 127,

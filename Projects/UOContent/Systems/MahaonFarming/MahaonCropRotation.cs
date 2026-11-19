@@ -121,7 +121,7 @@ public static class MahaonCropRotation
                 continue;
             }
 
-            beds[(tile.Map.MapID, tile.X, tile.Y)] = tile;
+            beds[(tile.Map.MapIndex, tile.X, tile.Y)] = tile;
         }
 
         return beds;

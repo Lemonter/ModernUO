@@ -15,5 +15,6 @@ public static class BotPassage
         (bc is BaseVendor or CityGuard || bc.Controlled || bc.IsInvulnerable ||
          bc.FightMode is FightMode.None or FightMode.Aggressor);
 
-    public static bool CanPass(Mobile walker, Mobile other) => walker is BotMobile && (other is BotMobile || IsPeaceful(other));
+    public static bool CanPass(Mobile walker, Mobile other) =>
+        walker is MahaonDungeons.DungeonWalker || walker is BotMobile && (other is BotMobile || IsPeaceful(other));
 }

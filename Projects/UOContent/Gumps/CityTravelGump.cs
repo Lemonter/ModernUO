@@ -71,7 +71,8 @@ public class CityTravelGump : StaticGump<CityTravelGump>
         ("Подземелья: Trammel", DungeonTravelTargets.Trammel),
         ("Подземелья: Ilshenar", DungeonTravelTargets.Ilshenar),
         ("Подземелья: Malas", DungeonTravelTargets.Malas),
-        ("Подземелья: TerMur", DungeonTravelTargets.TerMur)
+        ("Подземелья: TerMur", DungeonTravelTargets.TerMur),
+        ("Подземелья: Сумрак", DungeonTravelTargets.Sumrak)
     };
 
     private static (string, Point3D, Map)[] FeluccaCities()
@@ -197,6 +198,15 @@ public class CityTravelGump : StaticGump<CityTravelGump>
         }
 
         var (cityName, loc, map) = cities[index];
+
+        // Подземелье — к его началу: туда, куда приводит наземный вход, а не в середину региона
+        // (у многих она в отрезанной части или посреди уровня с боссом). См. [DungeonCheck.
+        if (_facet.StartsWith("Подземелья", System.StringComparison.Ordinal) &&
+            System.Linq.Enumerable.FirstOrDefault(Systems.MahaonDungeons.DungeonSurvey.Dungeons(map), r => r.Name == cityName) is { } dungeon &&
+            Systems.MahaonDungeons.DungeonSurvey.EntranceOf(dungeon) is { } entrance)
+        {
+            loc = entrance;
+        }
 
         if (_player.Map == map && _player.Location == loc)
         {

@@ -72,6 +72,20 @@ public static class StepProbe
             cand[count++] = tile.Z + data.CalcHeight;
         }
 
+        foreach (var item in DecorStatics.At(map, x, y))
+        {
+            if (count >= cand.Length)
+            {
+                break;
+            }
+            var data = TileData.ItemTable[item.ItemID & TileData.MaxItemValue];
+            if (!data.Surface || data.Impassable)
+            {
+                continue;
+            }
+            cand[count++] = item.Z + data.CalcHeight;
+        }
+
         if (count == 0)
         {
             return 0;
@@ -216,6 +230,15 @@ public static class StepProbe
             }
         }
 
+        foreach (var item in DecorStatics.At(map, x, y))
+        {
+            var data = TileData.ItemTable[item.ItemID & TileData.MaxItemValue];
+            if (data.Wet)
+            {
+                return item.Z + data.CalcHeight;
+            }
+        }
+
         return int.MinValue;
     }
 
@@ -250,7 +273,10 @@ public static class StepProbe
             isSet = true;
         }
 
-        foreach (var tile in tiles)
+        Span<StaticTile> all = stackalloc StaticTile[MaxCellTiles];
+        var n = Gather(map, x, y, tiles, all);
+
+        foreach (var tile in all[..n])
         {
             var id = TileData.ItemTable[tile.ID & TileData.MaxItemValue];
             var calcTop = tile.Z + id.CalcHeight;
@@ -316,7 +342,10 @@ public static class StepProbe
 
         int testTop;
 
-        foreach (var tile in tiles)
+        Span<StaticTile> all = stackalloc StaticTile[MaxCellTiles];
+        var n = Gather(map, x, y, tiles, all);
+
+        foreach (var tile in all[..n])
         {
             var itemData = TileData.ItemTable[tile.ID & TileData.MaxItemValue];
             var notWater = !itemData.Wet;
@@ -430,6 +459,51 @@ public static class StepProbe
             }
         }
 
+        foreach (var item in DecorStatics.At(map, x, y))
+        {
+            var itemData = TileData.ItemTable[item.ItemID & TileData.MaxItemValue];
+
+            if (itemData.ImpassableSurface)
+            {
+                var checkZ = item.Z;
+                var checkTop = checkZ + itemData.CalcHeight;
+
+                if (checkTop > ourZ && testTop > checkZ)
+                {
+                    return true;
+                }
+            }
+        }
+
         return false;
+    }
+
+    private const int MaxCellTiles = 96;
+
+    /// <summary>Статика клетки и неподвижный декор на ней (<see cref="DecorStatics"/>) одним списком.</summary>
+    private static int Gather(Map map, int x, int y, Map.StaticTileEnumerable tiles, Span<StaticTile> into)
+    {
+        var n = 0;
+        foreach (var tile in tiles)
+        {
+            if (n == into.Length)
+            {
+                return n;
+            }
+
+            into[n++] = tile;
+        }
+
+        foreach (var item in DecorStatics.At(map, x, y))
+        {
+            if (n == into.Length)
+            {
+                return n;
+            }
+
+            into[n++] = new StaticTile((ushort)(item.ItemID & TileData.MaxItemValue), (sbyte)item.Z);
+        }
+
+        return n;
     }
 }

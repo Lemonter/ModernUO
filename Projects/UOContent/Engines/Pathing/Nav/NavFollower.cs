@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Server.Items;
 using Server.PathAlgorithms;
@@ -227,7 +228,16 @@ public sealed class NavFollower
         if (_index + 1 < waypoints.Count)
         {
             var after = waypoints[_index + 1];
-            if (m.Map == after.Map && (m.Map != tele.Map || !Utility.InRange(m.Location, tele.Location, 2)))
+
+            // Телепорт в пределах одной карты: «далеко от плитки» ещё не значит «перенесло» —
+            // ходок мог просто не дойти до неё (встал в нескольких шагах, обходит угол). Перенесло,
+            // только если до точки за телепортом теперь ближе, чем до самой плитки.
+            var fired = m.Map != tele.Map
+                ? m.Map == after.Map
+                : m.Map == after.Map && !Utility.InRange(m.Location, tele.Location, 2) &&
+                  m.GetDistanceToSqrt(after.Location) < m.GetDistanceToSqrt(tele.Location);
+
+            if (fired)
             {
                 _index++;
                 _teleportWait = 0;
@@ -303,7 +313,7 @@ public sealed class NavFollower
                 continue;
             }
 
-            var path = FindLeg(m, target.Location);
+            var path = FindLeg(m, target.Location) ?? (IsJump(target.Kind) ? null : FindLegNear(m, target.Location));
             if (path != null)
             {
                 _leg = path;
@@ -351,6 +361,58 @@ public sealed class NavFollower
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Точка пути — лишь подсказка, где переходить из области в область: если её клетку занял
+    /// предмет (сундук в подземелье, бочка), дойти до соседней ничем не хуже. Без этого ходок
+    /// упирался в сундук на точке и перестраивал маршрут, пока тот не рассыпался.
+    /// </summary>
+    private Direction[] FindLegNear(Mobile m, Point3D target)
+    {
+        Span<int> order = stackalloc int[8];
+        for (var d = 0; d < 8; d++)
+        {
+            order[d] = d;
+        }
+
+        for (var tries = 0; tries < 8; tries++)
+        {
+            // Ближайшие к ходоку соседи — первыми.
+            var pick = -1;
+            var pickDist = double.MaxValue;
+            for (var d = 0; d < 8; d++)
+            {
+                if (order[d] < 0)
+                {
+                    continue;
+                }
+
+                var p = target;
+                Movement.Movement.Offset((Direction)d, ref p);
+                var dist = m.GetDistanceToSqrt(p);
+                if (dist < pickDist)
+                {
+                    pickDist = dist;
+                    pick = d;
+                }
+            }
+
+            if (pick < 0)
+            {
+                break;
+            }
+
+            order[pick] = -1;
+            var near = target;
+            Movement.Movement.Offset((Direction)pick, ref near);
+            if (FindLeg(m, near) is { } path)
+            {
+                return path;
+            }
+        }
+
+        return null;
     }
 
     private Direction[] FindLeg(Mobile m, Point3D target)

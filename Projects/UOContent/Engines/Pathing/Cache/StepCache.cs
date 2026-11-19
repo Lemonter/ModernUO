@@ -522,7 +522,7 @@ public sealed class StepCache
             return null;
         }
 
-        if (_chunks.TryGetValue(EncodeKey(map.MapID, chunkX, chunkY), out var chunk))
+        if (_chunks.TryGetValue(EncodeKey(map.MapIndex, chunkX, chunkY), out var chunk))
         {
             return chunk;
         }
@@ -556,7 +556,7 @@ public sealed class StepCache
 
         var chunkX = x >> 4;
         var chunkY = y >> 4;
-        var key = EncodeKey(map.MapID, chunkX, chunkY);
+        var key = EncodeKey(map.MapIndex, chunkX, chunkY);
 
         var hitKindResult = CacheHitKind.Hit;
         if (!_chunks.TryGetValue(key, out var chunk))
@@ -669,7 +669,7 @@ public sealed class StepCache
     /// file was opened, and the chunks are static-only.
     /// </summary>
     private StepChunk TryLoadFromLazyReader(Map map, int chunkX, int chunkY) =>
-        !_staleInFile.Contains(EncodeKey(map.MapID, chunkX, chunkY)) && _lazyReaders.TryGetValue(map.MapID, out var reader)
+        !_staleInFile.Contains(EncodeKey(map.MapIndex, chunkX, chunkY)) && _lazyReaders.TryGetValue(map.MapIndex, out var reader)
             ? reader.TryReadChunk(chunkX, chunkY)
             : null;
 
@@ -696,7 +696,7 @@ public sealed class StepCache
         {
             for (var cx = x0; cx <= x1; cx++)
             {
-                var key = EncodeKey(map.MapID, cx, cy);
+                var key = EncodeKey(map.MapIndex, cx, cy);
                 _staleInFile.Add(key);
 
                 if (_chunks.Remove(key))

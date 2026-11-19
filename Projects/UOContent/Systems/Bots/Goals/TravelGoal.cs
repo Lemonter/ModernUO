@@ -36,7 +36,7 @@ public sealed class TravelGoal : BotGoal
             }
 
             if (otherFacet
-                    ? city.Map == bot.Map || !Engines.Pathing.Nav.NavLinks.GatesConnect(bot.Map.MapID, city.Map.MapID, access)
+                    ? city.Map == bot.Map || !Engines.Pathing.Nav.NavLinks.GatesConnect(bot.Map.MapIndex, city.Map.MapIndex, access)
                     : city.Map != bot.Map)
             {
                 continue;

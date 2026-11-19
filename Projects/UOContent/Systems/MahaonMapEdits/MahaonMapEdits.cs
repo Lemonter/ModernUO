@@ -185,7 +185,7 @@ public sealed class MahaonMapEdits : GenericPersistence
     /// <summary>Состояние блока, готовое принять правку статики. Заодно снимает слепок.</summary>
     private static BlockState TouchStatics(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
         var state = StateFor(key);
 
         if (state.Statics != null)
@@ -202,7 +202,7 @@ public sealed class MahaonMapEdits : GenericPersistence
     /// <summary>То же для земли.</summary>
     private static BlockState TouchLand(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
         var state = StateFor(key);
 
         if (state.Land != null)
@@ -232,11 +232,11 @@ public sealed class MahaonMapEdits : GenericPersistence
 
         if (_batch != null)
         {
-            _batch.Add((map.MapID, blockId));
+            _batch.Add((map.MapIndex, blockId));
             return;
         }
 
-        BlockChanged?.Invoke(map.MapID, blockId);
+        BlockChanged?.Invoke(map.MapIndex, blockId);
     }
 
     // ---- Пачка правок ------------------------------------------------------------------
@@ -277,7 +277,7 @@ public sealed class MahaonMapEdits : GenericPersistence
     /// <summary>Возвращает блок к исходному виду. Слепок остаётся — он и есть исходная карта.</summary>
     public static bool ResetBlock(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
 
         if (!Changed.Remove(key))
         {
@@ -362,7 +362,7 @@ public sealed class MahaonMapEdits : GenericPersistence
     /// </summary>
     public static MapLand LandAt(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
 
         if (Changed.TryGetValue(key, out var state) && state.LandTouched)
         {
@@ -391,7 +391,7 @@ public sealed class MahaonMapEdits : GenericPersistence
     /// </summary>
     public static List<MapStatic> StaticsAt(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
         var ox = (byte)(x & 7);
         var oy = (byte)(y & 7);
         var result = new List<MapStatic>();
@@ -435,13 +435,13 @@ public sealed class MahaonMapEdits : GenericPersistence
 
     /// <summary>Была ли тут вообще правка. Дешевле, чем сравнивать состояния.</summary>
     public static bool IsChanged(Map map, int x, int y) =>
-        Changed.ContainsKey((map.MapID, BlockIdFor(map, x, y)));
+        Changed.ContainsKey((map.MapIndex, BlockIdFor(map, x, y)));
 
     // ---- Слепки --------------------------------------------------------------------------
 
     private static void EnsureSnapshotStatics(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
 
         if (OriginalStatics.ContainsKey(key))
         {
@@ -475,7 +475,7 @@ public sealed class MahaonMapEdits : GenericPersistence
 
     private static void EnsureSnapshotLand(Map map, int x, int y)
     {
-        var key = (map.MapID, BlockIdFor(map, x, y));
+        var key = (map.MapIndex, BlockIdFor(map, x, y));
 
         if (OriginalLand.ContainsKey(key))
         {

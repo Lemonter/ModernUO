@@ -146,6 +146,8 @@ namespace Server.Items
 
         public override void OnLocationChange(Point3D old)
         {
+            Engines.Pathing.Cache.DecorStatics.Update(this);
+
             if (_addon != null)
             {
                 _addon.Location = new Point3D(X - _offset.X, Y - _offset.Y, Z - _offset.Z);
@@ -154,6 +156,8 @@ namespace Server.Items
 
         public override void OnMapChange()
         {
+            Engines.Pathing.Cache.DecorStatics.Update(this);
+
             if (_addon != null)
             {
                 _addon.Map = Map;
@@ -168,6 +172,7 @@ namespace Server.Items
         public override void OnAfterDelete()
         {
             base.OnAfterDelete();
+            Engines.Pathing.Cache.DecorStatics.Remove(this);
 
             _addon?.Delete();
         }

@@ -166,7 +166,7 @@ public static class NavLinks
                 }
 
                 _all.Add(
-                    new NavLink(NavLinkKind.MoongateEnter, map.MapID, gate.Location, region, HubMapId, Point3D.Zero, 0, NavAccess.Criminal)
+                    new NavLink(NavLinkKind.MoongateEnter, map.MapIndex, gate.Location, region, HubMapId, Point3D.Zero, 0, NavAccess.Criminal)
                 );
                 gates++;
             }
@@ -188,7 +188,7 @@ public static class NavLinks
             if (region >= 0)
             {
                 var forbidden = destMap == Map.Felucca ? NavAccess.None : NavAccess.Murderer;
-                _all.Add(new NavLink(NavLinkKind.MoongateExit, HubMapId, Point3D.Zero, 0, destMap.MapID, dest, region, forbidden));
+                _all.Add(new NavLink(NavLinkKind.MoongateExit, HubMapId, Point3D.Zero, 0, destMap.MapIndex, dest, region, forbidden));
             }
         }
 
@@ -250,7 +250,7 @@ public static class NavLinks
             return false;
         }
 
-        _all.Add(new NavLink(kind, sourceMap.MapID, source, sourceRegion, destMap.MapID, dest, destRegion));
+        _all.Add(new NavLink(kind, sourceMap.MapIndex, source, sourceRegion, destMap.MapIndex, dest, destRegion));
         return true;
     }
 

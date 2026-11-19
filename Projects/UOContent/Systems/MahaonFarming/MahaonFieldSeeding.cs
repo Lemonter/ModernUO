@@ -123,7 +123,7 @@ public static class MahaonFieldSeeding
         {
             foreach (var map in Map.AllMaps)
             {
-                if (map != null && map != Map.Internal && map.MapID <= 5)
+                if (map != null && map != Map.Internal && map.MapIndex <= 5)
                 {
                     maps.Add(map);
                 }
@@ -150,7 +150,7 @@ public static class MahaonFieldSeeding
 
         foreach (var map in Map.AllMaps)
         {
-            if (map != null && map != Map.Internal && map.MapID <= 5)
+            if (map != null && map != Map.Internal && map.MapIndex <= 5)
             {
                 names.Add(map.Name);
             }

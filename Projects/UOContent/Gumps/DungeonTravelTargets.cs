@@ -87,6 +87,13 @@ public static class DungeonTravelTargets
         ("Yomotsu Mines", new Point3D(6, 118, 0), Map.Malas),
     };
 
+    /// <summary>Свои подземелья шарда (фасет Сумрак). Список собирается при обращении: карта
+    /// заводится из определений при старте.</summary>
+    public static (string name, Point3D loc, Map map)[] Sumrak =>
+        Systems.MahaonDungeons.NecroLair.Facet is { } sumrak
+            ? [(Systems.MahaonDungeons.NecroLair.RegionName, Systems.MahaonDungeons.NecroLair.Arrival, sumrak)]
+            : [];
+
     public static readonly (string name, Point3D loc, Map map)[] TerMur =
     {
         ("Abyss", new Point3D(946, 72, 72), Map.TerMur),
