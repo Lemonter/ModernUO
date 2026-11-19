@@ -11,17 +11,16 @@ namespace Server.Systems.MahaonCities;
 /// Городское хозяйство, которое ставит ГМ: камень (скрижаль) захвата и управления городом и маяк
 /// ботов-горожан. [CitySetup показывает, что где стоит; [CitySetup here ставит недостающее в
 /// город, где стоит ГМ, на открытое место рядом с ним; [CitySetup all — во все города у их
-/// центров. Один раз то же самое делается само при запуске, чтобы мир, где их ещё нет, их получил;
-/// снесённое после этого ГМом назад не встаёт.
+/// центров; [CitySetup renew — то же, что делает [Decorate: убирает маяки сверх положенного
+/// городу, обновляет население и ставит недостающее.
 /// </summary>
 public class CityFixtures : GenericPersistence
 {
     private static CityFixtures _instance;
 
     // Поднять, если в набор добавится что-то новое и его надо расставить ещё раз.
-    // 2 — старый маяк Британии (лимит 600, ставился руками) заменяется городским, население
-    // городов выросло.
-    private const int CurrentVersion = 2;
+    // Раньше хозяйство ставилось само при запуске, и сохранение хранило, какая его версия уже
+    // стоит. Теперь его ставит [Decorate; поле осталось, чтобы читались старые сохранения.
     private static int _placedVersion;
 
     // Сколько горожан-ботов держит маяк. Город должен казаться людным: встретить на улице
@@ -46,24 +45,6 @@ public class CityFixtures : GenericPersistence
     {
         _instance = new CityFixtures();
         CommandSystem.Register("CitySetup", AccessLevel.GameMaster, CitySetup_OnCommand);
-    }
-
-    public static void Initialize()
-    {
-        if (_placedVersion >= CurrentVersion || !ServerConfiguration.GetOrUpdateSetting("mahaon.cityFixtures.autoPlace", true))
-        {
-            return;
-        }
-
-        // После того как CityControlSystem применит ручные центры городов.
-        Timer.DelayCall(
-            TimeSpan.FromSeconds(10),
-            () =>
-            {
-                Renew(null);
-                _placedVersion = CurrentVersion;
-            }
-        );
     }
 
     public static int PopulationOf(string city) => Population.GetValueOrDefault(city, DefaultPopulation);

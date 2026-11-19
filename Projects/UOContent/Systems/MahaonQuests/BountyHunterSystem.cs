@@ -94,7 +94,7 @@ public static class BountyHunterSystem
         }
 
         killer.SendMessage(0x59, $"Награда за голову {bot.Name} выплачена: {_currentReward} золота.");
-        World.Broadcast(0x59, true, $"{killer.Name} получил награду за {bot.Name}!");
+        World.Broadcast(0x59, false, $"{killer.Name} получил награду за {bot.Name}!");
 
         _currentTarget = null; // board goes empty until the next reroll picks someone new
     }

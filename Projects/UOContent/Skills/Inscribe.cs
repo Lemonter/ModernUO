@@ -22,7 +22,7 @@ namespace Server.SkillHandlers
             {
                 var target = new T2AInscribeTarget();
                 m.Target = target;
-                m.SendAsciiMessage("Укажи книгу для копирования или свиток.");
+                m.SendMessage("Укажи книгу для копирования или свиток.");
                 target.BeginTimeout(m, 60000); // 1 minute
                 return TimeSpan.FromSeconds(1.0);
             }
@@ -103,7 +103,7 @@ namespace Server.SkillHandlers
                 {
                     if (!scroll.IsChildOf(from.Backpack))
                     {
-                        from.SendAsciiMessage("Это должно быть у тебя в рюкзаке.");
+                        from.SendMessage("Это должно быть у тебя в рюкзаке.");
                     }
                     else
                     {

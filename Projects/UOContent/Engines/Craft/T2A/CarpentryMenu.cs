@@ -281,7 +281,7 @@ public class CarpentryMenu : ItemListMenu
             var menu = new CarpentryMenu(from, _tool, (Category)craftIndex);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 

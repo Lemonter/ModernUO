@@ -149,6 +149,7 @@ public partial class BotBrain
     internal long DiedAt;
     internal GoToAction GhostWalk;
     internal bool GhostWalkStarted;
+    internal long GhostArriveAt;
     internal IEntity GhostTarget;
     internal int GhostFailures;
 
@@ -298,6 +299,8 @@ public partial class BotBrain
     public BotAction Action { get; private set; }
 
     private readonly Queue<BotAction> _plan = new();
+
+    internal int PlanCount => _plan.Count;
 
     public IReadOnlyCollection<BotAction> Plan => _plan;
 

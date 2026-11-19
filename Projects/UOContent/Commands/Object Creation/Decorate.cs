@@ -46,6 +46,10 @@ namespace Server.Commands
                 Generate("Data/Decoration/BountyBoards", Map.Felucca);
             }
 
+            // Mahaon: камни захвата городов и маяки ботов-горожан — часть убранства мира.
+            // Повторный запуск ничего не дублирует: ставится только недостающее.
+            Systems.MahaonCities.CityFixtures.Renew(m_Mobile);
+
             m_Mobile.SendMessage($"World generating complete. {m_Count} items were generated.");
         }
 

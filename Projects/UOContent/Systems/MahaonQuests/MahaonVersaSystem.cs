@@ -147,7 +147,7 @@ public static class MahaonVersaSystem
         ore.MoveToWorld(target, map);
 
         MahaonBots.BotRumors.Spread($"Метеорит упал неподалёку от {city}! Говорят, там осталась руда.");
-        World.Broadcast(0x22, true, $"[Версаль] Небо над {city} прочертил огненный след...");
+        World.Broadcast(0x22, false, $"[Версаль] Небо над {city} прочертил огненный след...");
     }
 
     private static void TriggerEarthquake(string city, Point3D center, Map map)
@@ -163,7 +163,7 @@ public static class MahaonVersaSystem
         }
 
         MahaonBots.BotRumors.Spread($"В {city} произошло землетрясение — дома трясло, но обошлось без жертв.");
-        World.Broadcast(0x22, true, $"[Версаль] Земля дрогнула под {city}...");
+        World.Broadcast(0x22, false, $"[Версаль] Земля дрогнула под {city}...");
     }
 
     private static void TriggerPlague(string city, Point3D center, Map map)
@@ -193,6 +193,6 @@ public static class MahaonVersaSystem
         }
 
         MahaonBots.BotRumors.Spread($"В {city} вспышка чумы — повсюду больные крысы, держитесь подальше от переулков.");
-        World.Broadcast(0x22, true, $"[Версаль] В {city} началась эпидемия...");
+        World.Broadcast(0x22, false, $"[Версаль] В {city} началась эпидемия...");
     }
 }

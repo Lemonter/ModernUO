@@ -212,7 +212,7 @@ public class AlchemyMenu : ItemListMenu
     {
         if ((from.Backpack?.GetAmount(typeof(Bottle)) ?? 0) == 0)
         {
-            from.SendAsciiMessage("Для зелья нужна пустая бутылка.");
+            from.SendMessage("Для зелья нужна пустая бутылка.");
             return;
         }
 
@@ -245,7 +245,7 @@ public class AlchemyMenu : ItemListMenu
             var menu = new AlchemyMenu(from, _tool, (Category)craftIndex);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 

@@ -41,7 +41,7 @@ public class T2ACraftToolTarget : Target
                 {
                     context.PendingGemType = GemType.None;
                     context.PendingGemCount = 0;
-                    from.SendAsciiMessage("Укажи самоцвет.");
+                    from.SendMessage("Укажи самоцвет.");
                     from.Target = new TinkeringMenu.GemSelectTarget(from, _tool, lastMade.ItemType, type);
                     return;
                 }
@@ -57,7 +57,7 @@ public class T2ACraftToolTarget : Target
             }
             else
             {
-                from.SendAsciiMessage("Ты ещё ничего не изготовил.");
+                from.SendMessage("Ты ещё ничего не изготовил.");
                 T2ACraftSystem.ShowMenu(from, _system, _tool);
             }
         }

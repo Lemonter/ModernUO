@@ -22,7 +22,7 @@ public partial class PowerCrystal : Item
         }
         else
         {
-            from.SendAsciiMessage("Похоже на часть чего-то большего.");
+            from.SendMessage("Похоже на часть чего-то большего.");
         }
     }
 }

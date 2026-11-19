@@ -50,6 +50,7 @@ public static class BotSystem
 
         CommandSystem.Register("BotInspect", AccessLevel.GameMaster, OnBotInspect);
         CommandSystem.Register("BotStats", AccessLevel.GameMaster, OnBotStats);
+        CommandSystem.Register("BotGoal", AccessLevel.GameMaster, OnBotGoal);
         CommandSystem.Register("ClearBots", AccessLevel.Administrator, OnClearBots);
     }
 
@@ -229,6 +230,33 @@ public static class BotSystem
         }
 
         e.Mobile.SendMessage($"Deleted {deleted} bots.");
+    }
+
+    [Usage("BotGoal <часть названия цели>")]
+    [Description("Кто из ботов сейчас преследует цель: где он, что делает, сколько шагов в плане.")]
+    private static void OnBotGoal(CommandEventArgs e)
+    {
+        var query = e.ArgString.Trim();
+        var total = 0;
+        foreach (var bot in _bots)
+        {
+            var brain = bot.GetBrain();
+            if (brain?.Goal == null || !brain.Goal.Name.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (total++ < 12)
+            {
+                var guild = bot.Guild is Guilds.Guild g ? $"{g.Name} ({g.Members.Count}{(g.Leader == bot ? ", глава" : "")})" : "без гильдии";
+                e.Mobile.SendMessage(
+                    $"{bot.Name} {bot.Location} {bot.Map}, {guild}, жизни {bot.Hits}/{bot.HitsMax}: " +
+                    $"{brain.Action?.Describe(brain) ?? "—"}; в плане ещё {brain.PlanCount}"
+                );
+            }
+        }
+
+        e.Mobile.SendMessage($"С целью «{query}»: {total}.");
     }
 
     [Usage("BotStats")]

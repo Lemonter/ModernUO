@@ -438,7 +438,7 @@ public class BlacksmithMenu : ItemListMenu
             var menu = new BlacksmithMenu(from, _tool, (Category)(craftIndex - MainActionCount));
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 
@@ -451,7 +451,7 @@ public class BlacksmithMenu : ItemListMenu
             var menu = new BlacksmithMenu(from, _tool, (Category)craftIndex);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 

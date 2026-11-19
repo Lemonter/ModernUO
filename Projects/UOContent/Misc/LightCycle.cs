@@ -61,14 +61,17 @@ namespace Server
         [OnEvent(nameof(PlayerMobile.PlayerLoginEvent))]
         public static void OnLogin(PlayerMobile pm) => pm.CheckLightLevels(true);
 
-        public static int ComputeLevelFor(Mobile from)
+        public static int ComputeLevelFor(Mobile from) => ComputeLevelFor(from.Map, from.X, from.Y);
+
+        // Mahaon: уровень света в точке без мобиля — для расчёта яркости в мире (MahaonLight).
+        public static int ComputeLevelFor(Map map, int x, int y)
         {
             if (m_LevelOverride > int.MinValue)
             {
                 return m_LevelOverride;
             }
 
-            Clock.GetTime(from.Map, from.X, from.Y, out var hours, out int minutes);
+            Clock.GetTime(map, x, y, out var hours, out int minutes);
 
             /* OSI times:
              *

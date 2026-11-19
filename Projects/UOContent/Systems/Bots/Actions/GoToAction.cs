@@ -43,6 +43,10 @@ public sealed class GoToAction : BotAction
 
     public GoToAction(Map map, Point3D point, int range, string label, Point3D[] spots = null)
     {
+        // Точка назначения бывает непроходимой — камень города, наковальня, анкх. Прийти в саму
+        // клетку нельзя, и последний отрезок пути не находился ни поиском, ни по прямой: бот
+        // застревал в паре шагов от цели и бросал её. Идём на проходимую клетку рядом.
+        point = Standable(map, point, range);
         _map = map;
         _point = point;
         _origin = point;
@@ -59,6 +63,36 @@ public sealed class GoToAction : BotAction
     }
 
     internal Point3D Destination => TargetPoint;
+
+    private static Point3D Standable(Map map, Point3D point, int range)
+    {
+        if (range < 1 || map == null || map == Map.Internal || map.CanFit(point, 16, false, false))
+        {
+            return point;
+        }
+
+        for (var r = 1; r <= range; r++)
+        {
+            for (var dy = -r; dy <= r; dy++)
+            {
+                for (var dx = -r; dx <= r; dx++)
+                {
+                    if (System.Math.Max(System.Math.Abs(dx), System.Math.Abs(dy)) != r)
+                    {
+                        continue;
+                    }
+
+                    var p = new Point3D(point.X + dx, point.Y + dy, point.Z);
+                    if (map.CanFit(p, 16, false, false))
+                    {
+                        return p;
+                    }
+                }
+            }
+        }
+
+        return point;
+    }
 
     private Map TargetMap => _mobile?.Map ?? _map;
     private Point3D TargetPoint => _mobile?.Location ?? _point;

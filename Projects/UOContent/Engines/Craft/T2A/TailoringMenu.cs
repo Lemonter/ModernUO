@@ -293,7 +293,7 @@ public class TailoringMenu : ItemListMenu
             var menu = new TailoringMenu(from, _tool, (Category)craftIndex, _hue);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать что-нибудь из этого раздела.");
                 return;
             }
 
@@ -315,7 +315,7 @@ public class TailoringMenu : ItemListMenu
             return;
         }
 
-        from.SendAsciiMessage("Выбери материал: ткань, кожа или шкуры.");
+        from.SendMessage("Выбери материал: ткань, кожа или шкуры.");
         from.Target = new ResourceSelectTarget(from, tool);
     }
 
@@ -326,7 +326,7 @@ public class TailoringMenu : ItemListMenu
             var menu = new TailoringMenu(from, tool, Category.Main, targeted.Hue);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                 return true;
             }
 
@@ -339,7 +339,7 @@ public class TailoringMenu : ItemListMenu
             var menu = new TailoringMenu(from, tool, Category.LeatherMain);
             if (menu.Entries.Length == 0)
             {
-                from.SendAsciiMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
+                from.SendMessage("Не хватает навыка и материалов, чтобы сделать хоть что-то.");
                 return true;
             }
 
@@ -368,7 +368,7 @@ public class TailoringMenu : ItemListMenu
                 return;
             }
 
-            from.SendAsciiMessage("Не тот материал. Выбери ткань, кожу или шкуры.");
+            from.SendMessage("Не тот материал. Выбери ткань, кожу или шкуры.");
             from.Target = new ResourceSelectTarget(_from, _tool);
         }
     }

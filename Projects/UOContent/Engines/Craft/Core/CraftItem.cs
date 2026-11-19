@@ -1062,7 +1062,7 @@ namespace Server.Engines.Craft
                 from.EndAction<CraftSystem>();
                 if (T2ACraftSystem.Enabled)
                 {
-                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
+                    from.SendMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {
@@ -1164,7 +1164,7 @@ namespace Server.Engines.Craft
             if (!allRequiredSkills || chance <= 0.0)
             {
                 from.EndAction<CraftSystem>();
-                from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
+                from.SendMessage("Не хватает навыка, чтобы это изготовить.");
                 return;
             }
 
@@ -1802,7 +1802,7 @@ namespace Server.Engines.Craft
             {
                 if (tool?.Deleted == false && tool.UsesRemaining > 0)
                 {
-                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
+                    from.SendMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {
@@ -2069,7 +2069,7 @@ namespace Server.Engines.Craft
             {
                 if (tool?.Deleted == false && tool.UsesRemaining > 0)
                 {
-                    from.SendAsciiMessage("Не хватает навыка, чтобы это изготовить.");
+                    from.SendMessage("Не хватает навыка, чтобы это изготовить.");
                 }
                 else
                 {

@@ -95,7 +95,7 @@ namespace Server.Mobiles
                 case 2:
                     {
                         AOS.Damage(defender, this, Utility.Random(10, 5), 100, 0, 0, 0, 0);
-                        defender.SendAsciiMessage("Тебя достали критическим ударом!");
+                        defender.SendMessage("Тебя достали критическим ударом!");
                         break;
                     }
             }

@@ -162,7 +162,7 @@ public abstract partial class BaseTool : Item, IUsesRemaining, ICraftable
             else if (T2ACraftSystem.Enabled)
             {
                 from.Target = new T2ACraftToolTarget(this, system);
-                from.SendAsciiMessage("Укажи этот инструмент, чтобы повторить последнюю вещь, или что-то другое, чтобы начать заново.");
+                from.SendMessage("Укажи этот инструмент, чтобы повторить последнюю вещь, или что-то другое, чтобы начать заново.");
             }
             else
             {

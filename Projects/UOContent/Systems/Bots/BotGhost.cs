@@ -70,27 +70,70 @@ public static class BotGhost
             return 2000;
         }
 
-        brain.GhostWalk ??= target switch
-        {
-            BaseHealer healer => new GoToAction(healer, HealerRange, "к лекарю"),
-            _                 => new GoToAction(target.Map, ((Item)target).GetWorldLocation(), 1, "к анкху")
-        };
-
+        // Живые призраков не видят, и прокладывать призраку путь клетка за клеткой незачем: это
+        // было самое дорогое в мозге бота — у мёртвого поиск отрезка идёт медленной дорогой, а
+        // призраков после драк набирались сотни. Дорога занимает столько, сколько бежал бы
+        // призрак, и по её истечении он у цели; принять ли его, решает сам лекарь.
         if (!brain.GhostWalkStarted)
         {
-            brain.GhostWalk.Start(brain);
             brain.GhostWalkStarted = true;
+            brain.GhostArriveAt = now + TravelMs(bot, target);
         }
 
-        var result = brain.GhostWalk.Tick(brain);
-        if (result.Status == BotActionStatus.Failed)
+        if (now - brain.GhostArriveAt < 0)
+        {
+            return (int)System.Math.Min(5000, brain.GhostArriveAt - now);
+        }
+
+        if (!ArriveAt(bot, target))
         {
             brain.GhostFailures++;
             ClearTarget(brain);
             return 3000;
         }
 
-        return result.DelayMs;
+        return TryResurrectAt(brain, target) ? 1000 : 2000;
+    }
+
+    // Призрак бежит: шаг бега у пешего — пятая доля секунды, плюс заминки на дороге.
+    private const int GhostStepMs = 250;
+    private const long MaxTravelMs = 3 * 60_000;
+
+    private static long TravelMs(Mobile bot, IEntity target)
+    {
+        var at = target is Item item ? item.GetWorldLocation() : target.Location;
+        return System.Math.Min(MaxTravelMs, (long)(bot.GetDistanceToSqrt(at) * GhostStepMs));
+    }
+
+    // Встать у цели: на свободную клетку рядом (у анкха — в пределах воскрешения).
+    private static bool ArriveAt(Mobile bot, IEntity target)
+    {
+        var map = target.Map;
+        var at = target is Item item ? item.GetWorldLocation() : target.Location;
+        if (map == null || map == Map.Internal)
+        {
+            return false;
+        }
+
+        for (var r = 1; r <= 2; r++)
+        {
+            for (var dy = -r; dy <= r; dy++)
+            {
+                for (var dx = -r; dx <= r; dx++)
+                {
+                    if (System.Math.Max(System.Math.Abs(dx), System.Math.Abs(dy)) != r ||
+                        !map.CanFit(at.X + dx, at.Y + dy, at.Z, 16, false, false))
+                    {
+                        continue;
+                    }
+
+                    bot.MoveToWorld(new Point3D(at.X + dx, at.Y + dy, at.Z), map);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

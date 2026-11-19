@@ -75,6 +75,12 @@ public class BitmapAStarAlgorithm : PathAlgorithm
     // outside what a static cache can model.
     private bool _currentMobileNeedsSlowPath;
 
+    // Mahaon: клетки, куда ходока уже не пустил регион (чужой дом, где он в бане). Поиск о
+    // правилах регионов не знает и иначе прокладывает тот же путь снова; задаёт NavFollower на
+    // время одного поиска.
+    [ThreadStatic]
+    internal static HashSet<Point2D> Avoid;
+
     // Diagonal corner-cut uses the strict rule — both cardinal partners walkable, not just one.
     // Non-GM players only. The cache still applies; the partner bits are in the same mask byte.
     private bool _currentMobilePlayerStrict;
@@ -487,6 +493,11 @@ public class BitmapAStarAlgorithm : PathAlgorithm
     /// </summary>
     private bool IsBlockedByDynamic(Mobile m, Map map, int x, int y, int z, bool checkMobiles = true)
     {
+        if (Avoid != null && Avoid.Contains(new Point2D(x, y)))
+        {
+            return true;
+        }
+
         var ourTop = z + PersonHeightConst;
 
         foreach (var item in map.GetItemsAt(x, y))

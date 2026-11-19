@@ -83,7 +83,7 @@ public static class MahaonLight
         var field = new int[grid.Width * grid.Depth * grid.Height];
         var queue = new Queue<(int X, int Y, int Z)>();
 
-        var sky = SkyBrightness();
+        var sky = SkyBrightness(grid.Map, grid.X0 + grid.Width / 2, grid.Y0 + grid.Depth / 2);
 
         for (var x = grid.X0; x < grid.X0 + grid.Width; x++)
         {
@@ -184,9 +184,11 @@ public static class MahaonLight
     }
 
     /// <summary>Яркость неба прямо сейчас. Берём из того же цикла суток, что и клиент.</summary>
-    private static int SkyBrightness()
+    private static int SkyBrightness(Map map, int x, int y)
     {
-        var darkness = Math.Clamp(LightCycle.ComputeLevelFor(null), 0, LightCycle.NightLevel);
+        // Раньше сюда передавался null вместо мобиля, и [LightInfo падал с исключением в обработке
+        // пакета прицела — у ГМа рвалось соединение.
+        var darkness = Math.Clamp(LightCycle.ComputeLevelFor(map, x, y), 0, LightCycle.NightLevel);
 
         return Max - darkness * Max / Math.Max(1, LightCycle.NightLevel);
     }
@@ -239,7 +241,7 @@ public static class MahaonLight
             from.SendMessage(0x59, $"({point.X}, {point.Y}, {point.Z}): яркость {brightness} из {Max}.");
             from.SendMessage(
                 0x3B2,
-                $"  небо сейчас {SkyBrightness()}, штатный уровень темноты у тебя {LightCycle.ComputeLevelFor(from)}"
+                $"  небо сейчас {SkyBrightness(from.Map, point.X, point.Y)}, штатный уровень темноты у тебя {LightCycle.ComputeLevelFor(from)}"
             );
         }
     }

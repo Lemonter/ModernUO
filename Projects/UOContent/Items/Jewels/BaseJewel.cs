@@ -202,7 +202,7 @@ public abstract partial class BaseJewel : Item, ICraftable, IAosItem
             {
                 // Gems were no longer available (or unknown type): craft a plain piece
                 // rather than naming it for gems that were never consumed.
-                from.SendAsciiMessage("Не хватает самоцветов, чтобы вставить в эту вещь.");
+                from.SendMessage("Не хватает самоцветов, чтобы вставить в эту вещь.");
             }
 
             context.PendingGemType = GemType.None;

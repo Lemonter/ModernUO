@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Server.Items;
 using Server.PathAlgorithms;
 
@@ -129,6 +130,17 @@ public sealed class NavFollower
         if (!moved)
         {
             Systems.Bots.BotProfile.Stop("отказ шага", WhyRefused(m, dir, next), Systems.Bots.BotProfile.Start());
+
+            // Не пустил регион (рельеф и мобили тут ни при чём): запомнить клетку, чтобы следующий
+            // отрезок её обошёл, а не упирался в неё снова.
+            if (Movement.Movement.CheckMovement(m, m.Map, m.Location, dir, out _) && !Occupied(m, next))
+            {
+                _refused ??= [];
+                if (_refused.Count < MaxRefused)
+                {
+                    _refused.Add(new Point2D(next.X, next.Y));
+                }
+            }
         }
         if (!moved || m.Location == oldLocation && m.Map == oldMap)
         {
@@ -325,7 +337,36 @@ public sealed class NavFollower
         return null;
     }
 
-    private static Direction[] FindLeg(Mobile m, Point3D target)
+    private HashSet<Point2D> _refused;
+    private const int MaxRefused = 64;
+
+    private static bool Occupied(Mobile m, Point3D cell)
+    {
+        foreach (var other in m.Map.GetMobilesAt(cell))
+        {
+            if (other != m && (other.Z - m.Z).Abs() < 16)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private Direction[] FindLeg(Mobile m, Point3D target)
+    {
+        BitmapAStarAlgorithm.Avoid = _refused;
+        try
+        {
+            return FindLegCore(m, target);
+        }
+        finally
+        {
+            BitmapAStarAlgorithm.Avoid = null;
+        }
+    }
+
+    private Direction[] FindLegCore(Mobile m, Point3D target)
     {
         // Большинство отрезков — прямая по открытому месту: проверить её по шагам куда дешевле
         // поиска, а поиск нужен, только если прямая во что-то упёрлась.
@@ -452,7 +493,7 @@ public sealed class NavFollower
     }
 
     /// <summary>Шаги по прямой до точки, если каждый шаг проходим; иначе null.</summary>
-    private static Direction[] StraightLeg(Mobile m, Point3D target)
+    private Direction[] StraightLeg(Mobile m, Point3D target)
     {
         var map = m.Map;
         var loc = m.Location;
@@ -474,6 +515,11 @@ public sealed class NavFollower
 
             int x = loc.X, y = loc.Y;
             Movement.Movement.Offset(dir, ref x, ref y);
+            if (_refused?.Contains(new Point2D(x, y)) == true)
+            {
+                return null;
+            }
+
             loc = new Point3D(x, y, z);
             steps[count++] = dir;
         }
